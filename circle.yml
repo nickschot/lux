@@ -17,6 +17,11 @@ jobs:
     parallelism: 3
     working_directory: ~/lux
     steps:
+      - run:
+          name: Install prerequisits
+          command: |
+            apt-get update -qq
+            apt-get install -qy libelf1
       - checkout
       - restore_cache:
           keys:
