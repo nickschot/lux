@@ -8,7 +8,7 @@ import exec from '../exec';
 describe('util exec()', () => {
   it('works as a `Promise` based interface to child_proces.exec', () => {
     exec('echo Test', { encoding: 'utf8' }).then(data => {
-      expect(data).to.equal(`Test${EOL}`);
+      expect(data).to.deep.equal([`Test${EOL}`, '']);
     });
   });
 
