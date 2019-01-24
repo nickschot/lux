@@ -1,0 +1,79 @@
+---
+version: 2
+jobs:
+  build:
+    docker:
+    - image: circleci/node:6
+      environment:
+        NODE_ENV: test
+        DROP_DATABASE: DROP DATABASE IF EXISTS lux_test;
+        CREATE_DATABASE: CREATE DATABASE lux_test;
+        DATABASE_USERNAME: ubuntu
+    steps:
+    - checkout
+    - run:
+        command: |
+          cd ../
+
+          if [ -d watchman ]; then
+            cd watchman
+            sudo make install
+          else
+            git clone https://github.com/facebook/watchman.git
+            cd watchman
+            git checkout v4.7.0
+
+            ./autogen.sh
+            ./configure
+            make
+            sudo make install
+          fi
+
+          cd ../lux
+    - run:
+        command: npm install
+    - run:
+        command: npm link
+    - run:
+        command: |
+          cd test/test-app
+          npm install
+          cd ../../
+    - run:
+        command: psql -c "$DROP_DATABASE" -U postgres
+    - run:
+        command: psql -c "$CREATE_DATABASE" -U postgres
+    - run:
+        command: mysql -e "$DROP_DATABASE"
+    - run:
+        command: mysql -e "$CREATE_DATABASE"
+    - run:
+        command: npm run clean
+    - run:
+        command: npm run build
+    - run:
+        parallel: true
+        command: case $CIRCLE_NODE_INDEX in 0) export DATABASE_DRIVER="pg" ;; 1) export
+          DATABASE_DRIVER="mysql2" ;; 2) export DATABASE_DRIVER="sqlite3" ;; esac
+    - run:
+        parallel: true
+        command: npm run flow
+    - run:
+        parallel: true
+        command: npm run lint
+    - run:
+        parallel: true
+        environment:
+          MOCHA_FILE: "$CIRCLE_TEST_REPORTS/junit/test-results.xml"
+        command: npm test -- -R mocha-junit-reporter
+    - run:
+        parallel: true
+        command: npm run codecov
+    - deploy:
+        name: release
+        command: |-
+          if false; then
+            true
+          else
+            echo "Not target branch so not deploying"
+          fi
