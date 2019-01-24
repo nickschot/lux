@@ -83,6 +83,7 @@ jobs:
 
           cd ../lux
       # This is based on your 1.0 configuration file or project settings
+      - run: npm uninstall -g lux-framework
       - run: npm install
       - run: npm link
       # This is based on your 1.0 configuration file or project settings
