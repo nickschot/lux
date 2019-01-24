@@ -19,6 +19,6 @@
     "mysql2": "1.2.0",
     "pg": "6.2.2",
     "source-map-support": "0.4.15",
-    "sqlite3": "3.1.8"
+    "sqlite3": "4.0.6"
   }
 }
