@@ -45,7 +45,7 @@ jobs:
             - ~/lux/.eslintcache
       - run:
           name: Check Types
-          command: yarn flow
+          command: USER=flowuser yarn flow
       - run:
           name: Compile
           command: |
