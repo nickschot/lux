@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: zacharygolba/lux-framework:latest
+      - image: circleci/node:11
         environment:
           NODE_ENV: test
           DATABASE_USERNAME: root
@@ -45,7 +45,7 @@ jobs:
             - ~/lux/.eslintcache
       - run:
           name: Check Types
-          command: USER=flowuser yarn flow
+          command: yarn flow
       - run:
           name: Compile
           command: |
