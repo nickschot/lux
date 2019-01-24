@@ -17,13 +17,10 @@
 
 [options]
 emoji=true
-strip_root=true
 suppress_comment=\\(.\\|\n\\)*\\$FlowIgnore
 
 module.name_mapper='LUX_LOCAL' -> '<PROJECT_ROOT>'
 module.name_mapper='rollup-plugin-lux' -> '<PROJECT_ROOT>/node_modules/rollup-plugin-lux/src/index.js'
-
-unsafe.enable_getters_and_setters=true
 
 esproposal.class_static_fields=enable
 esproposal.class_instance_fields=enable
