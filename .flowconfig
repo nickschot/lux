@@ -10,10 +10,10 @@
 ./node_modules/
 
 [libs]
-node_modules/rollup-plugin-lux/decl/
-node_modules/rollup-plugin-lux/flow-typed/
-flow-typed/
-decl/
+./node_modules/rollup-plugin-lux/decl/
+./node_modules/rollup-plugin-lux/flow-typed/
+./flow-typed/
+./decl/
 
 [options]
 emoji=true
@@ -27,6 +27,3 @@ unsafe.enable_getters_and_setters=true
 
 esproposal.class_static_fields=enable
 esproposal.class_instance_fields=enable
-
-[version]
-^0.38.0
