@@ -3,6 +3,7 @@
 # compiled output
 .nyc_output/
 coverage/
+build/
 dist/
 *test-results.xml
 

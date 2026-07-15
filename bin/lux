@@ -42,7 +42,7 @@ function setEnvVar(key, val, def) {
 }
 
 function exec(cmd, ...args) {
-  const handler = require('../dist')[cmd];
+  const handler = require('../dist/cli.cjs')[cmd];
   const needsProject = new RegExp(
     '^(?:db:.+|test|build|serve|console|generate|destroy)$'
   );
