@@ -12,6 +12,8 @@ node_modules/
 # misc
 *.sqlite
 *.DS_Store
+.idea/
+yarn.lock
 
 # logs
 log/
