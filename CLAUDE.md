@@ -58,16 +58,21 @@ while replacing legacy tooling.
 "convert first, compiler last"):
 0. ✅ Safety net — suite green on Node 20 / pnpm (552 passing).
 1. ✅ Runtime & dependency hygiene — safe dep bumps, Node-6 shims dropped.
-2. **Decouple + unify the transpiler (the real unlock).** Make the framework build a
-   plain-JS `dist` and point `main`/`module`/`types` at it, so the app compiler consumes
-   built JS instead of raw source. Use a transpiler that handles **both** Flow and TS —
-   **Babel 7** (`@babel/preset-flow` for `.js` + `@babel/preset-typescript` for `.ts`) is
-   the only single tool that does — for the framework build (and, when it's touched, the
-   app compiler). `tsc --noEmit` (strict) is the separate type gate.
-3. Flow → TypeScript, bottom-up per `src/packages/*`, hand-tightened to proper types;
-   green throughout via the Babel-7 build.
+2. ✅ **Decouple + unify the transpiler (the real unlock).** New two-stage build
+   ([build.mjs](build.mjs)): **Babel 8** strips Flow (`.js`) + TS (`.ts`) → plain-JS ESM
+   in `build/`; **esbuild** bundles → `dist/` (`index.js` CJS `main`, `index.mjs` ESM,
+   `cli.cjs` for `bin/lux`). App compiler's `LUX_LOCAL` now points at `dist/index.mjs`, so
+   it bundles built JS (decoupled from source language). TS foundation in place: strict
+   [tsconfig.json](tsconfig.json), `pnpm typecheck` (`tsc --noEmit`), and
+   [lib/ts-hook.js](lib/ts-hook.js) (esbuild-register runs `.ts` in Mocha, loaded via
+   `babel-hook.js` before babel-register). Proven end-to-end on `src/utils/uniq.ts`.
+3. **Flow → TypeScript, bottom-up per `src/packages/*`** (leaf `utils/` first), hand-
+   tightened to proper types. Per file: `flow-to-ts` scaffold → fix types → `pnpm
+   typecheck` clean → `pnpm build` → `pnpm test` green. Remember to rebuild `dist` (the
+   app compiler consumes it) when a converted file is reachable from `src/index.js`.
 4. Once no Flow remains: drop `@babel/preset-flow`, flip the build to **tsup**/esbuild and
-   the runner to **Vitest**; retire Babel/Mocha/nyc, `lib/babel-hook.js`, `.babelrc`.
+   the runner to **Vitest**; retire Babel/Mocha/nyc, `lib/babel-hook.js`, `lib/ts-hook.js`,
+   `.babelrc`.
 5. Finish the app-facing compiler rework (`rollup-plugin-lux`) — likely esbuild; free to
    break since only own apps consume it.
 6. ESLint 9 flat + Prettier; replace CircleCI/AppVeyor with GitHub Actions.
