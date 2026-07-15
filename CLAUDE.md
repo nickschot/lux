@@ -27,17 +27,49 @@ while replacing legacy tooling.
   freely — consumer apps are co-evolved. Optimize for a clean modern result over
   backward compatibility.
 - **Package manager:** **pnpm** (replacing yarn).
-- **Target stack:** Node 20 LTS · TypeScript · tsup/esbuild build · Vitest · ESLint 9
+- **Target stack:** Node 20 LTS · TypeScript · **tsup** build (esbuild) · Vitest · ESLint 9
   flat + typescript-eslint + Prettier.
+- **Build tool:** **tsup** for the steady state. The deciding constraint is that
+  esbuild/tsup/tsc/swc/Vitest **cannot parse Flow** — only Babel can — and the tree is
+  ~375 Flow files. So the build swap and the Flow→TS migration are one project.
+- **Migration strategy — "Path B" (front-load conversion):** keep the current Babel build
+  + Mocha while we convert Flow→TS, then flip to tsup + Vitest once no Flow remains. (The
+  alternative — a dual esbuild+Babel transpiler to swap the build early — was rejected as
+  throwaway infra.) **Proper types are a hard requirement:** use `flow-to-ts` only as a
+  per-file scaffold, then hand-tighten under **strict** `tsconfig`; `tsc --noEmit` is the
+  type-correctness gate (Babel only strips types, it does not check them).
+- **Transition wrinkles:**
+  - `tsc` can't parse Flow either → keep `allowJs: false` and convert **bottom-up** (leaf
+    utils first) so every `.ts` file imports only already-converted `.ts`.
+  - The Mocha hook can run `.ts` via esbuild-register alongside the Babel-6 Flow hook for
+    `.js` — **validated** (order matters: register `.ts`/esbuild *before* babel-register,
+    or Babel grabs `.ts` and babylon chokes; route it through `babel-hook.js` requiring the
+    ts-hook first). But this only fixes *unit* test transpilation, not the blocker below.
+- **⚠ Sequencing blocker (discovered in the Phase 2 spike):** the framework **ships raw
+  source** (`main: src/index.js`), and the test bootstrap builds `test/test-app` *from that
+  source* via the **legacy app compiler** (Rollup 0.43 + `rollup-plugin-lux` + Babel 6),
+  which cannot resolve or transpile `.ts`. So the first `.ts` file in `src/` breaks
+  `lux db:*` and fails the whole suite. **The build/ship-model must become `.ts`-capable
+  before source can be converted** — this inverts the naive order (compiler work can't come
+  last). `flow-to-ts`/tsconfig/esbuild-register all work; the app compiler is the gate.
+- **Drop `source-map-support`** in favor of Node's built-in `--enable-source-maps`.
 
-**Phased roadmap** (each phase keeps the test suite green):
-0. Safety net — get the current suite green on modern Node (sqlite locally) before changing anything.
-1. Runtime & dependency hygiene — bump safe deps, drop Node-6 shims.
-2. Introduce the TS toolchain alongside JS (`tsconfig` + esbuild build, `allowJs`).
-3. Swap the test runner to Vitest (retire mocha.opts + `lib/babel-hook.js` + nyc).
-4. Flow → TypeScript, one `src/packages/*` at a time.
-5. Rework the app-facing compiler (`rollup-plugin-lux` / `babel-preset-lux`) — likely
-   replace with esbuild; free to break since only own apps consume it.
+**Phased roadmap** — REVISED after the Phase 2 spike (order below supersedes the naive
+"convert first, compiler last"):
+0. ✅ Safety net — suite green on Node 20 / pnpm (552 passing).
+1. ✅ Runtime & dependency hygiene — safe dep bumps, Node-6 shims dropped.
+2. **Decouple + unify the transpiler (the real unlock).** Make the framework build a
+   plain-JS `dist` and point `main`/`module`/`types` at it, so the app compiler consumes
+   built JS instead of raw source. Use a transpiler that handles **both** Flow and TS —
+   **Babel 7** (`@babel/preset-flow` for `.js` + `@babel/preset-typescript` for `.ts`) is
+   the only single tool that does — for the framework build (and, when it's touched, the
+   app compiler). `tsc --noEmit` (strict) is the separate type gate.
+3. Flow → TypeScript, bottom-up per `src/packages/*`, hand-tightened to proper types;
+   green throughout via the Babel-7 build.
+4. Once no Flow remains: drop `@babel/preset-flow`, flip the build to **tsup**/esbuild and
+   the runner to **Vitest**; retire Babel/Mocha/nyc, `lib/babel-hook.js`, `.babelrc`.
+5. Finish the app-facing compiler rework (`rollup-plugin-lux`) — likely esbuild; free to
+   break since only own apps consume it.
 6. ESLint 9 flat + Prettier; replace CircleCI/AppVeyor with GitHub Actions.
 
 ## Architecture
