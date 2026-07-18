@@ -1,6 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Work from the repo root regardless of where this was invoked from: the
+# lifecycle command's working directory is not guaranteed to be the checkout
+# (IntelliJ's "clone sources" flow runs it elsewhere). Derived from this
+# script's own location, so it is correct wherever the IDE placed the clone.
+cd "$(dirname "$(readlink -f "$0")")/.."
+
+if [ ! -f package.json ]; then
+  echo "ERROR: $(pwd) does not look like the lux checkout" >&2
+  echo "       contents: $(ls -A | tr '\n' ' ')" >&2
+  exit 1
+fi
+
+echo "==> repo root: $(pwd)"
+
 # A named volume mounted at a path the image does not pre-create comes up
 # root-owned. Path-agnostic, so it holds wherever the IDE puts the checkout.
 if [ ! -w . ]; then

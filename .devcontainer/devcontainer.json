@@ -28,7 +28,7 @@
   // its darwin-x64 sqlite3 binaries) are redundant — and their hardcoded
   // /workspaces/lux paths would break a clone placed anywhere else.
   "mounts": [
-    "source=lux-claude-config,target=/home/node/.claude,type=volume",
+    "source?=lux-claude-config,target=/home/node/.claude,type=volume",
     "source=lux-gh-config,target=/home/node/.config/gh,type=volume"
   ],
 
@@ -43,7 +43,11 @@
     "GIT_AUTHOR_EMAIL": "${localEnv:GIT_AUTHOR_EMAIL}"
   },
 
-  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  // Absolute via ${containerWorkspaceFolder}, not a relative path: the lifecycle
+  // command does not necessarily run with the repo root as its working
+  // directory (IntelliJ's clone flow does not), and a relative path then fails
+  // with "No such file or directory".
+  "postCreateCommand": "bash ${containerWorkspaceFolder}/.devcontainer/post-create.sh",
 
   "customizations": {
     "jetbrains": {
