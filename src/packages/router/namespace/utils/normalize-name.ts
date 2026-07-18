@@ -1,9 +1,7 @@
-// @flow
-
 /**
  * @private
  */
-export default function normalizeName(str: string) {
+export default function normalizeName(str: string): string {
   let name = str;
 
   if (name.startsWith('/')) {
