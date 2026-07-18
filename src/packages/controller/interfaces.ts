@@ -1,37 +1,31 @@
-// @flow
-import type Database, { Model, Query } from '../database';
+import type { Model, ModelClass, Query } from '../database';
 import type { Request, Response } from '../server';
 import type Serializer from '../serializer';
-import type Controller from './index';
 
 export type Controller$opts = {
-  model?: Class<Model>;
+  model?: ModelClass<Model>;
   namespace?: string;
-  serializer?: Serializer<*>;
+  serializer?: Serializer<Model>;
 };
 
 export type Controller$builtIn =
-  | 'show'
-  | 'index'
-  | 'create'
-  | 'update'
-  | 'destroy';
+  'show' | 'index' | 'create' | 'update' | 'destroy';
 
 export type Controller$beforeAction = (
   request: Request,
   response: Response
-) => Promise<any>;
+) => Promise<unknown>;
 
 export type Controller$afterAction = (
   request: Request,
   response: Response,
-  responseData: any
-) => Promise<any>;
+  responseData?: unknown
+) => Promise<unknown>;
 
-export type Controller$findOne<T: Model> = (
+export type Controller$findOne<T extends Model> = (
   request: Request
 ) => Query<T>;
 
-export type Controller$findMany<T: Model> = (
+export type Controller$findMany<T extends Model> = (
   request: Request
 ) => Query<Array<T>>;

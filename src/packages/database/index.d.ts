@@ -51,8 +51,8 @@ export class Query<T = unknown> extends Promise<T> {
   static from(query: Query<unknown>): Query<unknown>;
   select(...columns: Array<string>): Query<T>;
   include(relationships: unknown): Query<T>;
-  limit(amount: number): Query<T>;
-  page(num: number): Query<T>;
+  limit(amount?: number): Query<T>;
+  page(num?: number): Query<T>;
   where(conditions: unknown): Query<T>;
   order(...columns: Array<string>): Query<T>;
   find(primaryKey: unknown): Query<T>;

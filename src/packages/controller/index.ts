@@ -1,10 +1,8 @@
-// @flow
-import { Model } from '../database';
 import { getDomain } from '../server';
 import { freezeProps } from '../freezeable';
 import type Serializer from '../serializer';
-import type { Query } from '../database'; // eslint-disable-line max-len, no-duplicate-imports
-import type { Request, Response } from '../server'; // eslint-disable-line max-len, no-duplicate-imports
+import type { Model, ModelClass, Query } from '../database';
+import type { Request, Response } from '../server';
 
 import findOne from './utils/find-one';
 import findMany from './utils/find-many';
@@ -469,7 +467,7 @@ class Controller {
    * @type {Model}
    * @private
    */
-  model: Class<Model>;
+  model!: ModelClass<Model>;
 
   /**
    * A reference to the root Controller for the namespace that a Controller
@@ -479,7 +477,7 @@ class Controller {
    * @type {?Controller}
    * @private
    */
-  parent: ?Controller;
+  parent!: Controller | null;
 
   /**
    * The namespace that a Controller instance is a member of.
@@ -488,7 +486,7 @@ class Controller {
    * @type {String}
    * @private
    */
-  namespace: string;
+  namespace!: string;
 
   /**
    * The resolved Serializer for a Controller instance.
@@ -497,7 +495,7 @@ class Controller {
    * @type {Serializer}
    * @private
    */
-  serializer: Serializer<*>;
+  serializer!: Serializer<Model>;
 
   /**
    * A Map instance containing a reference to all the Controller within an
@@ -507,7 +505,7 @@ class Controller {
    * @type {Map}
    * @private
    */
-  controllers: Map<string, Controller>;
+  controllers!: Map<string, Controller>;
 
   /**
    * A boolean value representing whether or not a Controller instance has a
@@ -517,7 +515,7 @@ class Controller {
    * @type {Boolean}
    * @private
    */
-  hasModel: boolean;
+  hasModel!: boolean;
 
   /**
    * A boolean value representing whether or not a Controller instance is within
@@ -527,7 +525,7 @@ class Controller {
    * @type {Boolean}
    * @private
    */
-  hasNamespace: boolean;
+  hasNamespace!: boolean;
 
   /**
    * A boolean value representing whether or not a Controller instance has a
@@ -537,7 +535,7 @@ class Controller {
    * @type {Boolean}
    * @private
    */
-  hasSerializer: boolean;
+  hasSerializer!: boolean;
 
   constructor({ model, namespace, serializer }: Controller$opts) {
     Object.assign(this, {
@@ -549,17 +547,9 @@ class Controller {
       hasSerializer: Boolean(serializer)
     });
 
-    freezeProps(this, true,
-      'model',
-      'namespace',
-      'serializer'
-    );
+    freezeProps(this, true, 'model', 'namespace', 'serializer');
 
-    freezeProps(this, false,
-      'hasModel',
-      'hasNamespace',
-      'hasSerializer'
-    );
+    freezeProps(this, false, 'hasModel', 'hasNamespace', 'hasSerializer');
   }
 
   /**
@@ -609,14 +599,9 @@ class Controller {
     const { model } = this;
 
     const {
-      url: {
-        pathname
-      },
+      url: { pathname },
       params: {
-        data: {
-          attributes,
-          relationships
-        }
+        data: { attributes, relationships }
       }
     } = req;
 
@@ -654,10 +639,7 @@ class Controller {
       .then(record => {
         const {
           params: {
-            data: {
-              attributes,
-              relationships
-            }
+            data: { attributes, relationships }
           }
         } = req;
 
@@ -713,5 +695,5 @@ export type {
   Controller$opts,
   Controller$builtIn,
   Controller$beforeAction,
-  Controller$afterAction,
+  Controller$afterAction
 } from './interfaces';
