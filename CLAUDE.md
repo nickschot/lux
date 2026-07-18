@@ -79,19 +79,20 @@ while replacing legacy tooling.
 
 ## Phase 3 status — where to resume
 
-**Progress: 141 `.ts` files, 160 Flow files left.** Every batch is one commit, with all
+**Progress: 150 `.ts` files, 151 Flow files left.** Every batch is one commit, with all
 five gates green (see "Conversion recipe").
 
 **Converted:** all of `src/utils/`, `src/interfaces`, `src/constants`, `freezeable`,
-`template`, `jsonapi`, `logger`, `server`, `router`; `src/errors/controller-missing-error`.
-The **logger + server + router + jsonapi cluster is done** (Phase 3b). Still Flow:
-`controller`, `serializer`, `database`, `application`, `cli`, `config`, `fs`, `pm`,
-`compiler`, `loader`, `luxify`, `src/index`.
+`template`, `jsonapi`, `logger`, `server`, `router`, `serializer`, `controller`;
+`src/errors/controller-missing-error`. Still Flow: `database` (56 files), `application`,
+`cli`, `config`, `fs`, `pm`, `compiler`, `loader`, `luxify`, `src/index`.
 
-**⚠ Temporary `.d.ts` stubs in the tree:** [controller/index.d.ts](src/packages/controller/index.d.ts)
-and [database/index.d.ts](src/packages/database/index.d.ts) describe only the surface the
-cluster consumes. **Delete them as `controller`/`database` convert** (they'll be replaced by
-the real emitted types). Both packages still ship real `index.js` at runtime.
+**⚠ One temporary `.d.ts` stub left:** [database/index.d.ts](src/packages/database/index.d.ts)
+describes only the `Model`/`ModelClass`/`Query`/`typeForColumn` surface the rest of the
+framework consumes. **Delete it when `database` converts** (real emitted types replace it).
+`database` still ships real `index.js` at runtime. (The `controller` stub is gone — the real
+`controller` dropped in with **zero** router/server fallout, confirming the stub was
+accurate.)
 
 **⚠ The next step is a cluster, not a package.** `logger`, `server`, `router` and
 `jsonapi/{errors,index,interfaces}` form **one irreducible type cycle**: `server` does

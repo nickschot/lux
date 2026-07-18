@@ -1,27 +1,36 @@
-// @flow
 import omit from '../../../utils/omit';
 import entries from '../../../utils/entries';
-import type { Model } from '../../database';
+import type { ModelClass } from '../../database';
 import type { Request$params } from '../../server';
+
+type Controller$query = {
+  id?: number | string | Buffer;
+  filter?: Record<string, unknown>;
+  select: Array<string>;
+  page?: number;
+  limit?: number;
+  sort?: [string, string];
+  include: Record<string, Array<string>>;
+};
 
 /**
  * @private
  */
-export default function paramsToQuery(model: Class<Model>, {
-  id,
-  page,
-  sort,
-  filter,
-  fields,
-  include
-}: Request$params): Object {
+export default function paramsToQuery(
+  model: ModelClass,
+  { id, page, sort, filter, fields, include }: Request$params
+): Controller$query {
   const relationships = entries(model.relationships);
-  let includedFields = omit(fields, model.resourceName);
+  const includedFields = omit(fields, model.resourceName);
 
-  let query = {
+  let query: Controller$query = {
     id,
     filter,
-    select: [model.primaryKey, ...Reflect.get(fields, model.resourceName)]
+    select: [
+      model.primaryKey,
+      ...(Reflect.get(fields, model.resourceName) as Array<string>)
+    ],
+    include: {}
   };
 
   if (page) {
@@ -46,20 +55,22 @@ export default function paramsToQuery(model: Class<Model>, {
     }
   }
 
-  includedFields = entries(includedFields).reduce((result, field) => {
+  const includedFieldsMap = entries(includedFields).reduce<
+    Record<string, Array<string>>
+  >((result, field) => {
     const [key] = field;
-    let [, value] = field;
+    const [, rawValue] = field;
 
-    const [
-      name,
-      relationship
-    ] = relationships.find(([, { model: related }]) => (
-      key === related.resourceName
-    )) || [];
+    const [name, relationship] =
+      relationships.find(
+        ([, { model: related }]) => key === related.resourceName
+      ) || [];
 
     if (!name || !relationship) {
       return result;
     }
+
+    let value = rawValue as Array<string>;
 
     if (!value.includes(relationship.model.primaryKey)) {
       value = [relationship.model.primaryKey, ...value];
@@ -79,6 +90,6 @@ export default function paramsToQuery(model: Class<Model>, {
 
   return {
     ...query,
-    include: includedFields
+    include: includedFieldsMap
   };
 }
