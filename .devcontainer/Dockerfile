@@ -31,8 +31,9 @@ RUN curl -fsSL -o /tmp/watchman.zip \
     && chmod 2777 /usr/local/var/run/watchman \
     && rm -rf /tmp/watchman*
 
-# Claude Code.
-RUN npm install -g @anthropic-ai/claude-code
+# NOTE: Claude Code is installed by the official
+# ghcr.io/anthropics/devcontainer-features/claude-code feature (see
+# devcontainer.json), not here.
 
 # pnpm comes from corepack, which honours the `packageManager` field in
 # package.json (pnpm@10.34.5) — so the container pins the same version as the
