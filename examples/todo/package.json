@@ -1,0 +1,22 @@
+{
+  "name": "todo",
+  "version": "0.0.1",
+  "description": "",
+  "main": "app/index.js",
+  "scripts": {
+    "start": "lux serve",
+    "test": "lux test"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "babel-core": "6.24.1",
+    "babel-preset-lux": "2.0.2",
+    "knex": "0.13.0",
+    "lux-framework": "1.2.3",
+    "sqlite3": "3.1.8"
+  },
+  "devDependencies": {
+    "faker": "4.1.0"
+  }
+}
