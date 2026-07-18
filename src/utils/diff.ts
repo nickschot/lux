@@ -1,5 +1,3 @@
-// @flow
-
 /**
  * @private
  */
@@ -12,5 +10,5 @@ export function map<K, V>(a: Map<K, V>, b: Map<K, V>): Map<K, V> {
       }
 
       return result;
-    }, new Map());
+    }, new Map<K, V>());
 }

@@ -64,6 +64,7 @@
     "@babel/preset-env": "^8.0.2",
     "@babel/preset-flow": "^8.0.1",
     "@babel/preset-typescript": "^8.0.1",
+    "@types/inflection": "1.13.2",
     "@types/node": "^20.19.43",
     "babel-core": "^6.24.1",
     "babel-plugin-istanbul": "^4.1.3",

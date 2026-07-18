@@ -1,4 +1,3 @@
-// @flow
 const GITHUB_URL = 'https://github.com/postlight/lux';
 
 type Options = {
