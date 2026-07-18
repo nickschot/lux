@@ -1,30 +1,29 @@
-// @flow
 import freeze from '../utils/freeze';
 import isFrozen from '../utils/is-frozen';
 
 /**
  * @private
  */
-class FreezeableMap<K, V> extends Map<K, V> {
-  set(key: K, value: V): FreezeableMap<K, V> {
+class FreezeableSet<T> extends Set<T> {
+  override add(value: T): this {
     if (!this.isFrozen()) {
-      super.set(key, value);
+      super.add(value);
     }
 
     return this;
   }
 
-  clear(): void {
+  override clear(): void {
     if (!this.isFrozen()) {
       super.clear();
     }
   }
 
-  delete(key: K): boolean {
-    return this.isFrozen() ? false : super.delete(key);
+  override delete(value: T): boolean {
+    return this.isFrozen() ? false : super.delete(value);
   }
 
-  freeze(deep?: boolean): FreezeableMap<K, V> {
+  freeze(deep?: boolean): this {
     if (deep) {
       this.forEach(Object.freeze);
     }
@@ -37,4 +36,4 @@ class FreezeableMap<K, V> extends Map<K, V> {
   }
 }
 
-export default FreezeableMap;
+export default FreezeableSet;

@@ -1,15 +1,17 @@
-// @flow
 import insertValues from './utils/insert-values';
 
 const bodyPattern = /^\n([\s\S]+)\s{2}$/gm;
 const trailingWhitespace = /\s+$/;
 
 /**
+ * Used as a template tag, so `strings` arrives as a TemplateStringsArray —
+ * typed as `readonly string[]`, which also accepts a plain array.
+ *
  * @private
  */
 export default function template(
-  strings: Array<string>,
-  ...values: Array<mixed>
+  strings: readonly string[],
+  ...values: unknown[]
 ): string {
   const compiled = insertValues(strings, ...values);
   let [body] = compiled.match(bodyPattern) || [];
@@ -20,7 +22,8 @@ export default function template(
     indentLevel = /^\s{0,2}(.+)$/g;
   }
 
-  return body.split('\n')
+  return body
+    .split('\n')
     .slice(1)
     .map(line => {
       let str = line.replace(indentLevel, '$1');
