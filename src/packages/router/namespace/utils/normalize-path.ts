@@ -1,9 +1,7 @@
-// @flow
-
 /**
  * @private
  */
-export default function normalizePath(str: string) {
+export default function normalizePath(str: string): string {
   let path = str;
 
   if (!path.startsWith('/')) {

@@ -1,4 +1,3 @@
-// @flow
 export const INT = /^\d+$/;
 export const NULL = /^null$/;
 export const BOOL = /^(?:true|false)$/;

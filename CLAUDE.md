@@ -79,7 +79,7 @@ while replacing legacy tooling.
 
 ## Phase 3 status — where to resume
 
-**Progress: 53 `.ts` files, 322 Flow files left.** Every batch is one commit, with all
+**Progress: 61 `.ts` files, 240 Flow files left.** Every batch is one commit, with all
 five gates green (see "Conversion recipe").
 
 **Converted:** all of `src/utils/`, `src/interfaces`, `src/constants`, `freezeable`,
@@ -87,15 +87,48 @@ five gates green (see "Conversion recipe").
 `logger` partially (`interfaces`, `constants`, `utils/line`, `utils/sql`, all of
 `writer/`, `request-logger/utils/filter-params`).
 
-**⚠ The next step is a cluster, not a package.** `logger`, `server` and `router` are
-**mutually dependent** — `server` does `import type Logger`, `logger/request-logger` does
-`import type { Request, Response }`, `router` is entangled with both. TypeScript handles
-circular *types* fine, but `allowJs: false` means none of them can read the others' types
-until they are all `.ts`. So they convert **as one unit** (~113 files: logger 10 left,
-server 29, router 65). Everything else waits on it: `logger/index` is blocked behind
-`request-logger`, which blocks `jsonapi/{errors,index,interfaces}`, which blocks
-`controller`/`serializer`. Consider splitting the work across sessions but landing it as
-one green commit.
+**⚠ The next step is a cluster, not a package.** `logger`, `server`, `router` and
+`jsonapi/{errors,index,interfaces}` form **one irreducible type cycle**: `server` does
+`import type Logger`; `logger/request-logger` does `import type { Request, Response }`;
+`router` value-imports `server` (8 sites: `createServerError`, `getDomain`,
+`REQUEST_METHODS`) and type-imports it back; `jsonapi/errors/*` value-import both `server`
+(`createServerError`) and `logger` (`line`) while `server` value-imports `jsonapi`
+(`MIME_TYPE`, `VERSION`, `hasMediaType`, `NotAcceptableError`). TypeScript handles circular
+*types* fine, but `allowJs: false` means none can read the others' types until all are
+`.ts` — and splitting the cycle would need throwaway `.d.ts` stubs for the *richest* types
+in the tree (`Request`/`Response`), so it lands as **one atomic commit**.
+
+**The real blocker is softer than it looks — and this changes the plan.** Under
+`moduleResolution: bundler` + `allowJs: false`, a `.ts` file importing a value or type from
+a `.js` module raises **TS7016 (implicit `any`)**, *not* TS2307 (cannot-find-module): the
+module still resolves and runs at runtime — only its *type* is `any`. A colocated `.d.ts`
+stub fixes `tsc` with **zero runtime/bundle impact** (Babel/esbuild don't emit for `.d.ts`;
+runtime still loads `index.js`). So the packages the cluster value-imports but that are
+**not** converting now — `controller` (`BUILT_IN_ACTIONS`, default `Controller` [only
+~7 members touched: `hasModel, show, index, hasSerializer, defaultPerPage, beforeAction,
+afterAction`], type `Controller$builtIn`) and `database` (`Query`, `typeForColumn`) —
+become **temporary `.d.ts` cut-points**, not blockers. Reverse edges (controller/database
+importing the cluster) stay `.js`, so they need no stubs. Delete the stubs when those
+packages convert.
+
+⚠ **Build caveat (load-bearing):** Babel's `--extensions .js,.ts` also matches `.d.ts` and
+dies parsing ambient syntax (`export const X: T;` with no initializer), aborting before
+`dist/` is written. [build.mjs](build.mjs) now passes `--ignore src/**/*.d.ts` to the
+type-strip stage so stubs are safe. (Verified end-to-end.)
+
+**Split (agreed):**
+- ✅ **Phase 3a (done):** the `build.mjs` `--ignore` change + the 8 pure-leaf files that
+  import only already-`.ts` (server: `constants`, `request/parser/constants`,
+  `request/parser/utils/parse-nested-object`; router: `route/constants`,
+  `route/action/constants`, `route/utils/get-static-path`, `namespace/utils/normalize-path`,
+  `namespace/utils/normalize-name`). Landed as a normal incremental batch.
+- 🔜 **Phase 3b (the core, one atomic commit):** temporary `controller` + `database`
+  `.d.ts` stubs + the remaining **~78 files** (logger 6, server 22, router 45,
+  jsonapi/{errors,index,interfaces} 5). Develop leaf-first across sessions (the stubs
+  unlock most of the router periphery — all the `import type Controller` files — so `tsc`
+  error count decreases monotonically), but run the full green gate and land only once.
+- After 3b: delete the 2 stubs as `controller`/`serializer` convert. `jsonapi/index` is no
+  longer a separate blocker (it converts inside 3b).
 
 **Conversion recipe (per batch):**
 1. Map the package's imports first — only convert files whose internal imports are already
