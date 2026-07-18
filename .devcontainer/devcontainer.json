@@ -4,31 +4,30 @@
     "dockerfile": "Dockerfile"
   },
 
-  "workspaceFolder": "/workspaces/lux",
-  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/lux,type=bind,consistency=cached",
+  // NOTE: workspaceMount/workspaceFolder are deliberately NOT set.
+  //
+  // The intended way in is IntelliJ's "Create Dev Container and Clone Sources",
+  // where the IDE clones the repo into the container itself — bind-mounting the
+  // macOS filesystem is slow for this project's workload (large node_modules,
+  // many-file test runs). Pinning paths here would fight the location the IDE
+  // picks for that clone.
+  //
+  // Left unset, tooling that mounts instead (the devcontainer CLI, VS Code)
+  // still works and bind-mounts the local folder by default — so both routes
+  // are usable.
 
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
   },
 
+  // Only home-directory state is pinned to volumes, so it survives rebuilds.
+  // node_modules deliberately has *no* volume any more: with sources cloned
+  // into the container they already live on a container-native filesystem, so
+  // the earlier volumes (which existed purely to dodge the macOS bind mount and
+  // its darwin-x64 sqlite3 binaries) are redundant — and their hardcoded
+  // /workspaces/lux paths would break a clone placed anywhere else.
   "mounts": [
-    // node_modules MUST NOT come from the host bind mount: the host is macOS and
-    // its tree contains darwin-x64 native binaries (sqlite3), which fail to load
-    // on linux. Named volumes keep the two installs independent, so host-side
-    // work keeps working too.
-    "source=lux-node-modules,target=/workspaces/lux/node_modules,type=volume",
-    "source=lux-testapp-node-modules,target=/workspaces/lux/test/test-app/node_modules,type=volume",
-
-    // pnpm relocates its content-addressed store next to node_modules whenever
-    // the configured store is on a different filesystem — which it always is
-    // here, because node_modules is a named volume. Left alone it writes
-    // <workspace>/.pnpm-store straight into the host bind mount (~220MB of it).
-    // Mounting a volume on exactly that path means pnpm can make its own choice
-    // and still never touch the host tree.
-    "source=lux-pnpm-store,target=/workspaces/lux/.pnpm-store,type=volume",
-
-    // Survive rebuilds: Claude Code login, gh login.
     "source=lux-claude-config,target=/home/node/.claude,type=volume",
     "source=lux-gh-config,target=/home/node/.config/gh,type=volume"
   ],

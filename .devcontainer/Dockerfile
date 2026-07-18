@@ -50,12 +50,14 @@ RUN npm uninstall -g pnpm || true \
 # pnpm, which would hang the non-interactive postCreate step.
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 
-# Pre-create the paths that get named volumes, owned by the non-root user, so
-# the volumes inherit that ownership instead of coming up root-owned.
+# Pre-create the directories that get named volumes, owned by the non-root user.
+# A volume mounted at a path that does not exist in the image comes up
+# root-owned, and the clone then fails with "Permission denied" — so the
+# conventional workspace root is created here too. It is only a default: if the
+# IDE clones somewhere else this is simply unused, and post-create re-checks
+# writability at runtime.
 RUN mkdir -p \
-        /workspaces/lux/node_modules \
-        /workspaces/lux/test/test-app/node_modules \
-        /workspaces/lux/.pnpm-store \
+        /workspaces/lux \
         /home/node/.claude \
         /home/node/.config/gh \
     && chown -R node:node /workspaces /home/node/.claude /home/node/.config

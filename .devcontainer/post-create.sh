@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Named volumes occasionally come up root-owned depending on the Docker version;
-# make sure the non-root user can write before installing into them.
-for dir in node_modules test/test-app/node_modules; do
-  if [ ! -w "$dir" ]; then
-    echo "==> fixing ownership of $dir"
-    sudo chown -R node:node "$dir"
-  fi
-done
+# A named volume mounted at a path the image does not pre-create comes up
+# root-owned. Path-agnostic, so it holds wherever the IDE puts the checkout.
+if [ ! -w . ]; then
+  echo "==> fixing ownership of $(pwd)"
+  sudo chown -R node:node .
+fi
 
 # Attribute container-side commits if the host exported an identity.
 if [ -n "${GIT_AUTHOR_NAME:-}" ]; then
@@ -18,8 +16,10 @@ if [ -n "${GIT_AUTHOR_EMAIL:-}" ]; then
   git config --global user.email "$GIT_AUTHOR_EMAIL"
 fi
 
-# The repo is bind-mounted from the host, where it is owned by a different uid.
-git config --global --add safe.directory /workspaces/lux
+# Resolved at runtime rather than hardcoded: with "clone sources" the IDE picks
+# the checkout path. Only strictly needed when the tree is bind-mounted from the
+# host (different uid), but harmless otherwise.
+git config --global --add safe.directory "$(pwd)"
 
 # Pushing from inside the container.
 #
