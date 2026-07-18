@@ -1,13 +1,13 @@
 // @flow
-export { build } from './build.js';
-export { create } from './create.js';
-export { dbcreate } from './dbcreate.js';
-export { dbdrop } from './dbdrop.js';
-export { dbmigrate } from './dbmigrate.js';
-export { dbrollback } from './dbrollback.js';
-export { dbseed } from './dbseed.js';
-export { destroy } from './destroy.js';
-export { generate } from './generate.js';
-export { repl } from './repl.js';
-export { serve } from './serve.js';
-export { test } from './test.js';
+export { build } from './build';
+export { create } from './create';
+export { dbcreate } from './dbcreate';
+export { dbdrop } from './dbdrop';
+export { dbmigrate } from './dbmigrate';
+export { dbrollback } from './dbrollback';
+export { dbseed } from './dbseed';
+export { destroy } from './destroy';
+export { generate } from './generate';
+export { repl } from './repl';
+export { serve } from './serve';
+export { test } from './test';

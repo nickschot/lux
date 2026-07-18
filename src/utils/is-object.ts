@@ -1,5 +1,3 @@
-// @flow
-
 /**
  * Determine wether or not a value is an Object.
  *
@@ -16,6 +14,8 @@
  *
  * @private
  */
-export default function isObject(value: mixed): boolean {
+export default function isObject(
+  value: unknown
+): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }

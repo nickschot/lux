@@ -1,5 +1,3 @@
-// @flow
-
 /**
  * A utility function that always returns `this` based on it's current
  * context.
@@ -9,6 +7,6 @@
  *
  * @private
  */
-export default function K(): any {
+export default function K(this: unknown): unknown {
   return this;
 }
