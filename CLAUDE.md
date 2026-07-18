@@ -66,16 +66,59 @@ while replacing legacy tooling.
    [tsconfig.json](tsconfig.json), `pnpm typecheck` (`tsc --noEmit`), and
    [lib/ts-hook.js](lib/ts-hook.js) (esbuild-register runs `.ts` in Mocha, loaded via
    `babel-hook.js` before babel-register). Proven end-to-end on `src/utils/uniq.ts`.
-3. **Flow → TypeScript, bottom-up per `src/packages/*`** (leaf `utils/` first), hand-
-   tightened to proper types. Per file: `flow-to-ts` scaffold → fix types → `pnpm
-   typecheck` clean → `pnpm build` → `pnpm test` green. Remember to rebuild `dist` (the
-   app compiler consumes it) when a converted file is reachable from `src/index.js`.
+3. 🔄 **Flow → TypeScript, bottom-up per `src/packages/*`** — IN PROGRESS, see
+   "Phase 3 status" below.
 4. Once no Flow remains: drop `@babel/preset-flow`, flip the build to **tsup**/esbuild and
    the runner to **Vitest**; retire Babel/Mocha/nyc, `lib/babel-hook.js`, `lib/ts-hook.js`,
-   `.babelrc`.
+   `.babelrc`. Raise the esbuild target off `es2017`. Convert the `*.test.js` files then
+   too (they stay Flow for now; chai/mocha typings come with the runner swap).
 5. Finish the app-facing compiler rework (`rollup-plugin-lux`) — likely esbuild; free to
    break since only own apps consume it.
-6. ESLint 9 flat + Prettier; replace CircleCI/AppVeyor with GitHub Actions.
+6. ✅ ESLint 9 flat + typescript-eslint + Prettier. ⬜ Still to do: replace
+   CircleCI/AppVeyor with GitHub Actions.
+
+## Phase 3 status — where to resume
+
+**Progress: 53 `.ts` files, 322 Flow files left.** Every batch is one commit, with all
+five gates green (see "Conversion recipe").
+
+**Converted:** all of `src/utils/`, `src/interfaces`, `src/constants`, `freezeable`,
+`template`; `jsonapi` partially (`constants`, `utils/has-media-type`, `utils/is-jsonapi`);
+`logger` partially (`interfaces`, `constants`, `utils/line`, `utils/sql`, all of
+`writer/`, `request-logger/utils/filter-params`).
+
+**⚠ The next step is a cluster, not a package.** `logger`, `server` and `router` are
+**mutually dependent** — `server` does `import type Logger`, `logger/request-logger` does
+`import type { Request, Response }`, `router` is entangled with both. TypeScript handles
+circular *types* fine, but `allowJs: false` means none of them can read the others' types
+until they are all `.ts`. So they convert **as one unit** (~113 files: logger 10 left,
+server 29, router 65). Everything else waits on it: `logger/index` is blocked behind
+`request-logger`, which blocks `jsonapi/{errors,index,interfaces}`, which blocks
+`controller`/`serializer`. Consider splitting the work across sessions but landing it as
+one green commit.
+
+**Conversion recipe (per batch):**
+1. Map the package's imports first — only convert files whose internal imports are already
+   `.ts` (`grep -hoE "from '[^']*'"` over the package).
+2. Hand-write the types. `flow-to-ts` is fine as a scaffold for big files, but these are
+   small enough that hand conversion produces better types.
+3. Gates, all of which must pass: `pnpm exec tsc --noEmit` → `pnpm exec prettier --write
+   "src/**/*.ts"` → `pnpm lint` → `pnpm build` → `pnpm test` (552 passing).
+4. `git rm` the `.js` originals in the same commit so renames show up as renames.
+
+**Conventions established so far** (keep these consistent):
+- Prefer real **type predicates** (`value is null`) over `boolean` for guards.
+- Where Flow claimed `T -> T` but the runtime returns something else, type it **honestly**:
+  `pick`/`omit` → `Partial<T>`; `compact`/`transformKeys` → **overloads**, because arrays
+  and objects behave differently.
+- `setType` was a Flow crutch and is **gone** — TypeScript generics say it directly. Delete
+  any remaining calls as their callers convert.
+- Confine unavoidable casts to return boundaries where dynamic key access genuinely makes
+  the shape unknowable, and comment why.
+- `noImplicitOverride` is on: subclass methods need `override`.
+- Keep conversions **behaviour-faithful**. Several latent bugs surfaced (dead `worker.pid`
+  branch, redundant spreads, an ignored `dasherize` argument); fix them only when the fix
+  is provably a no-op, and say so in the commit.
 
 ## Architecture
 
@@ -160,14 +203,21 @@ This machine uses **Volta**, not nvm. Two gotchas when running the suite locally
 ```bash
 pnpm install          # install deps (root)
 pnpm --dir test/test-app install   # install the test fixture app's deps
-pnpm run build        # rollup build -> dist/index.js
-pnpm run flow         # flow type check
-pnpm run lint         # remark + eslint
-pnpm run clean        # remove build/coverage artifacts
 
-# Full test suite (VOLTA_FEATURE_PNPM can instead live in ~/.zshrc):
-VOLTA_FEATURE_PNPM=1 pnpm test
+# The five gates — all must pass before committing a conversion batch:
+pnpm typecheck        # tsc --noEmit (strict); the real type gate
+pnpm exec prettier --write "src/**/*.ts"
+pnpm lint             # eslint 9 flat (.ts + Flow .js)
+pnpm build            # Babel 8 -> build/, esbuild -> dist/
+VOLTA_FEATURE_PNPM=1 pnpm test    # 552 passing
+
+pnpm format:check     # prettier verification (CI-style)
+pnpm run flow         # legacy Flow check — NOT a gate, expected to fail mid-migration
+pnpm run clean        # remove build/dist/coverage artifacts
 ```
+
+`pnpm build` matters more than it looks: the app compiler consumes `dist/index.mjs`, so
+the suite runs against the *last build*, not the working tree. Always build before test.
 
 Tests need a database; the test-app defaults to **`sqlite3`** (bumped to `^5.1.7`, a
 prebuilt N-API binary — no native compile, no Python). CI additionally runs `pg` /
