@@ -1,4 +1,3 @@
-// @flow
 import { insertValues } from '../../template';
 
 const PATTERN = /(?:,?`|'|").+(?:`|'|"),?/;
@@ -7,8 +6,8 @@ const PATTERN = /(?:,?`|'|").+(?:`|'|"),?/;
  * @private
  */
 export default function sql(
-  strings: Array<string>,
-  ...values: Array<mixed>
+  strings: readonly string[],
+  ...values: unknown[]
 ): string {
   return insertValues(strings, ...values)
     .split(' ')

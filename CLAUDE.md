@@ -116,7 +116,13 @@ Colocated tests: `src/**/*.test.js`. Type/decl stubs in `decl/` and `flow-typed/
 - **Transpile:** Babel 6 via `babel-preset-lux` (`.babelrc`) is still used by the *app
   compiler*. The framework's own build is Babel 8 + esbuild — see [build.mjs](build.mjs).
 - **Bundle:** [build.mjs](build.mjs) → `dist/` (`index.js` CJS, `index.mjs` ESM,
-  `cli.cjs`). Build: `pnpm build`.
+  `cli.cjs`). Build: `pnpm build`. **esbuild targets `es2017` on purpose:** two Babel 6
+  stages still *parse* the output — nyc wraps child processes so the suite's `lux …`
+  shell-outs load `dist/cli.cjs` through `lib/babel-hook.js`, and the legacy app compiler
+  bundles `dist/index.mjs` with Rollup 0.43 + Babel 6. babylon rejects post-ES2017 syntax,
+  so a stray `??`/`?.` in any converted source otherwise breaks the test bootstrap.
+  `bin/lux` is subject to the same constraint (noted in that file). Raise the target once
+  phases 4 and 5 retire Mocha/nyc and the app compiler.
 - **Lint/format:** **ESLint 9 flat** ([eslint.config.mjs](eslint.config.mjs)) +
   typescript-eslint + **Prettier**. `pnpm lint`, `pnpm format`, `pnpm format:check`.
   Because the tree is mid-migration the config scopes parsers by extension: `.ts` uses

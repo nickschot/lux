@@ -1,16 +1,15 @@
-// @flow
 export type Logger$level = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
-export type Logger$logFn = (data: string | Object) => void;
+export type Logger$logFn = (data: string | Record<string, unknown>) => void;
 export type Logger$format = 'text' | 'json';
 
 export type Logger$data = {
   level: Logger$level;
-  message?: mixed;
+  message?: unknown;
   timestamp: string;
 };
 
 export type Logger$filter = {
-  params: Array<string>;
+  params: string[];
 };
 
 export type Logger$config = {

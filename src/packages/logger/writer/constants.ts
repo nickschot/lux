@@ -1,4 +1,3 @@
-// @flow
 import ansiRegex from 'ansi-regex';
 
 export const ANSI = ansiRegex();

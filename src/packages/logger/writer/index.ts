@@ -1,4 +1,3 @@
-// @flow
 import { WriteStream } from 'tty';
 
 import { dim, red, yellow } from 'chalk';
@@ -12,18 +11,26 @@ import formatMessage from './utils/format-message';
 import type { Logger$Writer } from './interfaces';
 
 /**
+ * A logged message that is itself an object carrying its own `message` field,
+ * which the JSON writer hoists to the top level.
+ */
+function isMessageObject(value: unknown): value is { message?: unknown } {
+  return Boolean(value) && typeof value === 'object';
+}
+
+/**
  * @private
  */
 export function createWriter(format: Logger$format): Logger$Writer {
   return function write(data) {
     const { level, ...etc } = data;
     let { message, timestamp } = etc;
-    let output;
+    let output: unknown;
 
     if (format === 'json') {
       output = {};
 
-      if (message && typeof message === 'object' && message.message) {
+      if (isMessageObject(message) && message.message) {
         output = {
           timestamp,
           level,
@@ -31,11 +38,14 @@ export function createWriter(format: Logger$format): Logger$Writer {
           ...omit(message, 'message')
         };
       } else {
+        // The Flow original spread `...etc` here too, but `etc` is just
+        // `{ message, timestamp }` — both already listed above with the same
+        // values — so the spread only re-wrote them. Dropping it keeps the
+        // identical key order and values.
         output = {
           timestamp,
           level,
-          message,
-          ...etc
+          message
         };
       }
 
