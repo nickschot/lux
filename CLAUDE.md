@@ -94,6 +94,56 @@ framework consumes. **Delete it when `database` converts** (real emitted types r
 `controller` dropped in with **zero** router/server fallout, confirming the stub was
 accurate.)
 
+### Database — where to resume (next up, and it's the big one)
+
+`database` is **56 files / ~4,441 LOC** — the ORM core (`model/index.js` 1,495 lines,
+`query/index.js` 503, `initialize-class.js` 475). A **spike was done and reverted** to keep
+the tree clean; findings below so the next session starts warm. **Approach agreed:
+pragmatic-clean** — reproduce the *existing* Flow fidelity, which is already loose
+(`Object` appears 123×, `Model` is not generic, `any`×28, `mixed`×5). So: `Object` →
+`Record<string, unknown>`, `Class<Model>` → `ModelClass`, keep `Model`/`Query<T>` roughly as
+loose as today, and **do not** add per-model typed attributes / query-result narrowing (Flow
+never had them — that's a separate "improve ORM types" project for later, on a green TS
+baseline). Confine `any` + justified `eslint-disable` to genuinely-dynamic plumbing.
+
+- **Atomic, no checkpoint.** `model ↔ query` is a runtime *value* cycle
+  (`model/index` imports `Query`; `query/runner/utils/build-results` + `query/utils/format-select`
+  import `Model`), and the package is deeply interwoven, so under `allowJs:false` it's
+  all-or-nothing — convert **all 56 + delete the stub** in one commit. Leaf `.ts` can't even
+  build alongside their `.js` (duplicate Babel output), so don't expect a green mid-state;
+  convert everything, `git rm` the `.js`, then drive to zero with `tsc`.
+- **Downstream contract (keep these green):** controller/serializer/router import exactly
+  `Model`, `ModelClass`, `Query`, `typeForColumn` from `database`. `Database$column` /
+  `Database$relationship` were **stub-only** — real code doesn't import them by name.
+  `Model`, `Query`, `typeForColumn` are already real barrel exports; **the whole bridge is
+  adding an exported `ModelClass<T>` type** (Flow used anonymous `Class<Model>`). Put it in
+  `database/interfaces.ts`; shape that satisfied both downstream and internal use in the spike:
+  `new (attrs?, initialize?) => T` + statics `primaryKey/tableName/modelName/resourceName`,
+  `serializer: Serializer<T>`, `attributes/attributeNames`, `relationships/relationshipNames`,
+  `columnFor(): Database$column | undefined`, `relationshipFor(): Relationship$opts | undefined`,
+  `find(): Query<T>`, `select(): Query<Array<T>>`,
+  `create(): Promise<Transaction$ResultProxy<T, boolean>>`.
+- **Type-topology gotchas (the actual hard part, none individually hard but dozens of them):**
+  - `Model` is `this`-polymorphic everywhere: `static find(): Query<this>`, `static all():
+    Query<Array<this>>`, `static transacting(): Class<this>`. `Query<this>` is valid TS;
+    `Class<this>` in a static → `typeof Model`-ish, type it pragmatically.
+  - save/update/destroy return `Transaction$ResultProxy<this, *>` = `T & { didPersist; unwrap(): T }`
+    (`transaction/interfaces`). Controller relies on the proxy's `unwrap()`/`didPersist`.
+  - `serializer` does `item.constructor.serializer` — the **instance's `constructor` must be
+    typed `ModelClass`** (default TS types it `Function`). Resolve with a declared
+    `constructor` (interface-merge or `declare` trick) or it regresses serializer.
+  - `Relationship$opts.model` is `Class<Model>` → `ModelClass`; `relationshipFor` returns it.
+  - `createServerError` in `errors/unique-constraint-error` + `query/errors/record-not-found-error`:
+    import from the **leaf** `server/utils/create-server-error`, not the `../server` barrel
+    (same esbuild-register module-init reason as jsonapi/router errors — see below).
+- **Suggested order (leaf-up):** constants · errors/* · utils/{normalize-model-name,
+  type-for-column} · migration/utils/generate-timestamp · model/interfaces · interfaces (with
+  `ModelClass`) → attribute/* → query/* → model/* → relationship/* →
+  change-set/validation/migration/transaction → initialize → **index (delete the stub here)**.
+  cp+edit the big JSDoc files (`model/index`, `query/index`, `initialize-class`) — most lines
+  are docs; only the type annotations change (`Object`→`Record`, `Class<>`→`ModelClass`, `*`,
+  `mixed`→`unknown`). Then `git rm` all `.js`, `tsc`-drive to 0, fix downstream fallout, gates.
+
 **⚠ The next step is a cluster, not a package.** `logger`, `server`, `router` and
 `jsonapi/{errors,index,interfaces}` form **one irreducible type cycle**: `server` does
 `import type Logger`; `logger/request-logger` does `import type { Request, Response }`;
