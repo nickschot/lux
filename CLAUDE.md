@@ -79,13 +79,19 @@ while replacing legacy tooling.
 
 ## Phase 3 status — where to resume
 
-**Progress: 61 `.ts` files, 240 Flow files left.** Every batch is one commit, with all
+**Progress: 141 `.ts` files, 160 Flow files left.** Every batch is one commit, with all
 five gates green (see "Conversion recipe").
 
 **Converted:** all of `src/utils/`, `src/interfaces`, `src/constants`, `freezeable`,
-`template`; `jsonapi` partially (`constants`, `utils/has-media-type`, `utils/is-jsonapi`);
-`logger` partially (`interfaces`, `constants`, `utils/line`, `utils/sql`, all of
-`writer/`, `request-logger/utils/filter-params`).
+`template`, `jsonapi`, `logger`, `server`, `router`; `src/errors/controller-missing-error`.
+The **logger + server + router + jsonapi cluster is done** (Phase 3b). Still Flow:
+`controller`, `serializer`, `database`, `application`, `cli`, `config`, `fs`, `pm`,
+`compiler`, `loader`, `luxify`, `src/index`.
+
+**⚠ Temporary `.d.ts` stubs in the tree:** [controller/index.d.ts](src/packages/controller/index.d.ts)
+and [database/index.d.ts](src/packages/database/index.d.ts) describe only the surface the
+cluster consumes. **Delete them as `controller`/`database` convert** (they'll be replaced by
+the real emitted types). Both packages still ship real `index.js` at runtime.
 
 **⚠ The next step is a cluster, not a package.** `logger`, `server`, `router` and
 `jsonapi/{errors,index,interfaces}` form **one irreducible type cycle**: `server` does
@@ -122,13 +128,26 @@ type-strip stage so stubs are safe. (Verified end-to-end.)
   `request/parser/utils/parse-nested-object`; router: `route/constants`,
   `route/action/constants`, `route/utils/get-static-path`, `namespace/utils/normalize-path`,
   `namespace/utils/normalize-name`). Landed as a normal incremental batch.
-- 🔜 **Phase 3b (the core, one atomic commit):** temporary `controller` + `database`
-  `.d.ts` stubs + the remaining **~78 files** (logger 6, server 22, router 45,
-  jsonapi/{errors,index,interfaces} 5). Develop leaf-first across sessions (the stubs
-  unlock most of the router periphery — all the `import type Controller` files — so `tsc`
-  error count decreases monotonically), but run the full green gate and land only once.
-- After 3b: delete the 2 stubs as `controller`/`serializer` convert. `jsonapi/index` is no
-  longer a separate blocker (it converts inside 3b).
+- ✅ **Phase 3b (done, one atomic commit):** `controller` + `database` `.d.ts` stubs + the
+  cluster (logger 6, server 22, router 45, jsonapi/{errors,index,interfaces} 5) +
+  `controller-missing-error`. `tsc` landed at **0 errors** with the stub cut-points; the
+  `any` count is minimal (honest `unknown`/tuples everywhere except genuinely-dynamic
+  boundaries, which carry justified file-level `eslint-disable` blocks like `utils/compose`).
+- **Two runtime wrinkles surfaced (both fixed, both worth remembering):**
+  - **Module-init cycle:** `jsonapi/errors/*` and `router/route/params/errors/*` call
+    `createServerError(...)` at module top-level, importing it through the **`server`
+    barrel**. Under esbuild-register the barrel's re-export (`export { default as
+    createServerError } from './utils/create-server-error'`) isn't initialized when the
+    cycle re-enters → `Cannot read properties of undefined (reading 'default')`. Fix: those
+    error files import `createServerError` **directly from the leaf**
+    (`server/utils/create-server-error`), not the barrel (as `malformed-request-error`
+    already did). Prefer leaf imports for values used at module load inside a cycle.
+  - **Async lowering in the test hook:** chai's `type-detect` reports a **native** async
+    function as `'AsyncFunction'`, so `expect(fn).to.be.a('function')` fails. Babel 6
+    lowered async → plain function; esbuild-register kept it native. Fix: `lib/ts-hook.js`
+    now sets `target: 'es2016'` so async lowers, matching Babel-era behaviour. (Distinct
+    from the **build** target `es2017`, which is about Babel-6 re-parsing `dist/`.)
+- **Next:** delete the 2 stubs as `controller`/`database`/`serializer` convert.
 
 **Conversion recipe (per batch):**
 1. Map the package's imports first — only convert files whose internal imports are already

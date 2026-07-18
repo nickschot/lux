@@ -1,0 +1,73 @@
+import { Query } from '../../../../database';
+import { getDomain } from '../../../../server';
+import type { Request, Response } from '../../../../server';
+import createPageLinks from '../utils/create-page-links';
+import type { Action } from '../interfaces';
+
+/**
+ * @private
+ */
+export default function resource(action: Action<unknown>): Action<unknown> {
+  const resourceAction = async function (req: Request, res: Response) {
+    const {
+      route: { action: actionName }
+    } = req;
+    const result = action(req, res);
+    let links = {};
+    let data;
+    let total;
+
+    if (actionName === 'index' && result instanceof Query) {
+      [data, total] = await Promise.all([result, Query.from(result).count()]);
+    } else {
+      data = await result;
+    }
+
+    if (Array.isArray(data) || (data && data.isModelInstance)) {
+      const domain = getDomain(req);
+
+      const {
+        params,
+        url: { path, pathname },
+        route: {
+          controller: { namespace, serializer, defaultPerPage }
+        }
+      } = req;
+
+      const include = params.include || [];
+
+      if (actionName === 'index') {
+        links = createPageLinks({
+          params,
+          domain,
+          pathname,
+          defaultPerPage,
+          total: total || 0
+        });
+      } else if (actionName !== 'index' && namespace) {
+        links = {
+          self: domain.replace(`/${namespace}`, '') + path
+        };
+      } else if (actionName !== 'index' && !namespace) {
+        links = {
+          self: domain + path
+        };
+      }
+
+      return serializer.format({
+        data,
+        links,
+        domain,
+        include
+      });
+    }
+
+    return data;
+  };
+
+  Reflect.defineProperty(resourceAction, 'name', {
+    value: action.name
+  });
+
+  return resourceAction;
+}
