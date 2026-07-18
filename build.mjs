@@ -30,8 +30,15 @@ rmSync('dist', { recursive: true, force: true });
 // Stage 1 — type-strip with Babel (Flow for .js, TS for .ts).
 execFileSync(
   'babel',
-  ['--config-file', './babel.config.build.cjs', 'src',
-    '--out-dir', 'build', '--extensions', '.js,.ts'],
+  [
+    '--config-file',
+    './babel.config.build.cjs',
+    'src',
+    '--out-dir',
+    'build',
+    '--extensions',
+    '.js,.ts'
+  ],
   { stdio: 'inherit' }
 );
 

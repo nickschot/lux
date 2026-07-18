@@ -33,30 +33,28 @@ export function transformKeys(
   if (Array.isArray(source)) {
     return source.slice(0);
   } else if (source && typeof source === 'object') {
-    return entries(source as Record<string, unknown>)
-      .reduce<Record<string, unknown>>((result, [key, value]) => {
-        const recurse = deep
-          && value
-          && typeof value === 'object'
-          && !Array.isArray(value)
-          && !(value instanceof Date);
+    return entries(source as Record<string, unknown>).reduce<
+      Record<string, unknown>
+    >((result, [key, value]) => {
+      const recurse =
+        deep &&
+        value &&
+        typeof value === 'object' &&
+        !Array.isArray(value) &&
+        !(value instanceof Date);
 
-        if (recurse) {
-          return {
-            ...result,
-            [transformer(key)]: transformKeys(
-              value as object,
-              transformer,
-              true
-            )
-          };
-        }
-
+      if (recurse) {
         return {
           ...result,
-          [transformer(key)]: value
+          [transformer(key)]: transformKeys(value as object, transformer, true)
         };
-      }, {});
+      }
+
+      return {
+        ...result,
+        [transformer(key)]: value
+      };
+    }, {});
   }
 
   return {};
@@ -96,7 +94,11 @@ export function dasherizeKeys(
   // NOTE: the Flow original passed a second `true` argument to `dasherize`,
   // which takes only one parameter — it was silently ignored, so dropping it
   // is behaviour-preserving.
-  return transformKeys(source as object, key => dasherize(underscore(key)), deep);
+  return transformKeys(
+    source as object,
+    key => dasherize(underscore(key)),
+    deep
+  );
 }
 
 /**

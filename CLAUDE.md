@@ -113,10 +113,17 @@ Colocated tests: `src/**/*.test.js`. Type/decl stubs in `decl/` and `flow-typed/
 
 - **Language:** ES2015+ with [Flow](https://flow.org/) types (`// @flow`,
   `flow-bin@0.38`). Type-check: `npm run flow`.
-- **Transpile:** Babel 6 via `babel-preset-lux`. `.babelrc` uses the `lux` preset.
-- **Bundle:** Rollup 0.43 (`rollup.config.js`) → `dist/index.js`. Build: `npm run build`.
-- **Lint:** ESLint 3 (`airbnb-base`, `babel-eslint` parser, flowtype plugin) + `remark`
-  for markdown. `npm run lint`. Note `max-len` is 80.
+- **Transpile:** Babel 6 via `babel-preset-lux` (`.babelrc`) is still used by the *app
+  compiler*. The framework's own build is Babel 8 + esbuild — see [build.mjs](build.mjs).
+- **Bundle:** [build.mjs](build.mjs) → `dist/` (`index.js` CJS, `index.mjs` ESM,
+  `cli.cjs`). Build: `pnpm build`.
+- **Lint/format:** **ESLint 9 flat** ([eslint.config.mjs](eslint.config.mjs)) +
+  typescript-eslint + **Prettier**. `pnpm lint`, `pnpm format`, `pnpm format:check`.
+  Because the tree is mid-migration the config scopes parsers by extension: `.ts` uses
+  typescript-eslint, `.js` uses `@babel/eslint-parser` (nothing else parses Flow). On the
+  Flow side `no-undef`/`no-unused-vars` are off — core ESLint can't see type-position
+  usage and `eslint-plugin-flowtype` has no ESLint 9 support. Prettier skips `**/*.js`
+  (transitional; files get formatted as they convert) and `*.md`.
 - **Test:** Mocha 3 + Chai + Sinon, run through `nyc` for coverage. Test setup registers
   Babel via `lib/babel-hook.js` (`mocha.opts`). Run: `npm test`.
 - **Package manager:** **pnpm 10** (migrated from yarn; `pnpm-lock.yaml`, `packageManager`

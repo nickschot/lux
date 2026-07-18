@@ -1,0 +1,24 @@
+# generated / vendored
+build/
+dist/
+coverage/
+.nyc_output/
+node_modules/
+flow-typed/
+decl/
+examples/
+test/test-app/dist/
+test/utils/debugger/dist/
+pnpm-lock.yaml
+
+# Docs are hand-maintained. Prettier's markdown reflow rewrote content here
+# rather than just restyling it — a `+ Mocha` line continuation became a list
+# bullet, and the roadmap's numbered list was renumbered — so prose stays out of
+# its scope.
+*.md
+
+# Transitional Flow sources. These are formatted when they are converted to
+# TypeScript, rather than reformatting ~340 files that are about to be deleted
+# (which would bury the real conversion diffs). Remove this entry once no Flow
+# remains.
+**/*.js

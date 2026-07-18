@@ -13,24 +13,28 @@ export default function promiseHash<T extends Record<string, unknown>>(
 
   if (Object.keys(promises).length) {
     return Promise.all(
-      entries(promises)
-        .map(([key, promise]) => (
+      entries(promises).map(
+        ([key, promise]) =>
           new Promise<Record<string, unknown>>((resolve, reject) => {
             const maybe = promise as Promise<unknown> | undefined;
 
             if (maybe && typeof maybe.then === 'function') {
-              maybe
-                .then(value => resolve({ [key]: value }))
-                .catch(reject);
+              maybe.then(value => resolve({ [key]: value })).catch(reject);
             } else {
               resolve({ [key]: promise });
             }
           })
-        ))
-    ).then(objects => objects.reduce((hash, object) => ({
-      ...hash,
-      ...object
-    }), {}) as Resolved);
+      )
+    ).then(
+      objects =>
+        objects.reduce(
+          (hash, object) => ({
+            ...hash,
+            ...object
+          }),
+          {}
+        ) as Resolved
+    );
   }
 
   return Promise.resolve({} as Resolved);

@@ -17,13 +17,9 @@ export default function createQueryString(
     }
 
     if (prop) {
-      result += (
-        `${prop
-        + encodeURIComponent('[')
-        + key
-        + encodeURIComponent(']')
-         }=`
-      );
+      result += `${
+        prop + encodeURIComponent('[') + key + encodeURIComponent(']')
+      }=`;
     } else {
       result += `${key}=`;
     }
@@ -32,10 +28,9 @@ export default function createQueryString(
       if (Array.isArray(value)) {
         result += value.map(item => encodeURIComponent(String(item))).join();
       } else {
-        result = (
-          result.substr(0, result.length - (key.length + 1))
-          + createQueryString(value as Record<string, unknown>, key)
-        );
+        result =
+          result.substr(0, result.length - (key.length + 1)) +
+          createQueryString(value as Record<string, unknown>, key);
       }
     } else if (!value && typeof value !== 'number') {
       result += 'null';

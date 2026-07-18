@@ -12,8 +12,10 @@ export default function merge<T extends object, U extends object>(
   dest: T,
   source: U
 ): T & U {
-  return entries(source as Record<string, unknown>)
-    .reduce<Record<string, unknown>>((result, [key, value]) => {
+  return entries(source as Record<string, unknown>).reduce<
+    Record<string, unknown>
+  >(
+    (result, [key, value]) => {
       if (hasOwnProperty(result, key) && isObject(value)) {
         const currentValue = Reflect.get(result, key);
 
@@ -29,5 +31,7 @@ export default function merge<T extends object, U extends object>(
         ...result,
         [key]: value
       };
-    }, { ...dest } as Record<string, unknown>) as T & U;
+    },
+    { ...dest } as Record<string, unknown>
+  ) as T & U;
 }

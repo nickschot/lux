@@ -10,8 +10,10 @@ export default function uniq<T>(src: T[], ...keys: string[]): T[] {
     let lastIdx: number;
 
     if (hasKeys) {
-      lastIdx = arr.findIndex((y, yIdx) =>
-        yIdx > xIdx || keys.every(key => valueAt(x, key) === valueAt(y, key)));
+      lastIdx = arr.findIndex(
+        (y, yIdx) =>
+          yIdx > xIdx || keys.every(key => valueAt(x, key) === valueAt(y, key))
+      );
     } else {
       lastIdx = src.lastIndexOf(x);
     }

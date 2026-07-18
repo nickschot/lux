@@ -15,8 +15,11 @@ export default function pick<T extends object>(
   return keys
     .map((key): [string, unknown] => [key, Reflect.get(src, key)])
     .filter(([, value]) => typeof value !== 'undefined')
-    .reduce<Record<string, unknown>>((result, [key, value]) => ({
-      ...result,
-      [key]: value
-    }), {}) as Partial<T>;
+    .reduce<Record<string, unknown>>(
+      (result, [key, value]) => ({
+        ...result,
+        [key]: value
+      }),
+      {}
+    ) as Partial<T>;
 }

@@ -14,8 +14,11 @@ export default function omit<T extends object>(
 ): Partial<T> {
   return entries(src as Record<string, unknown>)
     .filter(([key]) => omitted.indexOf(key) < 0)
-    .reduce<Record<string, unknown>>((result, [key, value]) => ({
-      ...result,
-      [key]: value
-    }), {}) as Partial<T>;
+    .reduce<Record<string, unknown>>(
+      (result, [key, value]) => ({
+        ...result,
+        [key]: value
+      }),
+      {}
+    ) as Partial<T>;
 }

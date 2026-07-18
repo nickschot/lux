@@ -22,8 +22,11 @@ export default function compact(
 
   return entries(source as Record<string, unknown>)
     .filter(([, value]) => !isNull(value) && !isUndefined(value))
-    .reduce<Record<string, unknown>>((result, [key, value]) => ({
-      ...result,
-      [key]: value
-    }), {});
+    .reduce<Record<string, unknown>>(
+      (result, [key, value]) => ({
+        ...result,
+        [key]: value
+      }),
+      {}
+    );
 }
