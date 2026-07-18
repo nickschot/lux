@@ -160,10 +160,18 @@ Tests need a database; the test-app defaults to **`sqlite3`** (bumped to `^5.1.7
 prebuilt N-API binary — no native compile, no Python). CI additionally runs `pg` /
 `mysql2` via `DATABASE_DRIVER`.
 
-**Current baseline (Node 20 / pnpm 10):** `551 passing, 1 failing`. The single failure is
-a *pre-existing flaky* logger test ([logger.test.js:67](src/packages/logger/test/logger.test.js:67))
-that asserts a log timestamp exactly equals a `Date.now()` captured a moment earlier — it
-loses a 1 ms race intermittently. Not a regression; a candidate to fix during the test-runner migration.
+**Current baseline (Node 20 / pnpm 10):** `552 passing`.
+
+Two areas are **known-flaky** — if a run goes red here, re-run before investigating:
+- [logger.test.js:67](src/packages/logger/test/logger.test.js:67) asserts a log timestamp
+  exactly equals a `Date.now()` captured a moment earlier, so it loses a 1 ms race
+  intermittently.
+- `module "fs" #watch()` depends on the external **watchman** daemon; it intermittently
+  times out and then fails its `after all` hook with
+  `Cannot read properties of undefined (reading 'destroy')`.
+
+Both are pre-existing, not regressions, and are candidates to fix during the test-runner
+migration.
 
 ## Working notes
 

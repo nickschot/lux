@@ -1,4 +1,3 @@
-// @flow
 import type { Chain } from '../interfaces';
 
 /**
@@ -14,8 +13,8 @@ export default function chain<T>(source: T): Chain<T> {
       return source;
     },
 
-    construct<U, V: Class<U>>(constructor: V): Chain<U> {
-      return chain(Reflect.construct(constructor, [source]));
+    construct<U>(constructor: new (value: T) => U): Chain<U> {
+      return chain(Reflect.construct(constructor, [source]) as U);
     }
   };
 }
