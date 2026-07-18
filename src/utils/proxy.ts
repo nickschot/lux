@@ -1,12 +1,17 @@
-// @flow
 import hasOwnProperty from './has-own-property';
 
-type Proxy$get<T> = (target: T, key: string, receiver: Proxy<T>) => any;
+type ProxyGet<T extends object> = (
+  target: T,
+  key: string,
+  receiver: unknown
+) => unknown;
 
 /**
  * @private
  */
-export function trapGet<T>(traps: Object): Proxy$get<T> {
+export function trapGet<T extends object>(
+  traps: Record<string, unknown>
+): ProxyGet<T> {
   return (target, key, receiver) => {
     if (key === 'unwrap') {
       return () => target;

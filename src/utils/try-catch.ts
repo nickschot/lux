@@ -1,4 +1,3 @@
-// @flow
 import K from './k';
 
 /**
@@ -32,16 +31,18 @@ import K from './k';
  *
  * @private
  */
-export default async function tryCatch<T, F:() => Promise<T>>(
-  fn: F,
-  rescue: Function = K
-): Promise<void | T> {
-  let result;
+export default async function tryCatch<T>(
+  fn: () => Promise<T>,
+  rescue: (err: unknown) => unknown = K
+): Promise<T | undefined> {
+  let result: T | undefined;
 
   try {
     result = await fn();
   } catch (err) {
-    result = await rescue(err);
+    // `rescue` is a caller-supplied handler with no contract on its return
+    // value; when it returns something meaningful it stands in for `fn`'s.
+    result = (await rescue(err)) as T | undefined;
   }
 
   return result;
@@ -69,16 +70,16 @@ export default async function tryCatch<T, F:() => Promise<T>>(
  *
  * @private
  */
-export function tryCatchSync<T, F:() => T>(
-  fn: F,
-  rescue: Function = K
-): void | T {
-  let result;
+export function tryCatchSync<T>(
+  fn: () => T,
+  rescue: (err: unknown) => unknown = K
+): T | undefined {
+  let result: T | undefined;
 
   try {
     result = fn();
   } catch (err) {
-    result = rescue(err);
+    result = rescue(err) as T | undefined;
   }
 
   return result;

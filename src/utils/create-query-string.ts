@@ -1,4 +1,3 @@
-// @flow
 import entries from './entries';
 
 /**
@@ -6,7 +5,10 @@ import entries from './entries';
  *
  * @private
  */
-export default function createQueryString(src: Object, prop?: string): string {
+export default function createQueryString(
+  src: Record<string, unknown>,
+  prop?: string
+): string {
   return entries(src).reduce((str, [key, value], index) => {
     let result = str;
 
@@ -28,17 +30,17 @@ export default function createQueryString(src: Object, prop?: string): string {
 
     if (value && typeof value === 'object') {
       if (Array.isArray(value)) {
-        result += value.map(encodeURIComponent).join();
+        result += value.map(item => encodeURIComponent(String(item))).join();
       } else {
         result = (
           result.substr(0, result.length - (key.length + 1))
-          + createQueryString(value, key)
+          + createQueryString(value as Record<string, unknown>, key)
         );
       }
     } else if (!value && typeof value !== 'number') {
       result += 'null';
     } else {
-      result += encodeURIComponent(value);
+      result += encodeURIComponent(String(value));
     }
 
     return result;
