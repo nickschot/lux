@@ -179,7 +179,35 @@ Colocated tests: `src/**/*.test.js`. Type/decl stubs in `decl/` and `flow-typed/
   field). The old `yarn.lock` is retained untracked for reference only.
 - **Node:** pinned to **20** via **Volta** (`volta` field in `package.json`; `.nvmrc` = 20).
 
-## Environment (Phase 0 — done)
+## Devcontainer (preferred environment)
+
+[.devcontainer/](.devcontainer/) is the intended way to work on this project now. Open the
+folder in WebStorm/IntelliJ ("Dev Containers") or VS Code; `postCreateCommand` runs
+[post-create.sh](.devcontainer/post-create.sh), which installs both dependency trees and
+builds `dist/`. **Verified end-to-end: `552 passing` inside the container**, matching the
+host, watchman tests included.
+
+Ships Node **20.20.2** (same as the host's Volta pin), pnpm **10.34.5** via corepack,
+watchman, the `gh` CLI, and Claude Code. First run: `claude` prompts for login and
+`gh auth login` (or export `GH_TOKEN` on the host — `remoteEnv` forwards it, along with
+`GIT_AUTHOR_NAME`/`GIT_AUTHOR_EMAIL`).
+
+Three things about the setup are load-bearing, all learned by breaking them:
+- **Base is `trixie`, not `bookworm`.** Meta's prebuilt watchman links against GLIBC 2.38;
+  bookworm ships 2.36 and the binary simply refuses to run, which costs 3 tests.
+- **The base image's preinstalled pnpm is removed** (`npm uninstall -g pnpm`). It is newer
+  than this project's pin, requires Node >= 22.13 (it imports `node:sqlite`), and would
+  shadow corepack's shim — it hard-crashes on Node 20.
+- **`node_modules` and `.pnpm-store` are named volumes, deliberately.** The host is macOS
+  and its `node_modules` holds darwin-x64 binaries (sqlite3) that cannot load on linux, so
+  the two installs must stay separate. pnpm also relocates its store next to `node_modules`
+  when they are on different filesystems; without a volume mounted at
+  `<workspace>/.pnpm-store` it writes ~220MB into the host bind mount.
+
+Inside the container there is **no Volta**, so the `VOLTA_FEATURE_PNPM` dance below does
+not apply — `node` and `pnpm` are simply on PATH.
+
+## Environment (host — Phase 0)
 
 This machine uses **Volta**, not nvm. Two gotchas when running the suite locally:
 

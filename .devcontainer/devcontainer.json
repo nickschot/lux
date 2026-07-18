@@ -1,0 +1,58 @@
+{
+  "name": "lux-framework",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+
+  "workspaceFolder": "/workspaces/lux",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/lux,type=bind,consistency=cached",
+
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "mounts": [
+    // node_modules MUST NOT come from the host bind mount: the host is macOS and
+    // its tree contains darwin-x64 native binaries (sqlite3), which fail to load
+    // on linux. Named volumes keep the two installs independent, so host-side
+    // work keeps working too.
+    "source=lux-node-modules,target=/workspaces/lux/node_modules,type=volume",
+    "source=lux-testapp-node-modules,target=/workspaces/lux/test/test-app/node_modules,type=volume",
+
+    // pnpm relocates its content-addressed store next to node_modules whenever
+    // the configured store is on a different filesystem — which it always is
+    // here, because node_modules is a named volume. Left alone it writes
+    // <workspace>/.pnpm-store straight into the host bind mount (~220MB of it).
+    // Mounting a volume on exactly that path means pnpm can make its own choice
+    // and still never touch the host tree.
+    "source=lux-pnpm-store,target=/workspaces/lux/.pnpm-store,type=volume",
+
+    // Survive rebuilds: Claude Code login, gh login.
+    "source=lux-claude-config,target=/home/node/.claude,type=volume",
+    "source=lux-gh-config,target=/home/node/.config/gh,type=volume"
+  ],
+
+  "remoteUser": "node",
+
+  // Optional passthrough. `gh` picks GH_TOKEN up automatically; the git identity
+  // is what commits from inside the container will be attributed to. All three
+  // are blank-safe if unset on the host.
+  "remoteEnv": {
+    "GH_TOKEN": "${localEnv:GH_TOKEN}",
+    "GIT_AUTHOR_NAME": "${localEnv:GIT_AUTHOR_NAME}",
+    "GIT_AUTHOR_EMAIL": "${localEnv:GIT_AUTHOR_EMAIL}"
+  },
+
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  "customizations": {
+    "jetbrains": {
+      // Switch to "IntelliJ IDEA" if you'd rather open it there; WebStorm matches
+      // what this project is normally opened with.
+      "backend": "WebStorm"
+    },
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode"]
+    }
+  }
+}

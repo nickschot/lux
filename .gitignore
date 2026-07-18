@@ -10,6 +10,11 @@ dist/
 # dependencies
 node_modules/
 
+# pnpm relocates its content-addressed store next to node_modules when the
+# configured store is on a different filesystem — which happens inside the
+# devcontainer, where node_modules is a named volume.
+.pnpm-store/
+
 # misc
 *.sqlite
 *.DS_Store
