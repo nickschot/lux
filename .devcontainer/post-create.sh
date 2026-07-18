@@ -21,6 +21,34 @@ fi
 # The repo is bind-mounted from the host, where it is owned by a different uid.
 git config --global --add safe.directory /workspaces/lux
 
+# Pushing from inside the container.
+#
+# The repo's remote is SSH (git@github.com:...), but this container has no SSH
+# key and no agent forwarding, and a token only authenticates over HTTPS — so
+# `git push` would fail. Rewriting the URL makes git use HTTPS with gh's
+# credential helper instead.
+#
+# This is safe precisely because it is global-but-container-local: ~/.gitconfig
+# lives in the container image, not the bind mount, so the host keeps using SSH.
+# The rewrite is only applied when we actually have GitHub credentials, so
+# forwarding an SSH agent instead still works.
+if [ -n "${GH_TOKEN:-}" ] || gh auth status >/dev/null 2>&1; then
+  if gh auth setup-git 2>/dev/null; then
+    git config --global url."https://github.com/".insteadOf "git@github.com:"
+    echo "==> git will push over HTTPS as $(gh api user --jq .login 2>/dev/null || echo 'the token owner')"
+  else
+    echo "==> WARNING: 'gh auth setup-git' failed; pushes may not work"
+  fi
+else
+  cat <<'MSG'
+==> No GitHub credentials found (GH_TOKEN unset, gh not logged in).
+    Commits will work; pushes will not, because the remote is SSH and this
+    container has no key. To enable pushing:
+      gh auth login && gh auth setup-git
+      git config --global url."https://github.com/".insteadOf "git@github.com:"
+MSG
+fi
+
 echo "==> installing dependencies"
 pnpm install --frozen-lockfile
 pnpm --dir test/test-app install --frozen-lockfile
