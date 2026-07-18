@@ -1,4 +1,5 @@
 # compiled output
+build/
 coverage/
 dist/
 .nyc_output/

@@ -37,9 +37,10 @@ export async function compile(
   opts: CompileOptions = {}
 ): Promise<void> {
   const { useStrict = false } = opts;
-  // The framework is consumed as its built ESM bundle (sibling of the CLI bundle
-  // in `dist/`), not as raw source — so the app compiler is decoupled from the
-  // framework's source language and can keep working as `src/` migrates to TS.
+  // The framework is consumed as its built ESM bundle (sibling of the CLI
+  // bundle in `dist/`), not as raw source — so the app compiler is decoupled
+  // from the framework's source language and keeps working as `src/` moves to
+  // TypeScript.
   const local = path.join(__dirname, 'index.mjs');
   const entry = path.join(dir, 'dist', 'index.js');
   const external = isExternal(dir);
