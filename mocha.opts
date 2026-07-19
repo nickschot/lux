@@ -1,2 +1,2 @@
 --require ./lib/babel-hook.js
-test/index.js src/**/*.test.js src/**/*.test.ts
+test/index.js src/**/*.test.js

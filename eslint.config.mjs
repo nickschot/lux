@@ -88,13 +88,22 @@ export default [
     }
   },
 
-  // Colocated tests run under Mocha.
+  // Colocated tests. The Flow `.test.js` suites run under Mocha; converted
+  // `.test.ts` suites run under Vitest (both are wired into `pnpm test` during
+  // the migration). The Mocha globals stay until no `.test.js` remains — the
+  // Vitest suites import `describe`/`it`/`expect` explicitly.
   {
     files: ['**/*.test.{js,ts}', 'test/**/*.{js,ts}'],
     languageOptions: {
       globals: {
         ...globals.mocha
       }
+    },
+    rules: {
+      // chai's BDD assertions (`expect(x).to.be.true`) are bare member
+      // expressions, which this rule reads as a no-op statement. The suites
+      // are built on that style, so it's off for tests.
+      '@typescript-eslint/no-unused-expressions': 'off'
     }
   },
 
