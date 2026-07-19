@@ -1,4 +1,3 @@
-// @flow
 import path from 'path';
 
 import template from '../../template';
@@ -7,11 +6,14 @@ import { writeFile } from '../../fs';
 /**
  * @private
  */
-export default async function createBootScript(dir: string, {
-  useStrict
-}: {
-  useStrict: boolean;
-}): Promise<void> {
+export default async function createBootScript(
+  dir: string,
+  {
+    useStrict
+  }: {
+    useStrict: boolean;
+  }
+): Promise<void> {
   let data = template`
     const CWD = process.cwd();
     const { env: { PORT } } = process;

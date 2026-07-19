@@ -1,4 +1,3 @@
-// @flow
 import os from 'os';
 import path, { posix } from 'path';
 
@@ -26,7 +25,7 @@ type CompileOptions = {
   useStrict?: boolean;
 };
 
-let cache;
+let cache: unknown;
 
 /**
  * @private
@@ -52,19 +51,14 @@ export async function compile(
     readdirRec(path.join(dir, 'app', 'controllers')),
     readdirRec(path.join(dir, 'app', 'serializers'))
   ]).then(types => {
-    let [
-      models,
-      migrations,
-      controllers,
-      serializers
-    ] = types;
+    let [models, migrations, controllers, serializers] = types;
 
     models = models.filter(isJSFile);
     migrations = migrations.filter(isJSFile);
     controllers = controllers.filter(isJSFile);
     serializers = serializers.filter(isJSFile);
 
-    return new Map([
+    return new Map<string, Array<string> | string>([
       ['Application', path.join('app', 'index.js')],
       ['config', path.join('config', 'environments', `${env}.js`)],
       ['controllers', controllers],
@@ -117,9 +111,7 @@ export async function compile(
         cwd: dir,
         parser: 'babel-eslint',
         useEslintrc: false,
-        include: [
-          path.join(dir, 'app', '**'),
-        ],
+        include: [path.join(dir, 'app', '**')],
         exclude: [
           path.join(dir, 'package.json'),
           path.join(__dirname, '..', 'src', '**')

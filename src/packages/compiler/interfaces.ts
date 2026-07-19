@@ -1,6 +1,5 @@
-// @flow
-declare export function Compiler$manifestWriter(
+export type Compiler$manifestWriter = (
   value: string | Array<string>,
   resolveName?: (value: string) => string,
   resolveExport?: (value: string) => string
-): Promise<void>;
+) => Promise<void>;
