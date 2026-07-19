@@ -1,4 +1,3 @@
-// @flow
 import { dasherize } from 'inflection';
 
 import chain from '../../../utils/chain';

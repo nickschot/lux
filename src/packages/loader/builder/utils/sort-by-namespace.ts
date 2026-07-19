@@ -1,4 +1,3 @@
-// @flow
 import type { Bundle$Namespace } from '../../index';
 
 /**

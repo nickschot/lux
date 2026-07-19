@@ -1,4 +1,3 @@
-// @flow
 import bundleFor from './utils/bundle-for';
 import type { Loader } from './interfaces';
 
@@ -6,7 +5,7 @@ import type { Loader } from './interfaces';
  * @private
  */
 export function createLoader(path: string): Loader {
-  let bundle;
+  let bundle: ReturnType<typeof bundleFor> | undefined;
 
   return function load(type) {
     if (!bundle) {
