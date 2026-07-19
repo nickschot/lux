@@ -1,7 +1,6 @@
-// @flow
 import fs from 'fs';
 import { join as joinPath, resolve as resolvePath } from 'path';
-import type { Stats } from 'fs'; // eslint-disable-line no-duplicate-imports
+import type { Stats } from 'fs';
 
 import Watcher from './watcher';
 import createResolver from './utils/create-resolver';
@@ -19,7 +18,7 @@ export type { fs$ParsedPath } from './interfaces';
  * @private
  */
 export function watch(path: string): Promise<Watcher> {
-  return new Watcher(path);
+  return new Watcher(path) as unknown as Promise<Watcher>;
 }
 
 /**
@@ -34,8 +33,8 @@ export function stat(path: string): Promise<Stats> {
 /**
  * @private
  */
-export function mkdir(path: string, mode: number = 511) {
-  return new Promise((resolve, reject) => {
+export function mkdir(path: string, mode: number = 511): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
     fs.mkdir(path, mode, createResolver(resolve, reject));
   });
 }
@@ -76,7 +75,11 @@ export function rmdir(path: string): Promise<void> {
 /**
  * @private
  */
-export function readdir(path: string): Promise<Array<string>> {
+export function readdir(
+  path: string,
+  // opts is accepted for signature parity with readdirRec but unused here.
+  opts?: fs$readOpts // eslint-disable-line @typescript-eslint/no-unused-vars
+): Promise<Array<string>> {
   return new Promise((resolve, reject) => {
     fs.readdir(path, createResolver(resolve, reject));
   });
@@ -92,28 +95,33 @@ export function readdirRec(
   const stripPath = createPathRemover(path);
 
   return readdir(path, opts)
-    .then(files => Promise.all(
-      files.map(file => {
-        const filePath = joinPath(path, file);
+    .then(files =>
+      Promise.all(
+        files.map(file => {
+          const filePath = joinPath(path, file);
 
-        return Promise.all([filePath, stat(filePath)]);
-      })
-    ))
-    .then(files => Promise.all(
-      files.map(([file, stats]) => Promise.all([
-        file,
-        stats.isDirectory() ? readdirRec(file) : []
-      ]))
-    ))
-    .then(files => files.reduce((arr, [file, children]) => {
-      const basename = stripPath(file);
+          return Promise.all([filePath, stat(filePath)]);
+        })
+      )
+    )
+    .then(files =>
+      Promise.all(
+        files.map(([file, stats]) =>
+          Promise.all([file, stats.isDirectory() ? readdirRec(file) : []])
+        )
+      )
+    )
+    .then(files =>
+      files.reduce<Array<string>>((arr, [file, children]) => {
+        const basename = stripPath(file);
 
-      return [
-        ...arr,
-        basename,
-        ...children.map(child => joinPath(basename, stripPath(child)))
-      ];
-    }, []));
+        return [
+          ...arr,
+          basename,
+          ...children.map(child => joinPath(basename, stripPath(child)))
+        ];
+      }, [])
+    );
 }
 
 /**
@@ -126,7 +134,7 @@ export function readFile(
   return new Promise((resolve, reject) => {
     fs.readFile(
       path,
-      typeof opts === 'object' ? opts : {},
+      (typeof opts === 'object' ? opts : {}) as fs.ObjectEncodingOptions,
       createResolver(resolve, reject)
     );
   });
@@ -141,7 +149,12 @@ export function writeFile(
   opts?: fs$writeOpts
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    fs.writeFile(path, data, opts, createResolver(resolve, reject));
+    fs.writeFile(
+      path,
+      data,
+      (opts || {}) as fs.WriteFileOptions,
+      createResolver(resolve, reject)
+    );
   });
 }
 
@@ -157,7 +170,7 @@ export function appendFile(
     fs.appendFile(
       path,
       data,
-      typeof opts === 'object' ? opts : {},
+      (typeof opts === 'object' ? opts : {}) as fs.WriteFileOptions,
       createResolver(resolve, reject)
     );
   });

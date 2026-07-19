@@ -1,4 +1,3 @@
-// @flow
 import path from 'path';
 
 import { CWD } from '../../../constants';
@@ -9,9 +8,9 @@ import type { fs$ParsedPath } from '../index';
  * @private
  */
 export default function resolvePath(
-  cwd?: string = CWD,
-  dir?: string = '',
-  name?: string = ''
+  cwd: string = CWD,
+  dir: string = '',
+  name: string = ''
 ): fs$ParsedPath {
   return chain(name.split('/'))
     .pipe(parts => path.join(cwd, dir, ...parts))

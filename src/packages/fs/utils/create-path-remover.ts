@@ -1,4 +1,3 @@
-// @flow
 import { PLATFORM } from '../../../constants';
 
 /**
