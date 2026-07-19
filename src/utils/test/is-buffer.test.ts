@@ -1,6 +1,4 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe } from 'mocha';
+import { describe, it, expect } from 'vitest';
 
 import isBuffer from '../is-buffer';
 
