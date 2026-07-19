@@ -1,4 +1,3 @@
-// @flow
 import { stat, readdir } from '../index';
 
 /**
@@ -10,7 +9,7 @@ export default async function exists(
 ): Promise<boolean> {
   if (path instanceof RegExp) {
     const pattern = path;
-    let files = [];
+    let files: Array<string> = [];
 
     if (dir) {
       files = await readdir(dir);

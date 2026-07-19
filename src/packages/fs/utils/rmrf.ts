@@ -1,4 +1,3 @@
-// @flow
 import path from 'path';
 
 import { stat, rmdir, readdir, unlink } from '../index';
@@ -17,9 +16,9 @@ function rmrf(target: string): Promise<boolean> {
 
       return [];
     })
-    .then(files => (
+    .then(files =>
       Promise.all(files.map(file => rmrf(path.join(target, file))))
-    ))
+    )
     .then(() => rmdir(target))
     .catch(err => {
       if (err.code === 'ENOENT') {
