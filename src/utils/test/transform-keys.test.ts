@@ -1,6 +1,4 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe } from 'mocha';
+import { it, describe, expect } from 'vitest';
 
 import {
   transformKeys,
@@ -11,12 +9,12 @@ import {
 
 describe('util camelizeKeys()', () => {
   const subjectA = {
-    key_a: 1, // eslint-disable-line camelcase
-    key_b: 2, // eslint-disable-line camelcase
-    key_c: 3, // eslint-disable-line camelcase
+    key_a: 1,
+    key_b: 2,
+    key_c: 3,
 
-    key_d: { // eslint-disable-line camelcase
-      key_a: 1 // eslint-disable-line camelcase
+    key_d: {
+      key_a: 1
     }
   };
 
@@ -37,7 +35,7 @@ describe('util camelizeKeys()', () => {
       keyC: 3,
 
       keyD: {
-        key_a: 1 // eslint-disable-line camelcase
+        key_a: 1
       }
     });
 
@@ -77,12 +75,12 @@ describe('util camelizeKeys()', () => {
 
 describe('util dasherizeKeys()', () => {
   const subjectA = {
-    key_a: 1, // eslint-disable-line camelcase
-    key_b: 2, // eslint-disable-line camelcase
-    key_c: 3, // eslint-disable-line camelcase
+    key_a: 1,
+    key_b: 2,
+    key_c: 3,
 
-    key_d: { // eslint-disable-line camelcase
-      key_a: 1 // eslint-disable-line camelcase
+    key_d: {
+      key_a: 1
     }
   };
 
@@ -103,7 +101,7 @@ describe('util dasherizeKeys()', () => {
       'key-c': 3,
 
       'key-d': {
-        key_a: 1 // eslint-disable-line camelcase
+        key_a: 1
       }
     });
 
@@ -164,21 +162,21 @@ describe('util underscoreKeys()', () => {
 
   it('can shallow underscore an objects keys', () => {
     expect(underscoreKeys(subjectA)).to.deep.equal({
-      key_a: 1, // eslint-disable-line camelcase
-      key_b: 2, // eslint-disable-line camelcase
-      key_c: 3, // eslint-disable-line camelcase
+      key_a: 1,
+      key_b: 2,
+      key_c: 3,
 
-      key_d: { // eslint-disable-line camelcase
+      key_d: {
         keyA: 1
       }
     });
 
     expect(underscoreKeys(subjectB)).to.deep.equal({
-      key_a: 1, // eslint-disable-line camelcase
-      key_b: 2, // eslint-disable-line camelcase
-      key_c: 3, // eslint-disable-line camelcase
+      key_a: 1,
+      key_b: 2,
+      key_c: 3,
 
-      key_d: { // eslint-disable-line camelcase
+      key_d: {
         'key-a': 1
       }
     });
@@ -186,22 +184,22 @@ describe('util underscoreKeys()', () => {
 
   it('can deep underscore an objects keys', () => {
     expect(underscoreKeys(subjectA, true)).to.deep.equal({
-      key_a: 1, // eslint-disable-line camelcase
-      key_b: 2, // eslint-disable-line camelcase
-      key_c: 3, // eslint-disable-line camelcase
+      key_a: 1,
+      key_b: 2,
+      key_c: 3,
 
-      key_d: { // eslint-disable-line camelcase
-        key_a: 1 // eslint-disable-line camelcase
+      key_d: {
+        key_a: 1
       }
     });
 
     expect(underscoreKeys(subjectB, true)).to.deep.equal({
-      key_a: 1, // eslint-disable-line camelcase
-      key_b: 2, // eslint-disable-line camelcase
-      key_c: 3, // eslint-disable-line camelcase
+      key_a: 1,
+      key_b: 2,
+      key_c: 3,
 
-      key_d: { // eslint-disable-line camelcase
-        key_a: 1 // eslint-disable-line camelcase
+      key_d: {
+        key_a: 1
       }
     });
   });

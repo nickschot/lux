@@ -1,15 +1,13 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe } from 'mocha';
+import { it, describe, expect } from 'vitest';
 
 import isObject from '../is-object';
 
 describe('util isObject()', () => {
-  it ('returns false when an `null` is passed in as an argument', () => {
+  it('returns false when an `null` is passed in as an argument', () => {
     expect(isObject(null)).to.be.false;
   });
 
-  it ('returns false when an `Array` is passed in as an argument', () => {
+  it('returns false when an `Array` is passed in as an argument', () => {
     expect(isObject([])).to.be.false;
   });
 

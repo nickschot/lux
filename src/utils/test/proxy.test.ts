@@ -1,6 +1,4 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe, beforeEach } from 'mocha';
+import { it, describe, beforeEach, expect } from 'vitest';
 
 import * as proxy from '../proxy';
 
@@ -21,7 +19,7 @@ describe('util proxy', () => {
       }
 
       area() {
-        return Math.PI * (this.radius ** 2);
+        return Math.PI * this.radius ** 2;
       }
     }
 
@@ -42,7 +40,6 @@ describe('util proxy', () => {
 
     describe('- properties', () => {
       it('captures and returns values defined in as traps', () => {
-        // $FlowIgnore
         expect(proxied.isProxied).to.be.true;
       });
 
@@ -53,7 +50,6 @@ describe('util proxy', () => {
 
     describe('- methods', () => {
       it('captures and returns values defined in as traps', () => {
-        // $FlowIgnore
         expect(proxied.shortArea()).to.equal(314.16);
       });
 
@@ -64,7 +60,6 @@ describe('util proxy', () => {
 
     describe('#unwrap', () => {
       it('returns the proxy target', () => {
-        // $FlowIgnore
         expect(proxied.unwrap()).to.equal(base);
       });
     });

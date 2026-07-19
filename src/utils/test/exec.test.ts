@@ -1,7 +1,5 @@
-// @flow
 import { EOL } from 'os';
-import { expect } from 'chai';
-import { it, describe } from 'mocha';
+import { it, describe, expect } from 'vitest';
 
 import exec from '../exec';
 
