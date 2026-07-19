@@ -66,7 +66,8 @@ while replacing legacy tooling.
    [tsconfig.json](tsconfig.json), `pnpm typecheck` (`tsc --noEmit`), and
    [lib/ts-hook.js](lib/ts-hook.js) (esbuild-register runs `.ts` in Mocha, loaded via
    `babel-hook.js` before babel-register). Proven end-to-end on `src/utils/uniq.ts`.
-3. 🔄 **Flow → TypeScript, bottom-up per `src/packages/*`** — IN PROGRESS, see
+3. ✅ **Flow → TypeScript, bottom-up per `src/packages/*`** — all source converted
+   (295 `.ts`; only test suites/fixtures remain on Flow, deferred to Phase 4). See
    "Phase 3 status" below.
 4. Once no Flow remains: drop `@babel/preset-flow`, flip the build to **tsup**/esbuild and
    the runner to **Vitest**; retire Babel/Mocha/nyc, `lib/babel-hook.js`, `lib/ts-hook.js`,
@@ -79,21 +80,23 @@ while replacing legacy tooling.
 
 ## Phase 3 status — where to resume
 
-**Progress: 206 `.ts` files, 95 Flow files left.** Every batch is one commit, with all
-five gates green (see "Conversion recipe").
+**Progress: 295 `.ts` files — no non-test Flow *source* remains.** Every batch was one
+commit, with all five gates green (see "Conversion recipe").
 
-**Converted:** all of `src/utils/`, `src/interfaces`, `src/constants`, `freezeable`,
-`template`, `jsonapi`, `logger`, `server`, `router`, `serializer`, `controller`,
-**`database`** (the ORM core — the big one); `src/errors/controller-missing-error`. Still
-Flow: `application` (6), `cli` (44), `config` (3), `fs` (16), `pm` (3), `compiler` (7),
-`loader` (12), `luxify` (2), `src/index`.
+**Converted: the entire source tree.** All of `src/utils/`, `src/interfaces`,
+`src/constants`, `freezeable`, `template`, `jsonapi`, `logger`, `server`, `router`,
+`serializer`, `controller`, **`database`** (the ORM core — the big one), `application`,
+`config`, `fs`, `pm`, `compiler`, `loader`, `luxify`, `cli` (44 files), both
+`src/errors/*`, and the public API barrel `src/index`.
 
-**⚠ One temporary `.d.ts` stub left:** [fs/index.d.ts](src/packages/fs/index.d.ts) declares
-just `readdir` (the single symbol `database` imports from the not-yet-converted `fs`
-package). **Delete it when `fs` converts.** (The `controller` and `database` stubs are gone
-— the real `database`, with an exported `ModelClass<T>`, dropped in for
-controller/serializer/router with only tiny fallout: `typeForColumn` returned `void` where
-callers wanted `undefined`, and `Query.limit/page` params became optional again.)
+**Still Flow — deferred to Phase 4:** the 83 colocated `src/**/*.test.js` suites and 6
+test-support fixtures (`fs/test/utils/*`, `config/test/fixtures/results.js`). These wait
+on the runner swap (Vitest brings the chai/mocha typings); do **not** convert them under
+the current Mocha/Babel stack.
+
+**No temporary `.d.ts` stubs remain.** The only `.d.ts` files left are legitimate ambient
+declarations for untyped npm modules (`fs/watcher/fb-watchman.d.ts`,
+`compiler/legacy-rollup.d.ts`, `cli/ora.d.ts`).
 
 ### Database — DONE (the ORM core), how it was typed
 
