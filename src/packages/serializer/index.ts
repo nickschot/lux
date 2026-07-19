@@ -616,7 +616,7 @@ class Serializer<T extends Model> {
                     })
                   )
                 };
-              } else if (related && related.id != null) {
+              } else if (related && (related as { id?: unknown }).id != null) {
                 return this.formatRelationship({
                   domain,
                   included,
