@@ -45,7 +45,9 @@ export type Database$opts = {
   models: Map<string, ModelClass>;
   config: Database$config;
   logger: Logger;
-  checkMigrations: boolean;
+  // Optional: `dbseed` constructs a Database without it (undefined → the
+  // migration check is skipped).
+  checkMigrations?: boolean;
 };
 
 export type Database$column = {
