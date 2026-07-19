@@ -165,8 +165,8 @@ export function appendFile(
   path: string,
   data: string | Buffer,
   opts?: fs$writeOpts
-) {
-  return new Promise((resolve, reject) => {
+): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
     fs.appendFile(
       path,
       data,

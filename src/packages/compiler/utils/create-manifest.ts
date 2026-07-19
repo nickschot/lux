@@ -1,4 +1,3 @@
-// @flow
 import { sep, posix, basename, join as joinPath } from 'path';
 
 import { camelize, capitalize, pluralize } from 'inflection';
@@ -32,25 +31,27 @@ function createExportStatement(
  * @private
  */
 function createWriter(file: string) {
-  const writerFor = (
-    type: string,
-    handleWrite: void | (value: string) => Promise<void>
-  ) => (value: Array<string>) => {
-    const formatSymbol = compose(str => str + capitalize(type), formatName);
+  const writerFor =
+    (type: string, handleWrite?: (value: string) => Promise<void>) =>
+    (value: Array<string>) => {
+      const formatSymbol = compose(
+        (str: string) => str + capitalize(type),
+        formatName
+      );
 
-    return Promise.all(
-      value.map(item => {
-        if (handleWrite) {
-          return handleWrite(item);
-        }
+      return Promise.all(
+        value.map(item => {
+          if (handleWrite) {
+            return handleWrite(item);
+          }
 
-        const path = joinPath('app', pluralize(type), item);
-        const symbol = formatSymbol(item);
+          const path = joinPath('app', pluralize(type), item);
+          const symbol = formatSymbol(item);
 
-        return appendFile(file, createExportStatement(symbol, path));
-      })
-    );
-  };
+          return appendFile(file, createExportStatement(symbol, path));
+        })
+      );
+    };
 
   return {
     controllers: writerFor('controller'),
@@ -63,7 +64,7 @@ function createWriter(file: string) {
       return appendFile(file, createExportStatement(name, path));
     }),
 
-    migrations: writerFor('migration', async (item) => {
+    migrations: writerFor('migration', async item => {
       const path = joinPath('db', 'migrate', item);
       const name = chain(item)
         .pipe(str => basename(str, '.js'))
@@ -72,17 +73,15 @@ function createWriter(file: string) {
         .pipe(str => camelize(str, true))
         .value();
 
-      await appendFile(file, createExportStatement(
-        `up as ${name}Up`,
-        path,
-        false
-      ));
+      await appendFile(
+        file,
+        createExportStatement(`up as ${name}Up`, path, false)
+      );
 
-      await appendFile(file, createExportStatement(
-        `down as ${name}Down`,
-        path,
-        false
-      ));
+      await appendFile(
+        file,
+        createExportStatement(`down as ${name}Down`, path, false)
+      );
     })
   };
 }
@@ -100,21 +99,19 @@ export default async function createManifest(
   const writer = createWriter(file);
 
   await tryCatch(() => mkdir(dist));
-  await writeFile(file, useStrict ? '\'use strict\';\n\n' : '');
+  await writeFile(file, useStrict ? "'use strict';\n\n" : '');
 
   await Promise.all(
-    Array
-      .from(assets)
-      .map(([key, value]) => {
-        const write = Reflect.get(writer, key);
+    Array.from(assets).map(([key, value]) => {
+      const write = Reflect.get(writer, key);
 
-        if (write) {
-          return write(value);
-        } else if (!write && typeof value === 'string') {
-          return appendFile(file, createExportStatement(key, value));
-        }
+      if (write) {
+        return write(value);
+      } else if (!write && typeof value === 'string') {
+        return appendFile(file, createExportStatement(key, value));
+      }
 
-        return Promise.resolve();
-      })
+      return Promise.resolve();
+    })
   );
 }

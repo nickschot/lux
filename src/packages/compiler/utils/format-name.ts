@@ -1,4 +1,3 @@
-// @flow
 import { posix, dirname, basename } from 'path';
 
 import { camelize } from 'inflection';
@@ -15,10 +14,7 @@ const formatName: (source: string) => string = compose(
   (name: string) => name.replace(DOUBLE_COLON, '$'),
   camelize,
   underscore,
-  (name: string) => posix.join(
-    dirname(name),
-    basename(name, '.js')
-  )
+  (name: string) => posix.join(dirname(name), basename(name, '.js'))
 );
 
 export default formatName;
