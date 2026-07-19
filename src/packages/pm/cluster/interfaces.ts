@@ -1,4 +1,3 @@
-// @flow
 import type Logger from '../../logger';
 
 export type Cluster$opts = {

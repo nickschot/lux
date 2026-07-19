@@ -1,9 +1,13 @@
-// @flow
+/* eslint-disable @typescript-eslint/no-explicit-any --
+ * The cluster manager talks to worker processes over Node's untyped IPC
+ * channel: the `update` process event and worker `message` payloads carry
+ * arbitrary data, so those values are genuinely untyped here (as they were
+ * `Object` in Flow).
+ */
 import EventEmitter from 'events';
 import os from 'os';
-import cluster from 'cluster';
+import cluster, { type Worker } from 'cluster';
 import { join as joinPath } from 'path';
-import type { Worker } from 'cluster'; // eslint-disable-line max-len, no-duplicate-imports
 
 import { red, green } from 'chalk';
 
@@ -12,7 +16,7 @@ import { line } from '../../logger';
 import omit from '../../../utils/omit';
 import range from '../../../utils/range';
 import { composeAsync } from '../../../utils/compose';
-import type Logger from '../../logger'; // eslint-disable-line max-len, no-duplicate-imports
+import type Logger from '../../logger';
 
 import type { Cluster$opts } from './interfaces';
 
@@ -20,15 +24,15 @@ import type { Cluster$opts } from './interfaces';
  * @private
  */
 class Cluster extends EventEmitter {
-  path: string;
+  path!: string;
 
-  port: number;
+  port!: number;
 
-  logger: Logger;
+  logger!: Logger;
 
-  workers: Set<Worker>;
+  workers!: Set<Worker>;
 
-  maxWorkers: number;
+  maxWorkers!: number;
 
   constructor({ path, port, logger, maxWorkers }: Cluster$opts) {
     super();
@@ -74,7 +78,7 @@ class Cluster extends EventEmitter {
       exec: joinPath(path, 'dist', 'boot.js')
     });
 
-    process.on('update', (changed) => {
+    process.on('update', (changed: Array<{ name: string }>) => {
       changed.forEach(({ name: filename }) => {
         logger.info(`${green('update')} ${filename}`);
       });
@@ -85,7 +89,7 @@ class Cluster extends EventEmitter {
     this.forkAll().then(() => this.emit('ready'));
   }
 
-  fork(retry: boolean = true) {
+  fork(retry: boolean = true): Promise<Worker> {
     return new Promise(resolve => {
       if (this.workers.size < this.maxWorkers) {
         const worker = cluster.fork({
@@ -112,7 +116,7 @@ class Cluster extends EventEmitter {
           }
         }, 30000);
 
-        const handleError = (err?: string) => {
+        const handleError = (err?: any) => {
           if (err) {
             this.logger.error(err);
           }
@@ -131,8 +135,8 @@ class Cluster extends EventEmitter {
           resolve(worker);
         };
 
-        worker.on('message', (msg: string | Object) => {
-          let data = {};
+        worker.on('message', (msg: string | Record<string, any>) => {
+          let data: Record<string, any> = {};
           let message = msg;
 
           if (typeof message === 'object') {
@@ -164,8 +168,10 @@ class Cluster extends EventEmitter {
         });
 
         worker.once('error', handleError);
-        worker.once('exit', (code: ?number) => {
-          const { process: { pid } } = worker;
+        worker.once('exit', (code: number | null) => {
+          const {
+            process: { pid }
+          } = worker;
 
           if (typeof code === 'number') {
             this.logger.info(line`
@@ -186,7 +192,7 @@ class Cluster extends EventEmitter {
     });
   }
 
-  shutdown<T: Worker>(worker: T): Promise<T> {
+  shutdown<T extends Worker>(worker: T): Promise<T> {
     return new Promise(resolve => {
       this.workers.delete(worker);
 
@@ -208,22 +214,24 @@ class Cluster extends EventEmitter {
 
   reload() {
     if (this.workers.size) {
-      const groups = Array
-        .from(this.workers)
-        .reduce((arr, item, idx, src) => {
-          if ((idx + 1) % 2) {
-            const group = src.slice(idx, idx + 2);
+      const groups = Array.from(this.workers).reduce<
+        Array<() => Promise<Array<Worker>>>
+      >((arr, item, idx, src) => {
+        if ((idx + 1) % 2) {
+          const group = src.slice(idx, idx + 2);
 
-            return [
-              ...arr,
-              () => Promise.all(group.map(worker => this.shutdown(worker)))
-            ];
-          }
+          return [
+            ...arr,
+            () => Promise.all(group.map(worker => this.shutdown(worker)))
+          ];
+        }
 
-          return arr;
-        }, []);
+        return arr;
+      }, []);
 
-      return composeAsync(...groups)();
+      // groups is non-empty here (guarded by workers.size); composeAsync's
+      // fixed-first-param signature can't be spread with a dynamic array.
+      return (composeAsync as any)(...groups)();
     }
 
     return this.fork();

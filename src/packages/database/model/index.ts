@@ -16,11 +16,10 @@ import mapToObject from '../../../utils/map-to-object';
 import type Logger from '../../logger';
 import type Database from '../../database';
 import type Serializer from '../../serializer';
- 
+
 import type { Relationship$opts } from '../relationship';
 import type { ModelClass, Database$column } from '../interfaces';
 import type { Transaction$ResultProxy } from '../transaction';
- 
 
 import { create, update, destroy, createRunner } from './utils/persistence';
 import initializeClass from './initialize-class';
@@ -1286,7 +1285,9 @@ class Model {
    * @static
    * @public
    */
-  static transaction<T>(fn: (...args: Array<unknown>) => Promise<T>): Promise<T> {
+  static transaction<T>(
+    fn: (...args: Array<unknown>) => Promise<T>
+  ): Promise<T> {
     return new Promise((resolve, reject) => {
       const {
         store: { connection }

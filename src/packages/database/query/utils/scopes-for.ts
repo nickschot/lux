@@ -11,7 +11,6 @@ export default function scopesFor<T>(target: Query<T>): PropertyDescriptorMap {
       ...scopes,
       [name]: {
         get() {
-           
           const scope = function (...args: Array<any>) {
             const fn = Reflect.get(target.model, name);
             const { snapshots } = Reflect.apply(fn, target.model, args) as {

@@ -1,4 +1,3 @@
-// @flow
 import type { Response } from '../../server';
 
 /**
@@ -9,7 +8,7 @@ import type { Response } from '../../server';
  */
 export default function createResponseProxy(
   res: Response,
-  resolve: (result: mixed) => void
+  resolve: (result: unknown) => void
 ): Response {
   return new Proxy(res, {
     get(target, key) {
