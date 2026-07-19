@@ -1,4 +1,3 @@
-// @flow
 import { LUX_CONSOLE } from '../../constants';
 import Database from '../database';
 import Logger from '../logger';
@@ -12,18 +11,19 @@ import normalizePort from './utils/normalize-port';
 import createController from './utils/create-controller';
 import createSerializer from './utils/create-serializer';
 
-import type Application, { Application$opts } from './index'; // eslint-disable-line no-unused-vars, max-len
+import type Controller from '../controller';
+import type Serializer from '../serializer';
+import type { Model, ModelClass } from '../database';
+import type Application from './index';
+import type { Application$opts } from './index';
 
 /**
  * @private
  */
-export default async function initialize<T: Application>(app: T, {
-  path,
-  port,
-  logging,
-  database,
-  server: serverConfig
-}: Application$opts): Promise<T> {
+export default async function initialize<T extends Application>(
+  app: T,
+  { path, port, logging, database, server: serverConfig }: Application$opts
+): Promise<T> {
   const load = createLoader(path);
   const routes = load('routes');
   const models = load('models');
@@ -38,16 +38,17 @@ export default async function initialize<T: Application>(app: T, {
     checkMigrations: true
   });
 
-  const serializers = build(
+  const serializers = build<Serializer<Model>>(
     load('serializers'),
-    (key, value, parent) => createSerializer(value, {
-      key,
-      store,
-      parent
-    })
+    (key, value, parent) =>
+      createSerializer(value, {
+        key,
+        store,
+        parent
+      })
   );
 
-  models.forEach(model => {
+  models.forEach((model: ModelClass) => {
     Reflect.defineProperty(model, 'serializer', {
       value: closestChild(serializers, model.resourceName),
       writable: false,
@@ -56,17 +57,18 @@ export default async function initialize<T: Application>(app: T, {
     });
   });
 
-  const controllers = build(
+  const controllers = build<Controller>(
     load('controllers'),
-    (key, value, parent) => createController(value, {
-      key,
-      store,
-      parent,
-      serializers
-    })
+    (key, value, parent) =>
+      createController(value, {
+        key,
+        store,
+        parent,
+        serializers
+      })
   );
 
-  controllers.forEach(controller => {
+  controllers.forEach((controller: Controller) => {
     Reflect.defineProperty(controller, 'controllers', {
       value: controllers,
       writable: true,
@@ -98,7 +100,9 @@ export default async function initialize<T: Application>(app: T, {
       if (typeof process.send === 'function') {
         process.send('ready');
       } else {
-        process.emit('ready');
+        // 'ready' is a custom lifecycle event, not one of Process's typed
+        // emit overloads.
+        (process as NodeJS.EventEmitter).emit('ready');
       }
     });
   }
@@ -110,12 +114,7 @@ export default async function initialize<T: Application>(app: T, {
     serializers
   });
 
-  deepFreezeProps(app, true,
-    'logger',
-    'models',
-    'controllers',
-    'serializers'
-  );
+  deepFreezeProps(app, true, 'logger', 'models', 'controllers', 'serializers');
 
   Object.assign(app, {
     path,
@@ -125,13 +124,9 @@ export default async function initialize<T: Application>(app: T, {
     port: normalizedPort
   });
 
-  freezeProps(app, false,
-    'path',
-    'port',
-    'store',
-    'router',
-    'server'
-  );
+  freezeProps(app, false, 'path', 'port', 'store', 'router', 'server');
 
-  return Object.freeze(app);
+  Object.freeze(app);
+
+  return app;
 }

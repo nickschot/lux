@@ -1,27 +1,30 @@
-// @flow
 import { posix } from 'path';
 
 import { deepFreezeProps } from '../../freezeable';
 import { closestAncestor } from '../../loader';
 import { tryCatchSync } from '../../../utils/try-catch';
 import type Database from '../../database';
+import type { Model, ModelClass } from '../../database';
 import type Controller from '../../controller';
 import type Serializer from '../../serializer';
-import type { Bundle$Namespace } from '../../loader'; // eslint-disable-line max-len, no-duplicate-imports
+import type { Bundle$Namespace } from '../../loader';
+import type { Application$Class } from '../index';
 
-export default function createController<T: Controller>(
-  constructor: Class<T>,
+export default function createController<T extends Controller>(
+  constructor: Application$Class<T>,
   opts: {
     key: string;
     store: Database;
-    parent: ?Controller;
-    serializers: Bundle$Namespace<Serializer<*>>;
+    parent?: Controller | null;
+    serializers: Bundle$Namespace<Serializer<Model>>;
   }
 ): T {
   const { key, store, serializers } = opts;
   const namespace = posix.dirname(key).replace('.', '');
   let { parent } = opts;
-  let model = tryCatchSync(() => store.modelFor(posix.basename(key)));
+  let model: ModelClass | null | undefined = tryCatchSync(() =>
+    store.modelFor(posix.basename(key))
+  );
   let serializer = serializers.get(key);
 
   if (!model) {
@@ -36,11 +39,13 @@ export default function createController<T: Controller>(
     serializer = closestAncestor(serializers, key);
   }
 
-  const instance: T = Reflect.construct(constructor, [{
-    model,
-    namespace,
-    serializer
-  }]);
+  const instance: T = Reflect.construct(constructor, [
+    {
+      model,
+      namespace,
+      serializer
+    }
+  ]);
 
   if (serializer) {
     if (!instance.filter.length) {
@@ -71,7 +76,9 @@ export default function createController<T: Controller>(
     configurable: false
   });
 
-  return deepFreezeProps(instance, true,
+  return deepFreezeProps(
+    instance,
+    true,
     'query',
     'sort',
     'filter',
