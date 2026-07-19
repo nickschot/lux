@@ -1,6 +1,4 @@
-// @flow
-import { expect } from 'chai';
-import { it, before, describe } from 'mocha';
+import { it, beforeAll, describe, expect } from 'vitest';
 
 import { FreezeableMap } from '../../freezeable';
 import { createLoader } from '../index';
@@ -13,14 +11,14 @@ import type { Loader } from '../index';
 describe('module "loader"', () => {
   let app: Application;
 
-  before(async () => {
+  beforeAll(async () => {
     app = await getTestApp();
   });
 
   describe('#createLoader()', () => {
     let subject: Loader;
 
-    before(() => {
+    beforeAll(() => {
       subject = createLoader(app.path);
     });
 
@@ -33,7 +31,7 @@ describe('module "loader"', () => {
     });
 
     it('can load a config object', () => {
-      expect(subject('config')).to.be.an.object;
+      expect(subject('config')).to.be.an('object');
     });
 
     it('can load Controllers', () => {
@@ -42,9 +40,8 @@ describe('module "loader"', () => {
       expect(result).to.be.an.instanceof(FreezeableMap);
 
       result.forEach(value => {
-        expect(
-          Reflect.getPrototypeOf(value).name.endsWith('Controller')
-        ).to.be.true;
+        expect(Reflect.getPrototypeOf(value).name.endsWith('Controller')).to.be
+          .true;
       });
     });
 
@@ -82,9 +79,8 @@ describe('module "loader"', () => {
       expect(result).to.be.an.instanceof(FreezeableMap);
 
       result.forEach(value => {
-        expect(
-          Reflect.getPrototypeOf(value).name.endsWith('Serializer')
-        ).to.be.true;
+        expect(Reflect.getPrototypeOf(value).name.endsWith('Serializer')).to.be
+          .true;
       });
     });
   });

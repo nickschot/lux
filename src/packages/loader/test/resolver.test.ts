@@ -1,6 +1,4 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe, before } from 'mocha';
+import { it, describe, beforeAll, expect } from 'vitest';
 
 import { getTestApp } from '../../../../test/utils/get-test-app';
 import { closestChild, closestAncestor } from '../resolver';
@@ -9,7 +7,7 @@ describe('module "loader/resolver"', () => {
   describe('#closestChild()', () => {
     let serializers;
 
-    before(async () => {
+    beforeAll(async () => {
       const app = await getTestApp();
 
       serializers = app.serializers;
@@ -25,7 +23,7 @@ describe('module "loader/resolver"', () => {
   describe('#closestAncestor()', () => {
     let serializers;
 
-    before(async () => {
+    beforeAll(async () => {
       const app = await getTestApp();
 
       serializers = app.serializers;
@@ -34,9 +32,8 @@ describe('module "loader/resolver"', () => {
     it('can find the closest ancestor by a namespaced key', () => {
       const result = closestAncestor(serializers, 'admin/users');
 
-      expect(result)
-        .to.be.ok
-        .and.have.deep.property('constructor.name', 'UsersSerializer');
+      expect(result).to.be.ok;
+      expect(result.constructor.name).to.equal('UsersSerializer');
     });
   });
 });

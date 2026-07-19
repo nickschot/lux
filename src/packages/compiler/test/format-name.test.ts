@@ -1,8 +1,4 @@
-// @flow
-import path from 'path';
-
-import { expect } from 'chai';
-import { it, describe, beforeEach } from 'mocha';
+import { it, describe, beforeEach, expect } from 'vitest';
 
 import { getTestApp } from '../../../../test/utils/get-test-app';
 import formatName from '../utils/format-name';
