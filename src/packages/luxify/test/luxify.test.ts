@@ -1,6 +1,4 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe } from 'mocha';
+import { it, describe, expect } from 'vitest';
 
 import luxify from '../index';
 
@@ -48,9 +46,11 @@ describe('module "luxify"', () => {
 
     it('resolves when Response#json is called', () => {
       const subject = luxify((req, res) => {
-        Reflect.apply(Reflect.get(res, 'json'), res, [{
-          data: 'Hello world!'
-        }]);
+        Reflect.apply(Reflect.get(res, 'json'), res, [
+          {
+            data: 'Hello world!'
+          }
+        ]);
       });
 
       return subject(request, response).then(data => {

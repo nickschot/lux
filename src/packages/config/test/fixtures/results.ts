@@ -1,4 +1,3 @@
-// @flow
 import { NODE_ENV } from '../../../../constants';
 
 const isTestENV = NODE_ENV === 'test';
