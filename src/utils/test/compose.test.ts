@@ -1,7 +1,5 @@
-// @flow
 import { spy } from 'sinon';
-import { expect } from 'chai';
-import { it, describe } from 'mocha';
+import { describe, it, beforeAll, afterAll, expect } from 'vitest';
 
 import { tap, compose, composeAsync } from '../compose';
 
@@ -9,11 +7,11 @@ describe('util compose', () => {
   describe('.tap()', () => {
     let consoleSpy;
 
-    before(() => {
+    beforeAll(() => {
       consoleSpy = spy(console, 'log');
     });
 
-    after(() => {
+    afterAll(() => {
       consoleSpy.restore();
     });
 
@@ -32,9 +30,7 @@ describe('util compose', () => {
         str => str.toUpperCase()
       );
 
-      expect(shout)
-        .to.be.a('function')
-        .with.lengthOf(1);
+      expect(shout).to.be.a('function').with.lengthOf(1);
 
       expect(shout('hello world')).to.equal('HELLO WORLD!');
     });
@@ -47,9 +43,7 @@ describe('util compose', () => {
         str => Promise.resolve(str.toUpperCase())
       );
 
-      expect(shout)
-        .to.be.a('function')
-        .with.lengthOf(1);
+      expect(shout).to.be.a('function').with.lengthOf(1);
 
       return shout('hello world').then(str => {
         expect(str).to.equal('HELLO WORLD!');

@@ -1,6 +1,4 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe } from 'mocha';
+import { it, describe, expect } from 'vitest';
 
 import tryCatch, { tryCatchSync } from '../try-catch';
 
@@ -10,16 +8,18 @@ describe('util tryCatch()', () => {
 
     expect(value).to.be.false;
 
-    await tryCatch(() => {
-      return Promise.reject(new Error('Test'));
-    }, () => {
-      value = true;
-    });
+    await tryCatch(
+      () => {
+        return Promise.reject(new Error('Test'));
+      },
+      () => {
+        value = true;
+      }
+    );
 
     expect(value).to.be.true;
   });
 });
-
 
 describe('util tryCatchSync()', () => {
   it('is a functional equivalent of try...catch', () => {
@@ -27,11 +27,14 @@ describe('util tryCatchSync()', () => {
 
     expect(value).to.be.false;
 
-    tryCatchSync(() => {
-      throw new Error('Test');
-    }, () => {
-      value = true;
-    });
+    tryCatchSync(
+      () => {
+        throw new Error('Test');
+      },
+      () => {
+        value = true;
+      }
+    );
 
     expect(value).to.be.true;
   });

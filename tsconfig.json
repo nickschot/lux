@@ -31,6 +31,7 @@
     "flow-typed",
     "decl",
     "lib",
-    "coverage"
+    "coverage",
+    "src/**/test"
   ]
 }

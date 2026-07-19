@@ -1,14 +1,10 @@
-// @flow
-import { expect } from 'chai';
-import { describe, it, beforeEach } from 'mocha';
+import { describe, it, beforeEach, expect } from 'vitest';
 
 import sleep from '../sleep';
 
-describe('util sleep()', function () {
+describe('util sleep()', () => {
   const amount = 500;
   let time;
-
-  this.slow(1000);
 
   beforeEach(() => {
     time = Date.now();

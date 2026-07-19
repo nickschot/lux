@@ -1,7 +1,4 @@
-/* @flow */
-
-import { expect } from 'chai';
-import { afterEach, test } from 'mocha';
+import { afterEach, test, expect } from 'vitest';
 
 import * as env from '../env';
 import setEnv from '../../../test/utils/set-env';
