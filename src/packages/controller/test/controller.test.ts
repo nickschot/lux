@@ -1,22 +1,19 @@
-// @flow
 import faker from 'faker';
-import { expect } from 'chai';
-import { it, describe, before, beforeEach, afterEach } from 'mocha';
+import { it, describe, beforeAll, beforeEach, afterEach, expect } from 'vitest';
 
 import Controller from '../index';
 import Serializer from '../../serializer';
-import { Model } from '../../database';
 
-import setType from '../../../utils/set-type';
 import { getTestApp } from '../../../../test/utils/get-test-app';
 
+import type { Model, ModelClass } from '../../database';
 import type { Request, Response } from '../../server';
 
 const HOST = 'localhost:4000';
 
 describe('module "controller"', () => {
   describe('class Controller', () => {
-    let Post: Class<Model>;
+    let Post: ModelClass;
     let subject: Controller;
 
     const attributes = [
@@ -36,7 +33,7 @@ describe('module "controller"', () => {
       }
     };
 
-    before(async () => {
+    beforeAll(async () => {
       const app = await getTestApp();
       const model = app.models.get('post');
 
@@ -58,23 +55,24 @@ describe('module "controller"', () => {
     });
 
     describe('#index()', () => {
-      const createRequest = (params = {}): Request => setType(() => ({
-        params,
-        route: {
-          controller: subject
-        },
-        defaultParams: {
-          sort: 'createdAt',
-          filter: {},
-          fields: {
-            posts: attributes
+      const createRequest = (params = {}): Request =>
+        ({
+          params,
+          route: {
+            controller: subject
           },
-          page: {
-            size: 25,
-            number: 1
+          defaultParams: {
+            sort: 'createdAt',
+            filter: {},
+            fields: {
+              posts: attributes
+            },
+            page: {
+              size: 25,
+              number: 1
+            }
           }
-        }
-      }));
+        }) as unknown as Request;
 
       it('returns an array of records', async () => {
         const request = createRequest();
@@ -131,11 +129,7 @@ describe('module "controller"', () => {
         const request = createRequest({
           include: ['user'],
           fields: {
-            users: [
-              'id',
-              'name',
-              'email'
-            ]
+            users: ['id', 'name', 'email']
           }
         });
 
@@ -144,10 +138,7 @@ describe('module "controller"', () => {
         expect(result).to.be.an('array').with.lengthOf(25);
 
         result.forEach(item => {
-          assertRecord(item, [
-            ...attributes,
-            'user'
-          ]);
+          assertRecord(item, [...attributes, 'user']);
 
           expect(item.rawColumnData.user).to.have.all.keys([
             'id',
@@ -159,17 +150,18 @@ describe('module "controller"', () => {
     });
 
     describe('#show()', () => {
-      const createRequest = (params = {}): Request => setType(() => ({
-        params,
-        route: {
-          controller: subject
-        },
-        defaultParams: {
-          fields: {
-            posts: attributes
+      const createRequest = (params = {}): Request =>
+        ({
+          params,
+          route: {
+            controller: subject
+          },
+          defaultParams: {
+            fields: {
+              posts: attributes
+            }
           }
-        }
-      }));
+        }) as unknown as Request;
 
       it('returns a single record', async () => {
         const request = createRequest({ id: 1 });
@@ -209,11 +201,7 @@ describe('module "controller"', () => {
           id: 1,
           include: ['user'],
           fields: {
-            users: [
-              'id',
-              'name',
-              'email'
-            ]
+            users: ['id', 'name', 'email']
           }
         });
 
@@ -222,10 +210,7 @@ describe('module "controller"', () => {
         expect(result).to.be.ok;
 
         if (result) {
-          assertRecord(result, [
-            ...attributes,
-            'user'
-          ]);
+          assertRecord(result, [...attributes, 'user']);
 
           expect(result.rawColumnData.user).to.have.all.keys([
             'id',
@@ -239,40 +224,40 @@ describe('module "controller"', () => {
     describe('#create()', () => {
       let result: Model;
 
-      const createRequest = (params = {}): Request => setType(() => ({
-        params,
-        url: {
-          pathname: '/posts'
-        },
-        route: {
-          controller: subject
-        },
-        headers: new Map([
-          ['host', HOST]
-        ]),
-        connection: {
-          encrypted: false
-        },
-        defaultParams: {
-          fields: {
-            posts: attributes,
-            users: ['id']
+      const createRequest = (params = {}): Request =>
+        ({
+          params,
+          url: {
+            pathname: '/posts'
+          },
+          route: {
+            controller: subject
+          },
+          headers: new Map([['host', HOST]]),
+          connection: {
+            encrypted: false
+          },
+          defaultParams: {
+            fields: {
+              posts: attributes,
+              users: ['id']
+            }
           }
-        }
-      }));
+        }) as unknown as Request;
 
-      const createResponse = (): Response => setType(() => ({
-        headers: new Map(),
-        statusCode: 200,
+      const createResponse = (): Response =>
+        ({
+          headers: new Map(),
+          statusCode: 200,
 
-        setHeader(key: string, value: string): void {
-          this.headers.set(key, value);
-        },
+          setHeader(key: string, value: string): void {
+            this.headers.set(key, value);
+          },
 
-        getHeader(key: string): string | void {
-          return this.headers.get(key);
-        }
-      }));
+          getHeader(key: string): string | undefined {
+            return this.headers.get(key);
+          }
+        }) as unknown as Response;
 
       afterEach(async () => {
         await result.destroy();
@@ -365,17 +350,18 @@ describe('module "controller"', () => {
       let User;
       let record;
 
-      const createRequest = (params = {}): Request => setType(() => ({
-        params,
-        route: {
-          controller: subject
-        },
-        defaultParams: {
-          fields: {
-            posts: attributes
+      const createRequest = (params = {}): Request =>
+        ({
+          params,
+          route: {
+            controller: subject
+          },
+          defaultParams: {
+            fields: {
+              posts: attributes
+            }
           }
-        }
-      }));
+        }) as unknown as Request;
 
       beforeEach(async () => {
         const { models } = await getTestApp();
@@ -387,10 +373,9 @@ describe('module "controller"', () => {
 
         User = userModel;
 
-        return Post
-          .create({
-            title: '#update() Test'
-          })
+        return Post.create({
+          title: '#update() Test'
+        })
           .then(post => post.unwrap())
           .then(post => {
             record = post;
@@ -402,7 +387,7 @@ describe('module "controller"', () => {
       });
 
       it('returns a record if attribute(s) change', async () => {
-        let item = record;
+        const item = record;
         const id = Reflect.get(item, 'id');
 
         expect(item).to.have.property('isPublic', false);
@@ -430,13 +415,11 @@ describe('module "controller"', () => {
         expect(user).to.be.null;
         expect(comments).to.deep.equal([]);
 
-        const newUser = await User
-          .create({
-            name: `${faker.name.firstName()} ${faker.name.lastName()}`,
-            email: faker.internet.email(),
-            password: faker.internet.password(8)
-          })
-          .then(res => res.unwrap());
+        const newUser = await User.create({
+          name: `${faker.name.firstName()} ${faker.name.lastName()}`,
+          email: faker.internet.email(),
+          password: faker.internet.password(8)
+        }).then(res => res.unwrap());
 
         const request = createRequest({
           id,
@@ -476,21 +459,16 @@ describe('module "controller"', () => {
 
         const result = await subject.update(request);
 
-        assertRecord(result, [
-          ...attributes,
-          'user',
-          'comments'
-        ]);
+        assertRecord(result, [...attributes, 'user', 'comments']);
 
-        // $FlowIgnore
         item = await item.reload().include('user', 'comments');
-        ({ rawColumnData: { user, comments } } = item);
+        ({
+          rawColumnData: { user, comments }
+        } = item);
 
         expect(user).to.have.property('id', newUser.getPrimaryKey());
 
-        expect(comments)
-          .to.be.an('array')
-          .with.lengthOf(3);
+        expect(comments).to.be.an('array').with.lengthOf(3);
       });
 
       it('returns the number `204` if no changes occur', async () => {
@@ -533,25 +511,17 @@ describe('module "controller"', () => {
             }
           },
           fields: {
-            posts: [
-              'id',
-              'title'
-            ]
+            posts: ['id', 'title']
           }
         });
 
-        expect(record).to.have.deep.property(
-          'rawColumnData.title',
-          '#update() Test'
-        );
+        expect(record.rawColumnData.title).to.equal('#update() Test');
 
-        assertRecord(await subject.update(request), [
-          'id',
-          'title'
-        ]);
+        assertRecord(await subject.update(request), ['id', 'title']);
 
-        expect(await record.reload()).to.have.deep.property(
-          'rawColumnData.title',
+        const reloaded = await record.reload();
+
+        expect(reloaded.rawColumnData.title).to.equal(
           'Sparse Field Sets Work With #update()!'
         );
       });
@@ -559,19 +529,20 @@ describe('module "controller"', () => {
 
     describe('#destroy()', () => {
       let record: Model;
-      const createRequest = (params = {}): Request => setType(() => ({
-        params,
-        route: {
-          controller: subject
-        },
-        defaultParams: {
-          fields: {
-            posts: attributes
+      const createRequest = (params = {}): Request =>
+        ({
+          params,
+          route: {
+            controller: subject
+          },
+          defaultParams: {
+            fields: {
+              posts: attributes
+            }
           }
-        }
-      }));
+        }) as unknown as Request;
 
-      before(async () => {
+      beforeAll(async () => {
         record = await Post.create({
           title: '#destroy() Test'
         });

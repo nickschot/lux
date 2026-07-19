@@ -359,16 +359,19 @@ prebuilt N-API binary — no native compile, no Python). CI additionally runs `p
 
 **Current baseline (Node 20 / pnpm 10):** `552 passing`.
 
-Two areas are **known-flaky** — if a run goes red here, re-run before investigating:
+Three areas are **known-flaky** — if a run goes red here, re-run before investigating:
 - [logger.test.js:67](src/packages/logger/test/logger.test.js:67) asserts a log timestamp
   exactly equals a `Date.now()` captured a moment earlier, so it loses a 1 ms race
   intermittently.
 - `module "fs" #watch()` depends on the external **watchman** daemon; it intermittently
   times out and then fails its `after all` hook with
   `Cannot read properties of undefined (reading 'destroy')`.
+- [sleep.test.ts](src/utils/test/sleep.test.ts) asserts `sleep(500)` lands within
+  475–525 ms. Under a loaded machine the timer overshoots (seen at 556 ms) and the file's
+  other test fails alongside it. Passes in isolation; re-run before investigating.
 
-Both are pre-existing, not regressions, and are candidates to fix during the test-runner
-migration.
+All three are pre-existing, not regressions, and are candidates to fix during the
+test-runner migration.
 
 ## Working notes
 

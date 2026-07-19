@@ -1,36 +1,33 @@
-// @flow
-import { expect } from 'chai';
-import { describe, it, before } from 'mocha';
+import { describe, it, beforeAll, expect } from 'vitest';
 
-import type { Model } from '../../database';
+import type { ModelClass } from '../../database';
 import type { Request$params } from '../../server';
 import merge from '../../../utils/merge';
-import setType from '../../../utils/set-type';
 import paramsToQuery from '../utils/params-to-query';
 import { getTestApp } from '../../../../test/utils/get-test-app';
 
 describe('module "controller"', () => {
   describe('util paramsToQuery()', () => {
-    let Post: Class<Model>;
-    const createParams = (obj: Object): Request$params => setType(() => {
-      return merge({
-        sort: 'createdAt',
-        filter: {},
-        fields: {
-          posts: [
-            'body',
-            'title',
-            'createdAt',
-            'updatedAt'
-          ]
-        }
-      }, obj);
-    });
+    let Post: ModelClass;
+    // The test cases only ever supply the subset of `Request$params` that the
+    // assertion under test cares about, so the merged object is cast rather
+    // than filled out.
+    const createParams = (obj: Record<string, unknown>): Request$params =>
+      merge(
+        {
+          sort: 'createdAt',
+          filter: {},
+          fields: {
+            posts: ['body', 'title', 'createdAt', 'updatedAt']
+          }
+        },
+        obj
+      ) as unknown as Request$params;
 
-    before(async () => {
+    beforeAll(async () => {
       const { models } = await getTestApp();
 
-      Post = setType(() => models.get('post'));
+      Post = models.get('post') as ModelClass;
     });
 
     it('returns the correct params object', () => {
@@ -45,10 +42,7 @@ describe('module "controller"', () => {
           title: 'New Post'
         },
         fields: {
-          posts: [
-            'body',
-            'title'
-          ]
+          posts: ['body', 'title']
         }
       });
 
@@ -58,26 +52,15 @@ describe('module "controller"', () => {
       expect(result).to.have.property('page', 5);
       expect(result).to.have.property('limit', 10);
 
-      expect(result)
-        .to.have.property('sort')
-        .and.deep.equal([
-          'title',
-          'ASC'
-        ]);
+      expect(result).to.have.property('sort').and.deep.equal(['title', 'ASC']);
 
-      expect(result)
-        .to.have.property('filter')
-        .and.deep.equal({
-          title: 'New Post'
-        });
+      expect(result).to.have.property('filter').and.deep.equal({
+        title: 'New Post'
+      });
 
       expect(result)
         .to.have.property('select')
-        .and.deep.equal([
-          'id',
-          'body',
-          'title'
-        ]);
+        .and.deep.equal(['id', 'body', 'title']);
     });
 
     describe('- page', () => {
@@ -126,13 +109,9 @@ describe('module "controller"', () => {
       it('can properly build included fields', () => {
         const subject = createParams({
           fields: {
-            users: [
-              'name'
-            ]
+            users: ['name']
           },
-          include: [
-            'user'
-          ]
+          include: ['user']
         });
 
         const result = paramsToQuery(Post, subject);
@@ -140,39 +119,27 @@ describe('module "controller"', () => {
         expect(result)
           .to.have.property('include')
           .and.deep.equal({
-            user: [
-              'id',
-              'name'
-            ]
+            user: ['id', 'name']
           });
       });
 
       it('ignores invalid field sets', () => {
         const subject = createParams({
           fields: {
-            authors: [
-              'name'
-            ]
+            authors: ['name']
           },
-          include: [
-            'author'
-          ]
+          include: ['author']
         });
 
         const result = paramsToQuery(Post, subject);
 
-        expect(result)
-          .to.have.property('include')
-          .and.deep.equal({});
+        expect(result).to.have.property('include').and.deep.equal({});
       });
 
       it('only adds `id` when the include array is `undefined`', () => {
         const subject = createParams({
           fields: {
-            images: [
-              'id',
-              'url'
-            ]
+            images: ['id', 'url']
           }
         });
 

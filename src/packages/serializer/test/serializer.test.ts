@@ -1,8 +1,5 @@
-// @flow
-import * as faker from 'faker';
-import { expect } from 'chai';
-import { it, describe, before, beforeEach, afterEach } from 'mocha';
-import { dasherize, underscore } from 'inflection';
+import faker from 'faker';
+import { it, describe, beforeAll, beforeEach, afterEach, expect } from 'vitest';
 
 import Serializer from '../index';
 import { VERSION as JSONAPI_VERSION } from '../../jsonapi';
@@ -10,20 +7,10 @@ import { VERSION as JSONAPI_VERSION } from '../../jsonapi';
 import range from '../../../utils/range';
 import { getTestApp } from '../../../../test/utils/get-test-app';
 
-import type Application from '../../application';
-import type { Model } from '../../database';
-
-import type {
-  JSONAPI$DocumentLinks,
-  JSONAPI$ResourceObject,
-  JSONAPI$IdentifierObject
-} from '../../jsonapi';
-
 const DOMAIN = 'http://localhost:4000';
 
-const linkFor = (type, id) => (
-  id ? `${DOMAIN}/${type}/${id}` : `${DOMAIN}/${type}`
-);
+const linkFor = (type: string, id?: unknown) =>
+  id ? `${DOMAIN}/${type}/${id}` : `${DOMAIN}/${type}`;
 
 describe('module "serializer"', () => {
   describe('class Serializer', () => {
@@ -36,15 +23,16 @@ describe('module "serializer"', () => {
       subject = createSerializer();
     };
 
-    const teardown = () => subject.model.transaction(async trx => {
-      const promises = Array
-        .from(instances)
-        .map(record => record.transacting(trx).destroy());
+    const teardown = () =>
+      subject.model.transaction(async trx => {
+        const promises = Array.from(instances).map(record =>
+          record.transacting(trx).destroy()
+        );
 
-      await Promise.all(promises);
-    });
+        await Promise.all(promises);
+      });
 
-    before(async () => {
+    beforeAll(async () => {
       const { models } = await getTestApp();
       const Tag = models.get('tag');
       const Post = models.get('post');
@@ -58,37 +46,29 @@ describe('module "serializer"', () => {
       }
 
       class TestSerializer extends Serializer {
-        attributes = [
-          'body',
-          'title',
-          'isPublic',
-          'createdAt',
-          'updatedAt'
-        ];
+        attributes = ['body', 'title', 'isPublic', 'createdAt', 'updatedAt'];
 
-        hasOne = [
-          'user',
-          'image'
-        ];
+        hasOne = ['user', 'image'];
 
-        hasMany = [
-          'comments',
-          'tags'
-        ];
+        hasMany = ['comments', 'tags'];
       }
 
-      createSerializer = (namespace = '') => new TestSerializer({
-        namespace,
-        model: Post,
-        parent: null
-      });
+      createSerializer = (namespace = '') =>
+        new TestSerializer({
+          namespace,
+          model: Post,
+          parent: null
+        });
 
-      createPost = async ({
-        includeUser = true,
-        includeTags = true,
-        includeImage = true,
-        includeComments = true
-      } = {}, transaction) => {
+      createPost = async (
+        {
+          includeUser = true,
+          includeTags = true,
+          includeImage = true,
+          includeComments = true
+        } = {},
+        transaction
+      ) => {
         let include = [];
         const run = async trx => {
           const post = await Post.transacting(trx).create({
@@ -100,7 +80,6 @@ describe('module "serializer"', () => {
           const postId = post.getPrimaryKey();
 
           if (includeUser) {
-            // $FlowIgnore
             const user = await User.transacting(trx).create({
               name: `${faker.name.firstName()} ${faker.name.lastName()}`,
               email: faker.internet.email(),
@@ -114,7 +93,6 @@ describe('module "serializer"', () => {
           }
 
           if (includeImage) {
-            // $FlowIgnore
             const image = await Image.transacting(trx).create({
               postId,
               url: faker.image.imageUrl()
@@ -126,28 +104,24 @@ describe('module "serializer"', () => {
 
           if (includeTags) {
             const tags = await Promise.all([
-              // $FlowIgnore
               Tag.transacting(trx).create({
                 name: faker.lorem.word()
               }),
-              // $FlowIgnore
               Tag.transacting(trx).create({
                 name: faker.lorem.word()
               }),
-              // $FlowIgnore
               Tag.transacting(trx).create({
                 name: faker.lorem.word()
               })
             ]);
 
             const categorizations = await Promise.all(
-              tags.map(tag => (
-                // $FlowIgnore
+              tags.map(tag =>
                 Categorization.transacting(trx).create({
                   postId,
                   tagId: tag.getPrimaryKey()
                 })
-              ))
+              )
             );
 
             tags.forEach(tag => {
@@ -163,17 +137,14 @@ describe('module "serializer"', () => {
 
           if (includeComments) {
             const comments = await Promise.all([
-              // $FlowIgnore
               Comment.transacting(trx).create({
                 postId,
                 message: faker.lorem.sentence()
               }),
-              // $FlowIgnore
               Comment.transacting(trx).create({
                 postId,
                 message: faker.lorem.sentence()
               }),
-              // $FlowIgnore
               Comment.transacting(trx).create({
                 postId,
                 message: faker.lorem.sentence()
@@ -200,9 +171,7 @@ describe('module "serializer"', () => {
       };
     });
 
-    describe('#format()', function () {
-      this.timeout(20 * 1000);
-
+    describe('#format()', () => {
       beforeEach(setup);
       afterEach(teardown);
 
@@ -212,26 +181,16 @@ describe('module "serializer"', () => {
         includeImage = true
       ) => {
         const { attributes, relationships } = result;
-        const {
-          body,
-          title,
-          isPublic,
-          createdAt,
-          updatedAt
-        } = post.getAttributes(
-          'body',
-          'title',
-          'isPublic',
-          'createdAt',
-          'updatedAt'
-        );
+        const { body, title, isPublic, createdAt, updatedAt } =
+          post.getAttributes(
+            'body',
+            'title',
+            'isPublic',
+            'createdAt',
+            'updatedAt'
+          );
 
-        const [
-          user,
-          tags,
-          image,
-          comments
-        ] = await Promise.all([
+        const [user, tags, image, comments] = await Promise.all([
           Reflect.get(post, 'user'),
           Reflect.get(post, 'tags'),
           Reflect.get(post, 'image'),
@@ -242,9 +201,7 @@ describe('module "serializer"', () => {
         const userId = user.getPrimaryKey();
         const imageId = image ? image.getPrimaryKey() : null;
 
-        const tagIds = tags
-          .map(tag => tag.getPrimaryKey())
-          .map(String);
+        const tagIds = tags.map(tag => tag.getPrimaryKey()).map(String);
 
         const commentIds = comments
           .map(comment => comment.getPrimaryKey())
@@ -338,36 +295,25 @@ describe('module "serializer"', () => {
           }
         });
 
-        expect(result).to.have.all.keys([
-          'data',
-          'links',
-          'jsonapi'
-        ]);
+        expect(result).to.have.all.keys(['data', 'links', 'jsonapi']);
 
         await expectResourceToBeCorrect(post, result.data);
 
-        expect(result).to.have.property('links').and.deep.equal({
-          self: linkFor('posts', post.getPrimaryKey())
-        });
+        expect(result)
+          .to.have.property('links')
+          .and.deep.equal({
+            self: linkFor('posts', post.getPrimaryKey())
+          });
 
         expect(result).to.have.property('jsonapi').and.deep.equal({
           version: JSONAPI_VERSION
         });
       });
 
-      it('works with an array of `Model` instances', async function () {
-        this.slow(13 * 1000);
-        this.timeout(25 * 1000);
-
-        const posts = await subject.model.transaction(trx => (
-          Promise.all(
-            Array.from(range(1, 25)).map(() => createPost({}, trx))
-          )
-        ));
-
-        const postIds = posts
-          .map(post => post.getPrimaryKey())
-          .map(String);
+      it('works with an array of `Model` instances', async () => {
+        const posts = await subject.model.transaction(trx =>
+          Promise.all(Array.from(range(1, 25)).map(() => createPost({}, trx)))
+        );
 
         const result = await subject.format({
           data: posts,
@@ -378,11 +324,7 @@ describe('module "serializer"', () => {
           }
         });
 
-        expect(result).to.have.all.keys([
-          'data',
-          'links',
-          'jsonapi'
-        ]);
+        expect(result).to.have.all.keys(['data', 'links', 'jsonapi']);
 
         expect(result.data).to.be.an('array').with.lengthOf(posts.length);
 
@@ -390,9 +332,11 @@ describe('module "serializer"', () => {
           await expectResourceToBeCorrect(posts[i], result.data[i]);
         }
 
-        expect(result).to.have.property('links').and.deep.equal({
-          self: linkFor('posts')
-        });
+        expect(result)
+          .to.have.property('links')
+          .and.deep.equal({
+            self: linkFor('posts')
+          });
 
         expect(result).to.have.property('jsonapi').and.deep.equal({
           version: JSONAPI_VERSION
@@ -412,17 +356,15 @@ describe('module "serializer"', () => {
           }
         });
 
-        expect(result).to.have.all.keys([
-          'data',
-          'links',
-          'jsonapi'
-        ]);
+        expect(result).to.have.all.keys(['data', 'links', 'jsonapi']);
 
         await expectResourceToBeCorrect(post, result.data);
 
-        expect(result).to.have.property('links').and.deep.equal({
-          self: linkFor('admin/posts', post.getPrimaryKey())
-        });
+        expect(result)
+          .to.have.property('links')
+          .and.deep.equal({
+            self: linkFor('admin/posts', post.getPrimaryKey())
+          });
 
         expect(result).to.have.property('jsonapi').and.deep.equal({
           version: JSONAPI_VERSION
@@ -446,17 +388,15 @@ describe('module "serializer"', () => {
           }
         });
 
-        expect(result).to.have.all.keys([
-          'data',
-          'links',
-          'jsonapi'
-        ]);
+        expect(result).to.have.all.keys(['data', 'links', 'jsonapi']);
 
         await expectResourceToBeCorrect(post, result.data, false);
 
-        expect(result).to.have.property('links').and.deep.equal({
-          self: linkFor('posts', post.getPrimaryKey())
-        });
+        expect(result)
+          .to.have.property('links')
+          .and.deep.equal({
+            self: linkFor('posts', post.getPrimaryKey())
+          });
 
         expect(result).to.have.property('jsonapi').and.deep.equal({
           version: JSONAPI_VERSION
@@ -486,7 +426,9 @@ describe('module "serializer"', () => {
 
         expect(result.included).to.be.an('array').with.lengthOf(1);
 
-        const { included: [item] } = result;
+        const {
+          included: [item]
+        } = result;
 
         expect(item).to.have.property('id', `${image.getPrimaryKey()}`);
         expect(item).to.have.property('type', 'images');
@@ -517,7 +459,9 @@ describe('module "serializer"', () => {
 
         expect(result.included).to.be.an('array').with.lengthOf(1);
 
-        const { included: [item] } = result;
+        const {
+          included: [item]
+        } = result;
 
         expect(item).to.have.property('id', `${user.getPrimaryKey()}`);
         expect(item).to.have.property('type', 'users');
@@ -552,12 +496,7 @@ describe('module "serializer"', () => {
           .with.lengthOf(comments.length);
 
         result.included.forEach(item => {
-          expect(item).to.have.all.keys([
-            'id',
-            'type',
-            'links',
-            'attributes'
-          ]);
+          expect(item).to.have.all.keys(['id', 'type', 'links', 'attributes']);
 
           expect(item).to.have.property('id').and.be.a('string');
           expect(item).to.have.property('type', 'comments');
@@ -586,17 +525,10 @@ describe('module "serializer"', () => {
 
         await expectResourceToBeCorrect(post, result.data);
 
-        expect(result.included)
-          .to.be.an('array')
-          .with.lengthOf(tags.length);
+        expect(result.included).to.be.an('array').with.lengthOf(tags.length);
 
         result.included.forEach(item => {
-          expect(item).to.have.all.keys([
-            'id',
-            'type',
-            'links',
-            'attributes'
-          ]);
+          expect(item).to.have.all.keys(['id', 'type', 'links', 'attributes']);
 
           expect(item).to.have.property('id').and.be.a('string');
           expect(item).to.have.property('type', 'tags');
