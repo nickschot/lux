@@ -1,9 +1,6 @@
-// @flow
 import path from 'path';
 
-import { spy } from 'sinon';
-import { expect } from 'chai';
-import { it, describe, beforeEach } from 'mocha';
+import { it, describe, beforeEach, expect } from 'vitest';
 
 import isExternal from '../utils/is-external';
 
@@ -33,9 +30,8 @@ describe('module "compiler"', () => {
       it('returns `false` for absolute file paths', () => {
         expect(external('/absolute/path/to/app/models/user')).to.be.false;
         expect(external('C:/absolute/path/to/app/models/user')).to.be.false;
-        expect(external(
-          'C:\\absolute\\path\\to\\app\\models\\user'
-        )).to.be.false;
+        expect(external('C:\\absolute\\path\\to\\app\\models\\user')).to.be
+          .false;
       });
 
       it('returns `false` for relative file paths', () => {

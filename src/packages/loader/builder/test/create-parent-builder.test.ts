@@ -1,8 +1,6 @@
-// @flow
 import { posix } from 'path';
 
-import { expect } from 'chai';
-import { describe, it, beforeEach } from 'mocha';
+import { describe, it, beforeEach, expect } from 'vitest';
 
 import Controller from '../../../controller';
 import Serializer from '../../../serializer';
@@ -21,34 +19,37 @@ describe('module "loader/builder"', () => {
       subject = createParentBuilder((key, target, parent) => {
         const namespace = posix.dirname(key).replace('.', '');
 
-        // $FlowIgnore
         const serializer = new Serializer({
           namespace,
           model: null,
           parent: null
         });
 
-        return Reflect.construct(target, [{
-          parent,
-          namespace,
-          serializer,
-          model: null
-        }]);
+        return Reflect.construct(target, [
+          {
+            parent,
+            namespace,
+            serializer,
+            model: null
+          }
+        ]);
       });
     });
 
     it('correctly builds parent objects', () => {
-      subject(new FreezeableMap([
-        ['root', new FreezeableMap([
-          ['application', ApplicationController]
-        ])],
-        ['api', new FreezeableMap([
-          ['application', ApiApplicationController]
-        ])],
-        ['api/v1', new FreezeableMap([
-          ['application', ApiV1ApplicationController]
-        ])]
-      ])).forEach(({ key, parent }) => {
+      subject(
+        new FreezeableMap([
+          ['root', new FreezeableMap([['application', ApplicationController]])],
+          [
+            'api',
+            new FreezeableMap([['application', ApiApplicationController]])
+          ],
+          [
+            'api/v1',
+            new FreezeableMap([['application', ApiV1ApplicationController]])
+          ]
+        ])
+      ).forEach(({ key, parent }) => {
         switch (key) {
           case 'root':
             expect(parent).to.be.an.instanceOf(ApplicationController);

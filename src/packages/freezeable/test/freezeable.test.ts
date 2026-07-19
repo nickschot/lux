@@ -1,6 +1,4 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe, before, beforeEach } from 'mocha';
+import { it, describe, beforeAll, beforeEach, expect } from 'vitest';
 
 import { FreezeableMap, FreezeableSet } from '../index';
 
@@ -9,7 +7,7 @@ describe('module "freezeable"', () => {
     describe('#constructor()', () => {
       let subject;
 
-      before(() => {
+      beforeAll(() => {
         subject = new FreezeableMap([
           ['a', 1],
           ['b', 2],
@@ -85,7 +83,7 @@ describe('module "freezeable"', () => {
     describe('#constructor()', () => {
       let subject;
 
-      before(() => {
+      beforeAll(() => {
         subject = new FreezeableSet([1, 2, 3]);
       });
 
