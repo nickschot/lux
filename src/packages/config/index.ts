@@ -1,4 +1,3 @@
-// @flow
 import { NODE_ENV } from '../../constants';
 
 import type { Config } from './interfaces';

@@ -1,4 +1,3 @@
-// @flow
 import type { Action } from '../router';
 import type { Request, Response } from '../server';
 
@@ -13,22 +12,18 @@ import createResponseProxy from './utils/create-response-proxy';
  * @function luxify
  */
 export default function luxify(
-  middleware: (
-    req: Request,
-    res: Response,
-    next: (err?: Error) => void
-  ) => void
-): Action<any> {
-  const result = function (req, res) { // eslint-disable-line func-names
-    return new Promise((resolve, reject) => {
+  middleware: (req: Request, res: Response, next: (err?: Error) => void) => void
+): Action<unknown> {
+  const result = function (req: Request, res: Response) {
+    return new Promise<unknown>((resolve, reject) => {
       Reflect.apply(middleware, null, [
         req,
         createResponseProxy(res, resolve),
-        (err) => {
+        (err?: Error) => {
           if (err && err instanceof Error) {
             reject(err);
           } else {
-            resolve();
+            resolve(undefined);
           }
         }
       ]);

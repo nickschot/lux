@@ -1,4 +1,3 @@
-// @flow
 import type { Logger$config } from '../logger';
 import type { Server$config } from '../server';
 
