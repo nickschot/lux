@@ -79,72 +79,59 @@ while replacing legacy tooling.
 
 ## Phase 3 status — where to resume
 
-**Progress: 150 `.ts` files, 151 Flow files left.** Every batch is one commit, with all
+**Progress: 206 `.ts` files, 95 Flow files left.** Every batch is one commit, with all
 five gates green (see "Conversion recipe").
 
 **Converted:** all of `src/utils/`, `src/interfaces`, `src/constants`, `freezeable`,
-`template`, `jsonapi`, `logger`, `server`, `router`, `serializer`, `controller`;
-`src/errors/controller-missing-error`. Still Flow: `database` (56 files), `application`,
-`cli`, `config`, `fs`, `pm`, `compiler`, `loader`, `luxify`, `src/index`.
+`template`, `jsonapi`, `logger`, `server`, `router`, `serializer`, `controller`,
+**`database`** (the ORM core — the big one); `src/errors/controller-missing-error`. Still
+Flow: `application` (6), `cli` (44), `config` (3), `fs` (16), `pm` (3), `compiler` (7),
+`loader` (12), `luxify` (2), `src/index`.
 
-**⚠ One temporary `.d.ts` stub left:** [database/index.d.ts](src/packages/database/index.d.ts)
-describes only the `Model`/`ModelClass`/`Query`/`typeForColumn` surface the rest of the
-framework consumes. **Delete it when `database` converts** (real emitted types replace it).
-`database` still ships real `index.js` at runtime. (The `controller` stub is gone — the real
-`controller` dropped in with **zero** router/server fallout, confirming the stub was
-accurate.)
+**⚠ One temporary `.d.ts` stub left:** [fs/index.d.ts](src/packages/fs/index.d.ts) declares
+just `readdir` (the single symbol `database` imports from the not-yet-converted `fs`
+package). **Delete it when `fs` converts.** (The `controller` and `database` stubs are gone
+— the real `database`, with an exported `ModelClass<T>`, dropped in for
+controller/serializer/router with only tiny fallout: `typeForColumn` returned `void` where
+callers wanted `undefined`, and `Query.limit/page` params became optional again.)
 
-### Database — where to resume (next up, and it's the big one)
+### Database — DONE (the ORM core), how it was typed
 
-`database` is **56 files / ~4,441 LOC** — the ORM core (`model/index.js` 1,495 lines,
-`query/index.js` 503, `initialize-class.js` 475). A **spike was done and reverted** to keep
-the tree clean; findings below so the next session starts warm. **Approach agreed:
-pragmatic-clean** — reproduce the *existing* Flow fidelity, which is already loose
-(`Object` appears 123×, `Model` is not generic, `any`×28, `mixed`×5). So: `Object` →
-`Record<string, unknown>`, `Class<Model>` → `ModelClass`, keep `Model`/`Query<T>` roughly as
-loose as today, and **do not** add per-model typed attributes / query-result narrowing (Flow
-never had them — that's a separate "improve ORM types" project for later, on a green TS
-baseline). Confine `any` + justified `eslint-disable` to genuinely-dynamic plumbing.
+`database` (56 files / ~4,441 LOC) is converted **pragmatic-clean**: reproduced the existing
+loose Flow fidelity (`Object` → `Record<string, unknown>`, `Class<Model>` → `ModelClass`,
+`mixed` → `unknown`), and confined `any` + justified file-level `eslint-disable` to the
+genuinely-dynamic plumbing (Knex query builders, the query-builder snapshot tuples, class
+init metaprogramming, ChangeSet's value store). Landed as **one atomic commit** — `model ↔
+query` is a runtime value cycle so it couldn't checkpoint. Key decisions worth keeping:
 
-- **Atomic, no checkpoint.** `model ↔ query` is a runtime *value* cycle
-  (`model/index` imports `Query`; `query/runner/utils/build-results` + `query/utils/format-select`
-  import `Model`), and the package is deeply interwoven, so under `allowJs:false` it's
-  all-or-nothing — convert **all 56 + delete the stub** in one commit. Leaf `.ts` can't even
-  build alongside their `.js` (duplicate Babel output), so don't expect a green mid-state;
-  convert everything, `git rm` the `.js`, then drive to zero with `tsc`.
-- **Downstream contract (keep these green):** controller/serializer/router import exactly
-  `Model`, `ModelClass`, `Query`, `typeForColumn` from `database`. `Database$column` /
-  `Database$relationship` were **stub-only** — real code doesn't import them by name.
-  `Model`, `Query`, `typeForColumn` are already real barrel exports; **the whole bridge is
-  adding an exported `ModelClass<T>` type** (Flow used anonymous `Class<Model>`). Put it in
-  `database/interfaces.ts`; shape that satisfied both downstream and internal use in the spike:
-  `new (attrs?, initialize?) => T` + statics `primaryKey/tableName/modelName/resourceName`,
-  `serializer: Serializer<T>`, `attributes/attributeNames`, `relationships/relationshipNames`,
-  `columnFor(): Database$column | undefined`, `relationshipFor(): Relationship$opts | undefined`,
-  `find(): Query<T>`, `select(): Query<Array<T>>`,
-  `create(): Promise<Transaction$ResultProxy<T, boolean>>`.
-- **Type-topology gotchas (the actual hard part, none individually hard but dozens of them):**
-  - `Model` is `this`-polymorphic everywhere: `static find(): Query<this>`, `static all():
-    Query<Array<this>>`, `static transacting(): Class<this>`. `Query<this>` is valid TS;
-    `Class<this>` in a static → `typeof Model`-ish, type it pragmatically.
-  - save/update/destroy return `Transaction$ResultProxy<this, *>` = `T & { didPersist; unwrap(): T }`
-    (`transaction/interfaces`). Controller relies on the proxy's `unwrap()`/`didPersist`.
-  - `serializer` does `item.constructor.serializer` — the **instance's `constructor` must be
-    typed `ModelClass`** (default TS types it `Function`). Resolve with a declared
-    `constructor` (interface-merge or `declare` trick) or it regresses serializer.
-  - `Relationship$opts.model` is `Class<Model>` → `ModelClass`; `relationshipFor` returns it.
-  - `createServerError` in `errors/unique-constraint-error` + `query/errors/record-not-found-error`:
-    import from the **leaf** `server/utils/create-server-error`, not the `../server` barrel
-    (same esbuild-register module-init reason as jsonapi/router errors — see below).
-- **Suggested order (leaf-up):** constants · errors/* · utils/{normalize-model-name,
-  type-for-column} · migration/utils/generate-timestamp · model/interfaces · interfaces (with
-  `ModelClass`) → attribute/* → query/* → model/* → relationship/* →
-  change-set/validation/migration/transaction → initialize → **index (delete the stub here)**.
-  cp+edit the big JSDoc files (`model/index`, `query/index`, `initialize-class`) — most lines
-  are docs; only the type annotations change (`Object`→`Record`, `Class<>`→`ModelClass`, `*`,
-  `mixed`→`unknown`). Then `git rm` all `.js`, `tsc`-drive to 0, fix downstream fallout, gates.
+- **`ModelClass<T>` is the whole downstream bridge.** Flow used anonymous `Class<Model>`;
+  TS needs a named exported type. It lives in [database/interfaces.ts](src/packages/database/interfaces.ts)
+  and had to accumulate every static that *any* code touches off a model class (statics like
+  `find/select/create/where/first/isInstance/columnFor/relationshipFor/initialize/transaction`,
+  config `hasOne/hasMany/belongsTo/scopes/validates/hooks`, `store/logger/table/prototype`).
+  **`typeof Model` must be structurally assignable to `ModelClass`** because the Model class's
+  own statics do `new Query(this)`. That assignability is brittle: e.g. `isInstance` had to
+  return `boolean` not a `value is Model` predicate; `columnNameFor` had to return `string |
+  undefined` not `string | void` (`void` ≠ `undefined`); `Model.relationships` had to carry
+  `Relationship$opts`, not `unknown`.
+- **Instance `constructor` typing:** `class Model { declare ['constructor']: ModelClass; }`
+  — this is what lets `owner.constructor.relationshipFor(...)` and `item.constructor.serializer`
+  (in serializer) type-check.
+- **`this`-polymorphism:** kept `this` on instance-method returns (`save/update/destroy:
+  Promise<Transaction$ResultProxy<this, boolean>>`, `transacting(): this`); used concrete
+  `Model`/`Query<Array<Model>>` for **static** returns (`this` in a static means the class,
+  which breaks `Query<this>`/`Serializer<this>`).
+- **Static fields take no `!`** — `strictPropertyInitialization` doesn't check statics, and a
+  `!` there is a hard error (TS1255). Instance fields set via `defineProperties` do need `!`.
+- **`Database` constructs async** (`new Database()` returns the `initialize(this)` Promise) —
+  a Promise-returning constructor can't be expressed in TS, so it ends with
+  `return initialize(this, opts) as unknown as Database;` and callers `await new Database()`.
+- **createServerError leaf import** in `errors/unique-constraint-error` +
+  `query/errors/record-not-found-error` (same esbuild-register cycle reason as jsonapi/router).
+- **One new stub:** `fs/index.d.ts` (`readdir`) — `database` value-imports it from the still-Flow
+  `fs` package.
 
-**⚠ The next step is a cluster, not a package.** `logger`, `server`, `router` and
+**⚠ Historical note — the logger/server/router/jsonapi cluster (Phase 3b, done):** `logger`, `server`, `router` and
 `jsonapi/{errors,index,interfaces}` form **one irreducible type cycle**: `server` does
 `import type Logger`; `logger/request-logger` does `import type { Request, Response }`;
 `router` value-imports `server` (8 sites: `createServerError`, `getDomain`,
