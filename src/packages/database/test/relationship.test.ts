@@ -1,36 +1,28 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe, before, beforeEach, afterEach } from 'mocha';
+import { it, describe, beforeAll, beforeEach, afterEach, expect } from 'vitest';
 
 import { get, set } from '../relationship';
 
 import range from '../../../utils/range';
 import { getTestApp } from '../../../../test/utils/get-test-app';
 
-import type { Model } from '../index';
+import type { ModelClass } from '../index';
 
 describe('module "database/relationship"', () => {
-  let Tag: Class<Model>;
-  let Post: Class<Model>;
-  let User: Class<Model>;
-  let Image: Class<Model>;
-  let Comment: Class<Model>;
-  let Categorization: Class<Model>;
+  let Tag: ModelClass;
+  let Post: ModelClass;
+  let User: ModelClass;
+  let Image: ModelClass;
+  let Comment: ModelClass;
+  let Categorization: ModelClass;
 
-  before(async () => {
+  beforeAll(async () => {
     const { models } = await getTestApp();
 
-    // $FlowIgnore
     Tag = models.get('tag');
-    // $FlowIgnore
     Post = models.get('post');
-    // $FlowIgnore
     User = models.get('user');
-    // $FlowIgnore
     Image = models.get('image');
-    // $FlowIgnore
     Comment = models.get('comment');
-    // $FlowIgnore
     Categorization = models.get('categorization');
   });
 
@@ -55,30 +47,30 @@ describe('module "database/relationship"', () => {
             postId: subjectId
           }),
           Promise.all(
-            Array.from(range(1, 5)).map(num => (
+            Array.from(range(1, 5)).map(num =>
               Tag.transacting(trx).create({
                 name: `New Tag ${num}`
               })
-            ))
+            )
           ),
           Promise.all(
-            Array.from(range(1, 5)).map(num => (
+            Array.from(range(1, 5)).map(num =>
               Comment.transacting(trx).create({
                 message: `New Comment ${num}`,
                 userId: 2,
                 postId: subjectId
               })
-            ))
+            )
           )
         ]);
 
         const categorizations = await Promise.all(
-          tags.map(tag => (
+          tags.map(tag =>
             Categorization.transacting(trx).create({
               tagId: tag.getPrimaryKey(),
               postId: subjectId
             })
-          ))
+          )
         );
 
         instances.add(image);
@@ -97,14 +89,15 @@ describe('module "database/relationship"', () => {
       });
     };
 
-    const teardown = () => subject.transaction(async trx => {
-      await Promise.all([
-        subject.transacting(trx).destroy(),
-        ...Array
-          .from(instances)
-          .map(record => record.transacting(trx).destroy())
-      ]);
-    });
+    const teardown = () =>
+      subject.transaction(async trx => {
+        await Promise.all([
+          subject.transacting(trx).destroy(),
+          ...Array.from(instances).map(record =>
+            record.transacting(trx).destroy()
+          )
+        ]);
+      });
 
     describe('has-one relationships', () => {
       beforeEach(setup);
@@ -197,14 +190,15 @@ describe('module "database/relationship"', () => {
       subjectId = subject.getPrimaryKey();
     };
 
-    const teardown = () => subject.transaction(async trx => {
-      await Promise.all([
-        subject.transacting(trx).destroy(),
-        ...Array
-          .from(instances)
-          .map(record => record.transacting(trx).destroy())
-      ]);
-    });
+    const teardown = () =>
+      subject.transaction(async trx => {
+        await Promise.all([
+          subject.transacting(trx).destroy(),
+          ...Array.from(instances).map(record =>
+            record.transacting(trx).destroy()
+          )
+        ]);
+      });
 
     describe('has-one relationships', () => {
       let image;
@@ -269,18 +263,17 @@ describe('module "database/relationship"', () => {
       beforeEach(async () => {
         await setup();
 
-        comments = await Comment.transaction(trx => (
+        comments = await Comment.transaction(trx =>
           Promise.all(
-            [1, 2, 3].map(num => (
-              Comment
-                .transacting(trx)
+            [1, 2, 3].map(num =>
+              Comment.transacting(trx)
                 .create({
                   message: `Test Comment ${num}`
                 })
                 .then(record => record.unwrap())
-            ))
+            )
           )
-        ));
+        );
 
         comments.forEach(comment => {
           instances.add(comment);
