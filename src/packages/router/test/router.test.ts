@@ -1,6 +1,4 @@
-// @flow
-import { expect } from 'chai';
-import { it, before, describe } from 'mocha';
+import { it, beforeAll, describe, expect } from 'vitest';
 
 import Route from '../route';
 import Router from '../index';
@@ -17,12 +15,11 @@ describe('module "router"', () => {
     let controller: Controller;
     let controllers;
 
-    before(async () => {
+    beforeAll(async () => {
       const app = await getTestApp();
 
       controllers = app.controllers;
 
-      // $FlowIgnore
       controller = controllers.get('application');
     });
 
@@ -122,7 +119,7 @@ describe('module "router"', () => {
     describe('#match()', () => {
       let subject: Router;
 
-      before(() => {
+      beforeAll(() => {
         subject = new Router({
           controller,
           controllers,
@@ -134,7 +131,6 @@ describe('module "router"', () => {
       });
 
       it('can match a route for a request with a dynamic url', () => {
-        // $FlowIgnore
         const req: Request = {
           method: 'GET',
           url: {
@@ -146,7 +142,6 @@ describe('module "router"', () => {
       });
 
       it('can match a route for a request with a non-dynamic url', () => {
-        // $FlowIgnore
         const req: Request = {
           method: 'GET',
           url: {

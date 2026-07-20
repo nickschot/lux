@@ -1,6 +1,4 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe, before } from 'mocha';
+import { it, describe, beforeAll, expect } from 'vitest';
 
 import Parameter from '../parameter';
 import ParameterGroup from '../parameter-group';
@@ -9,43 +7,54 @@ describe('module "router/route/params"', () => {
   describe('class ParameterGroup', () => {
     let subject: ParameterGroup;
 
-    before(() => {
-      subject = new ParameterGroup([
-        ['id', new Parameter({
-          type: 'number',
-          path: 'id',
+    beforeAll(() => {
+      subject = new ParameterGroup(
+        [
+          [
+            'id',
+            new Parameter({
+              type: 'number',
+              path: 'id',
+              required: true
+            })
+          ],
+          [
+            'meta',
+            new ParameterGroup(
+              [
+                [
+                  'date',
+                  new Parameter({
+                    type: 'string',
+                    path: 'meta.date',
+                    required: true
+                  })
+                ],
+                [
+                  'vowel',
+                  new Parameter({
+                    type: 'string',
+                    path: 'meta.vowel',
+                    values: ['a', 'e', 'i', 'o', 'u']
+                  })
+                ]
+              ],
+              {
+                path: 'meta',
+                sanitize: true
+              }
+            )
+          ]
+        ],
+        {
+          path: '',
           required: true
-        })],
-        ['meta', new ParameterGroup([
-          ['date', new Parameter({
-            type: 'string',
-            path: 'meta.date',
-            required: true
-          })],
-          ['vowel', new Parameter({
-            type: 'string',
-            path: 'meta.vowel',
-            values: [
-              'a',
-              'e',
-              'i',
-              'o',
-              'u'
-            ]
-          })],
-        ], {
-          path: 'meta',
-          sanitize: true
-        })]
-      ], {
-        path: '',
-        required: true
-      });
+        }
+      );
     });
 
     describe('#validate()', () => {
       it('returns null when then value is null', () => {
-        // $FlowIgnore
         expect(subject.validate(null)).to.be.null;
       });
 
@@ -99,7 +108,7 @@ describe('module "router/route/params"', () => {
           id: 1,
           meta: {
             date: Date(),
-            colors: ['red', 'green', 'blue'],
+            colors: ['red', 'green', 'blue']
           }
         };
 

@@ -1,10 +1,7 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe, before } from 'mocha';
+import { it, describe, beforeAll, expect } from 'vitest';
 
 import { paramsFor, defaultParamsFor } from '../index';
 
-import setType from '../../../../../utils/set-type';
 import { getTestApp } from '../../../../../../test/utils/get-test-app';
 
 import type Controller from '../../../../controller';
@@ -13,18 +10,17 @@ describe('module "router/route/params"', () => {
   describe('#paramsFor()', () => {
     let getController;
 
-    before(async () => {
+    beforeAll(async () => {
       const { controllers } = await getTestApp();
 
-      getController = (name: string): Controller => setType(() => {
-        return controllers.get(name);
-      });
+      getController = (name: string): Controller =>
+        controllers.get(name) as Controller;
     });
 
     describe('with model-less controller', () => {
       let params;
 
-      before(() => {
+      beforeAll(() => {
         params = paramsFor({
           type: 'custom',
           method: 'GET',
@@ -42,19 +38,18 @@ describe('module "router/route/params"', () => {
   describe('#defaultParamsFor()', () => {
     let getController;
 
-    before(async () => {
+    beforeAll(async () => {
       const { controllers } = await getTestApp();
 
-      getController = (name: string): Controller => setType(() => {
-        return controllers.get(name);
-      });
+      getController = (name: string): Controller =>
+        controllers.get(name) as Controller;
     });
 
     describe('with collection route', () => {
       let params;
       let controller;
 
-      before(() => {
+      beforeAll(() => {
         controller = getController('posts');
         params = defaultParamsFor({
           controller,
@@ -72,7 +67,10 @@ describe('module "router/route/params"', () => {
       });
 
       it('contains model fields', () => {
-        const { model, serializer: { attributes } } = controller;
+        const {
+          model,
+          serializer: { attributes }
+        } = controller;
 
         expect(params.fields).to.include.keys(model.resourceName);
         expect(params.fields[model.resourceName]).to.deep.equal(attributes);
@@ -83,7 +81,7 @@ describe('module "router/route/params"', () => {
       let params;
       let controller;
 
-      before(() => {
+      beforeAll(() => {
         controller = getController('posts');
         params = defaultParamsFor({
           controller,
@@ -92,7 +90,10 @@ describe('module "router/route/params"', () => {
       });
 
       it('contains model fields', () => {
-        const { model, serializer: { attributes } } = controller;
+        const {
+          model,
+          serializer: { attributes }
+        } = controller;
 
         expect(params.fields).to.include.keys(model.resourceName);
         expect(params.fields[model.resourceName]).to.deep.equal(attributes);
@@ -102,7 +103,7 @@ describe('module "router/route/params"', () => {
     describe('with custom route', () => {
       let params;
 
-      before(() => {
+      beforeAll(() => {
         params = defaultParamsFor({
           type: 'custom',
           controller: getController('posts')
@@ -117,7 +118,7 @@ describe('module "router/route/params"', () => {
     describe('with model-less controller', () => {
       let params;
 
-      before(() => {
+      beforeAll(() => {
         params = defaultParamsFor({
           type: 'custom',
           controller: getController('health')

@@ -1,6 +1,4 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe, before } from 'mocha';
+import { it, describe, beforeAll, expect } from 'vitest';
 
 import type { Request } from '../../../../server';
 import getControllerName from '../utils/get-controller-name';
@@ -10,10 +8,9 @@ describe('module "router/route/action"', () => {
   describe('util getControllerName()', () => {
     let subject: Request;
 
-    before(async () => {
+    beforeAll(async () => {
       const { router } = await getTestApp();
 
-      // $FlowIgnore
       subject = {
         route: router.get('GET:/posts')
       };
