@@ -456,8 +456,11 @@ Things worth knowing before editing it:
   hunting for auth/host/server-version causes that are all red herrings. Bumped to `pg@8`.
   **Quickest check for this class of bug — connect to a closed port and see if it rejects:**
   a healthy driver gives `ECONNREFUSED` immediately; the broken one exits 0 in silence.
-  `mysql2@1.7` is the same vintage and is why the workflow pins `mysql:8.0` and switches
-  root to `mysql_native_password`; bumping it to `mysql2@3` should retire both hacks.
+  `mysql2` was bumped 1.7 -> 3.x for the same reason, which let the workflow drop a
+  `mysql:8.0` pin and a `mysql_native_password` switch; both services now run current
+  releases (postgres:16, mysql:8.4) with ordinary password auth. `sqlite3` is already
+  modern (5.1.7). **If a driver is ever pinned back, expect the server-side workarounds
+  to come back with it.**
 - **`lux db:reset` cannot provision pg/mysql.** `dbdrop` connects *to* `lux_test` and then
   drops it (Postgres refuses); `dbcreate` connects to a database it is about to create. So
   those legs create the database with the service container's client and set

@@ -65,9 +65,6 @@ jobs:
     # leg — the sqlite3 leg pays the health-check wait without using them. That
     # is the price of keeping this one readable job instead of three.
     services:
-      # The test-app pins 2019-era drivers (pg@7, mysql2@1.x) that predate the
-      # auth mechanisms modern servers default to, so both services are
-      # configured down to what those drivers can actually speak.
       postgres:
         image: postgres:16
         env:
@@ -82,10 +79,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       mysql:
-        # 8.0, not 8: `mysql:8` now resolves to 8.4, which no longer loads
-        # mysql_native_password at all. mysql2@1.x cannot do caching_sha2, so
-        # the server must still offer the native plugin for the ALTER below.
-        image: mysql:8.0
+        image: mysql:8.4
         env:
           MYSQL_ROOT_PASSWORD: root
         ports:
@@ -149,16 +143,9 @@ jobs:
           PGPASSWORD: postgres
         run: psql -h 127.0.0.1 -U postgres -c 'CREATE DATABASE lux_test;'
 
-      # The runner's own mysql client does speak caching_sha2, so it can connect
-      # to switch root back to the native plugin that mysql2@1.x requires.
       - name: Create database (mysql)
         if: matrix.driver == 'mysql2'
-        run: |
-          mysql -h 127.0.0.1 -uroot -proot -e "
-            ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'root';
-            FLUSH PRIVILEGES;
-            CREATE DATABASE lux_test;
-          "
+        run: mysql -h 127.0.0.1 -uroot -proot -e 'CREATE DATABASE lux_test;'
 
       - name: Test
         env:
