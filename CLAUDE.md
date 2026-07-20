@@ -64,18 +64,18 @@ while replacing legacy tooling.
    `cli.cjs` for `bin/lux`). App compiler's `LUX_LOCAL` now points at `dist/index.mjs`, so
    it bundles built JS (decoupled from source language). TS foundation in place: strict
    [tsconfig.json](tsconfig.json), `pnpm typecheck` (`tsc --noEmit`), and
-   [lib/ts-hook.js](lib/ts-hook.js) (esbuild-register runs `.ts` in Mocha, loaded via
-   `babel-hook.js` before babel-register). Proven end-to-end on `src/utils/uniq.ts`.
+   `lib/ts-hook.js` (esbuild-register ran `.ts` in Mocha, loaded via `babel-hook.js`
+   before babel-register). Proven end-to-end on `src/utils/uniq.ts`. *(Both hooks and
+   `lib/` itself were removed in Phase 4 Step 3.)*
 3. ✅ **Flow → TypeScript, bottom-up per `src/packages/*`** — all *source* converted
    (295 `.ts`). Test suites/fixtures were deferred to Phase 4 and are now done too. See
    "Phase 3 status" below.
 4. **Runner swap.** ✅ Steps 1–2: Vitest stood up beside Mocha, then **all 89 Flow test
    files converted** batch-by-batch — **no Flow remains anywhere in the tree**; the suite
    is 552 passing across 83 files, entirely on Vitest (Mocha reports 0). See "Phase 4
-   status" below. ⬜ Steps 3–4: retire Mocha/nyc/chai, `lib/babel-hook.js`,
-   `lib/ts-hook.js`, `mocha.opts`, `.babelrc` and `@babel/preset-flow`; make `test` just
-   `vitest run` with v8 coverage; flip the build to **tsup**/esbuild and raise the target
-   off `es2017`.
+   status" below. ✅ Step 3: the Mocha stack is **retired** — `test` is now just
+   `vitest run`. ⬜ Step 4: flip the build to **tsup**/esbuild and raise the target off
+   `es2017` (both gated on phase 5 — see "Phase 4 status").
 5. Finish the app-facing compiler rework (`rollup-plugin-lux`) — likely esbuild; free to
    break since only own apps consume it.
 6. ✅ ESLint 9 flat + typescript-eslint + Prettier. ⬜ Still to do: replace
@@ -83,23 +83,26 @@ while replacing legacy tooling.
 
 ## Phase 4 status — where to resume
 
-**Steps 1–2 are DONE.** Vitest runs the whole suite: **552 passing, 83 files, Mocha 0.**
-No Flow remains in the tree. Nine batches, one commit each, all five gates green.
+**Steps 1–3 are DONE.** Vitest is the only runner — **552 passing across 83 files**, via
+`pnpm test` (= `vitest run`, ~30 s). No Flow remains in the tree; Mocha, nyc and chai are
+gone along with `lib/` and `test/index.js`. Nine conversion batches, one commit each, all
+five gates green, plus the `declare` refactor and the Mocha removal.
 
-**⬜ Next: Steps 3–4.** Two clearly separable pieces — do them as separate commits:
+**⬜ Next: Step 4 — flip the build to tsup/esbuild.** Both remaining items are gated on
+phase 5, so there is no rush:
+- The **class-fields hazard is already defused**: the ~113 uninitialized fields are now
+  `declare` in the source and `lib/babel-plugin-strip-uninitialized-fields.cjs` is gone,
+  so dropping Babel no longer reintroduces the shadowing bug. Keep it that way — if a new
+  field is added with a bare annotation or `!`, tsup/esbuild *will* emit it.
+- The **`es2017` target can only rise once the app compiler stops re-parsing `dist/`**
+  with Rollup 0.43 + Babel 6 (phase 5). Retiring nyc removed the other reason for it.
 
-1. **Retire the Mocha stack (low risk).** `mocha.opts`, `lib/babel-hook.js`,
-   `lib/ts-hook.js`, `test/index.js` (the Mocha bootstrap — `test/vitest.global-setup.ts`
-   already does the same `lux db:*` work), nyc, chai, mocha; reduce `test` to `vitest run`
-   and move coverage to Vitest's v8 provider (already configured) for the `codecov`
-   script. Nothing here can break the suite: the Mocha half already matches 0 tests.
-   `@babel/preset-flow` can go too (no Flow left). **`.babelrc` must STAY** — it is Babel 6
-   + `babel-preset-lux` for the *app compiler*, which is Phase 5.
-2. **Flip the build to tsup (higher risk — read the class-fields trap below first).**
-   Dropping Babel also drops `lib/babel-plugin-strip-uninitialized-fields.cjs`, which is
-   currently what makes `src/`'s ~91 `!:` fields safe. The `es2017` target can only be
-   raised once the app compiler (Phase 5) stops re-parsing `dist/` with Babel 6; retiring
-   nyc removes only *one* of the two reasons for it.
+**Also still dead but not yet removed** (deliberately left out of the Mocha commit):
+`@babel/preset-flow` plus the `.js` override in [babel.config.build.cjs](babel.config.build.cjs)
+(no `.js` sources remain), `flow-bin`, `flow-typed`, the `flow`/`types` scripts and the
+`flow-typed/` directory; and `rollup-plugin-multi-entry`, which is unreferenced but whose
+original purpose I could not confirm. **`.babelrc`, `babel-core` and `babel-preset-lux`
+must STAY** — they are the *app compiler's* Babel 6 (phase 5), not test infrastructure.
 
 ### Traps this migration hit (all pre-existing bugs the runner swap exposed)
 
@@ -108,17 +111,17 @@ No Flow remains in the tree. Nine batches, one commit each, all five gates green
   *emitted* as an own property set to `undefined`, shadowing the accessor
   `Model.initialize()` installs — attributes silently stop persisting. **`!` does not
   prevent the emit**, it only silences `strictPropertyInitialization`.
-  **⚠ This is load-bearing for Step 4.** `src/` uses `!:` in ~91 places (10 on `Model`),
-  and it is safe today only because the Babel build stage runs
-  [lib/babel-plugin-strip-uninitialized-fields.cjs](lib/babel-plugin-strip-uninitialized-fields.cjs),
-  which deletes uninitialized non-`declare` class fields — verified: they are absent from
-  `build/packages/database/model/index.js`. **Flipping the build to tsup/esbuild removes
-  that plugin and with it the protection.** Either port the plugin, set
-  `useDefineForClassFields: false`, or convert those ~91 fields to `declare` *before*
-  dropping Babel. (Vitest/oxc gets no such plugin either; the suite is green because
-  `Model`'s constructor re-defines its instance fields via `Object.defineProperties`,
-  whereas the attribute accessors that broke `model.test` live on the *prototype* and
-  stay shadowed.)
+  **RESOLVED — keep it that way.** `src/` used to rely on a build-step plugin
+  (`lib/babel-plugin-strip-uninitialized-fields.cjs`) deleting these fields, which would
+  have silently reintroduced the bug the moment the build moved off Babel. All 113
+  uninitialized fields are now **`declare`** in the source and the plugin is gone. Note
+  the three shapes this takes: 91 instance fields that were `!:`; **18 statics on `Model`,
+  which cannot take `!` at all** (TS1255 — `strictPropertyInitialization` does not check
+  statics, so a bare annotation was the only option); and 4 plain uninitialized fields.
+  Adding a new field with a bare annotation or `!` will reintroduce the emit.
+  (Why the suite stayed green before: `Model`'s constructor re-defines its instance fields
+  via `Object.defineProperties`, so an own `undefined` gets overwritten — whereas the
+  attribute accessors that broke `model.test` live on the *prototype* and stay shadowed.)
 - **Cross-suite DB pollution.** Mocha's alphabetical file order was load-bearing:
   `serializer.test` leaked 32 `posts` rows (its `createPost` registered every *related*
   record for teardown but not the post), which broke `query.test`'s absolute counts against
@@ -251,9 +254,10 @@ type-strip stage so stubs are safe. (Verified end-to-end.)
     already did). Prefer leaf imports for values used at module load inside a cycle.
   - **Async lowering in the test hook:** chai's `type-detect` reports a **native** async
     function as `'AsyncFunction'`, so `expect(fn).to.be.a('function')` fails. Babel 6
-    lowered async → plain function; esbuild-register kept it native. Fix: `lib/ts-hook.js`
-    now sets `target: 'es2016'` so async lowers, matching Babel-era behaviour. (Distinct
-    from the **build** target `es2017`, which is about Babel-6 re-parsing `dist/`.)
+    lowered async → plain function; esbuild-register kept it native. Fix at the time:
+    `lib/ts-hook.js` set `target: 'es2016'` so async lowered, matching Babel-era behaviour.
+    *(Moot now — that hook is gone. The same hazard resurfaced under Vitest's oxc, which
+    also keeps async native; see "Phase 4 status".)*
 - **Next:** delete the 2 stubs as `controller`/`database`/`serializer` convert.
 
 **Conversion recipe (per batch):**
@@ -315,19 +319,20 @@ Colocated tests: `src/**/*.test.ts` (all Vitest). Type/decl stubs in `decl/` and
 ## Toolchain (current)
 
 - **Language:** **TypeScript** (strict). Type-check: `pnpm typecheck` (`tsc --noEmit`).
-  No Flow remains; `pnpm run flow` and `flow-typed/` are vestigial and go in Step 4.
+  No Flow remains; `pnpm run flow` and `flow-typed/` are vestigial (see "Phase 4 status"
+  for the full list of dead Flow tooling still to be removed).
   Note `tsconfig` **excludes `src/**/test`**, so test files are not type-checked — the
   build (Babel) and the suite are what catch errors there.
 - **Transpile:** Babel 6 via `babel-preset-lux` (`.babelrc`) is still used by the *app
   compiler*. The framework's own build is Babel 8 + esbuild — see [build.mjs](build.mjs).
 - **Bundle:** [build.mjs](build.mjs) → `dist/` (`index.js` CJS, `index.mjs` ESM,
-  `cli.cjs`). Build: `pnpm build`. **esbuild targets `es2017` on purpose:** two Babel 6
-  stages still *parse* the output — nyc wraps child processes so the suite's `lux …`
-  shell-outs load `dist/cli.cjs` through `lib/babel-hook.js`, and the legacy app compiler
-  bundles `dist/index.mjs` with Rollup 0.43 + Babel 6. babylon rejects post-ES2017 syntax,
-  so a stray `??`/`?.` in any converted source otherwise breaks the test bootstrap.
+  `cli.cjs`). Build: `pnpm build`. **esbuild targets `es2017` on purpose:** a Babel 6 stage
+  still *parses* the output — the legacy app compiler bundles `dist/index.mjs` with
+  Rollup 0.43 + Babel 6, and the suite shells out to `lux db:*`, which goes through it.
+  babylon rejects post-ES2017 syntax, so a stray `??`/`?.` in any source otherwise breaks
+  the test bootstrap. (The nyc half of this constraint died with the Mocha stack.)
   `bin/lux` is subject to the same constraint (noted in that file). Raise the target once
-  phases 4 and 5 retire Mocha/nyc and the app compiler.
+  phase 5 retires the app compiler.
 - **Lint/format:** **ESLint 9 flat** ([eslint.config.mjs](eslint.config.mjs)) +
   typescript-eslint + **Prettier**. `pnpm lint`, `pnpm format`, `pnpm format:check`.
   The config still scopes parsers by extension (`.ts` typescript-eslint, `.js`
@@ -338,8 +343,9 @@ Colocated tests: `src/**/*.test.ts` (all Vitest). Type/decl stubs in `decl/` and
   `expect` (Vitest bundles chai 5). Single fork, `isolate: false`, `fileParallelism: false`
   — the `getTestApp()` singleton and the migrated DB are shared, matching Mocha's old
   single-process model. `globalSetup: test/vitest.global-setup.ts` runs `lux db:*`.
-  Run: `pnpm test`. The Mocha half (`mocha.opts`, `lib/babel-hook.js`, `lib/ts-hook.js`,
-  nyc, chai) is still wired but now matches **0** tests; removing it is Phase 4 Step 4.
+  Run: `pnpm test` (= `vitest run`). Coverage is Vitest's **v8** provider (`pnpm codecov`).
+  The Mocha stack — `mocha.opts`, `lib/`, `test/index.js`, mocha/nyc/chai — was removed
+  once no suite referenced it.
 - **Package manager:** **pnpm 10** (migrated from yarn; `pnpm-lock.yaml`, `packageManager`
   field). The old `yarn.lock` is retained untracked for reference only.
 - **Node:** pinned to **20** via **Volta** (`volta` field in `package.json`; `.nvmrc` = 20).
@@ -429,9 +435,8 @@ Tests need a database; the test-app defaults to **`sqlite3`** (bumped to `^5.1.7
 prebuilt N-API binary — no native compile, no Python). CI additionally runs `pg` /
 `mysql2` via `DATABASE_DRIVER`.
 
-**Current baseline (Node 20 / pnpm 10):** `552 passing` — now **all on Vitest** across 83
-files; the Mocha half of `pnpm test` reports `0 passing` and is ready to be removed
-(Phase 4 Step 4).
+**Current baseline (Node 20 / pnpm 10):** `552 passing` across 83 files, all on **Vitest**
+(`pnpm test` = `vitest run`, ~30 s).
 
 Three areas are **known-flaky** — if a run goes red here, re-run before investigating:
 - [logger.test.ts](src/packages/logger/test/logger.test.ts) "writes with a recent
