@@ -9,7 +9,7 @@ import entries from '../../../utils/entries';
 import mapToObject from '../../../utils/map-to-object';
 
 class ChangeSet extends Map<string, any> {
-  isPersisted: boolean;
+  declare isPersisted: boolean;
 
   constructor(data: Record<string, unknown> = {}) {
     super(entries(data));

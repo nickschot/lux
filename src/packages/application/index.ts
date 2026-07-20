@@ -24,7 +24,7 @@ class Application {
    * @type {String}
    * @public
    */
-  path!: string;
+  declare path: string;
 
   /**
    * The port that an `Application` instance is listening for incomming HTTP
@@ -34,7 +34,7 @@ class Application {
    * @type {Number}
    * @public
    */
-  port!: number;
+  declare port: number;
 
   /**
    * A reference to the `Database` instance.
@@ -43,7 +43,7 @@ class Application {
    * @type {Database}
    * @private
    */
-  store!: Database;
+  declare store: Database;
 
   /**
    * A reference to the `Logger` instance.
@@ -52,7 +52,7 @@ class Application {
    * @type {Logger}
    * @private
    */
-  logger!: Logger;
+  declare logger: Logger;
 
   /**
    * A reference to the `Router` instance.
@@ -61,7 +61,7 @@ class Application {
    * @type {Router}
    * @private
    */
-  router!: Router;
+  declare router: Router;
 
   /**
    * A reference to the `Server` instance.
@@ -70,7 +70,7 @@ class Application {
    * @type {Server}
    * @private
    */
-  server!: Server;
+  declare server: Server;
 
   /**
    * A map containing each `Model` class.
@@ -79,7 +79,7 @@ class Application {
    * @type {Map}
    * @private
    */
-  models!: FreezeableMap<string, ModelClass>;
+  declare models: FreezeableMap<string, ModelClass>;
 
   /**
    * A map containing each `Controller` instance.
@@ -88,7 +88,7 @@ class Application {
    * @type {Map}
    * @private
    */
-  controllers!: FreezeableMap<string, Controller>;
+  declare controllers: FreezeableMap<string, Controller>;
 
   /**
    * A map containing each `Serializer` instance.
@@ -97,7 +97,7 @@ class Application {
    * @type {Map}
    * @private
    */
-  serializers!: FreezeableMap<string, Serializer<Model>>;
+  declare serializers: FreezeableMap<string, Serializer<Model>>;
 
   /**
    * @method constructor

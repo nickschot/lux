@@ -26,7 +26,7 @@ class Logger {
    * @type {String}
    * @public
    */
-  level!: Logger$level;
+  declare level: Logger$level;
 
   /**
    * The output format of log data (text or json).
@@ -35,7 +35,7 @@ class Logger {
    * @type {String}
    * @public
    */
-  format!: Logger$format;
+  declare format: Logger$format;
 
   /**
    * Hackers love logs. It's easy to get sensitive user information from log
@@ -106,7 +106,7 @@ class Logger {
    * @type {Object}
    * @public
    */
-  filter!: Logger$filter;
+  declare filter: Logger$filter;
 
   /**
    * A boolean flag that determines whether or not the logger is enabled.
@@ -115,7 +115,7 @@ class Logger {
    * @type {Boolean}
    * @public
    */
-  enabled!: boolean;
+  declare enabled: boolean;
 
   /**
    * Log a message at the DEBUG level.
@@ -130,7 +130,7 @@ class Logger {
    * @return {void}
    * @public
    */
-  debug!: Logger$logFn;
+  declare debug: Logger$logFn;
 
   /**
    * Log a message at the INFO level.
@@ -145,7 +145,7 @@ class Logger {
    * @return {void}
    * @public
    */
-  info!: Logger$logFn;
+  declare info: Logger$logFn;
 
   /**
    * Log a message at the WARN level.
@@ -160,7 +160,7 @@ class Logger {
    * @return {void}
    * @public
    */
-  warn!: Logger$logFn;
+  declare warn: Logger$logFn;
 
   /**
    * Log a message at the ERROR level.
@@ -175,7 +175,7 @@ class Logger {
    * @return {void}
    * @public
    */
-  error!: Logger$logFn;
+  declare error: Logger$logFn;
 
   /**
    * Internal method used for logging requests.
@@ -189,7 +189,7 @@ class Logger {
    * @return {void}
    * @private
    */
-  request!: Logger$RequestLogger;
+  declare request: Logger$RequestLogger;
 
   constructor({ level, format, filter, enabled }: Logger$config) {
     let write: Logger$Writer = K;

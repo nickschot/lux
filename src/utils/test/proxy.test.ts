@@ -8,7 +8,7 @@ describe('util proxy', () => {
     let proxied;
 
     class Circle {
-      radius: number;
+      declare radius: number;
 
       constructor(radius) {
         this.radius = radius;

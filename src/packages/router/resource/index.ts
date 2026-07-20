@@ -9,7 +9,7 @@ import type { Resource$opts } from './interfaces';
  * @private
  */
 class Resource extends Namespace {
-  only!: FreezeableSet<Controller$builtIn>;
+  declare only: FreezeableSet<Controller$builtIn>;
 
   constructor({ only, ...opts }: Resource$opts) {
     super(opts);

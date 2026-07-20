@@ -467,7 +467,7 @@ class Controller {
    * @type {Model}
    * @private
    */
-  model!: ModelClass<Model>;
+  declare model: ModelClass<Model>;
 
   /**
    * A reference to the root Controller for the namespace that a Controller
@@ -477,7 +477,7 @@ class Controller {
    * @type {?Controller}
    * @private
    */
-  parent!: Controller | null;
+  declare parent: Controller | null;
 
   /**
    * The namespace that a Controller instance is a member of.
@@ -486,7 +486,7 @@ class Controller {
    * @type {String}
    * @private
    */
-  namespace!: string;
+  declare namespace: string;
 
   /**
    * The resolved Serializer for a Controller instance.
@@ -495,7 +495,7 @@ class Controller {
    * @type {Serializer}
    * @private
    */
-  serializer!: Serializer<Model>;
+  declare serializer: Serializer<Model>;
 
   /**
    * A Map instance containing a reference to all the Controller within an
@@ -505,7 +505,7 @@ class Controller {
    * @type {Map}
    * @private
    */
-  controllers!: Map<string, Controller>;
+  declare controllers: Map<string, Controller>;
 
   /**
    * A boolean value representing whether or not a Controller instance has a
@@ -515,7 +515,7 @@ class Controller {
    * @type {Boolean}
    * @private
    */
-  hasModel!: boolean;
+  declare hasModel: boolean;
 
   /**
    * A boolean value representing whether or not a Controller instance is within
@@ -525,7 +525,7 @@ class Controller {
    * @type {Boolean}
    * @private
    */
-  hasNamespace!: boolean;
+  declare hasNamespace: boolean;
 
   /**
    * A boolean value representing whether or not a Controller instance has a
@@ -535,7 +535,7 @@ class Controller {
    * @type {Boolean}
    * @private
    */
-  hasSerializer!: boolean;
+  declare hasSerializer: boolean;
 
   constructor({ model, namespace, serializer }: Controller$opts) {
     Object.assign(this, {

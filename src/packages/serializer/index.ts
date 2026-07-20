@@ -401,7 +401,7 @@ class Serializer<T extends Model> {
    * @type {Model}
    * @private
    */
-  model!: ModelClass<T>;
+  declare model: ModelClass<T>;
 
   /**
    * A reference to the root Serializer for the namespace that a Serializer
@@ -411,7 +411,7 @@ class Serializer<T extends Model> {
    * @type {?Serializer}
    * @private
    */
-  parent!: Serializer<Model> | null;
+  declare parent: Serializer<Model> | null;
 
   /**
    * The namespace that a Serializer instance is a member of.
@@ -420,7 +420,7 @@ class Serializer<T extends Model> {
    * @type {String}
    * @private
    */
-  namespace!: string;
+  declare namespace: string;
 
   constructor({ model, parent, namespace }: Serializer$opts<T>) {
     Object.assign(this, {

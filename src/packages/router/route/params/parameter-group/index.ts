@@ -11,13 +11,13 @@ import hasRequiredParams from './utils/has-required-params';
  * @private
  */
 class ParameterGroup extends FreezeableMap<string, ParameterLike> {
-  type!: string;
+  declare type: string;
 
-  path!: string;
+  declare path: string;
 
-  required!: boolean;
+  declare required: boolean;
 
-  sanitize!: boolean;
+  declare sanitize: boolean;
 
   constructor(
     contents: Array<[string, ParameterLike]>,

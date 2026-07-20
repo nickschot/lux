@@ -45,7 +45,7 @@ class Model {
    * @type {String}
    * @public
    */
-  tableName!: string;
+  declare tableName: string;
 
   /**
    * The canonical name of a `Model`'s constructor.
@@ -54,7 +54,7 @@ class Model {
    * @type {String}
    * @public
    */
-  modelName!: string;
+  declare modelName: string;
 
   /**
    * The name of the API resource a `Model` instance's constructor represents.
@@ -63,7 +63,7 @@ class Model {
    * @type {String}
    * @public
    */
-  resourceName!: string;
+  declare resourceName: string;
 
   /**
    * A timestamp representing when the Model instance was created.
@@ -72,7 +72,7 @@ class Model {
    * @type {Date}
    * @public
    */
-  createdAt!: Date;
+  declare createdAt: Date;
 
   /**
    * A timestamp representing the last time the Model instance was updated.
@@ -81,42 +81,42 @@ class Model {
    * @type {Date}
    * @public
    */
-  updatedAt!: Date;
+  declare updatedAt: Date;
 
   /**
    * @property initialized
    * @type {Boolean}
    * @private
    */
-  initialized!: boolean;
+  declare initialized: boolean;
 
   /**
    * @property rawColumnData
    * @type {Object}
    * @private
    */
-  rawColumnData!: Record<string, unknown>;
+  declare rawColumnData: Record<string, unknown>;
 
   /**
    * @property isModelInstance
    * @type {Boolean}
    * @private
    */
-  isModelInstance!: boolean;
+  declare isModelInstance: boolean;
 
   /**
    * @property prevAssociations
    * @type {Set}
    * @private
    */
-  prevAssociations!: Set<Model>;
+  declare prevAssociations: Set<Model>;
 
   /**
    * @property changeSets
    * @type {Array}
    * @private
    */
-  changeSets!: Array<ChangeSet>;
+  declare changeSets: Array<ChangeSet>;
 
   /**
    * An object where you declare `hasOne` relationships.
@@ -168,7 +168,7 @@ class Model {
    * @static
    * @public
    */
-  static hasOne: Record<string, unknown>;
+  declare static hasOne: Record<string, unknown>;
 
   /**
    * An object where you declare `hasMany` relationships.
@@ -258,7 +258,7 @@ class Model {
    * @static
    * @public
    */
-  static hasMany: Record<string, unknown>;
+  declare static hasMany: Record<string, unknown>;
 
   /**
    * An object where you declare `belongsTo` relationships.
@@ -325,7 +325,7 @@ class Model {
    * @static
    * @public
    */
-  static belongsTo: Record<string, unknown>;
+  declare static belongsTo: Record<string, unknown>;
 
   /**
    * An object where you declare validations for an instance's attributes.
@@ -366,7 +366,7 @@ class Model {
    * @static
    * @public
    */
-  static validates: Record<string, unknown>;
+  declare static validates: Record<string, unknown>;
 
   /**
    * An object where you declare custom query scopes for the model.
@@ -444,7 +444,7 @@ class Model {
    * @static
    * @public
    */
-  static scopes: Record<string, unknown>;
+  declare static scopes: Record<string, unknown>;
 
   /**
    * An object where you declare hooks to execute at certain times in a model
@@ -542,7 +542,7 @@ class Model {
    * @static
    * @public
    */
-  static hooks: Model$Hooks;
+  declare static hooks: Model$Hooks;
 
   /**
    * A reference to the application's logger.
@@ -552,7 +552,7 @@ class Model {
    * @static
    * @public
    */
-  static logger: Logger;
+  declare static logger: Logger;
 
   /**
    * The name of the corresponding database table for the model.
@@ -562,7 +562,7 @@ class Model {
    * @static
    * @public
    */
-  static tableName: string;
+  declare static tableName: string;
 
   /**
    * The canonical name of the model.
@@ -572,7 +572,7 @@ class Model {
    * @static
    * @public
    */
-  static modelName: string;
+  declare static modelName: string;
 
   /**
    * The name of the resource the model represents.
@@ -582,7 +582,7 @@ class Model {
    * @static
    * @public
    */
-  static resourceName: string;
+  declare static resourceName: string;
 
   /**
    * The column name to use for a model's primary key.
@@ -601,7 +601,7 @@ class Model {
    * @static
    * @private
    */
-  static table: () => unknown;
+  declare static table: () => unknown;
 
   /**
    * @property store
@@ -609,7 +609,7 @@ class Model {
    * @static
    * @private
    */
-  static store: Database;
+  declare static store: Database;
 
   /**
    * @property initialized
@@ -617,7 +617,7 @@ class Model {
    * @static
    * @private
    */
-  static initialized: boolean;
+  declare static initialized: boolean;
 
   /**
    * @property serializer
@@ -625,7 +625,7 @@ class Model {
    * @static
    * @private
    */
-  static serializer: Serializer<Model>;
+  declare static serializer: Serializer<Model>;
 
   /**
    * @property attributes
@@ -633,7 +633,7 @@ class Model {
    * @static
    * @private
    */
-  static attributes: Record<string, unknown>;
+  declare static attributes: Record<string, unknown>;
 
   /**
    * @property attributeNames
@@ -641,7 +641,7 @@ class Model {
    * @static
    * @private
    */
-  static attributeNames: Array<string>;
+  declare static attributeNames: Array<string>;
 
   /**
    * @property relationships
@@ -649,7 +649,7 @@ class Model {
    * @static
    * @private
    */
-  static relationships: Record<string, Relationship$opts>;
+  declare static relationships: Record<string, Relationship$opts>;
 
   /**
    * @property relationshipNames
@@ -657,7 +657,7 @@ class Model {
    * @static
    * @private
    */
-  static relationshipNames: Array<string>;
+  declare static relationshipNames: Array<string>;
 
   constructor(attrs: Record<string, unknown> = {}, initialize: boolean = true) {
     Object.defineProperties(this, {

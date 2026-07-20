@@ -21,13 +21,13 @@ import type { Server$opts, Server$cors } from './interfaces';
  * @private
  */
 class Server {
-  logger!: Logger;
+  declare logger: Logger;
 
-  router!: Router;
+  declare router: Router;
 
-  cors!: Server$cors;
+  declare cors: Server$cors;
 
-  instance!: HTTPServer;
+  declare instance: HTTPServer;
 
   constructor({ logger, router, cors }: Server$opts) {
     Object.defineProperties(this, {
