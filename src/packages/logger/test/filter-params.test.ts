@@ -1,7 +1,4 @@
-// @flow
-
-import { expect } from 'chai';
-import { it, describe, before } from 'mocha';
+import { it, describe, beforeAll, expect } from 'vitest';
 
 import filterParams from '../request-logger/utils/filter-params';
 
@@ -9,7 +6,7 @@ describe('module "logger"', () => {
   describe('util filterParams()', () => {
     let params;
     let filter;
-    before(() => {
+    beforeAll(() => {
       params = {
         id: 1,
         username: 'test',
@@ -32,10 +29,12 @@ describe('module "logger"', () => {
     it('handles nested parameters', () => {
       const nestedParams = { params };
       const filtered = filterParams(nestedParams, ...filter);
-      expect(filtered.params.username)
-        .to.not.equal(nestedParams.params.username);
-      expect(filtered.params.password)
-        .to.not.equal(nestedParams.params.password);
+      expect(filtered.params.username).to.not.equal(
+        nestedParams.params.username
+      );
+      expect(filtered.params.password).to.not.equal(
+        nestedParams.params.password
+      );
     });
   });
 });
