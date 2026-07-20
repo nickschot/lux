@@ -1,8 +1,14 @@
-// @flow
 import fetch from 'node-fetch';
-import { expect } from 'chai';
 import { createServer } from 'http';
-import { it, before, describe } from 'mocha';
+import {
+  it,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  afterEach,
+  describe,
+  expect
+} from 'vitest';
 
 import { MIME_TYPE, VERSION } from '../../../jsonapi';
 import { createRequest } from '../../request';
@@ -16,39 +22,45 @@ const DOMAIN = 'http://localhost:4100';
 
 describe('module "server/responder"', () => {
   let test;
+  let server;
+  let handler;
 
-  before(async () => {
+  // One server for the whole suite. The original created and closed one per
+  // test on port 4100, but `close()` is asynchronous, so each request raced
+  // the previous server's shutdown — under Vitest every *other* test lost the
+  // race and failed with "socket hang up". Reusing one listener removes the
+  // race entirely; the per-test behaviour under assertion is unchanged.
+  beforeAll(async () => {
     const { logger, router } = await getTestApp();
 
-    test = fn => new Promise((resolve, reject) => {
-      const server = createServer((req, res) => {
-        req = createRequest(req, {
+    server = createServer((req, res) => {
+      handler(
+        createRequest(req, {
           logger,
           router
-        });
-
-        res = createResponse(res, {
+        }),
+        createResponse(res, {
           logger
-        });
-
-        fn(req, res);
-      }).listen(4100);
-
-      const cleanup = () => {
-        server.close();
-      };
-
-      return fetch(DOMAIN)
-        .then(res => {
-          resolve(res);
-          cleanup();
         })
-        .catch(err => {
-          reject(err);
-          cleanup();
-        });
+      );
     });
+
+    await new Promise(resolve => {
+      server.listen(4100, resolve);
+    });
+
+    test = fn => {
+      handler = fn;
+      return fetch(DOMAIN);
+    };
   });
+
+  afterAll(
+    () =>
+      new Promise(resolve => {
+        server.close(resolve);
+      })
+  );
 
   describe('#createResponder()', () => {
     it('creates a #respond() function', () => {
