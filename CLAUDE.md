@@ -66,17 +66,68 @@ while replacing legacy tooling.
    [tsconfig.json](tsconfig.json), `pnpm typecheck` (`tsc --noEmit`), and
    [lib/ts-hook.js](lib/ts-hook.js) (esbuild-register runs `.ts` in Mocha, loaded via
    `babel-hook.js` before babel-register). Proven end-to-end on `src/utils/uniq.ts`.
-3. ✅ **Flow → TypeScript, bottom-up per `src/packages/*`** — all source converted
-   (295 `.ts`; only test suites/fixtures remain on Flow, deferred to Phase 4). See
+3. ✅ **Flow → TypeScript, bottom-up per `src/packages/*`** — all *source* converted
+   (295 `.ts`). Test suites/fixtures were deferred to Phase 4 and are now done too. See
    "Phase 3 status" below.
-4. Once no Flow remains: drop `@babel/preset-flow`, flip the build to **tsup**/esbuild and
-   the runner to **Vitest**; retire Babel/Mocha/nyc, `lib/babel-hook.js`, `lib/ts-hook.js`,
-   `.babelrc`. Raise the esbuild target off `es2017`. Convert the `*.test.js` files then
-   too (they stay Flow for now; chai/mocha typings come with the runner swap).
+4. **Runner swap.** ✅ Steps 1–2: Vitest stood up beside Mocha, then **all 89 Flow test
+   files converted** batch-by-batch — **no Flow remains anywhere in the tree**; the suite
+   is 552 passing across 83 files, entirely on Vitest (Mocha reports 0). See "Phase 4
+   status" below. ⬜ Steps 3–4: retire Mocha/nyc/chai, `lib/babel-hook.js`,
+   `lib/ts-hook.js`, `mocha.opts`, `.babelrc` and `@babel/preset-flow`; make `test` just
+   `vitest run` with v8 coverage; flip the build to **tsup**/esbuild and raise the target
+   off `es2017`.
 5. Finish the app-facing compiler rework (`rollup-plugin-lux`) — likely esbuild; free to
    break since only own apps consume it.
 6. ✅ ESLint 9 flat + typescript-eslint + Prettier. ⬜ Still to do: replace
    CircleCI/AppVeyor with GitHub Actions.
+
+## Phase 4 status — where to resume
+
+**Steps 1–2 are DONE.** Vitest runs the whole suite: **552 passing, 83 files, Mocha 0.**
+No Flow remains in the tree. Nine batches, one commit each, all five gates green.
+
+**⬜ Next: Steps 3–4.** Retire the Mocha stack (`mocha.opts`, `lib/babel-hook.js`,
+`lib/ts-hook.js`, nyc, chai, `@babel/preset-flow`, `.babelrc`), reduce `test` to
+`vitest run` with v8 coverage, then flip the build to tsup and raise the `es2017` target.
+Note `test/index.js` is still the **Mocha bootstrap** and goes with it —
+`test/vitest.global-setup.ts` already does the same `lux db:*` work.
+
+### Traps this migration hit (all pre-existing bugs the runner swap exposed)
+
+- **`declare`, not `!`, for class fields backed by prototype accessors.** With
+  `useDefineForClassFields` (default true at `target: ES2022`) a declaration-only field is
+  *emitted* as an own property set to `undefined`, shadowing the accessor
+  `Model.initialize()` installs — attributes silently stop persisting. **`!` does not
+  prevent the emit**, it only silences `strictPropertyInitialization`. Babel used to strip
+  annotation-only fields entirely, which is why Flow never saw this. NB `src/` still uses
+  `!:` in ~91 places (10 on `Model`); the suite is green, but this is the first thing to
+  check if an attribute ever reads back `undefined`.
+- **Cross-suite DB pollution.** Mocha's alphabetical file order was load-bearing:
+  `serializer.test` leaked 32 `posts` rows (its `createPost` registered every *related*
+  record for teardown but not the post), which broke `query.test`'s absolute counts against
+  the 100 seeded posts. Vitest orders files differently. Fixed the leak, not the ordering.
+- **A per-test `createServer().listen(PORT)` + `close()` races itself** — `close()` is
+  async, so each request can hit the previous server mid-shutdown (`socket hang up`).
+  **Tell-tale sign: failures alternate exactly every other test.** `responder.test` now
+  shares one listener via `beforeAll`/`afterAll`. `request.test` still uses the per-test
+  shape on port 4100 and passes; apply the same fix if it goes flaky.
+- **Vitest has no `done` callback and no globals.** Callback tests must become
+  promise-based; hook globals (`beforeEach` etc.) must be imported or the file fails to
+  **collect** — 0 tests run and the total silently drops rather than going red.
+- **Neither `tsc` nor eslint catches Flow syntax in `.ts` test files** (`tsc` excludes
+  `src/**/test`; eslint parses `void | ?string` without complaint — verified). Only
+  `pnpm build` does, via Babel. Do not skip the build gate.
+- Chai 3→4 breaks are the most common per-batch fix: dotted/indexed `deep.property` paths
+  moved to `.nested.property`, and `constructor`/`__proto__` are guarded outright — assert
+  the value directly instead. Also, oxc keeps `async` functions native, so
+  `expect(asyncFn).to.be.a('function')` fails (`type-detect` says `'AsyncFunction'`); use
+  `typeof x === 'function'`.
+
+**Known-weak specs left behaviour-faithful on purpose** (fix separately, they are changes
+not fixes): `fs.test`'s `returnsPromiseSpec` callers pass their path at describe-collection
+time, before `beforeEach` assigns it, so 7 of 8 call `fs` methods with `undefined` and only
+ever assert "returns a Promise" (`#mkdir()` shows the correct pattern); and
+`logger.test`'s "writes with a recent timestamp" is still the 1 ms race.
 
 ## Phase 3 status — where to resume
 
@@ -89,10 +140,8 @@ commit, with all five gates green (see "Conversion recipe").
 `config`, `fs`, `pm`, `compiler`, `loader`, `luxify`, `cli` (44 files), both
 `src/errors/*`, and the public API barrel `src/index`.
 
-**Still Flow — deferred to Phase 4:** the 83 colocated `src/**/*.test.js` suites and 6
-test-support fixtures (`fs/test/utils/*`, `config/test/fixtures/results.js`). These wait
-on the runner swap (Vitest brings the chai/mocha typings); do **not** convert them under
-the current Mocha/Babel stack.
+**Nothing is still Flow.** The test suites and test-support fixtures that were deferred
+here were all converted in Phase 4 Step 2 — see "Phase 4 status" below.
 
 **No temporary `.d.ts` stubs remain.** The only `.d.ts` files left are legitimate ambient
 declarations for untyped npm modules (`fs/watcher/fb-watchman.d.ts`,
@@ -242,13 +291,16 @@ The public API is re-exported from `src/index.js`:
 Shared helpers are in `src/utils/`; global constants in `src/constants.js` (reads from
 `process.env`: `PORT` default 4000, `NODE_ENV`, `DATABASE_URL`, etc.).
 
-Colocated tests: `src/**/*.test.js`. Type/decl stubs in `decl/` and `flow-typed/`.
+Colocated tests: `src/**/*.test.ts` (all Vitest). Type/decl stubs in `decl/` and
+`flow-typed/` (the latter is vestigial — no Flow remains).
 `test/test-app/` is a full example Lux app the suite boots against (Postgres/MySQL/SQLite).
 
-## Toolchain (current, legacy)
+## Toolchain (current)
 
-- **Language:** ES2015+ with [Flow](https://flow.org/) types (`// @flow`,
-  `flow-bin@0.38`). Type-check: `npm run flow`.
+- **Language:** **TypeScript** (strict). Type-check: `pnpm typecheck` (`tsc --noEmit`).
+  No Flow remains; `pnpm run flow` and `flow-typed/` are vestigial and go in Step 4.
+  Note `tsconfig` **excludes `src/**/test`**, so test files are not type-checked — the
+  build (Babel) and the suite are what catch errors there.
 - **Transpile:** Babel 6 via `babel-preset-lux` (`.babelrc`) is still used by the *app
   compiler*. The framework's own build is Babel 8 + esbuild — see [build.mjs](build.mjs).
 - **Bundle:** [build.mjs](build.mjs) → `dist/` (`index.js` CJS, `index.mjs` ESM,
@@ -261,13 +313,16 @@ Colocated tests: `src/**/*.test.js`. Type/decl stubs in `decl/` and `flow-typed/
   phases 4 and 5 retire Mocha/nyc and the app compiler.
 - **Lint/format:** **ESLint 9 flat** ([eslint.config.mjs](eslint.config.mjs)) +
   typescript-eslint + **Prettier**. `pnpm lint`, `pnpm format`, `pnpm format:check`.
-  Because the tree is mid-migration the config scopes parsers by extension: `.ts` uses
-  typescript-eslint, `.js` uses `@babel/eslint-parser` (nothing else parses Flow). On the
-  Flow side `no-undef`/`no-unused-vars` are off — core ESLint can't see type-position
-  usage and `eslint-plugin-flowtype` has no ESLint 9 support. Prettier skips `**/*.js`
-  (transitional; files get formatted as they convert) and `*.md`.
-- **Test:** Mocha 3 + Chai + Sinon, run through `nyc` for coverage. Test setup registers
-  Babel via `lib/babel-hook.js` (`mocha.opts`). Run: `npm test`.
+  The config still scopes parsers by extension (`.ts` typescript-eslint, `.js`
+  `@babel/eslint-parser`) and Prettier still skips `**/*.js` — both now only cover
+  config/tooling `.js`, and can be simplified in Step 4. **eslint does not catch Flow
+  syntax in `.ts` files** (verified), so it is not a substitute for the build gate.
+- **Test:** **Vitest 4** ([vitest.config.ts](vitest.config.ts)) + Sinon, with chai-style
+  `expect` (Vitest bundles chai 5). Single fork, `isolate: false`, `fileParallelism: false`
+  — the `getTestApp()` singleton and the migrated DB are shared, matching Mocha's old
+  single-process model. `globalSetup: test/vitest.global-setup.ts` runs `lux db:*`.
+  Run: `pnpm test`. The Mocha half (`mocha.opts`, `lib/babel-hook.js`, `lib/ts-hook.js`,
+  nyc, chai) is still wired but now matches **0** tests; removing it is Phase 4 Step 4.
 - **Package manager:** **pnpm 10** (migrated from yarn; `pnpm-lock.yaml`, `packageManager`
   field). The old `yarn.lock` is retained untracked for reference only.
 - **Node:** pinned to **20** via **Volta** (`volta` field in `package.json`; `.nvmrc` = 20).
@@ -341,7 +396,7 @@ pnpm --dir test/test-app install   # install the test fixture app's deps
 # The five gates — all must pass before committing a conversion batch:
 pnpm typecheck        # tsc --noEmit (strict); the real type gate
 pnpm exec prettier --write "src/**/*.ts"
-pnpm lint             # eslint 9 flat (.ts + Flow .js)
+pnpm lint             # eslint 9 flat
 pnpm build            # Babel 8 -> build/, esbuild -> dist/
 VOLTA_FEATURE_PNPM=1 pnpm test    # 552 passing
 
@@ -357,12 +412,14 @@ Tests need a database; the test-app defaults to **`sqlite3`** (bumped to `^5.1.7
 prebuilt N-API binary — no native compile, no Python). CI additionally runs `pg` /
 `mysql2` via `DATABASE_DRIVER`.
 
-**Current baseline (Node 20 / pnpm 10):** `552 passing`.
+**Current baseline (Node 20 / pnpm 10):** `552 passing` — now **all on Vitest** across 83
+files; the Mocha half of `pnpm test` reports `0 passing` and is ready to be removed
+(Phase 4 Step 4).
 
 Three areas are **known-flaky** — if a run goes red here, re-run before investigating:
-- [logger.test.js:67](src/packages/logger/test/logger.test.js:67) asserts a log timestamp
-  exactly equals a `Date.now()` captured a moment earlier, so it loses a 1 ms race
-  intermittently.
+- [logger.test.ts](src/packages/logger/test/logger.test.ts) "writes with a recent
+  timestamp" asserts a log timestamp exactly equals a `Date.now()` captured a moment
+  earlier, so it loses a 1 ms race intermittently.
 - `module "fs" #watch()` depends on the external **watchman** daemon; it intermittently
   times out and then fails its `after all` hook with
   `Cannot read properties of undefined (reading 'destroy')`.
@@ -370,14 +427,15 @@ Three areas are **known-flaky** — if a run goes red here, re-run before invest
   475–525 ms. Under a loaded machine the timer overshoots (seen at 556 ms) and the file's
   other test fails alongside it. Passes in isolation; re-run before investigating.
 
-All three are pre-existing, not regressions, and are candidates to fix during the
-test-runner migration.
+All three are pre-existing, not regressions. They survived the runner swap unchanged
+(conversions were kept behaviour-faithful) and are still candidates to fix.
 
 ## Working notes
 
-- Follow existing conventions: keep `// @flow` annotations, respect the 80-col limit,
-  match the import ordering the airbnb config enforces, and prefer `Reflect.*` where the
-  codebase already does (the `prefer-reflect` rule is on).
+- Follow existing conventions: respect the 80-col limit, match the import ordering the
+  airbnb config enforces, and prefer `Reflect.*` where the codebase already does (the
+  `prefer-reflect` rule is on). Prettier owns formatting for `.ts` — run it, don't
+  hand-format.
 - `dist/` is **gitignored** (not committed) and generated by the build; don't hand-edit
   it. Note: there is currently **no `pretest`/`prepare` build wired**, so the suite relies
   on a `dist` already existing locally (a stale artifact today). `npm publish` builds it
