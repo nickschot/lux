@@ -1,7 +1,5 @@
-// @flow
 import { spy } from 'sinon';
-import { expect } from 'chai';
-import { it, describe, before, after } from 'mocha';
+import { it, describe, beforeAll, afterAll, expect } from 'vitest';
 
 import Model from '../model';
 import {
@@ -17,7 +15,7 @@ describe('module "database/transaction"', () => {
     static tableName = 'posts';
   }
 
-  before(async () => {
+  beforeAll(async () => {
     const { store } = await getTestApp();
 
     await Subject.initialize(store, () => {
@@ -27,7 +25,6 @@ describe('module "database/transaction"', () => {
 
   describe('.createTransactionResultProxy()', () => {
     it('has a #didPersist property', () => {
-      // $FlowIgnore
       const proxy = createTransactionResultProxy({}, true);
 
       expect(proxy.didPersist).to.be.true;
@@ -39,11 +36,11 @@ describe('module "database/transaction"', () => {
       let instance: Subject;
       let createSpy;
 
-      before(async () => {
+      beforeAll(async () => {
         createSpy = spy(Subject, 'create');
       });
 
-      after(async () => {
+      afterAll(async () => {
         createSpy.restore();
 
         if (instance) {
@@ -52,7 +49,7 @@ describe('module "database/transaction"', () => {
       });
 
       it('calls create on the model with the trx object', async () => {
-        let args = [{}];
+        const args = [{}];
 
         await Subject.transaction(trx => {
           args.push(trx);
@@ -70,14 +67,14 @@ describe('module "database/transaction"', () => {
         let instance: Subject;
         let methodSpy;
 
-        before(async () => {
+        beforeAll(async () => {
           await Subject.create().then(proxy => {
             instance = proxy.unwrap();
             methodSpy = spy(instance, method);
           });
         });
 
-        after(async () => {
+        afterAll(async () => {
           methodSpy.restore();
 
           if (method !== 'destroy') {
@@ -87,7 +84,7 @@ describe('module "database/transaction"', () => {
 
         it(`calls ${method} on the instance with the trx object`, async () => {
           const obj = {};
-          let args = [];
+          const args = [];
 
           await instance.transaction(trx => {
             const proxied = createInstanceTransactionProxy(instance, trx);

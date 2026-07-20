@@ -1,6 +1,4 @@
-// @flow
-import { expect } from 'chai';
-import { it, before, describe } from 'mocha';
+import { it, beforeAll, describe, expect } from 'vitest';
 
 import Database from '../index';
 import { getTestApp } from '../../../../test/utils/get-test-app';
@@ -33,16 +31,17 @@ describe('module "database"', () => {
   describe('class Database', () => {
     let createDatabase;
 
-    before(async () => {
+    beforeAll(async () => {
       const { path, models, logger } = await getTestApp();
 
-      createDatabase = async (config = DEFAULT_CONFIG) => await new Database({
-        path,
-        models,
-        logger,
-        config,
-        checkMigrations: false
-      });
+      createDatabase = async (config = DEFAULT_CONFIG) =>
+        await new Database({
+          path,
+          models,
+          logger,
+          config,
+          checkMigrations: false
+        });
     });
 
     describe('#constructor()', () => {
@@ -67,10 +66,7 @@ describe('module "database"', () => {
             driver: 'invalid-driver'
           }
         }).catch(err => {
-          expect(err).to.have.deep.property(
-            'constructor.name',
-            'InvalidDriverError'
-          );
+          expect(err.constructor.name).to.equal('InvalidDriverError');
         });
       });
     });
@@ -78,7 +74,7 @@ describe('module "database"', () => {
     describe('#modelFor()', () => {
       let subject;
 
-      before(async () => {
+      beforeAll(async () => {
         subject = await createDatabase();
       });
 
