@@ -160,6 +160,13 @@ describe('module "serializer"', () => {
 
           await post.transacting(trx).save();
 
+          // Added last so teardown destroys it after its related records.
+          // Without this the posts leaked: Mocha ran `database` before
+          // `serializer` alphabetically so it never mattered, but any other
+          // ordering leaves rows behind and breaks query.test's absolute
+          // counts against the 100 seeded posts.
+          instances.add(post);
+
           return post;
         };
 

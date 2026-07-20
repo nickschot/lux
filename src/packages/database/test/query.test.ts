@@ -1,28 +1,32 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe, before, beforeEach } from 'mocha';
+import { it, describe, beforeAll, beforeEach, expect } from 'vitest';
 
 import Query from '../query';
 import Model from '../model';
 
-import setType from '../../../utils/set-type';
+import type { ModelClass } from '../index';
+
 import { getTestApp } from '../../../../test/utils/get-test-app';
 
 describe('module "database/query"', () => {
   describe('class Query', () => {
-    let Comment: Class<Model>;
+    let Comment: ModelClass;
 
     class TestModel extends Model {
-      id: number;
-      body: string;
-      user: Class<Model>;
-      tags: Array<Class<Model>>;
-      title: string;
-      comments: Array<Class<Model>>;
-      isPublic: boolean;
-      reactions: Array<Class<Model>>;
-      createdAt: Date;
-      updatedAt: Date;
+      // `!` (not a bare annotation) so these stay declaration-only: with
+      // `useDefineForClassFields` they would otherwise be emitted as own
+      // properties and shadow the prototype accessors `initialize()` installs.
+      // The relationship values are Model *instances*, so they are typed as
+      // such -- the Flow original claimed they were classes.
+      declare id: number;
+      declare body: string;
+      declare user: Model;
+      declare tags: Array<Model>;
+      declare title: string;
+      declare comments: Array<Model>;
+      declare isPublic: boolean;
+      declare reactions: Array<Model>;
+      declare createdAt: Date;
+      declare updatedAt: Date;
 
       static tableName = 'posts';
 
@@ -60,7 +64,7 @@ describe('module "database/query"', () => {
       expect(item).to.be.an.instanceof(TestModel);
     };
 
-    before(async () => {
+    beforeAll(async () => {
       const { store } = await getTestApp();
 
       Comment = store.modelFor('comment');
@@ -73,16 +77,11 @@ describe('module "database/query"', () => {
     describe('.from()', () => {
       let source;
 
-      before(() => {
+      beforeAll(() => {
         source = new Query(TestModel)
           .limit(10)
           .order('title', 'DESC')
-          .include(
-            'user',
-            'tags',
-            'comments',
-            'reactions'
-          )
+          .include('user', 'tags', 'comments', 'reactions')
           .where({
             isPublic: true
           });
@@ -223,9 +222,7 @@ describe('module "database/query"', () => {
 
         const result = subject.find(1);
 
-        expect(result.snapshots).to.deep.equal([
-          ['where', { 'posts.id': 1 }]
-        ]);
+        expect(result.snapshots).to.deep.equal([['where', { 'posts.id': 1 }]]);
       });
 
       it('resolves with the correct `Model` instance', async () => {
@@ -294,9 +291,7 @@ describe('module "database/query"', () => {
       it('properly modifies #snapshots', () => {
         const result = subject.limit(5);
 
-        expect(result.snapshots).to.deep.equal([
-          ['limit', 5]
-        ]);
+        expect(result.snapshots).to.deep.equal([['limit', 5]]);
       });
 
       it('does not modify #snapshots if #shouldCount', () => {
@@ -469,7 +464,6 @@ describe('module "database/query"', () => {
           result.forEach(item => {
             assertItem(item);
             expect(item.userId).to.be.above(0).and.below(11);
-
           });
         }
       });
@@ -483,19 +477,13 @@ describe('module "database/query"', () => {
       });
 
       it('returns `this`', () => {
-        const result = subject.whereRaw(
-          `"title" LIKE ?`,
-          [`%Test%`]
-        );
+        const result = subject.whereRaw(`"title" LIKE ?`, [`%Test%`]);
 
         expect(result).to.equal(subject);
       });
 
       it('properly modifies #snapshots', () => {
-        const result = subject.whereRaw(
-          `"title" LIKE ?`,
-          [`%Test%`]
-        );
+        const result = subject.whereRaw(`"title" LIKE ?`, [`%Test%`]);
 
         expect(result.snapshots).to.deep.equal([
           ['whereRaw', [`"title" LIKE ?`, [`%Test%`]]]
@@ -503,10 +491,7 @@ describe('module "database/query"', () => {
       });
 
       it('resolves with the correct array of `Model` instances', async () => {
-        const result = await subject.whereRaw(
-          `"title" LIKE ?`,
-          [`%Test%`]
-        );
+        const result = await subject.whereRaw(`"title" LIKE ?`, [`%Test%`]);
 
         expect(result).to.be.an('array');
 
@@ -514,7 +499,6 @@ describe('module "database/query"', () => {
           result.forEach(item => {
             assertItem(item);
             expect(item.title).to.match(/Test/);
-
           });
         }
       });
@@ -644,9 +628,7 @@ describe('module "database/query"', () => {
       it('properly modifies #snapshots', () => {
         const result = subject.count();
 
-        expect(result.snapshots).to.deep.equal([
-          ['count', '* as countAll']
-        ]);
+        expect(result.snapshots).to.deep.equal([['count', '* as countAll']]);
       });
 
       it('sets #shouldCount to `true`', () => {
@@ -692,9 +674,7 @@ describe('module "database/query"', () => {
       it('properly modifies #snapshots', () => {
         const result = subject.offset(10);
 
-        expect(result.snapshots).to.deep.equal([
-          ['offset', 10]
-        ]);
+        expect(result.snapshots).to.deep.equal([['offset', 10]]);
       });
 
       it('does not modify #snapshots if #shouldCount', () => {
@@ -734,11 +714,14 @@ describe('module "database/query"', () => {
         const result = subject.select(...attrs);
 
         expect(result.snapshots).to.deep.equal([
-          ['select', [
-            'posts.id AS id',
-            'posts.title AS title',
-            'posts.created_at AS createdAt'
-          ]]
+          [
+            'select',
+            [
+              'posts.id AS id',
+              'posts.title AS title',
+              'posts.created_at AS createdAt'
+            ]
+          ]
         ]);
       });
 
@@ -796,16 +779,19 @@ describe('module "database/query"', () => {
     describe('#include()', () => {
       let subject;
 
-      const assertRelationships = (relationships, attrs = [
-        'id',
-        'message',
-        'edited',
-        'userId',
-        'postId',
-        'createdAt',
-        'updatedAt',
-        'postId'
-      ]) => {
+      const assertRelationships = (
+        relationships,
+        attrs = [
+          'id',
+          'message',
+          'edited',
+          'userId',
+          'postId',
+          'createdAt',
+          'updatedAt',
+          'postId'
+        ]
+      ) => {
         const { comments } = relationships;
 
         expect(relationships).to.have.property('comments');
@@ -839,77 +825,57 @@ describe('module "database/query"', () => {
       });
 
       it('properly modifies #snapshots when using an array of strings', () => {
-        const {
-          snapshots,
-          relationships
-        } = subject.include('user', 'comments');
+        const { snapshots, relationships } = subject.include(
+          'user',
+          'comments'
+        );
 
-        expect(snapshots)
-          .to.have.deep.property('[0][0]', 'includeSelect');
+        expect(snapshots[0][0]).to.equal('includeSelect');
 
-        expect(snapshots)
-          .to.have.deep.property('[0][1]')
-          .and.include.all.members([
-            'users.id AS user.id',
-            'users.name AS user.name',
-            'users.email AS user.email',
-            'users.password AS user.password',
-            'users.created_at AS user.createdAt',
-            'users.updated_at AS user.updatedAt'
-          ]);
+        expect(snapshots[0][1]).to.include.all.members([
+          'users.id AS user.id',
+          'users.name AS user.name',
+          'users.email AS user.email',
+          'users.password AS user.password',
+          'users.created_at AS user.createdAt',
+          'users.updated_at AS user.updatedAt'
+        ]);
 
-        expect(snapshots)
-          .to.have.deep.property('[1][0]', 'leftOuterJoin');
+        expect(snapshots[1][0]).to.equal('leftOuterJoin');
 
-        expect(snapshots)
-          .to.have.deep.property('[1][1]')
-          .and.include.all.members([
-            'users',
-            'posts.user_id',
-            '=',
-            'users.id'
-          ]);
+        expect(snapshots[1][1]).to.include.all.members([
+          'users',
+          'posts.user_id',
+          '=',
+          'users.id'
+        ]);
 
         assertRelationships(relationships);
       });
 
       it('properly modifies #snapshots when using an object', () => {
         const params = {
-          user: [
-            'id',
-            'name'
-          ],
-          comments: [
-            'id',
-            'name',
-            'edited',
-            'updatedAt'
-          ]
+          user: ['id', 'name'],
+          comments: ['id', 'name', 'edited', 'updatedAt']
         };
 
         const { snapshots, relationships } = subject.include(params);
 
-        expect(snapshots)
-          .to.have.deep.property('[0][0]', 'includeSelect');
+        expect(snapshots[0][0]).to.equal('includeSelect');
 
-        expect(snapshots)
-          .to.have.deep.property('[0][1]')
-          .and.include.all.members([
-            'users.id AS user.id',
-            'users.name AS user.name'
-          ]);
+        expect(snapshots[0][1]).to.include.all.members([
+          'users.id AS user.id',
+          'users.name AS user.name'
+        ]);
 
-        expect(snapshots)
-          .to.have.deep.property('[1][0]', 'leftOuterJoin');
+        expect(snapshots[1][0]).to.equal('leftOuterJoin');
 
-        expect(snapshots)
-          .to.have.deep.property('[1][1]')
-          .and.include.all.members([
-            'users',
-            'posts.user_id',
-            '=',
-            'users.id'
-          ]);
+        expect(snapshots[1][1]).to.include.all.members([
+          'users',
+          'posts.user_id',
+          '=',
+          'users.id'
+        ]);
 
         assertRelationships(relationships, params.comments);
       });
@@ -933,10 +899,7 @@ describe('module "database/query"', () => {
       });
 
       it('can be chained to other query methods', () => {
-        const result = subject
-          .isPublic()
-          .select('id', 'title')
-          .limit(10);
+        const result = subject.isPublic().select('id', 'title').limit(10);
 
         expect(result.snapshots).to.deep.equal([
           ['where', { 'posts.is_public': true }, 'isPublic'],
@@ -946,11 +909,7 @@ describe('module "database/query"', () => {
       });
 
       it('can be chained from other query methods', () => {
-        const result = subject
-          .all()
-          .select('id', 'title')
-          .limit(10)
-          .isPublic();
+        const result = subject.all().select('id', 'title').limit(10).isPublic();
 
         expect(result.snapshots).to.deep.equal([
           ['select', ['posts.id AS id', 'posts.title AS title']],
