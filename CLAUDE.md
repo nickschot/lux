@@ -86,11 +86,20 @@ while replacing legacy tooling.
 **Steps 1–2 are DONE.** Vitest runs the whole suite: **552 passing, 83 files, Mocha 0.**
 No Flow remains in the tree. Nine batches, one commit each, all five gates green.
 
-**⬜ Next: Steps 3–4.** Retire the Mocha stack (`mocha.opts`, `lib/babel-hook.js`,
-`lib/ts-hook.js`, nyc, chai, `@babel/preset-flow`, `.babelrc`), reduce `test` to
-`vitest run` with v8 coverage, then flip the build to tsup and raise the `es2017` target.
-Note `test/index.js` is still the **Mocha bootstrap** and goes with it —
-`test/vitest.global-setup.ts` already does the same `lux db:*` work.
+**⬜ Next: Steps 3–4.** Two clearly separable pieces — do them as separate commits:
+
+1. **Retire the Mocha stack (low risk).** `mocha.opts`, `lib/babel-hook.js`,
+   `lib/ts-hook.js`, `test/index.js` (the Mocha bootstrap — `test/vitest.global-setup.ts`
+   already does the same `lux db:*` work), nyc, chai, mocha; reduce `test` to `vitest run`
+   and move coverage to Vitest's v8 provider (already configured) for the `codecov`
+   script. Nothing here can break the suite: the Mocha half already matches 0 tests.
+   `@babel/preset-flow` can go too (no Flow left). **`.babelrc` must STAY** — it is Babel 6
+   + `babel-preset-lux` for the *app compiler*, which is Phase 5.
+2. **Flip the build to tsup (higher risk — read the class-fields trap below first).**
+   Dropping Babel also drops `lib/babel-plugin-strip-uninitialized-fields.cjs`, which is
+   currently what makes `src/`'s ~91 `!:` fields safe. The `es2017` target can only be
+   raised once the app compiler (Phase 5) stops re-parsing `dist/` with Babel 6; retiring
+   nyc removes only *one* of the two reasons for it.
 
 ### Traps this migration hit (all pre-existing bugs the runner swap exposed)
 
@@ -98,10 +107,18 @@ Note `test/index.js` is still the **Mocha bootstrap** and goes with it —
   `useDefineForClassFields` (default true at `target: ES2022`) a declaration-only field is
   *emitted* as an own property set to `undefined`, shadowing the accessor
   `Model.initialize()` installs — attributes silently stop persisting. **`!` does not
-  prevent the emit**, it only silences `strictPropertyInitialization`. Babel used to strip
-  annotation-only fields entirely, which is why Flow never saw this. NB `src/` still uses
-  `!:` in ~91 places (10 on `Model`); the suite is green, but this is the first thing to
-  check if an attribute ever reads back `undefined`.
+  prevent the emit**, it only silences `strictPropertyInitialization`.
+  **⚠ This is load-bearing for Step 4.** `src/` uses `!:` in ~91 places (10 on `Model`),
+  and it is safe today only because the Babel build stage runs
+  [lib/babel-plugin-strip-uninitialized-fields.cjs](lib/babel-plugin-strip-uninitialized-fields.cjs),
+  which deletes uninitialized non-`declare` class fields — verified: they are absent from
+  `build/packages/database/model/index.js`. **Flipping the build to tsup/esbuild removes
+  that plugin and with it the protection.** Either port the plugin, set
+  `useDefineForClassFields: false`, or convert those ~91 fields to `declare` *before*
+  dropping Babel. (Vitest/oxc gets no such plugin either; the suite is green because
+  `Model`'s constructor re-defines its instance fields via `Object.defineProperties`,
+  whereas the attribute accessors that broke `model.test` live on the *prototype* and
+  stay shadowed.)
 - **Cross-suite DB pollution.** Mocha's alphabetical file order was load-bearing:
   `serializer.test` leaked 32 `posts` rows (its `createPost` registered every *related*
   record for teardown but not the post), which broke `query.test`'s absolute counts against
