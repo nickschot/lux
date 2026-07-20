@@ -1,15 +1,9 @@
-// @flow
 import { tmpdir } from 'os';
-import { expect } from 'chai';
-import { it, describe, before, after } from 'mocha';
+import { it, describe, beforeAll, afterAll, expect } from 'vitest';
 
 import { basename, dirname, join } from 'path';
 
-import {
-  createTmpDir,
-  createTmpFiles,
-  removeTmpDir
-} from './utils';
+import { createTmpDir, createTmpFiles, removeTmpDir } from './utils';
 
 import { exists } from '../index';
 
@@ -17,7 +11,7 @@ const TMP_PATH = join(tmpdir(), `lux-${Date.now()}`);
 
 describe('module "fs"', () => {
   describe('#exists()', () => {
-    before(async () => {
+    beforeAll(async () => {
       await createTmpDir(TMP_PATH);
       await createTmpFiles(TMP_PATH, 5);
     });
@@ -43,6 +37,6 @@ describe('module "fs"', () => {
       expect(fileExists).to.be.false;
     });
 
-    after(() => removeTmpDir(TMP_PATH));
+    afterAll(() => removeTmpDir(TMP_PATH));
   });
 });

@@ -1,16 +1,10 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe } from 'mocha';
+import { it, describe, expect } from 'vitest';
 
 import { isJSFile } from '../index';
 
 describe('module "fs"', () => {
   describe('#isJSFile()', () => {
-    const [a, b, c] = [
-      'author.js',
-      'author.rb',
-      '.gitkeep'
-    ];
+    const [a, b, c] = ['author.js', 'author.rb', '.gitkeep'];
 
     it('is true if a file has a `.js` extension', () => {
       expect(isJSFile(a)).to.be.true;

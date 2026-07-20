@@ -1,9 +1,8 @@
-// @flow
 import { mkdir } from 'fs';
 
-export default function createTmpDir(path: string) {
+export default function createTmpDir(path: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    mkdir(path, undefined, (err) => {
+    mkdir(path, undefined, err => {
       if (err) {
         reject(err);
         return;
