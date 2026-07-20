@@ -1,7 +1,4 @@
-// @flow
-
-import { expect } from 'chai';
-import { it, describe } from 'mocha';
+import { it, describe, expect } from 'vitest';
 
 import getStaticPath from '../utils/get-static-path';
 import getDynamicSegments from '../utils/get-dynamic-segments';

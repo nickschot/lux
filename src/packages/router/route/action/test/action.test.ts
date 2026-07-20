@@ -1,6 +1,4 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe, before } from 'mocha';
+import { it, describe, beforeAll, expect } from 'vitest';
 
 import type Controller from '../../../../controller';
 import type { Request, Response } from '../../../../server';
@@ -18,21 +16,18 @@ describe('module "router/route/action"', () => {
     let createRequest;
     let createResponse;
 
-    before(async () => {
+    beforeAll(async () => {
       const { router, controllers } = await getTestApp();
 
-      // $FlowIgnore
       const controller: Controller = controllers.get('health');
-      const action: Action<any> = controller.index;
+      const action: Action<unknown> = controller.index;
 
-      // $FlowIgnore
       createRequest = (): Request => ({
         route: router.get('GET:/health'),
         method: 'GET',
         params: {}
       });
 
-      // $FlowIgnore
       createResponse = (): Response => ({
         stats: []
       });
@@ -58,7 +53,7 @@ describe('module "router/route/action"', () => {
       params = {}
     }: {
       total?: number;
-      params?: Object;
+      params?: Record<string, unknown>;
     } = {}) => ({
       total,
       params,
@@ -167,23 +162,17 @@ describe('module "router/route/action"', () => {
 
     it('works with complex parameter sets', () => {
       const base =
-        `${DOMAIN}/${RESOURCE}?sort=-created-at&include=user&fields%5Bposts%5D=`
-        + `title&fields%5Busers%5D=name`;
+        `${DOMAIN}/${RESOURCE}?sort=-created-at&include=user&fields%5Bposts%5D=` +
+        `title&fields%5Busers%5D=name`;
 
       [1, 2, 3, 4].forEach(number => {
         const opts = getOptions({
           params: {
             sort: '-created-at',
-            include: [
-              'user'
-            ],
+            include: ['user'],
             fields: {
-              posts: [
-                'title'
-              ],
-              users: [
-                'name'
-              ]
+              posts: ['title'],
+              users: ['name']
             },
             page: {
               number

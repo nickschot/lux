@@ -1,10 +1,7 @@
-// @flow
 import { spy } from 'sinon';
-import { expect } from 'chai';
-import { it, describe, before } from 'mocha';
+import { it, describe, beforeAll, expect } from 'vitest';
 
 import Controller from '../../../controller';
-import type { Request, Response } from '../../../server';
 import { getTestApp } from '../../../../../test/utils/get-test-app';
 import {
   createResponse,
@@ -18,10 +15,9 @@ describe('module "router/route"', () => {
     describe('#constructor()', () => {
       let controller: Controller;
 
-      before(async () => {
+      beforeAll(async () => {
         const { controllers } = await getTestApp();
 
-        // $FlowIgnore
         controller = controllers.get('posts');
       });
 
@@ -51,7 +47,6 @@ describe('module "router/route"', () => {
 
       it('throws when an an action is not provided', () => {
         expect(() => {
-          // $FlowIgnore
           new Route({
             controller,
             type: 'collection',
@@ -63,7 +58,6 @@ describe('module "router/route"', () => {
 
       it('throws when an an controller is not provided', () => {
         expect(() => {
-          // $FlowIgnore
           new Route({
             type: 'collection',
             path: 'posts',
@@ -77,11 +71,9 @@ describe('module "router/route"', () => {
     describe('#parseParams()', () => {
       let staticRoute: Route;
       let dynamicRoute: Route;
-      let dataRoute: Route;
 
-      before(async () => {
+      beforeAll(async () => {
         const { controllers } = await getTestApp();
-        // $FlowIgnore
         const controller: Controller = controllers.get('posts');
 
         staticRoute = new Route({
@@ -89,21 +81,14 @@ describe('module "router/route"', () => {
           type: 'collection',
           path: 'posts',
           action: 'index',
-          method: 'GET',
+          method: 'GET'
         });
         dynamicRoute = new Route({
           controller,
           type: 'member',
           path: 'posts/:id',
           action: 'show',
-          method: 'GET',
-        });
-        dataRoute = new Route({
-          controller,
-          type: 'member',
-          path: 'posts/:id',
-          action: 'create',
-          method: 'PATCH',
+          method: 'GET'
         });
       });
 
@@ -125,9 +110,8 @@ describe('module "router/route"', () => {
       let createRequest;
 
       describe('- with action only', () => {
-        before(async () => {
+        beforeAll(async () => {
           class TestController extends Controller {
-            // $FlowIgnore
             index = async () => ({
               meta: {
                 success: true
@@ -167,7 +151,7 @@ describe('module "router/route"', () => {
       });
 
       describe('- with `beforeAction`', () => {
-        before(async () => {
+        beforeAll(async () => {
           class TestController extends Controller {
             beforeAction = [
               async () => ({
@@ -177,7 +161,6 @@ describe('module "router/route"', () => {
               })
             ];
 
-            // $FlowIgnore
             index = async () => ({
               meta: {
                 success: true
@@ -217,9 +200,8 @@ describe('module "router/route"', () => {
       });
 
       describe('- with `afterAction`', () => {
-        before(async () => {
+        beforeAll(async () => {
           class TestController extends Controller {
-            // $FlowIgnore
             index = async () => ({
               meta: {
                 success: true,
@@ -263,7 +245,7 @@ describe('module "router/route"', () => {
       describe('- with `beforeAction` and `afterAction`', () => {
         let beforeSpy;
 
-        before(async () => {
+        beforeAll(async () => {
           const beforeHooks = {
             call: async () => undefined
           };
@@ -271,9 +253,7 @@ describe('module "router/route"', () => {
           beforeSpy = spy(beforeHooks, 'call');
 
           class TestController extends Controller {
-            beforeAction = [
-              beforeHooks.call
-            ];
+            beforeAction = [beforeHooks.call];
 
             afterAction = [
               async (req, res, { meta }) => ({
@@ -284,7 +264,6 @@ describe('module "router/route"', () => {
               })
             ];
 
-            // $FlowIgnore
             index = async () => ({
               meta: {
                 success: true
@@ -329,10 +308,9 @@ describe('module "router/route"', () => {
     describe('#visit', () => {
       let controller: Controller;
 
-      before(async () => {
+      beforeAll(async () => {
         const { controllers } = await getTestApp();
 
-        // $FlowIgnore
         controller = await controllers.get('posts');
       });
 
@@ -341,9 +319,7 @@ describe('module "router/route"', () => {
           let subject;
           let createRequest;
 
-          before(async () => {
-
-
+          beforeAll(async () => {
             subject = new Route({
               method,
               controller,
@@ -354,7 +330,7 @@ describe('module "router/route"', () => {
           });
 
           describe('- with params', () => {
-            before(() => {
+            beforeAll(() => {
               createRequest = createRequestBuilder({
                 method,
                 controller,
@@ -379,7 +355,7 @@ describe('module "router/route"', () => {
           });
 
           describe('- without params', () => {
-            before(() => {
+            beforeAll(() => {
               createRequest = createRequestBuilder({
                 method,
                 path: '/posts',

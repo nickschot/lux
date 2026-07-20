@@ -1,6 +1,4 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe, before } from 'mocha';
+import { it, describe, beforeAll, expect } from 'vitest';
 
 import type Controller from '../../../../controller';
 import type { Request, Response } from '../../../../server';
@@ -15,55 +13,50 @@ const DOMAIN = 'localhost:4000';
 
 describe('module "router/route/action"', () => {
   describe('enhancer resource()', () => {
-    // $FlowIgnore
     const createResponse = (): Response => ({
       stats: []
     });
 
-    //$FlowIgnore
-    const createRequestBuilder = ({ path, route, params }) => (): Request => ({
-      route,
-      method: 'GET',
-      url: {
-        protocol: null,
-        slashes: null,
-        auth: null,
-        host: null,
-        port: null,
-        hostname: null,
-        hash: null,
-        search: '',
-        query: {},
-        pathname: path,
-        path: path,
-        href: path
-      },
-      params: merge({
-        fields: {
-          posts: [
-            'body',
-            'title',
-            'createdAt',
-            'updatedAt'
-          ]
+    const createRequestBuilder =
+      ({ path, route, params }) =>
+      (): Request => ({
+        route,
+        method: 'GET',
+        url: {
+          protocol: null,
+          slashes: null,
+          auth: null,
+          host: null,
+          port: null,
+          hostname: null,
+          hash: null,
+          search: '',
+          query: {},
+          pathname: path,
+          path: path,
+          href: path
+        },
+        params: merge(
+          {
+            fields: {
+              posts: ['body', 'title', 'createdAt', 'updatedAt']
+            }
+          },
+          params
+        ),
+        headers: new Map([['host', DOMAIN]]),
+        connection: {
+          encrypted: false
         }
-      }, params),
-      headers: new Map([
-        ['host', DOMAIN]
-      ]),
-      connection: {
-        encrypted: false
-      }
-    });
+      });
 
     describe('- type "collection"', () => {
-      let subject: Action<any>;
+      let subject: Action<unknown>;
       let createRequest;
 
-      before(async () => {
+      beforeAll(async () => {
         const { router, controllers } = await getTestApp();
 
-        // $FlowIgnore
         const controller: Controller = controllers.get('posts');
 
         subject = resource(controller.index.bind(controller));
@@ -82,9 +75,7 @@ describe('module "router/route/action"', () => {
       });
 
       it('returns an enhanced action', () => {
-        expect(subject)
-          .to.be.a('function')
-          .with.a.lengthOf(2);
+        expect(subject).to.be.a('function').with.a.lengthOf(2);
       });
 
       it('resolves with a serialized payload', async () => {
@@ -97,13 +88,12 @@ describe('module "router/route/action"', () => {
     describe('- type "member"', () => {
       describe('- with "root" namespace', () => {
         const path = '/posts/1';
-        let subject: Action<any>;
+        let subject: Action<unknown>;
         let createRequest;
 
-        before(async () => {
+        beforeAll(async () => {
           const { router, controllers } = await getTestApp();
 
-          // $FlowIgnore
           const controller: Controller = controllers.get('posts');
 
           subject = resource(controller.show.bind(controller));
@@ -117,9 +107,7 @@ describe('module "router/route/action"', () => {
         });
 
         it('returns an enhanced action', () => {
-          expect(subject)
-            .to.be.a('function')
-            .with.a.lengthOf(2);
+          expect(subject).to.be.a('function').with.a.lengthOf(2);
         });
 
         it('resolves with a serialized payload', async () => {
@@ -135,13 +123,12 @@ describe('module "router/route/action"', () => {
 
       describe('- with "admin" namespace', () => {
         const path = '/admin/posts/1';
-        let subject: Action<any>;
+        let subject: Action<unknown>;
         let createRequest;
 
-        before(async () => {
+        beforeAll(async () => {
           const { router, controllers } = await getTestApp();
 
-          // $FlowIgnore
           const controller: Controller = controllers.get('admin/posts');
 
           subject = resource(controller.show.bind(controller));
@@ -155,9 +142,7 @@ describe('module "router/route/action"', () => {
         });
 
         it('returns an enhanced action', () => {
-          expect(subject)
-            .to.be.a('function')
-            .with.a.lengthOf(2);
+          expect(subject).to.be.a('function').with.a.lengthOf(2);
         });
 
         it('resolves with a serialized payload', async () => {
@@ -173,10 +158,10 @@ describe('module "router/route/action"', () => {
 
       describe('- with non-model data', () => {
         const path = '/posts/10000';
-        let subject: Action<any>;
+        let subject: Action<unknown>;
         let createRequest;
 
-        before(async () => {
+        beforeAll(async () => {
           const { router } = await getTestApp();
 
           subject = resource(() => Promise.resolve(null));
@@ -190,9 +175,7 @@ describe('module "router/route/action"', () => {
         });
 
         it('returns an enhanced action', () => {
-          expect(subject)
-            .to.be.a('function')
-            .with.a.lengthOf(2);
+          expect(subject).to.be.a('function').with.a.lengthOf(2);
         });
 
         it('resolves with the result of the action', async () => {

@@ -1,8 +1,5 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe, before } from 'mocha';
+import { it, describe, beforeAll, expect } from 'vitest';
 
-import type { Action } from '../../../index';
 import type { Request, Response } from '../../../../server';
 import sleep from '../../../../../utils/sleep';
 import trackPerf from '../enhancers/track-perf';
@@ -33,26 +30,24 @@ describe('module "router/route/action"', () => {
       ]
     });
 
-    async function __FINAL_HANDLER__(req, res) {
+    async function __FINAL_HANDLER__() {
       await sleep(50);
       return DATA;
     }
 
-    async function middleware(req, res) {
+    async function middleware() {
       await sleep(5);
     }
 
-    before(async () => {
+    beforeAll(async () => {
       const { router } = await getTestApp();
 
-      // $FlowIgnore
       createRequest = (): Request => ({
         route: router.get('GET:/posts'),
         method: 'GET',
         params: {}
       });
 
-      // $FlowIgnore
       createResponse = (): Response => ({
         stats: []
       });
@@ -66,15 +61,15 @@ describe('module "router/route/action"', () => {
       expect(result).to.deep.equal(DATA);
       expect(res.stats).to.have.lengthOf(1);
 
-      const { stats: [stat] } = res;
+      const {
+        stats: [stat]
+      } = res;
 
       expect(stat).to.have.property('type', 'action');
       expect(stat).to.have.property('name', 'index');
       expect(stat).to.have.property('controller', 'PostsController');
 
-      expect(stat)
-        .to.have.property('duration')
-        .and.be.at.least(49);
+      expect(stat).to.have.property('duration').and.be.at.least(49);
     });
 
     it('works with middleware', async () => {
@@ -85,15 +80,15 @@ describe('module "router/route/action"', () => {
       expect(result).to.be.undefined;
       expect(res.stats).to.have.lengthOf(1);
 
-      const { stats: [stat] } = res;
+      const {
+        stats: [stat]
+      } = res;
 
       expect(stat).to.have.property('type', 'middleware');
       expect(stat).to.have.property('name', 'middleware');
       expect(stat).to.have.property('controller', 'PostsController');
 
-      expect(stat)
-        .to.have.property('duration')
-        .and.be.at.least(4);
+      expect(stat).to.have.property('duration').and.be.at.least(4);
     });
 
     it('works with anonymous functions', async () => {
@@ -104,15 +99,15 @@ describe('module "router/route/action"', () => {
       expect(result).to.be.undefined;
       expect(res.stats).to.have.lengthOf(1);
 
-      const { stats: [stat] } = res;
+      const {
+        stats: [stat]
+      } = res;
 
       expect(stat).to.have.property('type', 'middleware');
       expect(stat).to.have.property('name', 'anonymous');
       expect(stat).to.have.property('controller', 'PostsController');
 
-      expect(stat)
-        .to.have.property('duration')
-        .and.be.at.least(19);
+      expect(stat).to.have.property('duration').and.be.at.least(19);
     });
   });
 });

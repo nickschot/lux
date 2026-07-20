@@ -1,10 +1,7 @@
-// @flow
-import { expect } from 'chai';
-import { it, describe, before, beforeEach } from 'mocha';
+import { it, describe, beforeAll, beforeEach, expect } from 'vitest';
 
 import Namespace from '../namespace';
 
-import setType from '../../../utils/set-type';
 import { getTestApp } from '../../../../test/utils/get-test-app';
 
 import type Controller from '../../controller';
@@ -25,23 +22,20 @@ describe('module "router/namespace"', () => {
         expect(subject).to.have.property('controllers', controllers);
       };
 
-      before(async () => {
+      beforeAll(async () => {
         const app = await getTestApp();
 
         controllers = app.controllers;
 
-        controller = setType(() => {
-          return controllers.get('admin/application');
-        });
+        controller = controllers.get('admin/application') as Controller;
 
-        createRootNamespace = (): Namespace => new Namespace({
-          controllers,
-          path: '/',
-          name: 'root',
-          controller: setType(() => {
-            return app.controllers.get('application');
-          })
-        });
+        createRootNamespace = (): Namespace =>
+          new Namespace({
+            controllers,
+            path: '/',
+            name: 'root',
+            controller: app.controllers.get('application') as Controller
+          });
       });
 
       beforeEach(() => {
