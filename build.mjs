@@ -18,15 +18,15 @@ import esbuild from 'esbuild';
 const shared = {
   bundle: true,
   platform: 'node',
-  // Deliberately below what Node 20 supports: two Babel 6 stages still *parse*
-  // this output, and babylon rejects post-ES2017 syntax.
-  //   - dist/cli.cjs  -> nyc wraps child processes, so the suite's `lux ...`
-  //                      shell-outs load it through lib/babel-hook.js
-  //   - dist/index.mjs -> the legacy app compiler bundles it with Rollup 0.43
-  //                      + rollup-plugin-babel
-  // Without this, any `??`/`?.` in a converted source file reaches the bundle
-  // and breaks the test bootstrap. Raise to 'node20' once the Mocha/nyc stack
-  // and the app compiler are retired (phases 4 and 5).
+  // Deliberately below what Node 20 supports: the legacy app compiler still
+  // bundles dist/index.mjs with Rollup 0.43 + rollup-plugin-babel, and babylon
+  // rejects post-ES2017 syntax. Without this, any `??`/`?.` in a source file
+  // reaches the bundle and breaks the test bootstrap (the suite shells out to
+  // `lux db:*`, which compiles the test-app through that pipeline).
+  //
+  // The Mocha/nyc half of this constraint is gone — nyc used to wrap child
+  // processes so `lux ...` shell-outs re-parsed dist/cli.cjs through Babel 6.
+  // Raise to 'node20' once the app compiler is retired (phase 5).
   target: 'es2017',
   packages: 'external', // deps come from node_modules, don't inline them
   sourcemap: true,
