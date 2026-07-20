@@ -1,8 +1,6 @@
-// @flow
 import fetch from 'node-fetch';
-import { expect } from 'chai';
 import { createServer } from 'http';
-import { it, describe, before } from 'mocha';
+import { it, describe, beforeAll, expect } from 'vitest';
 
 import { createResponse } from '../index';
 
@@ -13,7 +11,7 @@ const DOMAIN = 'http://localhost:4100';
 describe('module "server/response"', () => {
   let test;
 
-  before(async () => {
+  beforeAll(async () => {
     const { logger } = await getTestApp();
 
     test = (path, fn) => {

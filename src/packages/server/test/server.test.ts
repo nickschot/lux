@@ -1,7 +1,5 @@
-// @flow
 import fetch from 'node-fetch';
-import { expect } from 'chai';
-import { it, before, after, describe } from 'mocha';
+import { it, beforeAll, afterAll, describe, expect } from 'vitest';
 
 import Server from '../index';
 
@@ -14,7 +12,7 @@ describe('module "server"', () => {
   describe('class Server', () => {
     let subject;
 
-    before(async () => {
+    beforeAll(async () => {
       const { logger, router } = await getTestApp();
 
       subject = new Server({
@@ -28,7 +26,7 @@ describe('module "server"', () => {
       subject.listen(PORT);
     });
 
-    after(() => {
+    afterAll(() => {
       subject.instance.close();
     });
 
