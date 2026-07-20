@@ -9,9 +9,9 @@ import initialize from './initialize';
  * @private
  */
 class Watcher extends EventEmitter {
-  path!: string;
+  declare path: string;
 
-  client!: Client | FSWatcher;
+  declare client: Client | FSWatcher;
 
   constructor(path: string, useWatchman: boolean = true) {
     super();

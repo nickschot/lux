@@ -11,7 +11,7 @@ import type { Router$opts } from './interfaces';
  * @private
  */
 class Router extends FreezeableMap<string, Route> {
-  replacer!: RegExp;
+  declare replacer: RegExp;
 
   constructor({ routes, controller, controllers }: Router$opts) {
     const definitions = build(

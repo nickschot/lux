@@ -11,19 +11,19 @@ import type { Database$opts, ModelClass } from './interfaces';
  * @private
  */
 class Database {
-  path!: string;
+  declare path: string;
 
-  debug!: boolean;
+  declare debug: boolean;
 
-  logger!: Logger;
+  declare logger: Logger;
 
-  config!: Record<string, unknown>;
+  declare config: Record<string, unknown>;
 
-  schema!: () => Knex.SchemaBuilder;
+  declare schema: () => Knex.SchemaBuilder;
 
-  connection!: Knex;
+  declare connection: Knex;
 
-  models!: Map<string, ModelClass>;
+  declare models: Map<string, ModelClass>;
 
   constructor(opts: Database$opts) {
     // Lux databases construct asynchronously: `initialize` populates `this` and

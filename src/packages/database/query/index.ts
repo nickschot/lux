@@ -21,17 +21,17 @@ import { runQuery, createRunner } from './runner';
  * @private
  */
 class Query<T = any> extends Promise<T> {
-  model!: ModelClass;
+  declare model: ModelClass;
 
-  isFind!: boolean;
+  declare isFind: boolean;
 
-  snapshots!: Array<Array<any>>;
+  declare snapshots: Array<Array<any>>;
 
-  collection!: boolean;
+  declare collection: boolean;
 
-  shouldCount!: boolean;
+  declare shouldCount: boolean;
 
-  relationships!: Record<string, any>;
+  declare relationships: Record<string, any>;
 
   constructor(model: ModelClass) {
     let resolve;

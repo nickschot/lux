@@ -8,13 +8,13 @@ import type { Parameter$opts } from './interfaces';
  * @private
  */
 class Parameter extends FreezeableSet<unknown> {
-  path!: string;
+  declare path: string;
 
-  type!: string;
+  declare type: string;
 
-  required!: boolean;
+  declare required: boolean;
 
-  sanitize!: boolean;
+  declare sanitize: boolean;
 
   constructor({ path, type, values, required, sanitize }: Parameter$opts) {
     super(values);

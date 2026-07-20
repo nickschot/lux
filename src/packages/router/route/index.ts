@@ -14,23 +14,23 @@ import type { Route$opts } from './interfaces';
  * @private
  */
 class Route extends FreezeableSet<Action<unknown>> {
-  type!: string;
+  declare type: string;
 
-  path!: string;
+  declare path: string;
 
-  action!: string;
+  declare action: string;
 
-  params!: ParameterGroup;
+  declare params: ParameterGroup;
 
-  method!: Request$method;
+  declare method: Request$method;
 
-  controller!: Controller;
+  declare controller: Controller;
 
-  staticPath!: string;
+  declare staticPath: string;
 
-  defaultParams!: Record<string, unknown>;
+  declare defaultParams: Record<string, unknown>;
 
-  dynamicSegments!: Array<string>;
+  declare dynamicSegments: Array<string>;
 
   constructor({ type, path, action, method, controller }: Route$opts) {
     const dynamicSegments = getDynamicSegments(path);

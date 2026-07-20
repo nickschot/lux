@@ -6,7 +6,6 @@
 module.exports = {
   babelrc: false,
   presets: [['@babel/preset-env', { targets: { node: '20' }, modules: false }]],
-  plugins: ['./lib/babel-plugin-strip-uninitialized-fields.cjs'],
   overrides: [
     { test: /\.js$/, presets: ['@babel/preset-flow'] },
     { test: /\.ts$/, presets: ['@babel/preset-typescript'] }

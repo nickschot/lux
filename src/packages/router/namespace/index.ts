@@ -10,17 +10,17 @@ import type { Namespace$opts } from './interfaces';
  * @private
  */
 class Namespace extends FreezeableSet<Route | Router$Namespace> {
-  name!: string;
+  declare name: string;
 
-  path!: string;
+  declare path: string;
 
-  isRoot!: boolean;
+  declare isRoot: boolean;
 
-  namespace!: Router$Namespace;
+  declare namespace: Router$Namespace;
 
-  controller!: Controller;
+  declare controller: Controller;
 
-  controllers!: Map<string, Controller>;
+  declare controllers: Map<string, Controller>;
 
   constructor({
     name,

@@ -24,15 +24,15 @@ import type { Cluster$opts } from './interfaces';
  * @private
  */
 class Cluster extends EventEmitter {
-  path!: string;
+  declare path: string;
 
-  port!: number;
+  declare port: number;
 
-  logger!: Logger;
+  declare logger: Logger;
 
-  workers!: Set<Worker>;
+  declare workers: Set<Worker>;
 
-  maxWorkers!: number;
+  declare maxWorkers: number;
 
   constructor({ path, port, logger, maxWorkers }: Cluster$opts) {
     super();

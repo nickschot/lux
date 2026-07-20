@@ -15,7 +15,7 @@ export default function createServerError<T extends object>(
   statusCode: number
 ): Constructor<T & Server$Error> {
   const ServerError = class extends (Target as Constructor<object>) {
-    statusCode: number;
+    declare statusCode: number;
 
     constructor(...args: Array<unknown>) {
       super(...args);

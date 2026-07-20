@@ -4,7 +4,7 @@ import type { Migration$Fn } from './interfaces';
  * @private
  */
 class Migration<T extends object> {
-  fn: Migration$Fn<T>;
+  declare fn: Migration$Fn<T>;
 
   constructor(fn: Migration$Fn<T>) {
     this.fn = fn;
