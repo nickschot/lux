@@ -1,9 +1,7 @@
-// @flow
 import { tmpdir } from 'os';
 import { join as joinPath } from 'path';
 
-import { expect } from 'chai';
-import { it, describe, after, before } from 'mocha';
+import { it, describe, afterAll, beforeAll, expect } from 'vitest';
 
 import Watcher from '../watcher';
 import { APPVEYOR } from '../../../constants';
@@ -14,11 +12,11 @@ describe('module "fs"', () => {
   const tmpDirPath = joinPath(tmpdir(), `lux-${Date.now()}`);
   const tmpAppPath = joinPath(tmpDirPath, 'app');
 
-  before(async () => {
+  beforeAll(async () => {
     await mkdirRec(tmpAppPath);
   });
 
-  after(async () => {
+  afterAll(async () => {
     await rmrf(tmpDirPath);
   });
 
@@ -27,7 +25,7 @@ describe('module "fs"', () => {
       describe('- client Watchman', () => {
         let subject;
 
-        before(async () => {
+        beforeAll(async () => {
           subject = await new Watcher(tmpDirPath);
         });
 
@@ -52,7 +50,7 @@ describe('module "fs"', () => {
     describe('- client FSWatcher', () => {
       let subject;
 
-      before(async () => {
+      beforeAll(async () => {
         subject = await new Watcher(tmpDirPath, false);
       });
 

@@ -1,8 +1,6 @@
-// @flow
 import { tmpdir } from 'os';
 
-import { expect } from 'chai';
-import { it, describe, beforeEach, afterEach } from 'mocha';
+import { it, describe, beforeEach, afterEach, expect } from 'vitest';
 
 import { join } from 'path';
 
