@@ -46,10 +46,10 @@ execFileSync(
     '--out-dir',
     'build',
     '--extensions',
-    '.js,.ts',
-    // Ambient `.d.ts` stubs (temporary type shims for not-yet-converted
-    // packages) parse as ambient TS, which @babel/preset-typescript can't
-    // handle; keep them out of the type-strip pass. Runtime is unaffected.
+    '.ts',
+    // Ambient `.d.ts` stubs (declarations for untyped npm modules) parse as
+    // ambient TS, which @babel/preset-typescript can't handle; keep them out
+    // of the type-strip pass. Runtime is unaffected.
     '--ignore',
     'src/**/*.d.ts'
   ],

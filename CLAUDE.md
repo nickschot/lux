@@ -97,12 +97,14 @@ phase 5, so there is no rush:
 - The **`es2017` target can only rise once the app compiler stops re-parsing `dist/`**
   with Rollup 0.43 + Babel 6 (phase 5). Retiring nyc removed the other reason for it.
 
-**Also still dead but not yet removed** (deliberately left out of the Mocha commit):
-`@babel/preset-flow` plus the `.js` override in [babel.config.build.cjs](babel.config.build.cjs)
-(no `.js` sources remain), `flow-bin`, `flow-typed`, the `flow`/`types` scripts and the
-`flow-typed/` directory; and `rollup-plugin-multi-entry`, which is unreferenced but whose
-original purpose I could not confirm. **`.babelrc`, `babel-core` and `babel-preset-lux`
-must STAY** — they are the *app compiler's* Babel 6 (phase 5), not test infrastructure.
+**The dead Flow tooling is gone too** (`.flowconfig`, `flow-typed/`, `decl/`, `flow-bin`,
+`flow-typed`, `@babel/preset-flow`, the `flow`/`types` scripts, the eslint Babel-parser
+block), along with `rollup-plugin-multi-entry` once confirmed unreferenced. **Three things
+must STAY, despite looking like legacy Babel/Flow:** `.babelrc`, `babel-core` and
+`babel-preset-lux` are the *app compiler's* Babel 6, and **`babel-eslint`** is a real
+runtime dependency — [compiler/index.ts](src/packages/compiler/index.ts) passes
+`parser: 'babel-eslint'` to `rollup-plugin-eslint`, and the generated-app template
+references it. All four are phase 5.
 
 ### Traps this migration hit (all pre-existing bugs the runner swap exposed)
 
@@ -312,15 +314,16 @@ The public API is re-exported from `src/index.js`:
 Shared helpers are in `src/utils/`; global constants in `src/constants.js` (reads from
 `process.env`: `PORT` default 4000, `NODE_ENV`, `DATABASE_URL`, etc.).
 
-Colocated tests: `src/**/*.test.ts` (all Vitest). Type/decl stubs in `decl/` and
-`flow-typed/` (the latter is vestigial — no Flow remains).
+Colocated tests: `src/**/*.test.ts` (all Vitest). Ambient declarations for untyped npm
+modules live beside their consumers as `.d.ts` (`fs/watcher/fb-watchman.d.ts`,
+`compiler/legacy-rollup.d.ts`, `cli/ora.d.ts`).
 `test/test-app/` is a full example Lux app the suite boots against (Postgres/MySQL/SQLite).
 
 ## Toolchain (current)
 
 - **Language:** **TypeScript** (strict). Type-check: `pnpm typecheck` (`tsc --noEmit`).
-  No Flow remains; `pnpm run flow` and `flow-typed/` are vestigial (see "Phase 4 status"
-  for the full list of dead Flow tooling still to be removed).
+  No Flow remains, and its tooling is gone (`.flowconfig`, `flow-typed/`, `decl/`,
+  flow-bin, preset-flow).
   Note `tsconfig` **excludes `src/**/test`**, so test files are not type-checked — the
   build (Babel) and the suite are what catch errors there.
 - **Transpile:** Babel 6 via `babel-preset-lux` (`.babelrc`) is still used by the *app
@@ -424,7 +427,6 @@ pnpm build            # Babel 8 -> build/, esbuild -> dist/
 VOLTA_FEATURE_PNPM=1 pnpm test    # 552 passing
 
 pnpm format:check     # prettier verification (CI-style)
-pnpm run flow         # legacy Flow check — NOT a gate, expected to fail mid-migration
 pnpm run clean        # remove build/dist/coverage artifacts
 ```
 
