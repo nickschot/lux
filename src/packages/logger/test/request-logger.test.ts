@@ -1,8 +1,6 @@
-// @flow
 import EventEmitter from 'events';
 
-import { expect } from 'chai';
-import { it, describe, before } from 'mocha';
+import { it, describe, beforeAll, expect } from 'vitest';
 
 import { FORMATS } from '../constants';
 import { createRequestLogger } from '../request-logger';
@@ -21,7 +19,7 @@ describe('module "logger/request-logger"', () => {
       describe(`- format "${format}"`, () => {
         let subject;
 
-        before(() => {
+        beforeAll(() => {
           const logger = new Logger({
             format,
             level: 'INFO',
@@ -35,16 +33,14 @@ describe('module "logger/request-logger"', () => {
         });
 
         it('returns a request logger function', () => {
-          expect(subject)
-            .to.be.a('function')
-            .with.lengthOf(3);
+          expect(subject).to.be.a('function').with.lengthOf(3);
         });
 
         describe('- logger function', () => {
           let req;
           let res;
 
-          before(async () => {
+          beforeAll(async () => {
             const { router } = await getTestApp();
             const emitter = new EventEmitter();
             const createRequest = createRequestBuilder({
@@ -59,9 +55,8 @@ describe('module "logger/request-logger"', () => {
               once: (...args) => emitter.once(...args),
               emit: (...args) => emitter.emit(...args),
               removeListener: (...args) => emitter.removeListener(...args),
-              removeAllListeners: (...args) => (
+              removeAllListeners: (...args) =>
                 emitter.removeAllListeners(...args)
-              )
             });
           });
 

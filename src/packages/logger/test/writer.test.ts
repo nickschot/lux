@@ -1,7 +1,5 @@
-// @flow
 import { spy } from 'sinon';
-import { expect } from 'chai';
-import { it, describe, before, beforeEach, after } from 'mocha';
+import { it, describe, beforeAll, beforeEach, afterAll, expect } from 'vitest';
 
 import { WARN, ERROR, LEVELS, FORMATS } from '../constants';
 import { createWriter } from '../writer';
@@ -11,7 +9,7 @@ describe('module "logger/writer"', () => {
     let stdoutSpy;
     let stderrSpy;
 
-    before(() => {
+    beforeAll(() => {
       stdoutSpy = spy(process.stdout, 'write');
       stderrSpy = spy(process.stderr, 'write');
     });
@@ -21,7 +19,7 @@ describe('module "logger/writer"', () => {
       stderrSpy.reset();
     });
 
-    after(() => {
+    afterAll(() => {
       stdoutSpy.restore();
       stderrSpy.restore();
     });
@@ -30,7 +28,7 @@ describe('module "logger/writer"', () => {
       describe(`- format "${format}"`, () => {
         let subject;
 
-        before(() => {
+        beforeAll(() => {
           subject = createWriter(format);
         });
 
@@ -59,9 +57,7 @@ describe('module "logger/writer"', () => {
               }
 
               expect(spyForLevel.calledOnce).to.be.true;
-              expect(spyForLevel)
-                .to.have.deep.property('firstCall.args[0]')
-                .and.include(message);
+              expect(spyForLevel.firstCall.args[0]).to.include(message);
             });
 
             it('can write nested message objects', () => {
@@ -89,13 +85,13 @@ describe('module "logger/writer"', () => {
               expect(spyForLevel).to.have.property('calledOnce', true);
 
               if (format === 'text') {
-                expect(spyForLevel)
-                  .to.have.deep.property('firstCall.args[0]')
-                  .and.include(JSON.stringify(message, null, 2));
+                expect(spyForLevel.firstCall.args[0]).to.include(
+                  JSON.stringify(message, null, 2)
+                );
               } else {
-                expect(spyForLevel)
-                  .to.have.deep.property('firstCall.args[0]')
-                  .and.include(message.message);
+                expect(spyForLevel.firstCall.args[0]).to.include(
+                  message.message
+                );
               }
             });
 
@@ -113,13 +109,11 @@ describe('module "logger/writer"', () => {
                 expect(stderrSpy).to.have.property('calledOnce', true);
 
                 if (format === 'text') {
-                  expect(stderrSpy)
-                    .to.have.deep.property('firstCall.args[0]')
-                    .and.include(message.stack);
+                  expect(stderrSpy.firstCall.args[0]).to.include(message.stack);
                 } else {
-                  expect(stderrSpy)
-                    .to.have.deep.property('firstCall.args[0]')
-                    .and.include(message.message);
+                  expect(stderrSpy.firstCall.args[0]).to.include(
+                    message.message
+                  );
                 }
               });
             }
