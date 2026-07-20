@@ -1,0 +1,172 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, modernization]
+  pull_request:
+  workflow_dispatch:
+
+# One run per ref: pushing again supersedes an in-flight run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Meta's prebuilt watchman. Pinned, and kept in step with the devcontainer
+  # (.devcontainer/Dockerfile). Needs glibc >= 2.38, which ubuntu-24.04 has.
+  WATCHMAN_VERSION: v2026.07.13.00
+
+jobs:
+  static:
+    name: typecheck / lint / format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # No build or database needed for any of these.
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm format:check
+
+  test:
+    name: test (${{ matrix.driver }})
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      # For the coverage summary comment on pull requests.
+      pull-requests: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - driver: sqlite3
+          - driver: pg
+            username: postgres
+            password: postgres
+          - driver: mysql2
+            username: root
+            password: root
+
+    # GitHub evaluates `services` statically, so both containers start for every
+    # leg — the sqlite3 leg pays the health-check wait without using them. That
+    # is the price of keeping this one readable job instead of three.
+    services:
+      # The test-app pins 2019-era drivers (pg@7, mysql2@1.x) that predate the
+      # auth mechanisms modern servers default to, so both services are
+      # configured down to what those drivers can actually speak.
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      mysql:
+        # 8.0, not 8: `mysql:8` now resolves to 8.4, which no longer loads
+        # mysql_native_password at all. mysql2@1.x cannot do caching_sha2, so
+        # the server must still offer the native plugin for the ALTER below.
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      NODE_ENV: test
+      DATABASE_DRIVER: ${{ matrix.driver }}
+      DATABASE_USERNAME: ${{ matrix.username }}
+      DATABASE_PASSWORD: ${{ matrix.password }}
+      # The service containers publish on IPv4, but "localhost" can resolve to
+      # ::1 on Node 20 — so pin the host explicitly rather than relying on each
+      # driver's default. sqlite3 ignores it (it connects to a file).
+      DATABASE_HOST: 127.0.0.1
+      # NB: deliberately no DATABASE_URL. It takes precedence over every other
+      # setting in src/packages/database/utils/connect.ts and would bypass the
+      # sqlite filename logic entirely.
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      # Two dependency trees: the framework and the test-app it boots against.
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir test/test-app install --frozen-lockfile
+
+      # `module "fs" #watch()` asserts a real watchman client. The framework
+      # itself falls back to native fs.watch, but the test does not.
+      - name: Install watchman
+        run: |
+          curl -fsSL -o /tmp/watchman.zip \
+            "https://github.com/facebook/watchman/releases/download/${WATCHMAN_VERSION}/watchman-${WATCHMAN_VERSION}-linux.zip"
+          unzip -q /tmp/watchman.zip -d /tmp
+          sudo cp /tmp/watchman-${WATCHMAN_VERSION}-linux/bin/* /usr/local/bin/
+          sudo cp -r /tmp/watchman-${WATCHMAN_VERSION}-linux/lib/* /usr/local/lib/
+          sudo mkdir -p /usr/local/var/run/watchman
+          sudo chmod 2777 /usr/local/var/run/watchman
+          watchman --version
+
+      # The app compiler bundles dist/index.mjs, so the suite runs against the
+      # last build rather than the working tree. Must precede `pnpm test`.
+      - run: pnpm build
+
+      # `lux db:reset` cannot provision pg/mysql (dbdrop connects to the database
+      # it is about to drop), so create it here and tell the global setup to skip
+      # the reset. See test/vitest.global-setup.ts.
+      - name: Create database (postgres)
+        if: matrix.driver == 'pg'
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -c 'CREATE DATABASE lux_test;'
+
+      # The runner's own mysql client does speak caching_sha2, so it can connect
+      # to switch root back to the native plugin that mysql2@1.x requires.
+      - name: Create database (mysql)
+        if: matrix.driver == 'mysql2'
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot -e "
+            ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'root';
+            FLUSH PRIVILEGES;
+            CREATE DATABASE lux_test;
+          "
+
+      - name: Test
+        env:
+          LUX_SKIP_DB_RESET: ${{ matrix.driver != 'sqlite3' && '1' || '' }}
+        # Coverage only on the sqlite3 leg — the three legs exercise the same
+        # source, so collecting it three times just slows the matrix down.
+        run: pnpm test ${{ matrix.driver == 'sqlite3' && '--coverage' || '' }}
+
+      - name: Report coverage
+        if: matrix.driver == 'sqlite3' && !cancelled()
+        uses: davelosert/vitest-coverage-report-action@v2

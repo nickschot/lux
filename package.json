@@ -20,7 +20,6 @@
   "scripts": {
     "build": "node build.mjs",
     "clean": "shx rm -rf coverage build dist test/test-app/dist",
-    "codecov": "vitest run --coverage --coverage.reporter=lcov && curl -s https://codecov.io/bash | bash",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
