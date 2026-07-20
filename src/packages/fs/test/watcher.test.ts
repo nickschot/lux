@@ -1,12 +1,26 @@
 import { tmpdir } from 'os';
 import { join as joinPath } from 'path';
+import { execSync } from 'child_process';
 
 import { it, describe, afterAll, beforeAll, expect } from 'vitest';
 
 import Watcher from '../watcher';
-import { APPVEYOR } from '../../../constants';
 
 import { rmrf, mkdirRec, writeFile } from '../index';
+
+// `fs/watcher` falls back to native fs.watch when watchman is absent (see the
+// `which watchman` probe in ../watcher/initialize.ts), but this suite asserts a
+// real watchman client — so probe the same way and skip when it isn't there.
+// Self-configuring: runs for real in CI and the devcontainer, both of which
+// install watchman, and skips on a bare machine.
+const hasWatchman = (() => {
+  try {
+    execSync('which watchman', { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+})();
 
 describe('module "fs"', () => {
   const tmpDirPath = joinPath(tmpdir(), `lux-${Date.now()}`);
@@ -21,7 +35,7 @@ describe('module "fs"', () => {
   });
 
   describe('class Watcher', () => {
-    if (!APPVEYOR) {
+    if (hasWatchman) {
       describe('- client Watchman', () => {
         let subject;
 

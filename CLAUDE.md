@@ -78,8 +78,9 @@ while replacing legacy tooling.
    `es2017` (both gated on phase 5 — see "Phase 4 status").
 5. Finish the app-facing compiler rework (`rollup-plugin-lux`) — likely esbuild; free to
    break since only own apps consume it.
-6. ✅ ESLint 9 flat + typescript-eslint + Prettier. ⬜ Still to do: replace
-   CircleCI/AppVeyor with GitHub Actions.
+6. ✅ ESLint 9 flat + typescript-eslint + Prettier. ✅ CI is **GitHub Actions**
+   ([.github/workflows/ci.yml](.github/workflows/ci.yml)); CircleCI, AppVeyor and Codecov
+   are gone.
 
 ## Phase 4 status — where to resume
 
@@ -346,7 +347,8 @@ modules live beside their consumers as `.d.ts` (`fs/watcher/fb-watchman.d.ts`,
   `expect` (Vitest bundles chai 5). Single fork, `isolate: false`, `fileParallelism: false`
   — the `getTestApp()` singleton and the migrated DB are shared, matching Mocha's old
   single-process model. `globalSetup: test/vitest.global-setup.ts` runs `lux db:*`.
-  Run: `pnpm test` (= `vitest run`). Coverage is Vitest's **v8** provider (`pnpm codecov`).
+  Run: `pnpm test` (= `vitest run`). Coverage is Vitest's **v8** provider
+  (`pnpm test --coverage`), reported in CI as a job summary / PR comment.
   The Mocha stack — `mocha.opts`, `lib/`, `test/index.js`, mocha/nyc/chai — was removed
   once no suite referenced it.
 - **Package manager:** **pnpm 10** (migrated from yarn; `pnpm-lock.yaml`, `packageManager`
@@ -438,7 +440,46 @@ prebuilt N-API binary — no native compile, no Python). CI additionally runs `p
 `mysql2` via `DATABASE_DRIVER`.
 
 **Current baseline (Node 20 / pnpm 10):** `552 passing` across 83 files, all on **Vitest**
-(`pnpm test` = `vitest run`, ~30 s).
+(`pnpm test` = `vitest run`, ~30 s). Coverage sits at ~70% of statements.
+
+### CI — GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml))
+
+Two jobs on push to `develop`/`modernization`, on every PR, and on demand:
+`static` (typecheck + lint + format:check — none of which the old CI ran) and `test`,
+a matrix over `sqlite3` / `pg` / `mysql2`.
+
+Things worth knowing before editing it:
+- **⚠ The test-app's DB drivers are ancient enough to break on modern Node.**
+  `pg@7.18` (2019) is **silently broken on Node 20**: `Client#connect()` returns a promise
+  that never settles *and* keeps no handle alive, so the process just exits. knex reports
+  that only as `Timeout acquiring a connection. The pool is probably full`, which sends you
+  hunting for auth/host/server-version causes that are all red herrings. Bumped to `pg@8`.
+  **Quickest check for this class of bug — connect to a closed port and see if it rejects:**
+  a healthy driver gives `ECONNREFUSED` immediately; the broken one exits 0 in silence.
+  `mysql2@1.7` is the same vintage and is why the workflow pins `mysql:8.0` and switches
+  root to `mysql_native_password`; bumping it to `mysql2@3` should retire both hacks.
+- **`lux db:reset` cannot provision pg/mysql.** `dbdrop` connects *to* `lux_test` and then
+  drops it (Postgres refuses); `dbcreate` connects to a database it is about to create. So
+  those legs create the database with the service container's client and set
+  **`LUX_SKIP_DB_RESET=1`**, which [test/vitest.global-setup.ts](test/vitest.global-setup.ts)
+  honours. This replaced the old `CIRCLECI`/`APPVEYOR` env gating, and the matching
+  `src/constants.ts` exports are gone.
+- **Seeding is not idempotent** — `db:seed` on an already-seeded database duplicates rows and
+  breaks `query.test`'s absolute counts. Harmless in CI (containers start empty) but it means
+  you cannot skip the reset against a warm local database.
+- **watchman is installed from Meta's prebuilt release**, pinned via `WATCHMAN_VERSION` and
+  kept in step with [.devcontainer/Dockerfile](.devcontainer/Dockerfile). `ubuntu-latest`
+  (24.04, glibc 2.39) clears the GLIBC 2.38 floor. `fs/watcher` falls back to native
+  `fs.watch` without it, but `watcher.test.ts` asserts a real client — it now probes
+  `which watchman` and skips itself when absent, so no CI-vendor flag is involved.
+- **Both service containers start for every leg** (GitHub evaluates `services` statically),
+  so the sqlite leg waits on health checks it doesn't use. Deliberate: one readable job
+  beats three near-duplicates.
+- **`pnpm build` must precede `pnpm test`** — the app compiler consumes `dist/index.mjs`.
+- **Do not set `DATABASE_URL` in CI.** It takes precedence over everything in
+  [connect.ts](src/packages/database/utils/connect.ts) and bypasses the sqlite filename logic.
+- The three known-flaky tests are handled with `retry: process.env.CI ? 2 : 0` in
+  [vitest.config.ts](vitest.config.ts) — retries in CI only, so local flakes stay visible.
 
 Three areas are **known-flaky** — if a run goes red here, re-run before investigating:
 - [logger.test.ts](src/packages/logger/test/logger.test.ts) "writes with a recent
