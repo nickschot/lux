@@ -1179,7 +1179,15 @@ class Model {
       );
 
       const runner = createRunner(logger, []);
-      const [[primaryKeyValue]] = await runner(await create(instance, trx));
+      const [[firstRow]] = await runner(await create(instance, trx));
+
+      // `insert().returning(pk)` yields a scalar `[1]` on knex 0.16 but an
+      // object `[{ id: 1 }]` on knex >= 1 (once `RETURNING` reached sqlite).
+      // Normalize both so the primary key stays a scalar.
+      const primaryKeyValue =
+        firstRow !== null && typeof firstRow === 'object'
+          ? Reflect.get(firstRow, primaryKey)
+          : firstRow;
 
       Reflect.set(instance, primaryKey, primaryKeyValue);
       Reflect.set(instance.rawColumnData, primaryKey, primaryKeyValue);
