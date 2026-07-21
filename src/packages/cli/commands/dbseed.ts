@@ -6,7 +6,7 @@ import { createLoader } from '../../loader';
 /**
  * @private
  */
-export function dbseed() {
+export function dbseed(): Promise<unknown> {
   const load = createLoader(CWD);
   const { database: config } = load('config');
   const seed = load('seed');
