@@ -14,8 +14,7 @@ import routesTemplate from '../templates/routes';
 import dbTemplate from '../templates/database';
 import seedTemplate from '../templates/seed';
 import pkgJSONTemplate from '../templates/package-json';
-import babelrcTemplate from '../templates/babelrc';
-import eslintrcTemplate from '../templates/eslintrc';
+import eslintConfigTemplate from '../templates/eslint-config';
 import readmeTemplate from '../templates/readme';
 import licenseTemplate from '../templates/license';
 import gitignoreTemplate from '../templates/gitignore';
@@ -75,11 +74,9 @@ export async function create(name: string, database: string) {
 
     writeFile(`${project}/LICENSE`, licenseTemplate()),
 
-    writeFile(`${project}/package.json`, pkgJSONTemplate(name)),
+    writeFile(`${project}/package.json`, pkgJSONTemplate(name, driver)),
 
-    writeFile(`${project}/.babelrc`, babelrcTemplate()),
-
-    writeFile(`${project}/.eslintrc.json`, eslintrcTemplate()),
+    writeFile(`${project}/eslint.config.mjs`, eslintConfigTemplate()),
 
     writeFile(`${project}/.gitignore`, gitignoreTemplate())
   ]);
@@ -97,8 +94,7 @@ export async function create(name: string, database: string) {
     ${green('create')} README.md
     ${green('create')} LICENSE
     ${green('create')} package.json
-    ${green('create')} .babelrc
-    ${green('create')} .eslintrc.json
+    ${green('create')} eslint.config.mjs
     ${green('create')} .gitignore
   `;
 
@@ -133,11 +129,9 @@ export async function create(name: string, database: string) {
 
   spinner.start();
 
+  // The database driver is already declared in the generated package.json, so a
+  // plain install pulls it in — no separate `npm install --save` needed.
   await exec('npm install', {
-    cwd: project
-  });
-
-  await exec(`npm install --save --save-exact ${driver}`, {
     cwd: project
   });
 

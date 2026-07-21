@@ -78,7 +78,7 @@ cli
   .option(
     '--database [database]',
     'Database driver',
-    /^(postgres|sqlite|mysql|mariadb|oracle)$/i,
+    /^(postgres|sqlite|mysql)$/i,
     'sqlite'
   )
   .action((name, { database }) => {

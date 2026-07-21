@@ -1,9 +1,7 @@
 const drivers = new Map([
   ['postgres', 'pg'],
   ['sqlite', 'sqlite3'],
-  ['mysql', 'mysql2'],
-  ['mariadb', 'mariasql'],
-  ['oracle', 'oracle']
+  ['mysql', 'mysql2']
 ]);
 
 export default function driverFor(database = 'sqlite') {

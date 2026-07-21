@@ -108,13 +108,17 @@ while replacing legacy tooling.
   handle-warning}.ts` + `legacy-rollup.d.ts`. The standalone debugger tool
   ([test/utils/debugger](test/utils/debugger)) was converted to esbuild too.
 
-**⬜ Follow-up — generated-app scaffolding (`cli/templates/*`).** Still emits 2017-era app
-setup: `.babelrc`, `babel-core`/`babel-preset-lux` deps, an `.eslintrc` with
-`parser: 'babel-eslint'`. Those four framework deps (`.babelrc`, `babel-core`,
-`babel-preset-lux`, `babel-eslint`) are kept **only** to feed those templates —
-`babel-eslint`'s former runtime use (the compiler's eslint parser) is gone. Modernizing what
-`lux new` writes is its own task with its own decisions (what a modern generated Lux app
-looks like), so it was scoped out of the compiler rework.
+**✅ Generated-app scaffolding (`cli/templates/*`) modernized — Babel 6 fully retired.**
+`lux new` now emits a modern app: no `.babelrc`, `node >= 20`, a flat `eslint.config.mjs`
+(with `eslint`/`@eslint/js`/`globals` devDeps), and — the real bug fix — **the selected DB
+driver** (the old template shipped none, so generated apps couldn't connect). Drivers are
+trimmed to the three CI-tested (`postgres`/`sqlite`/`mysql` → `pg`/`sqlite3`/`mysql2`); the
+dead `mariadb→mariasql` / `oracle→oracledb` mappings are gone (an unsupported `--database`
+falls back to sqlite via commander, rather than generating a broken app). With no template
+emitting Babel 6, the framework's last Babel-6 deps (`babel-core`, `babel-preset-lux`,
+`babel-eslint`) and root `.babelrc` were removed. **Only `@babel/*` v8 remains** — the
+framework's own TS-strip build ([build.mjs](build.mjs)). Templates have no test coverage;
+verify by running `lux new` and inspecting the output against `test/test-app`.
 
 ### Traps this migration hit (all pre-existing bugs the runner swap exposed)
 
@@ -336,9 +340,9 @@ modules live beside their consumers as `.d.ts` (`fs/watcher/fb-watchman.d.ts`,
   flow-bin, preset-flow).
   Note `tsconfig` **excludes `src/**/test`**, so test files are not type-checked — the
   build and the suite are what catch errors there.
-- **Transpile:** the framework's build strips TS via Babel 8 in [build.mjs](build.mjs).
-  (Babel 6 / `babel-preset-lux` / `.babelrc` survive **only** for the `cli/templates`
-  scaffolding — see the Phase 5 follow-up; nothing in the framework's own build uses them.)
+- **Transpile:** the framework's build strips TS via Babel 8 (`@babel/*`) in
+  [build.mjs](build.mjs). Babel 6 is fully retired — no `.babelrc`, no
+  `babel-core`/`babel-preset-lux`/`babel-eslint` anywhere.
 - **Bundle:** [build.mjs](build.mjs) → `dist/` (`index.js` CJS, `index.mjs` ESM,
   `cli.cjs`). Build: `pnpm build`. **esbuild targets `node20`** — nothing re-parses the
   output with an older parser anymore (the app compiler bundles `dist/index.mjs` with

@@ -16,6 +16,12 @@ export default (): string => template`
   /log
   npm-debug.log
 
+  # database
+  *.sqlite
+  *.sqlite-journal
+  *.sqlite-wal
+  *.sqlite-shm
+
   # misc
   *.DS_Store
 `;
