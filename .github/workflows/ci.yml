@@ -41,7 +41,7 @@ jobs:
       - run: pnpm format:check
 
   test:
-    name: test (${{ matrix.driver }})
+    name: test (node ${{ matrix.node }} / ${{ matrix.driver }})
     runs-on: ubuntu-latest
 
     permissions:
@@ -53,13 +53,26 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - driver: sqlite3
-          - driver: pg
+          # Full driver coverage on the dev baseline (Node 20, the .nvmrc pin).
+          - node: 20
+            driver: sqlite3
+          - node: 20
+            driver: pg
             username: postgres
             password: postgres
-          - driver: mysql2
+          - node: 20
+            driver: mysql2
             username: root
             password: root
+          # Forward-compat across Node versions (22 & 24 LTS, 26 current), run
+          # via sqlite3 — the one native (N-API) dependency and the ABI-sensitive
+          # surface. The pure-JS pg/mysql2 drivers aren't Node-version-sensitive.
+          - node: 22
+            driver: sqlite3
+          - node: 24
+            driver: sqlite3
+          - node: 26
+            driver: sqlite3
 
     # GitHub evaluates `services` statically, so both containers start for every
     # leg — the sqlite3 leg pays the health-check wait without using them. That
@@ -96,8 +109,8 @@ jobs:
       DATABASE_USERNAME: ${{ matrix.username }}
       DATABASE_PASSWORD: ${{ matrix.password }}
       # The service containers publish on IPv4, but "localhost" can resolve to
-      # ::1 on Node 20 — so pin the host explicitly rather than relying on each
-      # driver's default. sqlite3 ignores it (it connects to a file).
+      # ::1 on modern Node — so pin the host explicitly rather than relying on
+      # each driver's default. sqlite3 ignores it (it connects to a file).
       DATABASE_HOST: 127.0.0.1
       # NB: deliberately no DATABASE_URL. It takes precedence over every other
       # setting in src/packages/database/utils/connect.ts and would bypass the
@@ -110,7 +123,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version-file: .nvmrc
+          node-version: ${{ matrix.node }}
           cache: pnpm
 
       # Two dependency trees: the framework and the test-app it boots against.
@@ -150,10 +163,11 @@ jobs:
       - name: Test
         env:
           LUX_SKIP_DB_RESET: ${{ matrix.driver != 'sqlite3' && '1' || '' }}
-        # Coverage only on the sqlite3 leg — the three legs exercise the same
-        # source, so collecting it three times just slows the matrix down.
-        run: pnpm test ${{ matrix.driver == 'sqlite3' && '--coverage' || '' }}
+        # Coverage only on the baseline sqlite3 leg — every leg exercises the
+        # same source, so collecting it repeatedly just slows the matrix down.
+        run: pnpm test ${{ matrix.node == 20 && matrix.driver == 'sqlite3' && '--coverage' || '' }}
 
       - name: Report coverage
-        if: matrix.driver == 'sqlite3' && !cancelled()
+        # Exactly one leg, or the action posts a comment per sqlite3 leg.
+        if: matrix.node == 20 && matrix.driver == 'sqlite3' && !cancelled()
         uses: davelosert/vitest-coverage-report-action@v2
