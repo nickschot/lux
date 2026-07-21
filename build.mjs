@@ -18,16 +18,11 @@ import esbuild from 'esbuild';
 const shared = {
   bundle: true,
   platform: 'node',
-  // Deliberately below what Node 20 supports: the legacy app compiler still
-  // bundles dist/index.mjs with Rollup 0.43 + rollup-plugin-babel, and babylon
-  // rejects post-ES2017 syntax. Without this, any `??`/`?.` in a source file
-  // reaches the bundle and breaks the test bootstrap (the suite shells out to
-  // `lux db:*`, which compiles the test-app through that pipeline).
-  //
-  // The Mocha/nyc half of this constraint is gone — nyc used to wrap child
-  // processes so `lux ...` shell-outs re-parsed dist/cli.cjs through Babel 6.
-  // Raise to 'node20' once the app compiler is retired (phase 5).
-  target: 'es2017',
+  // Node 20 is the floor everywhere (engines, .nvmrc, CI). Nothing re-parses
+  // this output with an older parser anymore: the app compiler bundles
+  // dist/index.mjs with esbuild (phase 5), and dist/cli.cjs is loaded straight
+  // by Node via bin/lux. Native `??`/`?.` are fine.
+  target: 'node20',
   packages: 'external', // deps come from node_modules, don't inline them
   sourcemap: true,
   logLevel: 'info'

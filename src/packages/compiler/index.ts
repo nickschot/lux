@@ -1,20 +1,9 @@
-import os from 'os';
-import path, { posix } from 'path';
+import path from 'path';
 
-import lux from 'rollup-plugin-lux';
-import json from 'rollup-plugin-json';
-import alias from 'rollup-plugin-alias';
-import babel from 'rollup-plugin-babel';
-import eslint from 'rollup-plugin-eslint';
-import resolve from 'rollup-plugin-node-resolve';
-import { rollup } from 'rollup';
+import * as esbuild from 'esbuild';
 
 import { rmrf, readdir, readdirRec, isJSFile } from '../fs';
-import template from '../template';
-import { NODE_ENV } from '../../constants';
 
-import onwarn from './utils/handle-warning';
-import isExternal from './utils/is-external';
 import createManifest from './utils/create-manifest';
 import createBootScript from './utils/create-boot-script';
 
@@ -24,8 +13,6 @@ import createBootScript from './utils/create-boot-script';
 type CompileOptions = {
   useStrict?: boolean;
 };
-
-let cache: unknown;
 
 /**
  * @private
@@ -38,12 +25,9 @@ export async function compile(
   const { useStrict = false } = opts;
   // The framework is consumed as its built ESM bundle (sibling of the CLI
   // bundle in `dist/`), not as raw source — so the app compiler is decoupled
-  // from the framework's source language and keeps working as `src/` moves to
-  // TypeScript.
+  // from the framework's source language.
   const local = path.join(__dirname, 'index.mjs');
   const entry = path.join(dir, 'dist', 'index.js');
-  const external = isExternal(dir);
-  let banner;
 
   const assets = await Promise.all([
     readdir(path.join(dir, 'app', 'models')),
@@ -72,79 +56,32 @@ export async function compile(
   });
 
   await Promise.all([
-    createManifest(dir, assets, {
-      useStrict
-    }),
-    createBootScript(dir, {
-      useStrict
-    })
+    createManifest(dir, assets, { useStrict }),
+    createBootScript(dir, { useStrict })
   ]);
 
-  const aliases = {
-    app: posix.join('/', ...dir.split(path.sep), 'app'),
-    LUX_LOCAL: posix.join('/', ...local.split(path.sep))
-  };
-
-  if (os.platform() === 'win32') {
-    const [volume] = dir;
-    const prefix = `${volume}:/`;
-
-    Object.assign(aliases, {
-      app: aliases.app.replace(prefix, ''),
-      LUX_LOCAL: aliases.LUX_LOCAL.replace(prefix, '')
-    });
-  }
-
-  const bundle = await rollup({
-    entry,
-    onwarn,
-    external,
-    cache,
-    plugins: [
-      alias({
-        resolve: ['.js', '.mjs'],
-        ...aliases
-      }),
-      json(),
-      resolve(),
-      eslint({
-        cwd: dir,
-        parser: 'babel-eslint',
-        useEslintrc: false,
-        include: [path.join(dir, 'app', '**')],
-        exclude: [
-          path.join(dir, 'package.json'),
-          path.join(__dirname, '..', 'src', '**')
-        ]
-      }),
-      babel(),
-      lux(path.resolve(path.sep, dir, 'app'))
-    ]
+  await esbuild.build({
+    entryPoints: [entry],
+    outfile: path.join(dir, 'dist', 'bundle.js'),
+    bundle: true,
+    platform: 'node',
+    format: 'cjs',
+    target: 'node20',
+    sourcemap: true,
+    // Reproduces `rollup-plugin-lux`: preserves each class's `.name` (Lux keys
+    // models/controllers/serializers off it) against esbuild's own renaming.
+    keepNames: true,
+    // Bare specifiers stay external (knex, inflection, the app's own deps);
+    // relative paths and the two aliases below are bundled in. This matches the
+    // old `is-external` split, with the framework itself pulled in via LUX_LOCAL.
+    packages: 'external',
+    alias: {
+      // Apps import the framework as `import { Model } from 'LUX_LOCAL'`.
+      LUX_LOCAL: local,
+      // ...and their own tree as `app/...`.
+      app: path.join(dir, 'app')
+    }
   });
-
-  if (NODE_ENV === 'development') {
-    cache = bundle;
-  }
 
   await rmrf(entry);
-
-  banner = template`
-    const srcmap = require('source-map-support').install({
-      environment: 'node'
-    });
-  `;
-
-  if (useStrict) {
-    banner = `'use strict';\n\n${banner}`;
-  }
-
-  return bundle.write({
-    banner,
-    dest: path.join(dir, 'dist', 'bundle.js'),
-    format: 'cjs',
-    sourceMap: true,
-    useStrict: false
-  });
 }
-
-export { default as onwarn } from './utils/handle-warning';

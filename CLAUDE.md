@@ -70,42 +70,51 @@ while replacing legacy tooling.
 3. ✅ **Flow → TypeScript, bottom-up per `src/packages/*`** — all *source* converted
    (295 `.ts`). Test suites/fixtures were deferred to Phase 4 and are now done too. See
    "Phase 3 status" below.
-4. **Runner swap.** ✅ Steps 1–2: Vitest stood up beside Mocha, then **all 89 Flow test
-   files converted** batch-by-batch — **no Flow remains anywhere in the tree**; the suite
-   is 552 passing across 83 files, entirely on Vitest (Mocha reports 0). See "Phase 4
-   status" below. ✅ Step 3: the Mocha stack is **retired** — `test` is now just
-   `vitest run`. ⬜ Step 4: flip the build to **tsup**/esbuild and raise the target off
-   `es2017` (both gated on phase 5 — see "Phase 4 status").
-5. Finish the app-facing compiler rework (`rollup-plugin-lux`) — likely esbuild; free to
-   break since only own apps consume it.
+4. **Runner swap.** ✅ Steps 1–3: Vitest replaced Mocha, all 89 Flow test files converted,
+   the Mocha stack retired (`test` = `vitest run`). ✅ Step 4 (build target): the framework
+   esbuild build now targets **node20** — the `es2017` pin is gone, since nothing re-parses
+   `dist/` with an older parser anymore. (A full tsup migration was never needed — the
+   framework already bundles with esbuild via [build.mjs](build.mjs).)
+5. ✅ **App compiler reworked to esbuild** (phase 5). Rollup 0.43 + Babel 6 +
+   `rollup-plugin-lux` are gone; [compiler/index.ts](src/packages/compiler/index.ts) is a
+   single `esbuild.build`. See "Phase 5 status" below.
 6. ✅ ESLint 9 flat + typescript-eslint + Prettier. ✅ CI is **GitHub Actions**
    ([.github/workflows/ci.yml](.github/workflows/ci.yml)); CircleCI, AppVeyor and Codecov
    are gone.
 
-## Phase 4 status — where to resume
+## Phase 5 status — app compiler on esbuild
 
-**Steps 1–3 are DONE.** Vitest is the only runner — **552 passing across 83 files**, via
-`pnpm test` (= `vitest run`, ~30 s). No Flow remains in the tree; Mocha, nyc and chai are
-gone along with `lib/` and `test/index.js`. Nine conversion batches, one commit each, all
-five gates green, plus the `declare` refactor and the Mocha removal.
+**DONE.** [compiler/index.ts](src/packages/compiler/index.ts) is now a single
+`esbuild.build` (was Rollup 0.43 + Babel 6 + six plugins incl. `rollup-plugin-lux`). Suite
+**542 passing** (552 − 10 removed tests: 8 `is-external`, 2 `onwarn`). How it maps:
 
-**⬜ Next: Step 4 — flip the build to tsup/esbuild.** Both remaining items are gated on
-phase 5, so there is no rush:
-- The **class-fields hazard is already defused**: the ~113 uninitialized fields are now
-  `declare` in the source and `lib/babel-plugin-strip-uninitialized-fields.cjs` is gone,
-  so dropping Babel no longer reintroduces the shadowing bug. Keep it that way — if a new
-  field is added with a bare annotation or `!`, tsup/esbuild *will* emit it.
-- The **`es2017` target can only rise once the app compiler stops re-parsing `dist/`**
-  with Rollup 0.43 + Babel 6 (phase 5). Retiring nyc removed the other reason for it.
+- **`keepNames: true`** replaces `rollup-plugin-lux` exactly — both emit
+  `Object.defineProperty(Class, 'name', …)` (Lux keys models/controllers/serializers off
+  `.name`). Verified: `bundle.Post.name === 'Post'` on the compiled test-app.
+- **`packages: 'external'`** reproduces the old `is-external` bare-vs-relative split; the
+  framework itself is bundled in via the `LUX_LOCAL` alias (apps import
+  `from 'LUX_LOCAL'`), which resolves to `path.join(__dirname, 'index.mjs')` — the built
+  `dist/index.mjs`, *not* source. **This is why the compiler unit test stubs esbuild** (via
+  `vi.mock` — the namespace is non-configurable, so `spyOn` fails): imported from source,
+  `__dirname` has no `index.mjs`. The real end-to-end path is covered by the global setup —
+  every `lux db:*` compiles the test-app through `dist/`.
+- **eslint-during-compile dropped**: it ran `useEslintrc:false` with no ruleset and no
+  `throwError`, so it enforced nothing and couldn't fail the build (a parse check esbuild
+  already does). Confirmed empirically before removing.
+- **`source-map-support` dropped** for `--enable-source-maps`, set via the `bin/lux`
+  shebang (`#!/usr/bin/env -S node --enable-source-maps`) — process-wide, so the required
+  bundle and cluster workers (inherit `execArgv`) both map traces.
+- Removed: the 7 `rollup*` deps, `source-map-support`, `compiler/utils/{is-external,
+  handle-warning}.ts` + `legacy-rollup.d.ts`. The standalone debugger tool
+  ([test/utils/debugger](test/utils/debugger)) was converted to esbuild too.
 
-**The dead Flow tooling is gone too** (`.flowconfig`, `flow-typed/`, `decl/`, `flow-bin`,
-`flow-typed`, `@babel/preset-flow`, the `flow`/`types` scripts, the eslint Babel-parser
-block), along with `rollup-plugin-multi-entry` once confirmed unreferenced. **Three things
-must STAY, despite looking like legacy Babel/Flow:** `.babelrc`, `babel-core` and
-`babel-preset-lux` are the *app compiler's* Babel 6, and **`babel-eslint`** is a real
-runtime dependency — [compiler/index.ts](src/packages/compiler/index.ts) passes
-`parser: 'babel-eslint'` to `rollup-plugin-eslint`, and the generated-app template
-references it. All four are phase 5.
+**⬜ Follow-up — generated-app scaffolding (`cli/templates/*`).** Still emits 2017-era app
+setup: `.babelrc`, `babel-core`/`babel-preset-lux` deps, an `.eslintrc` with
+`parser: 'babel-eslint'`. Those four framework deps (`.babelrc`, `babel-core`,
+`babel-preset-lux`, `babel-eslint`) are kept **only** to feed those templates —
+`babel-eslint`'s former runtime use (the compiler's eslint parser) is gone. Modernizing what
+`lux new` writes is its own task with its own decisions (what a modern generated Lux app
+looks like), so it was scoped out of the compiler rework.
 
 ### Traps this migration hit (all pre-existing bugs the runner swap exposed)
 
@@ -167,8 +176,8 @@ commit, with all five gates green (see "Conversion recipe").
 here were all converted in Phase 4 Step 2 — see "Phase 4 status" below.
 
 **No temporary `.d.ts` stubs remain.** The only `.d.ts` files left are legitimate ambient
-declarations for untyped npm modules (`fs/watcher/fb-watchman.d.ts`,
-`compiler/legacy-rollup.d.ts`, `cli/ora.d.ts`).
+declarations for untyped npm modules (`fs/watcher/fb-watchman.d.ts`, `cli/ora.d.ts`).
+(`compiler/legacy-rollup.d.ts` went with the Rollup deps in phase 5.)
 
 ### Database — DONE (the ORM core), how it was typed
 
@@ -317,7 +326,7 @@ Shared helpers are in `src/utils/`; global constants in `src/constants.js` (read
 
 Colocated tests: `src/**/*.test.ts` (all Vitest). Ambient declarations for untyped npm
 modules live beside their consumers as `.d.ts` (`fs/watcher/fb-watchman.d.ts`,
-`compiler/legacy-rollup.d.ts`, `cli/ora.d.ts`).
+`cli/ora.d.ts`).
 `test/test-app/` is a full example Lux app the suite boots against (Postgres/MySQL/SQLite).
 
 ## Toolchain (current)
@@ -326,17 +335,15 @@ modules live beside their consumers as `.d.ts` (`fs/watcher/fb-watchman.d.ts`,
   No Flow remains, and its tooling is gone (`.flowconfig`, `flow-typed/`, `decl/`,
   flow-bin, preset-flow).
   Note `tsconfig` **excludes `src/**/test`**, so test files are not type-checked — the
-  build (Babel) and the suite are what catch errors there.
-- **Transpile:** Babel 6 via `babel-preset-lux` (`.babelrc`) is still used by the *app
-  compiler*. The framework's own build is Babel 8 + esbuild — see [build.mjs](build.mjs).
+  build and the suite are what catch errors there.
+- **Transpile:** the framework's build strips TS via Babel 8 in [build.mjs](build.mjs).
+  (Babel 6 / `babel-preset-lux` / `.babelrc` survive **only** for the `cli/templates`
+  scaffolding — see the Phase 5 follow-up; nothing in the framework's own build uses them.)
 - **Bundle:** [build.mjs](build.mjs) → `dist/` (`index.js` CJS, `index.mjs` ESM,
-  `cli.cjs`). Build: `pnpm build`. **esbuild targets `es2017` on purpose:** a Babel 6 stage
-  still *parses* the output — the legacy app compiler bundles `dist/index.mjs` with
-  Rollup 0.43 + Babel 6, and the suite shells out to `lux db:*`, which goes through it.
-  babylon rejects post-ES2017 syntax, so a stray `??`/`?.` in any source otherwise breaks
-  the test bootstrap. (The nyc half of this constraint died with the Mocha stack.)
-  `bin/lux` is subject to the same constraint (noted in that file). Raise the target once
-  phase 5 retires the app compiler.
+  `cli.cjs`). Build: `pnpm build`. **esbuild targets `node20`** — nothing re-parses the
+  output with an older parser anymore (the app compiler bundles `dist/index.mjs` with
+  esbuild, and `dist/cli.cjs` is loaded straight by Node via `bin/lux`). Native `??`/`?.`
+  are fine.
 - **Lint/format:** **ESLint 9 flat** ([eslint.config.mjs](eslint.config.mjs)) +
   typescript-eslint + **Prettier**. `pnpm lint`, `pnpm format`, `pnpm format:check`.
   The config still scopes parsers by extension (`.ts` typescript-eslint, `.js`
