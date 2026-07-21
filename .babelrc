@@ -1,5 +1,0 @@
-{
-  "presets": ["lux"],
-  "minified": true,
-  "comments": false
-}
