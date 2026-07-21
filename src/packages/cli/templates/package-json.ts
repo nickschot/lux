@@ -21,7 +21,7 @@ export default (name: string): string => template`
     "dependencies": {
       "babel-core": "6.17.0",
       "babel-preset-lux": "${BABEL_PRESET_VERSION}",
-      "knex": "0.12.6",
+      "knex": "^3.3.0",
       "lux-framework": "${LUX_VERSION}"
     },
     "engines": {
