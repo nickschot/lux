@@ -341,20 +341,24 @@ modules live beside their consumers as `.d.ts` (`fs/watcher/fb-watchman.d.ts`,
   flow-bin, preset-flow).
   Note `tsconfig` **excludes `src/**/test`**, so test files are not type-checked — the
   build and the suite are what catch errors there.
-- **Transpile:** the framework's build strips TS via Babel 8 (`@babel/*`) in
-  [build.mjs](build.mjs). Babel 6 is fully retired — no `.babelrc`, no
-  `babel-core`/`babel-preset-lux`/`babel-eslint` anywhere.
-- **Bundle:** [build.mjs](build.mjs) → `dist/` (`index.js` CJS, `index.mjs` ESM,
-  `cli.cjs`). Build: `pnpm build`. **esbuild targets `node20`** — nothing re-parses the
-  output with an older parser anymore (the app compiler bundles `dist/index.mjs` with
-  esbuild, and `dist/cli.cjs` is loaded straight by Node via `bin/lux`). Native `??`/`?.`
-  are fine.
+- **Build:** [build.mjs](build.mjs) is **pure esbuild** — it strips TS *and* bundles
+  `src/` straight to `dist/` in one pass (`index.js` CJS, `index.mjs` ESM, `cli.cjs`). No
+  Babel: **Babel is fully retired** (no `.babelrc`, no `babel-config.build.cjs`, no
+  `@babel/*` or Babel-6 deps). `pnpm build`. **esbuild targets `node20`** — nothing
+  re-parses the output with an older parser (the app compiler bundles `dist/index.mjs` with
+  esbuild; `dist/cli.cjs` is loaded straight by Node via `bin/lux`). esbuild reads
+  `tsconfig.json` for `useDefineForClassFields` (true at ES2022), so **uninitialized class
+  fields must stay `declare`** or they get emitted and shadow the prototype accessors.
+- **Types:** `pnpm build:types` (`tsc -p [tsconfig.build.json](tsconfig.build.json)`) emits
+  `dist/types/` (`declaration`/`emitDeclarationOnly`, `rootDir: src`); the `types` field
+  points at `dist/types/index.d.ts`, so consumers get real types instead of `any`. Kept
+  separate from `pnpm build` so the hot build/test loop stays fast; `prepack` runs both, and
+  the CI `static` job runs `build:types` to catch declaration-only errors (e.g. TS2742).
 - **Lint/format:** **ESLint 9 flat** ([eslint.config.mjs](eslint.config.mjs)) +
-  typescript-eslint + **Prettier**. `pnpm lint`, `pnpm format`, `pnpm format:check`.
-  The config still scopes parsers by extension (`.ts` typescript-eslint, `.js`
-  `@babel/eslint-parser`) and Prettier still skips `**/*.js` — both now only cover
-  config/tooling `.js`, and can be simplified in Step 4. **eslint does not catch Flow
-  syntax in `.ts` files** (verified), so it is not a substitute for the build gate.
+  typescript-eslint + **Prettier**. `pnpm lint`, `pnpm format`, `pnpm format:check`. `.ts`
+  uses typescript-eslint; the remaining `.js` (test-app fixture + tooling) uses the default
+  parser (the old `@babel/eslint-parser` block is gone). **eslint does not catch Flow syntax
+  in `.ts` files** (verified), so it is not a substitute for the build gate.
 - **Test:** **Vitest 4** ([vitest.config.ts](vitest.config.ts)) + Sinon, with chai-style
   `expect` (Vitest bundles chai 5). Single fork, `isolate: false`, `fileParallelism: false`
   — the `getTestApp()` singleton and the migrated DB are shared, matching Mocha's old
