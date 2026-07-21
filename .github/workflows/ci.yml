@@ -35,10 +35,13 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # No build or database needed for any of these.
+      # No runtime build or database needed for any of these.
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm format:check
+      # Emits the consumer-facing .d.ts; also catches declaration-only errors
+      # (e.g. TS2742 "cannot be named") that `tsc --noEmit` doesn't.
+      - run: pnpm build:types
 
   test:
     name: test (node ${{ matrix.node }} / ${{ matrix.driver }})

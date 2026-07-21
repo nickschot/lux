@@ -14,12 +14,15 @@
   ],
   "main": "dist/index.js",
   "module": "dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
   "bin": {
     "lux": "bin/lux"
   },
   "scripts": {
     "build": "node build.mjs",
-    "clean": "shx rm -rf coverage build dist test/test-app/dist",
+    "build:types": "tsc -p tsconfig.build.json",
+    "prepack": "pnpm run build && pnpm run build:types",
+    "clean": "shx rm -rf coverage dist test/test-app/dist",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -48,11 +51,6 @@
     "ora": "^5.4.1"
   },
   "devDependencies": {
-    "@babel/cli": "^8.0.4",
-    "@babel/core": "^8.0.1",
-    "@babel/eslint-parser": "^8.0.1",
-    "@babel/preset-env": "^8.0.2",
-    "@babel/preset-typescript": "^8.0.1",
     "@eslint/js": "^9.39.5",
     "@types/inflection": "1.13.2",
     "@types/node": "^20.19.43",
