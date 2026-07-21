@@ -73,14 +73,19 @@ describe('module "logger"', () => {
     });
 
     it('writes with a recent timestamp', async () => {
-      const oldTimestamp = Date.now();
+      const before = Date.now();
       const written = nextWrite();
 
       jsonLogger.info(TEST_MESSAGE);
 
       const { timestamp } = JSON.parse(await written);
+      const logged = Date.parse(timestamp);
 
-      expect(Date.parse(timestamp)).to.equal(oldTimestamp);
+      // The logger stamps its own `Date` a moment after `before`, so the logged
+      // time must fall in the window [before, now]. Asserting that window is
+      // robust; exact equality with `before` lost a 1 ms race intermittently.
+      expect(logged).to.be.at.least(before);
+      expect(logged).to.be.at.most(Date.now());
     });
 
     it('writes json', async () => {

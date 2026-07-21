@@ -159,11 +159,12 @@ verify by running `lux new` and inspecting the output against `test/test-app`.
   `expect(asyncFn).to.be.a('function')` fails (`type-detect` says `'AsyncFunction'`); use
   `typeof x === 'function'`.
 
-**Known-weak specs left behaviour-faithful on purpose** (fix separately, they are changes
-not fixes): `fs.test`'s `returnsPromiseSpec` callers pass their path at describe-collection
-time, before `beforeEach` assigns it, so 7 of 8 call `fs` methods with `undefined` and only
-ever assert "returns a Promise" (`#mkdir()` shows the correct pattern); and
-`logger.test`'s "writes with a recent timestamp" is still the 1 ms race.
+**Two weak specs were carried through the runner swap behaviour-faithful, then fixed once
+the migration settled:** `fs.test`'s `returnsPromiseSpec` used to capture its path at
+describe-collection time (before `beforeEach`), so 7 of 8 callers ran `fs` methods with
+`undefined` and only asserted "returns a Promise" — now the args are a run-time thunk and the
+spec `await`s the real call; and `logger.test`'s "writes with a recent timestamp" exact-equality
+1 ms race is now a `[before, now]` window assertion.
 
 ## Phase 3 status — where to resume
 
@@ -492,22 +493,21 @@ Things worth knowing before editing it:
 - **`pnpm build` must precede `pnpm test`** — the app compiler consumes `dist/index.mjs`.
 - **Do not set `DATABASE_URL` in CI.** It takes precedence over everything in
   [connect.ts](src/packages/database/utils/connect.ts) and bypasses the sqlite filename logic.
-- The three known-flaky tests are handled with `retry: process.env.CI ? 2 : 0` in
+- The remaining known-flaky tests are handled with `retry: process.env.CI ? 2 : 0` in
   [vitest.config.ts](vitest.config.ts) — retries in CI only, so local flakes stay visible.
 
-Three areas are **known-flaky** — if a run goes red here, re-run before investigating:
-- [logger.test.ts](src/packages/logger/test/logger.test.ts) "writes with a recent
-  timestamp" asserts a log timestamp exactly equals a `Date.now()` captured a moment
-  earlier, so it loses a 1 ms race intermittently.
+Two areas are **known-flaky** — if a run goes red here, re-run before investigating:
 - `module "fs" #watch()` depends on the external **watchman** daemon; it intermittently
   times out and then fails its `after all` hook with
-  `Cannot read properties of undefined (reading 'destroy')`.
+  `Cannot read properties of undefined (reading 'destroy')`. Environmental (the daemon),
+  not a test-design flaw.
 - [sleep.test.ts](src/utils/test/sleep.test.ts) asserts `sleep(500)` lands within
   475–525 ms. Under a loaded machine the timer overshoots (seen at 556 ms) and the file's
   other test fails alongside it. Passes in isolation; re-run before investigating.
 
-All three are pre-existing, not regressions. They survived the runner swap unchanged
-(conversions were kept behaviour-faithful) and are still candidates to fix.
+Both are environmental/timer flakiness, not regressions. (The logger "recent timestamp"
+1 ms race and the `fs` `returnsPromiseSpec` no-op specs — the two behaviour-faithful weak
+specs carried through the runner swap — were fixed once the migration settled.)
 
 ## Working notes
 

@@ -75,10 +75,10 @@ describe('module "fs"', () => {
       await fs.mkdir(dirPath);
       expect(spies['mkdir'].calledWith(dirPath)).to.be.true;
     });
-    it('returns a promise', () => {
-      const dirPath = join(tmpDirPath, 'test-mkdir');
-      returnsPromiseSpec('mkdir', dirPath)();
-    });
+    it(
+      'returns a promise',
+      returnsPromiseSpec('mkdir', () => [join(tmpDirPath, 'test-mkdir')])
+    );
   });
 
   describe('#rmdir()', () => {
@@ -86,7 +86,10 @@ describe('module "fs"', () => {
       await fs.rmdir(tmpDirPath);
       expect(spies['rmdir'].calledWith(tmpDirPath)).to.be.true;
     });
-    it('returns a promise', returnsPromiseSpec('rmdir', tmpDirPath));
+    it(
+      'returns a promise',
+      returnsPromiseSpec('rmdir', () => [tmpDirPath])
+    );
   });
 
   describe('#readdir()', () => {
@@ -94,7 +97,10 @@ describe('module "fs"', () => {
       await fs.readdir(tmpDirPath);
       expect(spies['readdir'].calledWith(tmpDirPath)).to.be.true;
     });
-    it('returns a promise', returnsPromiseSpec('readdir', tmpDirPath));
+    it(
+      'returns a promise',
+      returnsPromiseSpec('readdir', () => [tmpDirPath])
+    );
   });
 
   describe('#readFile()', () => {
@@ -109,7 +115,10 @@ describe('module "fs"', () => {
       await fs.readFile(tmpFilePath);
       expect(spies['readFile'].calledWith(tmpFilePath)).to.be.true;
     });
-    it('returns a promise', returnsPromiseSpec('readFile', tmpFilePath));
+    it(
+      'returns a promise',
+      returnsPromiseSpec('readFile', () => [tmpFilePath])
+    );
   });
 
   describe('#writeFile()', () => {
@@ -124,7 +133,10 @@ describe('module "fs"', () => {
       await fs.writeFile(tmpFilePath, 'test data');
       expect(spies['writeFile'].calledWith(tmpFilePath)).to.be.true;
     });
-    it('returns a promise', returnsPromiseSpec('writeFile', tmpFilePath));
+    it(
+      'returns a promise',
+      returnsPromiseSpec('writeFile', () => [tmpFilePath, 'test data'])
+    );
   });
 
   describe('#appendFile()', () => {
@@ -139,7 +151,10 @@ describe('module "fs"', () => {
       await fs.appendFile(tmpFilePath, 'test data');
       expect(spies['appendFile'].calledWith(tmpFilePath));
     });
-    it('returns a promise', returnsPromiseSpec('appendFile', tmpFilePath));
+    it(
+      'returns a promise',
+      returnsPromiseSpec('appendFile', () => [tmpFilePath, 'test data'])
+    );
   });
 
   describe('#stat()', () => {
@@ -154,7 +169,10 @@ describe('module "fs"', () => {
       await fs.stat(tmpFilePath);
       expect(spies['stat'].calledWith(tmpFilePath));
     });
-    it('returns a promise', returnsPromiseSpec('stat', tmpFilePath));
+    it(
+      'returns a promise',
+      returnsPromiseSpec('stat', () => [tmpFilePath])
+    );
   });
 
   describe('#unlink()', () => {
@@ -169,7 +187,10 @@ describe('module "fs"', () => {
       await fs.unlink(tmpFilePath);
       expect(spies['unlink'].calledWith(tmpFilePath));
     });
-    it('returns a promise', returnsPromiseSpec('unlink', tmpFilePath));
+    it(
+      'returns a promise',
+      returnsPromiseSpec('unlink', () => [tmpFilePath])
+    );
   });
 
   describe('#watch()', () => {
@@ -193,24 +214,18 @@ describe('module "fs"', () => {
   });
 });
 
-// The Flow signature declared an optional Mocha `done` parameter the returned
-// spec never took; Vitest has no `done` at all, so it is typed as it behaves.
+// Asserts a promise-wrapped `fs` method returns a Promise that resolves for a
+// real call. `getArgs` is a thunk so the arguments are read when the spec runs,
+// after `beforeEach` has set up the paths -- passing them directly would capture
+// the still-`undefined` `let`s at describe-collection time (which is how these
+// specs used to silently assert nothing).
 function returnsPromiseSpec(
   method: string,
-  ...args: Array<unknown>
-): () => void {
-  return function () {
-    const res = Reflect.apply(fs[method], fs, args);
+  getArgs: () => Array<unknown>
+): () => Promise<void> {
+  return async function () {
+    const res = Reflect.apply(fs[method], fs, getArgs());
     expect(res).to.be.an.instanceOf(Promise);
-
-    // NOTE: every caller but `#mkdir()` passes its path argument at
-    // describe-collection time, i.e. before `beforeEach` assigns it -- so the
-    // call above is usually made with `undefined` and the promise rejects.
-    // These specs therefore only ever assert "returns a Promise", never that
-    // the call succeeds. Mocha silently dropped the rejection; Vitest reports
-    // it as an unhandled error and fails the run, so it is swallowed here.
-    // Left behaviour-faithful on purpose: passing real paths would make these
-    // specs actually touch the filesystem, which is a change, not a fix.
-    Promise.resolve(res).catch(() => {});
+    await res;
   };
 }
