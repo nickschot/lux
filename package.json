@@ -18,6 +18,12 @@
   "bin": {
     "lux": "bin/lux"
   },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "node build.mjs",
     "build:types": "tsc -p tsconfig.build.json",
