@@ -27,3 +27,6 @@ yarn.lock
 # logs
 log/
 *npm-debug.log
+
+# npm pack output
+*.tgz
