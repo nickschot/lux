@@ -174,3 +174,75 @@ jobs:
         # Exactly one leg, or the action posts a comment per sqlite3 leg.
         if: matrix.node == 20 && matrix.driver == 'sqlite3' && !cancelled()
         uses: davelosert/vitest-coverage-report-action@v2
+
+  # Consumption smoke test: installs lux-framework the way an app does -- as a
+  # packaged, production-only dependency -- which the other jobs never do (they
+  # run in-repo with devDeps and a portable layout). This catches install-only
+  # bugs: a runtime need left in devDependencies (e.g. esbuild, which the app
+  # compiler require()s), or broken/missing shipped types.
+  consume:
+    name: consume (packaged, prod-only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      # devDeps (esbuild, typescript) are needed to build + pack.
+      - run: pnpm install --frozen-lockfile
+
+      # `pnpm pack` runs prepack -> build + build:types, then tars the `files`
+      # whitelist. This is the exact artifact a consumer would install. The
+      # tarball name is deterministic, so build it from package.json rather than
+      # parsing pack output (which interleaves the prepack build logs).
+      - name: Pack the package
+        run: |
+          pnpm pack
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          echo "TARBALL=$(pwd)/${NAME}-${VERSION}.tgz" >> "$GITHUB_ENV"
+
+      - name: Install into a throwaway app (production deps only)
+        run: |
+          mkdir -p /tmp/consumer
+          cd /tmp/consumer
+          npm init -y >/dev/null
+          npm install "$TARBALL" --omit=dev --no-audit --no-fund
+
+      # Loading the bundles require()s every runtime dep -- the compiler pulls in
+      # esbuild at module init, so this fails if a runtime need is a devDep.
+      - name: Runtime + CLI bundles load
+        working-directory: /tmp/consumer
+        run: |
+          node -e "require('lux-framework')"
+          node -e "require('lux-framework/dist/cli.cjs')"
+
+      # A consumer gets real types from the shipped dist/types, not `any`.
+      - name: Consumer types resolve
+        working-directory: /tmp/consumer
+        run: |
+          cat > check.ts <<'TS'
+          import { Model, Controller, Serializer, Application } from 'lux-framework';
+          class Post extends Model {}
+          export class C extends Controller {}
+          export class S extends Serializer<Post> {}
+          void Application;
+          TS
+          cat > tsconfig.json <<'JSON'
+          {
+            "compilerOptions": {
+              "strict": true,
+              "module": "esnext",
+              "moduleResolution": "bundler",
+              "noEmit": true,
+              "skipLibCheck": true,
+              "types": []
+            }
+          }
+          JSON
+          "$GITHUB_WORKSPACE/node_modules/.bin/tsc" -p tsconfig.json
