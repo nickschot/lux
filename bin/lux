@@ -1,12 +1,11 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S node --enable-source-maps
 
 'use strict';
 
-// NOTE: keep this file parseable by Babel 6. nyc wraps spawned child processes,
-// so when the test suite shells out to `lux ...` this file is loaded through
-// `lib/babel-hook.js` (extensionless files fall back to the `.js` loader) and
-// babylon rejects post-ES2015 syntax — optional catch binding, for instance.
-// The constraint lifts once the Mocha/nyc/Babel stack is retired for Vitest.
+// `--enable-source-maps` (above) replaces the `source-map-support` shim the app
+// compiler used to inject into every bundle: the flag applies process-wide, so
+// the required app bundle and the cluster workers (which inherit execArgv) both
+// map stack traces back to source.
 
 const { EOL } = require('os');
 const path = require('path');
