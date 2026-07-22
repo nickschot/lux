@@ -2,10 +2,14 @@
   "solution": {
     "lumen-framework": {
       "impact": "patch",
-      "oldVersion": "3.0.0",
-      "newVersion": "3.0.1",
+      "oldVersion": "3.0.1",
+      "newVersion": "3.0.2",
       "tagName": "latest",
       "constraints": [
+        {
+          "impact": "patch",
+          "reason": "Appears in changelog section :memo: Documentation"
+        },
         {
           "impact": "patch",
           "reason": "Appears in changelog section :house: Internal"
@@ -14,5 +18,5 @@
       "pkgJSONPath": "./package.json"
     }
   },
-  "description": "## Release (2026-07-22)\n\n* lumen-framework 3.0.1 (patch)\n\n#### :house: Internal\n* `lumen-framework`\n  * [#13](https://github.com/nickschot/lux/pull/13) Add release-plan setup ([@nickschot](https://github.com/nickschot))\n\n#### Committers: 1\n- Nick Schot ([@nickschot](https://github.com/nickschot))\n"
+  "description": "## Release (2026-07-22)\n\n* lumen-framework 3.0.2 (patch)\n\n#### :memo: Documentation\n* `lumen-framework`\n  * [#15](https://github.com/nickschot/lux/pull/15) Fix npm badge in README.md ([@nickschot](https://github.com/nickschot))\n\n#### :house: Internal\n* `lumen-framework`\n  * [#17](https://github.com/nickschot/lux/pull/17) Only run CI on push on main branch ([@nickschot](https://github.com/nickschot))\n\n#### Committers: 1\n- Nick Schot ([@nickschot](https://github.com/nickschot))\n"
 }

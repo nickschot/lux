@@ -2,6 +2,21 @@
 
 ## Release (2026-07-22)
 
+* lumen-framework 3.0.2 (patch)
+
+#### :memo: Documentation
+* `lumen-framework`
+  * [#15](https://github.com/nickschot/lux/pull/15) Fix npm badge in README.md ([@nickschot](https://github.com/nickschot))
+
+#### :house: Internal
+* `lumen-framework`
+  * [#17](https://github.com/nickschot/lux/pull/17) Only run CI on push on main branch ([@nickschot](https://github.com/nickschot))
+
+#### Committers: 1
+- Nick Schot ([@nickschot](https://github.com/nickschot))
+
+## Release (2026-07-22)
+
 * lumen-framework 3.0.1 (patch)
 
 #### :house: Internal
