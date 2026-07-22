@@ -1,4 +1,4 @@
-# [![Lumen](https://lux.postlight.com/src/components/Sidebar/logo.svg)](https://lux.postlight.com)
+# Lumen
 
 [![CI](https://github.com/nickschot/lux/actions/workflows/ci.yml/badge.svg)](https://github.com/nickschot/lux/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/lumen-framework.svg?style=flat-square)](https://www.npmjs.com/package/lumen-framework)
 
@@ -136,20 +136,29 @@ cd <app-name>
 lumen serve
 ```
 
-For more information checkout out the [Guides](https://lux.postlight.com/).
-
-
-## Benchmarks
-
-[**postlight/lux-benchmarks**](https://github.com/postlight/lux-benchmarks)
-
-
-## Contribution
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md).
-
 ## Useful Links
 
 *   [JSON API](http://jsonapi.org/)
 *   [Knex.js](http://knexjs.org/)
-*   [Chai](http://chaijs.com/) / [Mocha](http://mochajs.org/)
+*   [Vitest](https://vitest.dev/)
+
+## Attribution
+
+Lumen is a fork of [**Lux**](https://github.com/postlight/lux), created by
+[Zachary Golba](https://github.com/zacharygolba) and originally developed and maintained by
+[Postlight](https://postlight.com/). Essentially all of the framework's design — the
+convention-over-configuration approach, the automatic CRUD controllers, the JSON:API
+serialization, the ORM built on Knex — is their work.
+
+Upstream development stopped after `v1.2.3` (2018). This fork picks it up from there: it
+was renamed to Lumen to avoid confusion with the original, since it is no longer a
+drop-in continuation of it — the toolchain has been modernized (TypeScript, esbuild,
+Vitest, Node 20+) and the public API has been allowed to change. Lumen is **not** an
+official Postlight project, and the Postlight team provides no support for it.
+
+The original is MIT licensed, and Lumen remains MIT licensed under the same terms. The
+original copyright notice is retained in [LICENSE](./LICENSE) alongside that of this
+fork's contributors.
+
+*   Original repository: [postlight/lux](https://github.com/postlight/lux)
+*   Original announcement: [Not Another Node.js Framework](https://trackchanges.postlight.com/not-another-node-js-framework-33103ebeedf8)
