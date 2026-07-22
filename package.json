@@ -38,7 +38,13 @@
     "debugger": "node --enable-source-maps test/utils/debugger/dist/debug.js",
     "build:debugger": "node test/utils/debugger/build.mjs"
   },
-  "author": "Zachary Golba",
+  "author": "Nick Schot <nickschot@gmail.com>",
+  "contributors": [
+    {
+      "name": "Zachary Golba",
+      "url": "https://github.com/zacharygolba"
+    }
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/nickschot/lux/issues"
