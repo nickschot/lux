@@ -8,7 +8,7 @@ set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")/.."
 
 if [ ! -f package.json ]; then
-  echo "ERROR: $(pwd) does not look like the lux checkout" >&2
+  echo "ERROR: $(pwd) does not look like the lumen checkout" >&2
   echo "       contents: $(ls -A | tr '\n' ' ')" >&2
   exit 1
 fi

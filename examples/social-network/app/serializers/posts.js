@@ -1,4 +1,4 @@
-import { Serializer } from 'lux-framework';
+import { Serializer } from 'lumen-framework';
 
 class PostsSerializer extends Serializer {
   attributes = [

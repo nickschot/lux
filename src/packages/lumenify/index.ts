@@ -4,14 +4,14 @@ import type { Request, Response } from '../server';
 import createResponseProxy from './utils/create-response-proxy';
 
 /**
- * Convert traditional node HTTP server middleware into a lux compatible
+ * Convert traditional node HTTP server middleware into a lumen compatible
  * function for use in Controller#beforeAction.
  *
- * @module lux-framework
- * @namespace Lux
- * @function luxify
+ * @module lumen-framework
+ * @namespace Lumen
+ * @function lumenify
  */
-export default function luxify(
+export default function lumenify(
   middleware: (req: Request, res: Response, next: (err?: Error) => void) => void
 ): Action<unknown> {
   const result = function (req: Request, res: Response) {

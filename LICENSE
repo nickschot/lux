@@ -1,6 +1,11 @@
 The MIT License (MIT)
 
 Copyright (c) 2016 Postlight
+Copyright (c) 2019-2026 Nick Schot and contributors
+
+Lumen is a fork of Lux (https://github.com/postlight/lux). The copyright notice
+above is retained for the original work, as the MIT License requires; the second
+line covers the changes made in this fork.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

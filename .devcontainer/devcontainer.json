@@ -1,5 +1,5 @@
 {
-  "name": "lux-framework",
+  "name": "lumen-framework",
   "build": {
     "dockerfile": "Dockerfile"
   },
@@ -26,10 +26,10 @@
   // into the container they already live on a container-native filesystem, so
   // the earlier volumes (which existed purely to dodge the macOS bind mount and
   // its darwin-x64 sqlite3 binaries) are redundant — and their hardcoded
-  // /workspaces/lux paths would break a clone placed anywhere else.
+  // /workspaces/lumen paths would break a clone placed anywhere else.
   "mounts": [
-    "source?=lux-claude-config,target=/home/node/.claude,type=volume",
-    "source=lux-gh-config,target=/home/node/.config/gh,type=volume"
+    "source?=lumen-claude-config,target=/home/node/.claude,type=volume",
+    "source=lumen-gh-config,target=/home/node/.config/gh,type=volume"
   ],
 
   "remoteUser": "node",
@@ -49,7 +49,7 @@
   // under IntelliJ but /workspaces/<repo> under the devcontainer CLI and VS
   // Code. Empty candidates are skipped, so this degrades cleanly if
   // ${containerWorkspaceFolder} is not substituted.
-  "postCreateCommand": "bash -c 'for d in \"${containerWorkspaceFolder}\" \"$PWD\" \"$HOME/IdeaProjects/lux\" /workspaces/lux; do [ -f \"$d/.devcontainer/post-create.sh\" ] && exec bash \"$d/.devcontainer/post-create.sh\"; done; echo \"ERROR: could not locate .devcontainer/post-create.sh\" >&2; exit 1'",
+  "postCreateCommand": "bash -c 'for d in \"${containerWorkspaceFolder}\" \"$PWD\" \"$HOME/IdeaProjects/lumen\" /workspaces/lumen; do [ -f \"$d/.devcontainer/post-create.sh\" ] && exec bash \"$d/.devcontainer/post-create.sh\"; done; echo \"ERROR: could not locate .devcontainer/post-create.sh\" >&2; exit 1'",
 
   "customizations": {
     "jetbrains": {

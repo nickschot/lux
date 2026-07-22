@@ -1,4 +1,4 @@
-import { Serializer } from 'lux-framework';
+import { Serializer } from 'lumen-framework';
 
 class TasksSerializer extends Serializer {
   attributes = [

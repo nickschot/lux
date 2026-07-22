@@ -7,7 +7,7 @@ import { createTmpDir, createTmpFiles, removeTmpDir } from './utils';
 
 import { exists } from '../index';
 
-const TMP_PATH = join(tmpdir(), `lux-${Date.now()}`);
+const TMP_PATH = join(tmpdir(), `lumen-${Date.now()}`);
 
 describe('module "fs"', () => {
   describe('#exists()', () => {

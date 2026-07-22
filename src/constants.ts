@@ -18,5 +18,5 @@ export const PID = process.pid;
 export const PORT = parseInt(ENV.PORT as string, 10) || 4000;
 export const NODE_ENV = ENV.NODE_ENV || 'development';
 export const DATABASE_URL = ENV.DATABASE_URL;
-export const LUX_CONSOLE = ENV.LUX_CONSOLE || false;
+export const LUMEN_CONSOLE = ENV.LUMEN_CONSOLE || false;
 export const PLATFORM = platform();

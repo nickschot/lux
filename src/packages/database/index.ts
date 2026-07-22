@@ -26,7 +26,7 @@ class Database {
   declare models: Map<string, ModelClass>;
 
   constructor(opts: Database$opts) {
-    // Lux databases construct asynchronously: `initialize` populates `this` and
+    // Lumen databases construct asynchronously: `initialize` populates `this` and
     // resolves once the schema/migrations/models are ready, so `new Database()`
     // is awaited by callers. TS can't express a Promise-returning constructor,
     // so assert the instance type here.

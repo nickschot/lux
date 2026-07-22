@@ -9,7 +9,7 @@
 // Outputs:
 //   dist/index.js   CJS library    -> package "main" / require()
 //   dist/index.mjs  ESM library    -> the app compiler bundles this
-//   dist/cli.cjs    CJS CLI bundle  -> bin/lux
+//   dist/cli.cjs    CJS CLI bundle  -> bin/lumen
 //
 // Type declarations (dist/types/) are emitted separately by `pnpm build:types`
 // (tsc), so this hot build/test path stays fast.
@@ -21,7 +21,7 @@ const shared = {
   bundle: true,
   platform: 'node',
   // Node 20 is the floor everywhere (engines, .nvmrc, CI). dist/cli.cjs is
-  // loaded straight by Node via bin/lux and dist/index.mjs is re-bundled by the
+  // loaded straight by Node via bin/lumen and dist/index.mjs is re-bundled by the
   // esbuild app compiler, so native `??`/`?.` are fine.
   target: 'node20',
   packages: 'external', // deps come from node_modules, don't inline them

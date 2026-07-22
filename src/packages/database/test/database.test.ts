@@ -11,19 +11,19 @@ const DEFAULT_CONFIG = {
   development: {
     pool: 5,
     driver: 'sqlite3',
-    database: 'lux_test'
+    database: 'lumen_test'
   },
   test: {
     pool: 5,
     driver: DATABASE_DRIVER || 'sqlite3',
-    database: 'lux_test',
+    database: 'lumen_test',
     username: DATABASE_USERNAME,
     password: DATABASE_PASSWORD
   },
   production: {
     pool: 5,
     driver: 'sqlite3',
-    database: 'lux_test'
+    database: 'lumen_test'
   }
 };
 

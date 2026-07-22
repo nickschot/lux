@@ -39,6 +39,6 @@ export async function serve({
     port: PORT,
     maxWorkers: cluster ? undefined : 1
   }).once('ready', () => {
-    logger.info(`Lux Server listening on port: ${cyan(`${PORT}`)}`);
+    logger.info(`Lumen Server listening on port: ${cyan(`${PORT}`)}`);
   });
 }

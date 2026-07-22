@@ -150,22 +150,22 @@ jobs:
       # last build rather than the working tree. Must precede `pnpm test`.
       - run: pnpm build
 
-      # `lux db:reset` cannot provision pg/mysql (dbdrop connects to the database
+      # `lumen db:reset` cannot provision pg/mysql (dbdrop connects to the database
       # it is about to drop), so create it here and tell the global setup to skip
       # the reset. See test/vitest.global-setup.ts.
       - name: Create database (postgres)
         if: matrix.driver == 'pg'
         env:
           PGPASSWORD: postgres
-        run: psql -h 127.0.0.1 -U postgres -c 'CREATE DATABASE lux_test;'
+        run: psql -h 127.0.0.1 -U postgres -c 'CREATE DATABASE lumen_test;'
 
       - name: Create database (mysql)
         if: matrix.driver == 'mysql2'
-        run: mysql -h 127.0.0.1 -uroot -proot -e 'CREATE DATABASE lux_test;'
+        run: mysql -h 127.0.0.1 -uroot -proot -e 'CREATE DATABASE lumen_test;'
 
       - name: Test
         env:
-          LUX_SKIP_DB_RESET: ${{ matrix.driver != 'sqlite3' && '1' || '' }}
+          LUMEN_SKIP_DB_RESET: ${{ matrix.driver != 'sqlite3' && '1' || '' }}
         # Coverage only on the baseline sqlite3 leg — every leg exercises the
         # same source, so collecting it repeatedly just slows the matrix down.
         run: pnpm test ${{ matrix.node == 20 && matrix.driver == 'sqlite3' && '--coverage' || '' }}
@@ -175,7 +175,7 @@ jobs:
         if: matrix.node == 20 && matrix.driver == 'sqlite3' && !cancelled()
         uses: davelosert/vitest-coverage-report-action@v2
 
-  # Consumption smoke test: installs lux-framework the way an app does -- as a
+  # Consumption smoke test: installs lumen-framework the way an app does -- as a
   # packaged, production-only dependency -- which the other jobs never do (they
   # run in-repo with devDeps and a portable layout). This catches install-only
   # bugs: a runtime need left in devDependencies (e.g. esbuild, which the app
@@ -219,15 +219,15 @@ jobs:
       - name: Runtime + CLI bundles load
         working-directory: /tmp/consumer
         run: |
-          node -e "require('lux-framework')"
-          node -e "require('lux-framework/dist/cli.cjs')"
+          node -e "require('lumen-framework')"
+          node -e "require('lumen-framework/dist/cli.cjs')"
 
       # A consumer gets real types from the shipped dist/types, not `any`.
       - name: Consumer types resolve
         working-directory: /tmp/consumer
         run: |
           cat > check.ts <<'TS'
-          import { Model, Controller, Serializer, Application } from 'lux-framework';
+          import { Model, Controller, Serializer, Application } from 'lumen-framework';
           class Post extends Model {}
           export class C extends Controller {}
           export class S extends Serializer<Post> {}

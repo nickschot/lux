@@ -1,4 +1,4 @@
-import { Model } from 'LUX_LOCAL';
+import { Model } from 'LUMEN_LOCAL';
 
 import Comment from './comment';
 import Notification from './notification';

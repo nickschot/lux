@@ -1,7 +1,7 @@
 ### Installation
 
 ```bash
-npm install -g lux-framework
+npm install -g lumen-framework
 ```
 
 ### Creating Your First Project
@@ -9,12 +9,12 @@ npm install -g lux-framework
 Use the new command to create your first project.
 
 ```bash
-lux new <app-name>
+lumen new <app-name>
 ```
 
 ### Generators
 
-Lux allows you to use the CLI to generate boilerplate for the following types:
+Lumen allows you to use the CLI to generate boilerplate for the following types:
 
 - `model`
 - `controller`
@@ -25,7 +25,7 @@ Lux allows you to use the CLI to generate boilerplate for the following types:
 - `util`
 
 ```bash
-lux generate <type> <name> [attrs...]
+lumen generate <type> <name> [attrs...]
 ```
 
 ### Running
@@ -34,5 +34,5 @@ To run your application use the serve command.
 
 ```bash
 cd <app-name>
-lux serve
+lumen serve
 ```

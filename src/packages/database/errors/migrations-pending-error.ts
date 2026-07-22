@@ -13,7 +13,7 @@ class MigrationsPendingError extends Error {
 
     super(line`
       The following migrations are pending ${pending}.
-      Please run ${green('lux db:migrate')} before starting your application.
+      Please run ${green('lumen db:migrate')} before starting your application.
     `);
   }
 }

@@ -1,12 +1,13 @@
 {
-  "name": "lux-framework",
+  "name": "lumen-framework",
   "version": "1.2.3",
   "description": "Build scalable, Node.js-powered REST APIs with almost no code.",
-  "repository": "github:postlight/lux",
+  "repository": "github:nickschot/lux",
   "keywords": [
     "mvc",
     "api",
     "lux",
+    "lumen",
     "jsonapi",
     "json-api",
     "rest",
@@ -16,7 +17,7 @@
   "module": "dist/index.mjs",
   "types": "./dist/types/index.d.ts",
   "bin": {
-    "lux": "bin/lux"
+    "lumen": "bin/lumen"
   },
   "files": [
     "dist",
@@ -37,11 +38,16 @@
     "debugger": "node --enable-source-maps test/utils/debugger/dist/debug.js",
     "build:debugger": "node test/utils/debugger/build.mjs"
   },
-  "author": "Zachary Golba",
+  "author": "Nick Schot <nickschot@gmail.com>",
+  "contributors": [
+    {
+      "name": "Zachary Golba",
+      "url": "https://github.com/zacharygolba"
+    }
+  ],
   "license": "MIT",
-  "homepage": "https://lux.postlight.com",
   "bugs": {
-    "url": "https://github.com/postlight/lux/issues"
+    "url": "https://github.com/nickschot/lux/issues"
   },
   "engines": {
     "node": ">= 20"
@@ -66,7 +72,7 @@
     "eslint-config-prettier": "^10.1.8",
     "faker": "4.1.0",
     "globals": "^17.7.0",
-    "lux-framework": "link:.",
+    "lumen-framework": "link:.",
     "node-fetch": "^2.7.0",
     "prettier": "^3.9.5",
     "shx": "^0.3.4",

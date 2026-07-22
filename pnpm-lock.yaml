@@ -57,7 +57,7 @@ importers:
       globals:
         specifier: ^17.7.0
         version: 17.7.0
-      lux-framework:
+      lumen-framework:
         specifier: link:.
         version: 'link:'
       node-fetch:

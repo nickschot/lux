@@ -1,6 +1,6 @@
-# [![Lux](https://lux.postlight.com/src/components/Sidebar/logo.svg)](https://lux.postlight.com)
+# Lumen
 
-[![CI](https://github.com/nickschot/lux/actions/workflows/ci.yml/badge.svg)](https://github.com/nickschot/lux/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/lux-framework.svg?style=flat-square)](https://www.npmjs.com/package/lux-framework)
+[![CI](https://github.com/nickschot/lux/actions/workflows/ci.yml/badge.svg)](https://github.com/nickschot/lux/actions/workflows/ci.yml) [![npm](https://www.npmjs.com/package/lumen-framework)
 
 A MVC style framework for building highly performant, large scale JSON APIs that anybody who knows the JavaScript language and its modern features will understand.
 
@@ -37,7 +37,7 @@ This isn't another wrapper around [Express](http://expressjs.com/) or a framewor
 
 ##### Minimal API surface area
 
-Lux uses JavaScript's standard library rather than creating a ton of functions you'll have to learn and remember.
+Lumen uses JavaScript's standard library rather than creating a ton of functions you'll have to learn and remember.
 
 After your learn how to use it, you'll rarely need to look at the docs.
 
@@ -90,7 +90,7 @@ Shouldn't there be a better way to do this? Can't I just return a promise or a J
 
 Fortunately ES2015+ has introduced great new features to the JavaScript language, especially when it comes to meta programming.
 
-With Lux your code from before can now look like this:
+With Lumen your code from before can now look like this:
 
 ```javascript
 class PostsController extends Controller {
@@ -116,7 +116,7 @@ It's about time a Node server framework learned something from client-side JS fr
 ### Installation
 
 ```bash
-npm install -g lux-framework
+npm install -g lumen-framework
 ```
 
 ### Creating Your First Project
@@ -124,7 +124,7 @@ npm install -g lux-framework
 Use the `new` command to create your first project.
 
 ```bash
-lux new <app-name>
+lumen new <app-name>
 ```
 
 ### Running
@@ -133,23 +133,32 @@ To run your application use the `serve` command.
 
 ```bash
 cd <app-name>
-lux serve
+lumen serve
 ```
-
-For more information checkout out the [Guides](https://lux.postlight.com/).
-
-
-## Benchmarks
-
-[**postlight/lux-benchmarks**](https://github.com/postlight/lux-benchmarks)
-
-
-## Contribution
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Useful Links
 
 *   [JSON API](http://jsonapi.org/)
 *   [Knex.js](http://knexjs.org/)
-*   [Chai](http://chaijs.com/) / [Mocha](http://mochajs.org/)
+*   [Vitest](https://vitest.dev/)
+
+## Attribution
+
+Lumen is a fork of [**Lux**](https://github.com/postlight/lux), created by
+[Zachary Golba](https://github.com/zacharygolba) and originally developed and maintained by
+[Postlight](https://postlight.com/). Essentially all of the framework's design — the
+convention-over-configuration approach, the automatic CRUD controllers, the JSON:API
+serialization, the ORM built on Knex — is their work.
+
+Upstream development stopped after `v1.2.3` (2018). This fork picks it up from there: it
+was renamed to Lumen to avoid confusion with the original, since it is no longer a
+drop-in continuation of it — the toolchain has been modernized (TypeScript, esbuild,
+Vitest, Node 20+) and the public API has been allowed to change. Lumen is **not** an
+official Postlight project, and the Postlight team provides no support for it.
+
+The original is MIT licensed, and Lumen remains MIT licensed under the same terms. The
+original copyright notice is retained in [LICENSE](./LICENSE) alongside that of this
+fork's contributors.
+
+*   Original repository: [postlight/lux](https://github.com/postlight/lux)
+*   Original announcement: [Not Another Node.js Framework](https://trackchanges.postlight.com/not-another-node-js-framework-33103ebeedf8)

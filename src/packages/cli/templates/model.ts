@@ -18,7 +18,7 @@ export default (name: string, attrs: Array<string>) => {
   const normalized = chain(name).pipe(underscore).pipe(classify).value();
 
   return template`
-    import { Model } from 'lux-framework';
+    import { Model } from 'lumen-framework';
 
     class ${normalized} extends Model {
     ${entries(

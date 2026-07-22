@@ -129,7 +129,7 @@ class Model {
    *   static hasOne = {
    *     profile: {
    *       inverse: 'user'
-   *       // The line above lets Lux know that this relationship is accessible
+   *       // The line above lets Lumen know that this relationship is accessible
    *       // on profile instances via `profile.user`.
    *     }
    *   };
@@ -139,7 +139,7 @@ class Model {
    *   static belongsTo = {
    *     user: {
    *       inverse: 'profile'
-   *       // The line above lets Lux know that this relationship is accessible
+   *       // The line above lets Lumen know that this relationship is accessible
    *       // on user instances via `user.profile`.
    *     }
    *   };
@@ -155,7 +155,7 @@ class Model {
    *     owner: {
    *       inverse: 'profile',
    *       model: 'user'
-   *       // The line above lets Lux know that this is a relationship with the
+   *       // The line above lets Lumen know that this is a relationship with the
    *       // `User` model and not a non-existent `Owner` model.
    *     }
    *   };
@@ -181,7 +181,7 @@ class Model {
    *   static hasMany = {
    *     books: {
    *       inverse: 'author'
-   *       // The line above lets Lux know that this relationship is accessible
+   *       // The line above lets Lumen know that this relationship is accessible
    *       // on book instances via `book.author`.
    *     }
    *   };
@@ -191,7 +191,7 @@ class Model {
    *   static belongsTo = {
    *     author: {
    *       inverse: 'books'
-   *       // The line above lets Lux know that this relationship is accessible
+   *       // The line above lets Lumen know that this relationship is accessible
    *       // on author instances via `author.books`.
    *     }
    *   };
@@ -207,7 +207,7 @@ class Model {
    *     publications: {
    *       inverse: 'author',
    *       model: 'book'
-   *       // The line above lets Lux know that this is a relationship with the
+   *       // The line above lets Lumen know that this is a relationship with the
    *       // `Book` model and not a non-existent `Publication` model.
    *     }
    *   };
@@ -271,7 +271,7 @@ class Model {
    *   static belongsTo = {
    *     author: {
    *       inverse: 'books'
-   *       // The line above lets Lux know that this relationship is accessible
+   *       // The line above lets Lumen know that this relationship is accessible
    *       // on author instances via `author.books`.
    *     }
    *   };
@@ -281,7 +281,7 @@ class Model {
    *   static hasMany = {
    *     books: {
    *       inverse: 'book'
-   *       // The line above lets Lux know that this relationship is accessible
+   *       // The line above lets Lumen know that this relationship is accessible
    *       // on book instances via `book.author`.
    *     }
    *   };
@@ -297,7 +297,7 @@ class Model {
    *     writer: {
    *       inverse: 'books',
    *       model: 'author'
-   *       // The line above lets Lux know that this is a relationship with the
+   *       // The line above lets Lumen know that this is a relationship with the
    *       // `Author` model and not a non-existent `Writer` model.
    *     }
    *   };
@@ -346,7 +346,7 @@ class Model {
    * }
    * ```
    *
-   * In the spirit of have a small api surface area, Lux provides no validation
+   * In the spirit of have a small api surface area, Lumen provides no validation
    * helper functions. You can roll your own helpers with or use one of the many
    * excellent validation libraries like [validator](https://goo.gl/LWaHBB).
    *
@@ -876,20 +876,20 @@ class Model {
    * Specify the transaction object to use for following save, update, or
    * destroy method calls.
    *
-   * When you call a method like update or destroy, lux will create a
+   * When you call a method like update or destroy, lumen will create a
    * transaction and wrap the internals of the method and other downstream
    * method calls like model hooks within. In some edge cases it can be more
    * useful to manually initiate the transaction. Bulk updating or destroying
    * are good examples of this. When you manually begin a transaction, you can
    * call this method to specify the transaction object that you would like to
-   * use for subsequent mutation methods (save, update, destroy, etc.) so lux
+   * use for subsequent mutation methods (save, update, destroy, etc.) so lumen
    * knows not to automatically begin a new transaction if/when a mutation
    * method is called.
    *
    * ```javascript
    * const post = await Post.first();
    *
-   * // This call to update uses the transaction that lux will initiate.
+   * // This call to update uses the transaction that lumen will initiate.
    * await post.update({
    *   // updates to post...
    * });
@@ -959,15 +959,15 @@ class Model {
    * console.log(post.title, post.isDirty);
    * // => 'New Post' false
    *
-   * post.title = 'How to Save a Lux Model';
+   * post.title = 'How to Save a Lumen Model';
    *
    * console.log(post.title, post.isDirty);
-   * // => 'How to Update a Lux Model' true
+   * // => 'How to Update a Lumen Model' true
    *
    * await post.save();
    *
    * console.log(post.title, post.isDirty);
-   * // => 'How to Save a Lux Model' false
+   * // => 'How to Save a Lumen Model' false
    * ```
    *
    * @method save
@@ -988,12 +988,12 @@ class Model {
    * // => 'New Post' false false
    *
    * await post.update({
-   *   title: 'How to Update a Lux Model',
+   *   title: 'How to Update a Lumen Model',
    *   isPublic: true
    * });
    *
    * console.log(post.title, post.isPublic, post.isDirty);
-   * // => 'How to Update a Lux Model' true false
+   * // => 'How to Update a Lumen Model' true false
    * ```
    *
    * @method update
@@ -1231,17 +1231,17 @@ class Model {
    * Specify the transaction object to use for following save, update, or
    * destroy method calls.
    *
-   * When you call a method like update or destroy, lux will create a
+   * When you call a method like update or destroy, lumen will create a
    * transaction and wrap the internals of the method and other downstream
    * method calls like model hooks within. In some edge cases it can be more
    * useful to manually initiate the transaction. Bulk updating or destroying
    * are good examples of this. When you manually begin a transaction, you can
    * call this method to specify the transaction object that you would like to
-   * use for calls to the static create method so lux knows not to automatically
+   * use for calls to the static create method so lumen knows not to automatically
    * begin a new transaction if/when the static create method is called.
    *
    * ```javascript
-   * // This call to create uses the transaction that lux will initiate.
+   * // This call to create uses the transaction that lumen will initiate.
    * await Post.create();
    *
    * await Post.transaction(trx => {

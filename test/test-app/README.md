@@ -8,12 +8,12 @@
 
 ## Running / Development
 
-*   `lux serve`
+*   `lumen serve`
 
 ## Testing
 
-*   `lux test`
+*   `lumen test`
 
 ## Further Reading / Useful Links
-*   [Lux](https://github.com/postlight/lux/)
+*   [Lumen](https://github.com/nickschot/lux/)
 *   [Chai](http://chaijs.com/) / [Mocha](http://mochajs.org/)

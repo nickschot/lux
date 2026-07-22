@@ -56,7 +56,7 @@ describe('module "fs"', () => {
   });
 
   beforeEach(async () => {
-    tmpDirPath = join(tmpdir(), `lux-${Date.now()}`);
+    tmpDirPath = join(tmpdir(), `lumen-${Date.now()}`);
     await createTmpDir(tmpDirPath);
   });
 
@@ -194,7 +194,7 @@ describe('module "fs"', () => {
   });
 
   describe('#watch()', () => {
-    const watchPath = join(tmpdir(), `lux-${Date.now()}`);
+    const watchPath = join(tmpdir(), `lumen-${Date.now()}`);
     let result;
 
     beforeAll(async () => {

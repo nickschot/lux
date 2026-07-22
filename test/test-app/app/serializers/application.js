@@ -1,4 +1,4 @@
-import { Serializer } from 'LUX_LOCAL';
+import { Serializer } from 'LUMEN_LOCAL';
 
 class ApplicationSerializer extends Serializer {
 

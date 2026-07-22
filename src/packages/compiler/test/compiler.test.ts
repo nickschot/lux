@@ -11,7 +11,7 @@ import { compile } from '../index';
 // which only exists in the built `dist/` layout — so importing it from source
 // here can't actually run the bundle (the same reason the old test stubbed
 // Rollup). The real end-to-end path is covered by the global setup, which
-// shells out to `lux db:*` and compiles the test-app through `dist/`. This test
+// shells out to `lumen db:*` and compiles the test-app through `dist/`. This test
 // asserts the compiler's contract: it generates the manifest, hands esbuild the
 // right config, and cleans the entry up afterward.
 //
@@ -56,12 +56,12 @@ describe('module "compiler"', () => {
           expect(options.outfile).to.equal(path.join(dir, 'dist', 'bundle.js'));
           expect(options.format).to.equal('cjs');
           expect(options.platform).to.equal('node');
-          // keepNames replaces rollup-plugin-lux's class-name preservation.
+          // keepNames replaces rollup-plugin-lumen's class-name preservation.
           expect(options.keepNames).to.be.true;
           // The framework and the app tree resolve through aliases; bare deps
           // stay external.
           expect(options.packages).to.equal('external');
-          expect(options.alias).to.have.property('LUX_LOCAL');
+          expect(options.alias).to.have.property('LUMEN_LOCAL');
           expect(options.alias).to.have.property('app', path.join(dir, 'app'));
 
           // The generated manifest re-exports the app's modules...

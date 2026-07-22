@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any --
  * The runner drives Knex query builders (`model.table()` and the reduced
- * snapshot chain) whose types Lux does not model; `records` and the reflected
+ * snapshot chain) whose types Lumen does not model; `records` and the reflected
  * method calls are genuinely untyped here.
  */
 import { RecordNotFoundError } from '../errors';

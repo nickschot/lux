@@ -9,31 +9,44 @@
 
 const { EOL } = require('os');
 const path = require('path');
+const { existsSync } = require('fs');
 
 const cli = require('commander');
 const { red, green } = require('chalk');
 
 const { version: VERSION } = require('../package.json');
 
-function inLuxProject() {
+function inLumenProject() {
   const cwd = process.cwd();
-
-  if (cwd.indexOf(path.join('lux', 'test', 'test-app')) >= 0) {
-    return true;
-  }
 
   try {
     const { dependencies } = require(path.join(cwd, 'package.json'));
-    return Boolean(dependencies['lux-framework']);
+
+    if (dependencies && dependencies['lumen-framework']) {
+      return true;
+    }
   } catch (err) {
-    return false;
+    // No readable package.json here — fall through to the layout check below.
   }
+
+  // Fall back to detecting the application layout the compiler requires.
+  //
+  // This used to match a hardcoded `lumen/test/test-app` path fragment, which
+  // existed because the framework's own fixture app does not depend on the
+  // framework. That broke the moment the project was renamed (the checkout is
+  // still `lux/`), taking the whole suite with it — and it would break again
+  // for anyone whose directory happens to be named differently. Checking for
+  // the app's shape is both rename-proof and closer to the real question.
+  return (
+    existsSync(path.join(cwd, 'app', 'index.js'))
+    && existsSync(path.join(cwd, 'config', 'database.js'))
+  );
 }
 
 function commandNotFound(cmd) {
   console.log(
     `${EOL}  ${red(cmd)} is not a valid command.${EOL.repeat(2)}`,
-    ` Use ${green('lux --help')} for a full list of commands.${EOL}`
+    ` Use ${green('lumen --help')} for a full list of commands.${EOL}`
   );
 }
 
@@ -51,9 +64,9 @@ function exec(cmd, ...args) {
     '^(?:db:.+|test|build|serve|console|generate|destroy)$'
   );
 
-  if (needsProject.test(cmd) && !inLuxProject()) {
+  if (needsProject.test(cmd) && !inLumenProject()) {
     return Promise.reject(
-      new Error('Directory does not contain a valid Lux application.')
+      new Error('Directory does not contain a valid Lumen application.')
     );
   }
 
@@ -110,7 +123,7 @@ cli
   .option('-w, --use-weak', 'Use weak mode')
   .action(({ environment, useWeak }) => {
     setEnvVar('NODE_ENV', environment, 'development');
-    process.env.LUX_CONSOLE = true;
+    process.env.LUMEN_CONSOLE = true;
 
     exec('build', !useWeak)
       .then(() => exec('repl'))
@@ -144,7 +157,7 @@ cli
   .command('g <type> <name> [attrs...]')
   .alias('generate')
   .description(
-    'Example: lux generate model user name:string email:string admin:boolean'
+    'Example: lumen generate model user name:string email:string admin:boolean'
   )
   .action((type, name, attrs) => {
     exec('generate', { type, name, attrs }).then(exit).catch(rescue);
@@ -153,7 +166,7 @@ cli
 cli
   .command('d')
   .alias('destroy <type> <name>')
-  .description('Example: lux destroy model user')
+  .description('Example: lumen destroy model user')
   .action((type, name) => {
     exec('destroy', { type, name }).then(exit).catch(rescue);
   });

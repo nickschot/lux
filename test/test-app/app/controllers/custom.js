@@ -1,4 +1,4 @@
-import { Controller } from 'LUX_LOCAL';
+import { Controller } from 'LUMEN_LOCAL';
 
 class CustomController extends Controller {
   query = [

@@ -57,7 +57,7 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 # IDE clones somewhere else this is simply unused, and post-create re-checks
 # writability at runtime.
 RUN mkdir -p \
-        /workspaces/lux \
+        /workspaces/lumen \
         /home/node/.claude \
         /home/node/.config/gh \
     && chown -R node:node /workspaces /home/node/.claude /home/node/.config
