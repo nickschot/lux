@@ -1,0 +1,18 @@
+{
+  "solution": {
+    "lumen-framework": {
+      "impact": "patch",
+      "oldVersion": "3.0.0",
+      "newVersion": "3.0.1",
+      "tagName": "latest",
+      "constraints": [
+        {
+          "impact": "patch",
+          "reason": "Appears in changelog section :house: Internal"
+        }
+      ],
+      "pkgJSONPath": "./package.json"
+    }
+  },
+  "description": "## Release (2026-07-22)\n\n* lumen-framework 3.0.1 (patch)\n\n#### :house: Internal\n* `lumen-framework`\n  * [#13](https://github.com/nickschot/lux/pull/13) Add release-plan setup ([@nickschot](https://github.com/nickschot))\n\n#### Committers: 1\n- Nick Schot ([@nickschot](https://github.com/nickschot))\n"
+}
