@@ -61,7 +61,7 @@ describe('module "compiler"', () => {
           // The framework and the app tree resolve through aliases; bare deps
           // stay external.
           expect(options.packages).to.equal('external');
-          expect(options.alias).to.have.property('LUX_LOCAL');
+          expect(options.alias).to.have.property('LUMEN_LOCAL');
           expect(options.alias).to.have.property('app', path.join(dir, 'app'));
 
           // The generated manifest re-exports the app's modules...

@@ -73,11 +73,11 @@ export async function compile(
     keepNames: true,
     // Bare specifiers stay external (knex, inflection, the app's own deps);
     // relative paths and the two aliases below are bundled in. This matches the
-    // old `is-external` split, with the framework itself pulled in via LUX_LOCAL.
+    // old `is-external` split, with the framework itself pulled in via LUMEN_LOCAL.
     packages: 'external',
     alias: {
-      // Apps import the framework as `import { Model } from 'LUX_LOCAL'`.
-      LUX_LOCAL: local,
+      // Apps import the framework as `import { Model } from 'LUMEN_LOCAL'`.
+      LUMEN_LOCAL: local,
       // ...and their own tree as `app/...`.
       app: path.join(dir, 'app')
     }

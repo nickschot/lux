@@ -61,7 +61,7 @@ while replacing legacy tooling.
 2. ✅ **Decouple + unify the transpiler (the real unlock).** New two-stage build
    ([build.mjs](build.mjs)): **Babel 8** strips Flow (`.js`) + TS (`.ts`) → plain-JS ESM
    in `build/`; **esbuild** bundles → `dist/` (`index.js` CJS `main`, `index.mjs` ESM,
-   `cli.cjs` for `bin/lumen`). App compiler's `LUX_LOCAL` now points at `dist/index.mjs`, so
+   `cli.cjs` for `bin/lumen`). App compiler's `LUMEN_LOCAL` now points at `dist/index.mjs`, so
    it bundles built JS (decoupled from source language). TS foundation in place: strict
    [tsconfig.json](tsconfig.json), `pnpm typecheck` (`tsc --noEmit`), and
    `lib/ts-hook.js` (esbuild-register ran `.ts` in Mocha, loaded via `babel-hook.js`
@@ -92,8 +92,8 @@ while replacing legacy tooling.
   `Object.defineProperty(Class, 'name', …)` (Lux keys models/controllers/serializers off
   `.name`). Verified: `bundle.Post.name === 'Post'` on the compiled test-app.
 - **`packages: 'external'`** reproduces the old `is-external` bare-vs-relative split; the
-  framework itself is bundled in via the `LUX_LOCAL` alias (apps import
-  `from 'LUX_LOCAL'`), which resolves to `path.join(__dirname, 'index.mjs')` — the built
+  framework itself is bundled in via the `LUMEN_LOCAL` alias (apps import
+  `from 'LUMEN_LOCAL'`), which resolves to `path.join(__dirname, 'index.mjs')` — the built
   `dist/index.mjs`, *not* source. **This is why the compiler unit test stubs esbuild** (via
   `vi.mock` — the namespace is non-configurable, so `spyOn` fails): imported from source,
   `__dirname` has no `index.mjs`. The real end-to-end path is covered by the global setup —
@@ -480,7 +480,7 @@ Things worth knowing before editing it:
 - **`lumen db:reset` cannot provision pg/mysql.** `dbdrop` connects *to* `lumen_test` and then
   drops it (Postgres refuses); `dbcreate` connects to a database it is about to create. So
   those legs create the database with the service container's client and set
-  **`LUX_SKIP_DB_RESET=1`**, which [test/vitest.global-setup.ts](test/vitest.global-setup.ts)
+  **`LUMEN_SKIP_DB_RESET=1`**, which [test/vitest.global-setup.ts](test/vitest.global-setup.ts)
   honours. This replaced the old `CIRCLECI`/`APPVEYOR` env gating, and the matching
   `src/constants.ts` exports are gone.
 - **Seeding is not idempotent** — `db:seed` on an already-seeded database duplicates rows and

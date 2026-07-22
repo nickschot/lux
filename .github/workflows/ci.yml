@@ -165,7 +165,7 @@ jobs:
 
       - name: Test
         env:
-          LUX_SKIP_DB_RESET: ${{ matrix.driver != 'sqlite3' && '1' || '' }}
+          LUMEN_SKIP_DB_RESET: ${{ matrix.driver != 'sqlite3' && '1' || '' }}
         # Coverage only on the baseline sqlite3 leg — every leg exercises the
         # same source, so collecting it repeatedly just slows the matrix down.
         run: pnpm test ${{ matrix.node == 20 && matrix.driver == 'sqlite3' && '--coverage' || '' }}

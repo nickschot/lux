@@ -53,13 +53,13 @@ your app code stops working:
   `db/migrate/*.js`; `.ts` app files are not picked up.
 
 What's fine (and what the reference app uses): plain ESM,
-`import { Model } from 'LUX_LOCAL'`, class fields (`static hasMany = {...}`),
+`import { Model } from 'LUMEN_LOCAL'`, class fields (`static hasMany = {...}`),
 async/await, `??` / `?.`. Standard modern JS passes straight through.
 
 ## 4. Unchanged — no action needed
 
 - **Framework imports:** still `import { Model, Controller, Serializer,
-  Application } from 'LUX_LOCAL'`. The magic specifier is the same.
+  Application } from 'LUMEN_LOCAL'`. The magic specifier is the same.
 - **Runtime API:** `Model`, `Controller`, `Serializer`, `Application`,
   `Logger`, `lumenify` behave identically — the Flow → TypeScript conversion was
   behaviour-faithful, not a rewrite.
@@ -71,7 +71,7 @@ async/await, `??` / `?.`. Standard modern JS passes straight through.
 
 ## 5. Deployment note
 
-`LUX_LOCAL` resolves to the framework's **built** `dist/index.mjs`, and `dist/`
+`LUMEN_LOCAL` resolves to the framework's **built** `dist/index.mjs`, and `dist/`
 is gitignored. If you consume `lumen-framework` straight from a git branch (not a
 published tarball), make sure it gets built on install — a `prepare` script, or
 publish a built package. Installing from a registry (which builds before

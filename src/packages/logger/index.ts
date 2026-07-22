@@ -1,4 +1,4 @@
-import { LUX_CONSOLE } from '../../constants';
+import { LUMEN_CONSOLE } from '../../constants';
 import K from '../../utils/k';
 
 import { LEVELS } from './constants';
@@ -195,7 +195,7 @@ class Logger {
     let write: Logger$Writer = K;
     let request: Logger$RequestLogger = K;
 
-    if (!LUX_CONSOLE && enabled) {
+    if (!LUMEN_CONSOLE && enabled) {
       write = createWriter(format);
       request = createRequestLogger(this);
     }

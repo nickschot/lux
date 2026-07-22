@@ -110,7 +110,7 @@ cli
   .option('-w, --use-weak', 'Use weak mode')
   .action(({ environment, useWeak }) => {
     setEnvVar('NODE_ENV', environment, 'development');
-    process.env.LUX_CONSOLE = true;
+    process.env.LUMEN_CONSOLE = true;
 
     exec('build', !useWeak)
       .then(() => exec('repl'))

@@ -1,4 +1,4 @@
-import { LUX_CONSOLE } from '../../constants';
+import { LUMEN_CONSOLE } from '../../constants';
 import Database from '../database';
 import Logger from '../logger';
 import Router from '../router';
@@ -95,7 +95,7 @@ export default async function initialize<T extends Application>(
     ...serverConfig
   });
 
-  if (!LUX_CONSOLE) {
+  if (!LUMEN_CONSOLE) {
     server.instance.listen(normalizedPort).once('listening', () => {
       if (typeof process.send === 'function') {
         process.send('ready');

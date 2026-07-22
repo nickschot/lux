@@ -11,15 +11,15 @@ import exec from '../src/utils/exec';
 // `lumen db:reset` can only provision sqlite. For pg/mysql `dbdrop` connects *to*
 // `lumen_test` before dropping it (which Postgres refuses) and `dbcreate` connects
 // to a database it is about to create — so those drivers need the database
-// created externally, and whoever does that sets LUX_SKIP_DB_RESET. See the
+// created externally, and whoever does that sets LUMEN_SKIP_DB_RESET. See the
 // pg/mysql legs of .github/workflows/ci.yml.
-const { LUX_SKIP_DB_RESET } = process.env;
+const { LUMEN_SKIP_DB_RESET } = process.env;
 
 export default async function setup(): Promise<void> {
   const path = resolvePath(import.meta.dirname, 'test-app');
   const execOpts = { cwd: path };
 
-  if (!LUX_SKIP_DB_RESET) {
+  if (!LUMEN_SKIP_DB_RESET) {
     await exec('lumen db:reset', execOpts);
   }
 

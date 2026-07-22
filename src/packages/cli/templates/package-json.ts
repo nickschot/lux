@@ -1,6 +1,6 @@
 import { version } from '../../../../package.json';
 
-const LUX_VERSION: string = version;
+const LUMEN_VERSION: string = version;
 
 // The knex client name (what `driverFor` returns) -> the npm package + version
 // a generated app needs installed to actually connect. Pinned to the versions
@@ -30,7 +30,7 @@ export default (name: string, driver: string): string => {
     license: 'MIT',
     dependencies: {
       knex: '^3.3.0',
-      'lumen-framework': LUX_VERSION,
+      'lumen-framework': LUMEN_VERSION,
       [dbDriver.name]: dbDriver.version
     },
     devDependencies: {
