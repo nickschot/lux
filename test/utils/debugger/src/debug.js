@@ -99,13 +99,13 @@ process.on('exit', () => {
 
   const cleanArgs = 'rm -rf coverage dist test/test-app/dist'.split(' ');
 
-  await runCommand('shx', cleanArgs, ['Cleaning Lux repo...', 'Repo cleaned.']);
+  await runCommand('shx', cleanArgs, ['Cleaning Lumen repo...', 'Repo cleaned.']);
 
-  await runCommand('node', ['build.mjs'], ['Building Lux source...', 'Lux source built.']);
+  await runCommand('node', ['build.mjs'], ['Building Lumen source...', 'Lumen source built.']);
 
   process.chdir('./test/test-app');
 
-  await runCommand('lumen', ['build'], ['Building Lux test-app...', 'Lux test-app built.']);
+  await runCommand('lumen', ['build'], ['Building Lumen test-app...', 'Lumen test-app built.']);
 
   await runInspector();
 

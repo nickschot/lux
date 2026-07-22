@@ -1,8 +1,8 @@
-# The Lux Code of Conduct
+# The Lumen Code of Conduct
 
 ## Conduct
 
-**Contact Lux moderators:**: [lumen+moderators@postlight.com](mailto:lumen+moderators@postlight.com)
+**Contact Lumen moderators:**: [lumen+moderators@postlight.com](mailto:lumen+moderators@postlight.com)
 
 *   We are committed to providing a friendly, safe and welcoming environment for
 all, regardless of level of experience, gender, gender identity and expression,
@@ -31,7 +31,7 @@ people in socially marginalized groups.
 
 *   Private harassment is also unacceptable. No matter who you are, if you feel
 you have been or are being harassed or made uncomfortable by a community member,
-please contact one of the channel ops or any of the [Lux moderation team](mailto:lumen+moderators@postlight.com)
+please contact one of the channel ops or any of the [Lumen moderation team](mailto:lumen+moderators@postlight.com)
 immediately. Whether you're a regular contributor or a newcomer, we care about
 making this community a safe place for you and we've got your back.
 
@@ -41,9 +41,9 @@ behavior is not welcome.
 ## Moderation
 
 These are the policies for upholding our community's standards of conduct. If you
-feel that a thread needs moderation, please contact the [Lux moderation team](mailto:lumen+moderators@postlight.com).
+feel that a thread needs moderation, please contact the [Lumen moderation team](mailto:lumen+moderators@postlight.com).
 
-1.  Remarks that violate the Lux standards of conduct, including hateful, hurtful,
+1.  Remarks that violate the Lumen standards of conduct, including hateful, hurtful,
 oppressive, or exclusionary remarks, are not allowed. (Cursing is allowed, but
 never targeting another user, and never in a hateful manner.)
 
@@ -69,7 +69,7 @@ about bans in-channel are not allowed.
 moderator creates an inappropriate situation, they should expect less leeway than
 others.
 
-In the Lux community we strive to go the extra step to look out for each other.
+In the Lumen community we strive to go the extra step to look out for each other.
 Don't just aim to be technically unimpeachable, try to be your best self. In
 particular, avoid flirting with offensive or sensitive issues, particularly if
 they're off-topic; this all too often leads to unnecessary fights, hurt feelings,
@@ -84,10 +84,10 @@ are all here first and foremost because we want to talk about cool technology.
 You will find that people will be eager to assume good intent and forgive as long
 as you earn their trust.
 
-The enforcement policies listed above apply to all official Lux venues; including
-the official Gitter room ([*postlight/lumen*](http://bit.ly/2k4qS1k)); GitHub
-repositories under postlight/lumen such as Lux core and other Postlight repositories
-with a \*-lumen or lumen-\* naming convention; For other projects adopting the Lux
+The enforcement policies listed above apply to all official Lumen venues; including
+the official Gitter room ([*postlight/lux*](http://bit.ly/2k4qS1k)); GitHub
+repositories under postlight/lumen such as Lumen core and other Postlight repositories
+with a \*-lumen or lumen-\* naming convention; For other projects adopting the Lumen
 Code of Conduct, please contact the maintainers of those projects for enforcement.
 If you wish to use this code of conduct for your own project, consider explicitly
 mentioning your moderation policy or making a copy with your own moderation policy

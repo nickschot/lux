@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any --
  * These build and run Knex insert/update/delete statements; the query builders
- * and the promises they return are not modeled by Lux (they were `Object` in
+ * and the promises they return are not modeled by Lumen (they were `Object` in
  * Flow).
  */
 import { sql } from '../../../logger';

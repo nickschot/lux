@@ -1,4 +1,4 @@
-# Upgrading a Lux app to the modernized framework
+# Upgrading a Lumen app to the modernized framework
 
 This branch replaces the framework's 2017-era toolchain (Node 6, Flow, Babel 6,
 Rollup 0.43) with a modern one (Node 20, TypeScript, esbuild). The app-facing

@@ -1,7 +1,7 @@
 import type Controller from '../../../controller';
 import type { Route$type } from '../index';
 import type { Request$method } from '../../../server';
-import type { Lux$Collection } from '../../../../interfaces';
+import type { Lumen$Collection } from '../../../../interfaces';
 
 export type Params$opts = {
   type: Route$type;
@@ -18,7 +18,7 @@ export type ParameterLike$opts = {
   sanitize?: boolean;
 };
 
-export interface ParameterLike extends Lux$Collection<unknown> {
+export interface ParameterLike extends Lumen$Collection<unknown> {
   path: string;
   type: string;
   required: boolean;

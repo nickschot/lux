@@ -28,14 +28,14 @@ import type {
  *
  * Controller actions are functions that call on a Controller in response to an
  * incoming HTTP request. The job of Controller actions are to return the data
- * that the Lux Application will respond with.
+ * that the Lumen Application will respond with.
  *
  * There is no special API for Controller actions. They are simply functions
  * that return a value. If an action returns a Query or Promise the resolved
  * value will be used rather than the immediate return value of the action.
  *
  * Below you will find a table showing the different types of responses you can
- * get from different action return values. Keep in mind, Lux is agnostic to
+ * get from different action return values. Keep in mind, Lumen is agnostic to
  * whether or not the value is returned synchronously or resolved from a
  * Promise.
  *
@@ -94,7 +94,7 @@ import type {
  *
  * **Custom Actions**
  *
- * Sometimes it is necessary to add a custom action to a Controller. Lux allows
+ * Sometimes it is necessary to add a custom action to a Controller. Lumen allows
  * you to do so by adding an instance method to a Controller. In the following
  * example you will see how to add a custom action with the name `check` to a
  * Controller. We are implementing this action to use as a health check for the
@@ -177,7 +177,7 @@ import type {
  *
  * #### Middleware
  *
- * Middleware can be a very powerful tool in many Node.js server frameworks. Lux
+ * Middleware can be a very powerful tool in many Node.js server frameworks. Lumen
  * is no exception. Middleware can be used to execute logic before or after a
  * Controller action is executed.
  *
@@ -227,7 +227,7 @@ import type {
  * **Execuation Order**
  *
  * Understanding the execution order of middleware functions and a `Controller`
- * action is essential to productivity with Lux. Depending on what you use case
+ * action is essential to productivity with Lumen. Depending on what you use case
  * is, you may want your function to execute at different times in the
  * `request` / `response` cycle.
  *

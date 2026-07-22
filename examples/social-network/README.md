@@ -18,5 +18,5 @@
 *   `lumen test`
 
 ## Further Reading / Useful Links
-*   [Lux](https://github.com/nickschot/lux/)
+*   [Lumen](https://github.com/nickschot/lux/)
 *   [Chai](http://chaijs.com/) / [Mocha](http://mochajs.org/)

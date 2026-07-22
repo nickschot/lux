@@ -1,6 +1,6 @@
-# Contributing to Lux
+# Contributing to Lumen
 
-Thank you for your interest in contributing to Lux! This document will help
+Thank you for your interest in contributing to Lumen! This document will help
 answer any outstanding questions you may have about the contribution process.
 
 *Please read the [Code of Conduct](./CODE_OF_CONDUCT.md) before you participate
@@ -18,7 +18,7 @@ in community.*
 
 ## Ways to Contribute
 
-There are many ways you can contribute to the Lux community. We value each type
+There are many ways you can contribute to the Lumen community. We value each type
 of contribution and appreciate your help.
 
 Here are a few examples of what we consider a contribution:
@@ -26,7 +26,7 @@ Here are a few examples of what we consider a contribution:
 *   Updates to source code
 *   Answering questions and chatting with the community in the [Gitter](https://gitter.im/postlight/lumen) room
 *   Filing, organizing, and commenting on issues in the [issue tracker](https://github.com/postlight/lumen/issues)
-*   Teaching others how to use Lux
+*   Teaching others how to use Lumen
 *   Community building and outreach
 
 ## Reporting a Bug
@@ -45,12 +45,12 @@ and filling out the fields.
 
 ### Security
 
-If you find a security bug in Lux, send an email with a descriptive subject line
+If you find a security bug in Lumen, send an email with a descriptive subject line
 to [lumen+security@postlight.com](mailto:lumen+security@postlight.com). If you think
 you’ve found a serious vulnerability, please do not file a public issue or share
-in the Lux Gitter room.
+in the Lumen Gitter room.
 
-Your report will go to Lux's core development team. You will receive
+Your report will go to Lumen's core development team. You will receive
 acknowledgement of the report in 24-48 hours, and what our next steps will be to
 release a fix. If you don’t get a report acknowledgement in 48 hours, contact
 [Zachary Golba](mailto:zachary.golba@postlight.com) directly.
@@ -60,27 +60,27 @@ A working list of public, known security-related issues can be found in the
 
 ## Requesting a Feature
 
-To request a change to the way that Lux works, please open an issue in the RFCs
+To request a change to the way that Lumen works, please open an issue in the RFCs
 repository rather than this one. New features and other significant API changes
 must go through the RFC process. For more information about the RFC process, head
 over to the [lumen-rfcs repository](https://github.com/postlight/lumen-rfcs).
 
 ## Development Workflow
 
-This section of the document outlines how to build, run, and test Lux locally.
+This section of the document outlines how to build, run, and test Lumen locally.
 
 ### Building
 
 ![lumen build](https://media.giphy.com/media/l0ExhMFcO0stlw0q4/giphy.gif)
 
-When a project that is built with Lux executes a command like `lumen serve` it goes
-through a build process. During this build process, Lux core is also being built.
+When a project that is built with Lumen executes a command like `lumen serve` it goes
+through a build process. During this build process, Lumen core is also being built.
 The output of this build process is a bundled JavaScript file that includes only
-the parts of Lux core and your application that you actually use. This is known as
+the parts of Lumen core and your application that you actually use. This is known as
 tree shaking. Although saving bytes may not be necessary for server side applications,
 tree shaking can still help optimize application start time amongst other things.
-Technically speaking, Lux is not built until a project that uses Lux is built—so why
-build in development at all? Well, some parts of Lux core are required to be built and
+Technically speaking, Lumen is not built until a project that uses Lumen is built—so why
+build in development at all? Well, some parts of Lumen core are required to be built and
 executable in the targeted Node.js version(s).
 
 To build the required modules for local development, execute the following commands:
@@ -108,7 +108,7 @@ npm run build
 npm link
 ```
 
-For general debugging and sanity checking code changes to Lux core, you can use
+For general debugging and sanity checking code changes to Lumen core, you can use
 the [test app](./test/test-app). To run the test app for the first time,
 execute the following commands:
 
@@ -149,7 +149,7 @@ steps again.
 
 #### Flow
 
-The Lux codebase is statically typed with [Flow](https://flowtype.org). This
+The Lumen codebase is statically typed with [Flow](https://flowtype.org). This
 helps prevent many common bugs including ones caused by [unexpected type coercions](https://www.destroyallsoftware.com/talks/wat).
 
 If you have never written JavaScript with [Flow](https://flowtype.org) or
@@ -184,9 +184,9 @@ markdown parsers used for generating documentation.
 
 ### Node.js Version Requirements
 
-Lux is built against Node `>= v6`. Since this is the latest LTS release and the
+Lumen is built against Node `>= v6`. Since this is the latest LTS release and the
 version we run in our CI environments, we recommend you use it when working on
-the Lux codebase.
+the Lumen codebase.
 
 If you use [nvm](https://github.com/creationix/nvm) to manage Node.js versions
 and zsh (like [Oh-My-ZSH](https://github.com/robbyrussell/oh-my-zsh)), you can
@@ -217,7 +217,7 @@ load-nvmrc
 
 ## Writing Documentation
 
-Improvements to documentation are a great way to start contributing to Lux. The
+Improvements to documentation are a great way to start contributing to Lumen. The
 sources for the official documentation are generated from source code comments
 and markdown files that live in this repository.
 
@@ -231,7 +231,7 @@ directory of this repository.
 
 ## Submitting a Pull Request
 
-Want to make a change to Lux? Submit a pull request! We use the "fork and pull"
+Want to make a change to Lumen? Submit a pull request! We use the "fork and pull"
 model [described here](https://help.github.com/articles/creating-a-pull-request-from-a-fork).
 
 **Before submitting a pull request**, please make sure:

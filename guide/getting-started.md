@@ -14,7 +14,7 @@ lumen new <app-name>
 
 ### Generators
 
-Lux allows you to use the CLI to generate boilerplate for the following types:
+Lumen allows you to use the CLI to generate boilerplate for the following types:
 
 - `model`
 - `controller`

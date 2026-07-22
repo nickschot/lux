@@ -44,7 +44,7 @@ import type { Serializer$opts } from './interfaces';
  * ```
  *
  * Since the attributes required for a resource are declared ahead of time in a
- * Serializer, Lux will optimize SQL queries for the resource to only include
+ * Serializer, Lumen will optimize SQL queries for the resource to only include
  * what the Serializer needs to build the response.
  *
  * ```javascript

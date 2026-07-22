@@ -8,7 +8,7 @@ import createResponseProxy from './utils/create-response-proxy';
  * function for use in Controller#beforeAction.
  *
  * @module lumen-framework
- * @namespace Lux
+ * @namespace Lumen
  * @function lumenify
  */
 export default function lumenify(

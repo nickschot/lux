@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any --
- * `ModelClass#table()` returns a Knex query builder, whose fluent type Lux does
+ * `ModelClass#table()` returns a Knex query builder, whose fluent type Lumen does
  * not model; it is `any` at this boundary (as it was `Object` in Flow).
  */
 import type Logger from '../logger';

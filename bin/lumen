@@ -15,7 +15,7 @@ const { red, green } = require('chalk');
 
 const { version: VERSION } = require('../package.json');
 
-function inLuxProject() {
+function inLumenProject() {
   const cwd = process.cwd();
 
   if (cwd.indexOf(path.join('lumen', 'test', 'test-app')) >= 0) {
@@ -51,9 +51,9 @@ function exec(cmd, ...args) {
     '^(?:db:.+|test|build|serve|console|generate|destroy)$'
   );
 
-  if (needsProject.test(cmd) && !inLuxProject()) {
+  if (needsProject.test(cmd) && !inLumenProject()) {
     return Promise.reject(
-      new Error('Directory does not contain a valid Lux application.')
+      new Error('Directory does not contain a valid Lumen application.')
     );
   }
 

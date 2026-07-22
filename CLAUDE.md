@@ -89,7 +89,7 @@ while replacing legacy tooling.
 **542 passing** (552 − 10 removed tests: 8 `is-external`, 2 `onwarn`). How it maps:
 
 - **`keepNames: true`** replaces `rollup-plugin-lux` exactly — both emit
-  `Object.defineProperty(Class, 'name', …)` (Lux keys models/controllers/serializers off
+  `Object.defineProperty(Class, 'name', …)` (Lumen keys models/controllers/serializers off
   `.name`). Verified: `bundle.Post.name === 'Post'` on the compiled test-app.
 - **`packages: 'external'`** reproduces the old `is-external` bare-vs-relative split; the
   framework itself is bundled in via the `LUMEN_LOCAL` alias (apps import
@@ -332,7 +332,7 @@ Shared helpers are in `src/utils/`; global constants in `src/constants.js` (read
 Colocated tests: `src/**/*.test.ts` (all Vitest). Ambient declarations for untyped npm
 modules live beside their consumers as `.d.ts` (`fs/watcher/fb-watchman.d.ts`,
 `cli/ora.d.ts`).
-`test/test-app/` is a full example Lux app the suite boots against (Postgres/MySQL/SQLite).
+`test/test-app/` is a full example Lumen app the suite boots against (Postgres/MySQL/SQLite).
 
 ## Toolchain (current)
 

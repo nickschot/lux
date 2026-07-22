@@ -1,4 +1,4 @@
-# [![Lux](https://lumen.postlight.com/src/components/Sidebar/logo.svg)](https://lumen.postlight.com)
+# [![Lumen](https://lumen.postlight.com/src/components/Sidebar/logo.svg)](https://lumen.postlight.com)
 
 [![CI](https://github.com/nickschot/lumen/actions/workflows/ci.yml/badge.svg)](https://github.com/nickschot/lumen/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/lumen-framework.svg?style=flat-square)](https://www.npmjs.com/package/lumen-framework)
 
@@ -37,7 +37,7 @@ This isn't another wrapper around [Express](http://expressjs.com/) or a framewor
 
 ##### Minimal API surface area
 
-Lux uses JavaScript's standard library rather than creating a ton of functions you'll have to learn and remember.
+Lumen uses JavaScript's standard library rather than creating a ton of functions you'll have to learn and remember.
 
 After your learn how to use it, you'll rarely need to look at the docs.
 
@@ -90,7 +90,7 @@ Shouldn't there be a better way to do this? Can't I just return a promise or a J
 
 Fortunately ES2015+ has introduced great new features to the JavaScript language, especially when it comes to meta programming.
 
-With Lux your code from before can now look like this:
+With Lumen your code from before can now look like this:
 
 ```javascript
 class PostsController extends Controller {
