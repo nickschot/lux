@@ -4,7 +4,7 @@ import * as github from '../github';
 
 describe('util github', () => {
   describe('#fileLink()', () => {
-    const baseURL = 'https://github.com/postlight/lumen/blob';
+    const baseURL = 'https://github.com/nickschot/lux/blob';
 
     describe('- without options', () => {
       it('builds the correct url', () => {

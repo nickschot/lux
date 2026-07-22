@@ -11,7 +11,7 @@ const createMessageTemplate = resourceType => (name, reactionType) => (
 );
 
 /* TODO: Add support for polymorphic relationship to a 'trackable'.
- * https://github.com/postlight/lumen/issues/75
+ * https://github.com/postlight/lux/issues/75
  */
 class Action extends Model {
   static hooks = {

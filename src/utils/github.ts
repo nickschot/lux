@@ -1,4 +1,4 @@
-const GITHUB_URL = 'https://github.com/postlight/lumen';
+const GITHUB_URL = 'https://github.com/nickschot/lux';
 
 type Options = {
   line?: number;

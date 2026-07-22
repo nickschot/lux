@@ -86,7 +86,7 @@ as you earn their trust.
 
 The enforcement policies listed above apply to all official Lumen venues; including
 the official Gitter room ([*postlight/lux*](http://bit.ly/2k4qS1k)); GitHub
-repositories under postlight/lumen such as Lumen core and other Postlight repositories
+repositories under postlight/lux such as Lumen core and other Postlight repositories
 with a \*-lumen or lumen-\* naming convention; For other projects adopting the Lumen
 Code of Conduct, please contact the maintainers of those projects for enforcement.
 If you wish to use this code of conduct for your own project, consider explicitly

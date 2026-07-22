@@ -141,7 +141,7 @@ For more information checkout out the [Guides](https://lumen.postlight.com/).
 
 ## Benchmarks
 
-[**postlight/lumen-benchmarks**](https://github.com/postlight/lumen-benchmarks)
+[**postlight/lux-benchmarks**](https://github.com/postlight/lux-benchmarks)
 
 
 ## Contribution

@@ -24,8 +24,8 @@ of contribution and appreciate your help.
 Here are a few examples of what we consider a contribution:
 
 *   Updates to source code
-*   Answering questions and chatting with the community in the [Gitter](https://gitter.im/postlight/lumen) room
-*   Filing, organizing, and commenting on issues in the [issue tracker](https://github.com/postlight/lumen/issues)
+*   Answering questions and chatting with the community in the [Gitter](https://gitter.im/postlight/lux) room
+*   Filing, organizing, and commenting on issues in the [issue tracker](https://github.com/postlight/lux/issues)
 *   Teaching others how to use Lumen
 *   Community building and outreach
 
@@ -40,7 +40,7 @@ as it's possible that someone else has already reported your error. This doesn't
 always work, and sometimes it's hard to know what to search for, so consider
 this extra credit. We won't mind if you accidentally file a duplicate report.
 
-Opening an issue is as easy as following [this link](https://github.com/postlight/lumen/issues/new)
+Opening an issue is as easy as following [this link](https://github.com/postlight/lux/issues/new)
 and filling out the fields.
 
 ### Security
@@ -56,14 +56,14 @@ release a fix. If you don’t get a report acknowledgement in 48 hours, contact
 [Zachary Golba](mailto:zachary.golba@postlight.com) directly.
 
 A working list of public, known security-related issues can be found in the
-[issue tracker](https://github.com/postlight/lumen/issues?q=is%3Aopen+is%3Aissue+label%3Asecurity).
+[issue tracker](https://github.com/postlight/lux/issues?q=is%3Aopen+is%3Aissue+label%3Asecurity).
 
 ## Requesting a Feature
 
 To request a change to the way that Lumen works, please open an issue in the RFCs
 repository rather than this one. New features and other significant API changes
 must go through the RFC process. For more information about the RFC process, head
-over to the [lumen-rfcs repository](https://github.com/postlight/lumen-rfcs).
+over to the [lumen-rfcs repository](https://github.com/postlight/lux-rfcs).
 
 ## Development Workflow
 
@@ -87,7 +87,7 @@ To build the required modules for local development, execute the following comma
 
 ```bash
 # Clone this repository from GitHub.
-git clone https://github.com/postlight/lumen.git
+git clone https://github.com/postlight/lux.git
 
 # Navigate into the root of this repository.
 cd lumen
@@ -155,7 +155,7 @@ helps prevent many common bugs including ones caused by [unexpected type coercio
 If you have never written JavaScript with [Flow](https://flowtype.org) or
 [TypeScript](https://www.typescriptlang.org/) before, you may have a bit of a
 learning curve. If you get stuck on something, feel free to ask a question in the
-[*postlight/lumen*](https://gitter.im/postlight/lumen) and/or [*facebook/flow*](https://gitter.im/facebook/flow)
+[*postlight/lux*](https://gitter.im/postlight/lux) and/or [*facebook/flow*](https://gitter.im/facebook/flow)
 Gitter room. We recommend installing an editor plugin with autocompletion and
 realtime error checking. Below you will find a few example plugins for many
 common editors.
@@ -266,14 +266,14 @@ Commit messages should follow the format outlined below:
 
 Once you have submitted a pull request, a member of the core team must review it
 before it is merged. We try to review pull requests within 3 days but sometimes
-fall behind. Feel free to reach out to someone in the [*postlight/lumen*](https://gitter.im/postlight/lumen)
+fall behind. Feel free to reach out to someone in the [*postlight/lux*](https://gitter.im/postlight/lux)
 room on Gitter if you have not received a review after 3 days.
 
 ## Helpful Links and Information
 
 Some useful places to look for information are:
 
-*   The [*postlight/lumen*](https://gitter.im/postlight/lumen) room on Gitter
+*   The [*postlight/lux*](https://gitter.im/postlight/lux) room on Gitter
 *   The official [guides and documentation](https://lumen.postlight.com/docs/latest)
 *   Example applications in [this repository](./examples)
 
