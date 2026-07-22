@@ -2,7 +2,7 @@
 
 ## Conduct
 
-**Contact Lux moderators:**: [lux+moderators@postlight.com](mailto:lux+moderators@postlight.com)
+**Contact Lux moderators:**: [lumen+moderators@postlight.com](mailto:lumen+moderators@postlight.com)
 
 *   We are committed to providing a friendly, safe and welcoming environment for
 all, regardless of level of experience, gender, gender identity and expression,
@@ -31,7 +31,7 @@ people in socially marginalized groups.
 
 *   Private harassment is also unacceptable. No matter who you are, if you feel
 you have been or are being harassed or made uncomfortable by a community member,
-please contact one of the channel ops or any of the [Lux moderation team](mailto:lux+moderators@postlight.com)
+please contact one of the channel ops or any of the [Lux moderation team](mailto:lumen+moderators@postlight.com)
 immediately. Whether you're a regular contributor or a newcomer, we care about
 making this community a safe place for you and we've got your back.
 
@@ -41,7 +41,7 @@ behavior is not welcome.
 ## Moderation
 
 These are the policies for upholding our community's standards of conduct. If you
-feel that a thread needs moderation, please contact the [Lux moderation team](mailto:lux+moderators@postlight.com).
+feel that a thread needs moderation, please contact the [Lux moderation team](mailto:lumen+moderators@postlight.com).
 
 1.  Remarks that violate the Lux standards of conduct, including hateful, hurtful,
 oppressive, or exclusionary remarks, are not allowed. (Cursing is allowed, but
@@ -85,9 +85,9 @@ You will find that people will be eager to assume good intent and forgive as lon
 as you earn their trust.
 
 The enforcement policies listed above apply to all official Lux venues; including
-the official Gitter room ([*postlight/lux*](http://bit.ly/2k4qS1k)); GitHub
-repositories under postlight/lux such as Lux core and other Postlight repositories
-with a \*-lux or lux-\* naming convention; For other projects adopting the Lux
+the official Gitter room ([*postlight/lumen*](http://bit.ly/2k4qS1k)); GitHub
+repositories under postlight/lumen such as Lux core and other Postlight repositories
+with a \*-lumen or lumen-\* naming convention; For other projects adopting the Lux
 Code of Conduct, please contact the maintainers of those projects for enforcement.
 If you wish to use this code of conduct for your own project, consider explicitly
 mentioning your moderation policy or making a copy with your own moderation policy

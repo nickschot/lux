@@ -876,20 +876,20 @@ class Model {
    * Specify the transaction object to use for following save, update, or
    * destroy method calls.
    *
-   * When you call a method like update or destroy, lux will create a
+   * When you call a method like update or destroy, lumen will create a
    * transaction and wrap the internals of the method and other downstream
    * method calls like model hooks within. In some edge cases it can be more
    * useful to manually initiate the transaction. Bulk updating or destroying
    * are good examples of this. When you manually begin a transaction, you can
    * call this method to specify the transaction object that you would like to
-   * use for subsequent mutation methods (save, update, destroy, etc.) so lux
+   * use for subsequent mutation methods (save, update, destroy, etc.) so lumen
    * knows not to automatically begin a new transaction if/when a mutation
    * method is called.
    *
    * ```javascript
    * const post = await Post.first();
    *
-   * // This call to update uses the transaction that lux will initiate.
+   * // This call to update uses the transaction that lumen will initiate.
    * await post.update({
    *   // updates to post...
    * });
@@ -1231,17 +1231,17 @@ class Model {
    * Specify the transaction object to use for following save, update, or
    * destroy method calls.
    *
-   * When you call a method like update or destroy, lux will create a
+   * When you call a method like update or destroy, lumen will create a
    * transaction and wrap the internals of the method and other downstream
    * method calls like model hooks within. In some edge cases it can be more
    * useful to manually initiate the transaction. Bulk updating or destroying
    * are good examples of this. When you manually begin a transaction, you can
    * call this method to specify the transaction object that you would like to
-   * use for calls to the static create method so lux knows not to automatically
+   * use for calls to the static create method so lumen knows not to automatically
    * begin a new transaction if/when the static create method is called.
    *
    * ```javascript
-   * // This call to create uses the transaction that lux will initiate.
+   * // This call to create uses the transaction that lumen will initiate.
    * await Post.create();
    *
    * await Post.transaction(trx => {

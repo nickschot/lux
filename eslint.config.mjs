@@ -68,7 +68,7 @@ export default [
 
   // Build tooling and the CLI entry point run in plain Node.
   {
-    files: ['*.mjs', '*.cjs', 'bin/lux'],
+    files: ['*.mjs', '*.cjs', 'bin/lumen'],
     languageOptions: {
       globals: {
         ...globals.node
@@ -77,7 +77,7 @@ export default [
     rules: {
       // ESLint 9 flipped this default to 'all', which flags `catch (err)` where
       // the binding is unused. Rewriting those to optional catch binding is not
-      // an option here: `bin/lux` must stay Babel-6-parseable (see the note at
+      // an option here: `bin/lumen` must stay Babel-6-parseable (see the note at
       // the top of that file).
       'no-unused-vars': ['error', { caughtErrors: 'none' }]
     }

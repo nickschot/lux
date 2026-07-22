@@ -23,7 +23,7 @@ const hasWatchman = (() => {
 })();
 
 describe('module "fs"', () => {
-  const tmpDirPath = joinPath(tmpdir(), `lux-${Date.now()}`);
+  const tmpDirPath = joinPath(tmpdir(), `lumen-${Date.now()}`);
   const tmpAppPath = joinPath(tmpDirPath, 'app');
 
   beforeAll(async () => {

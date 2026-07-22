@@ -7,6 +7,7 @@
     "mvc",
     "api",
     "lux",
+    "lumen",
     "jsonapi",
     "json-api",
     "rest",
@@ -16,7 +17,7 @@
   "module": "dist/index.mjs",
   "types": "./dist/types/index.d.ts",
   "bin": {
-    "lux": "bin/lux"
+    "lumen": "bin/lumen"
   },
   "files": [
     "dist",
@@ -39,9 +40,8 @@
   },
   "author": "Zachary Golba",
   "license": "MIT",
-  "homepage": "https://lux.postlight.com",
   "bugs": {
-    "url": "https://github.com/postlight/lux/issues"
+    "url": "https://github.com/nickschot/lumen/issues"
   },
   "engines": {
     "node": ">= 20"

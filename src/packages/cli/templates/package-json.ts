@@ -22,8 +22,8 @@ export default (name: string, driver: string): string => {
     version: '0.0.1',
     description: '',
     scripts: {
-      start: 'lux serve',
-      test: 'lux test',
+      start: 'lumen serve',
+      test: 'lumen test',
       lint: 'eslint .'
     },
     author: '',

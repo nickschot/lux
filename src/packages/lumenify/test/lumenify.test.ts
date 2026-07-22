@@ -1,12 +1,12 @@
 import { it, describe, expect } from 'vitest';
 
-import luxify from '../index';
+import lumenify from '../index';
 
 import K from '../../../utils/k';
 import setType from '../../../utils/set-type';
 
-describe('module "luxify"', () => {
-  describe('#luxify()', () => {
+describe('module "lumenify"', () => {
+  describe('#lumenify()', () => {
     const [request, response] = setType(() => [
       {},
       {
@@ -17,7 +17,7 @@ describe('module "luxify"', () => {
     ]);
 
     it('promisifies a callback based middleware function', () => {
-      const subject = luxify((req, res, next) => {
+      const subject = lumenify((req, res, next) => {
         next();
       });
 
@@ -25,7 +25,7 @@ describe('module "luxify"', () => {
     });
 
     it('resolves when Response#end is called', () => {
-      const subject = luxify((req, res) => {
+      const subject = lumenify((req, res) => {
         res.end('Hello world!');
       });
 
@@ -35,7 +35,7 @@ describe('module "luxify"', () => {
     });
 
     it('resolves when Response#send is called', () => {
-      const subject = luxify((req, res) => {
+      const subject = lumenify((req, res) => {
         Reflect.apply(Reflect.get(res, 'send'), res, ['Hello world!']);
       });
 
@@ -45,7 +45,7 @@ describe('module "luxify"', () => {
     });
 
     it('resolves when Response#json is called', () => {
-      const subject = luxify((req, res) => {
+      const subject = lumenify((req, res) => {
         Reflect.apply(Reflect.get(res, 'json'), res, [
           {
             data: 'Hello world!'
@@ -61,7 +61,7 @@ describe('module "luxify"', () => {
     });
 
     it('rejects when an error is passed to `next`', () => {
-      const subject = luxify((req, res, next) => {
+      const subject = lumenify((req, res, next) => {
         next(new Error('Test'));
       });
 
@@ -71,7 +71,7 @@ describe('module "luxify"', () => {
     });
 
     it('properly proxies untrapped response properties', () => {
-      luxify((req, res) => {
+      lumenify((req, res) => {
         expect(res.getHeader).to.be.a('function');
         expect(res.setHeader).to.be.a('function');
         expect(res.removeHeader).to.be.a('function');

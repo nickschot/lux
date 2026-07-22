@@ -24,8 +24,8 @@ of contribution and appreciate your help.
 Here are a few examples of what we consider a contribution:
 
 *   Updates to source code
-*   Answering questions and chatting with the community in the [Gitter](https://gitter.im/postlight/lux) room
-*   Filing, organizing, and commenting on issues in the [issue tracker](https://github.com/postlight/lux/issues)
+*   Answering questions and chatting with the community in the [Gitter](https://gitter.im/postlight/lumen) room
+*   Filing, organizing, and commenting on issues in the [issue tracker](https://github.com/postlight/lumen/issues)
 *   Teaching others how to use Lux
 *   Community building and outreach
 
@@ -40,13 +40,13 @@ as it's possible that someone else has already reported your error. This doesn't
 always work, and sometimes it's hard to know what to search for, so consider
 this extra credit. We won't mind if you accidentally file a duplicate report.
 
-Opening an issue is as easy as following [this link](https://github.com/postlight/lux/issues/new)
+Opening an issue is as easy as following [this link](https://github.com/postlight/lumen/issues/new)
 and filling out the fields.
 
 ### Security
 
 If you find a security bug in Lux, send an email with a descriptive subject line
-to [lux+security@postlight.com](mailto:lux+security@postlight.com). If you think
+to [lumen+security@postlight.com](mailto:lumen+security@postlight.com). If you think
 you’ve found a serious vulnerability, please do not file a public issue or share
 in the Lux Gitter room.
 
@@ -56,14 +56,14 @@ release a fix. If you don’t get a report acknowledgement in 48 hours, contact
 [Zachary Golba](mailto:zachary.golba@postlight.com) directly.
 
 A working list of public, known security-related issues can be found in the
-[issue tracker](https://github.com/postlight/lux/issues?q=is%3Aopen+is%3Aissue+label%3Asecurity).
+[issue tracker](https://github.com/postlight/lumen/issues?q=is%3Aopen+is%3Aissue+label%3Asecurity).
 
 ## Requesting a Feature
 
 To request a change to the way that Lux works, please open an issue in the RFCs
 repository rather than this one. New features and other significant API changes
 must go through the RFC process. For more information about the RFC process, head
-over to the [lux-rfcs repository](https://github.com/postlight/lux-rfcs).
+over to the [lumen-rfcs repository](https://github.com/postlight/lumen-rfcs).
 
 ## Development Workflow
 
@@ -71,9 +71,9 @@ This section of the document outlines how to build, run, and test Lux locally.
 
 ### Building
 
-![lux build](https://media.giphy.com/media/l0ExhMFcO0stlw0q4/giphy.gif)
+![lumen build](https://media.giphy.com/media/l0ExhMFcO0stlw0q4/giphy.gif)
 
-When a project that is built with Lux executes a command like `lux serve` it goes
+When a project that is built with Lux executes a command like `lumen serve` it goes
 through a build process. During this build process, Lux core is also being built.
 The output of this build process is a bundled JavaScript file that includes only
 the parts of Lux core and your application that you actually use. This is known as
@@ -87,10 +87,10 @@ To build the required modules for local development, execute the following comma
 
 ```bash
 # Clone this repository from GitHub.
-git clone https://github.com/postlight/lux.git
+git clone https://github.com/postlight/lumen.git
 
 # Navigate into the root of this repository.
-cd lux
+cd lumen
 
 # Install local dependencies.
 npm install
@@ -103,7 +103,7 @@ npm run clean
 npm run build
 
 # Symlink the lumen-framework to the global node_modules directory. This ensures
-# that the "lux" command will use the files we just built instead of another
+# that the "lumen" command will use the files we just built instead of another
 # install.
 npm link
 ```
@@ -117,21 +117,21 @@ execute the following commands:
 cd test/test-app
 
 # Create the database schema.
-lux db:create
+lumen db:create
 
 # Run any pending database migrations.
-lux db:migrate
+lumen db:migrate
 
 # Seed the database with fixtures.
-lux db:seed
+lumen db:seed
 
 # Run the application server.
-lux serve
+lumen serve
 ```
 
 ### Testing
 
-First make sure you have built lux locally and it is symlinked to your global
+First make sure you have built lumen locally and it is symlinked to your global
 `node_modules` directory. Once you have completed the build steps, execute the
 following command:
 
@@ -155,7 +155,7 @@ helps prevent many common bugs including ones caused by [unexpected type coercio
 If you have never written JavaScript with [Flow](https://flowtype.org) or
 [TypeScript](https://www.typescriptlang.org/) before, you may have a bit of a
 learning curve. If you get stuck on something, feel free to ask a question in the
-[*postlight/lux*](https://gitter.im/postlight/lux) and/or [*facebook/flow*](https://gitter.im/facebook/flow)
+[*postlight/lumen*](https://gitter.im/postlight/lumen) and/or [*facebook/flow*](https://gitter.im/facebook/flow)
 Gitter room. We recommend installing an editor plugin with autocompletion and
 realtime error checking. Below you will find a few example plugins for many
 common editors.
@@ -221,11 +221,11 @@ Improvements to documentation are a great way to start contributing to Lux. The
 sources for the official documentation are generated from source code comments
 and markdown files that live in this repository.
 
-The [Guide](https://lux.postlight.com/docs/latest/guide) section of the official
+The [Guide](https://lumen.postlight.com/docs/latest/guide) section of the official
 documentation is generated from markdown files found in files within the[`./guide`](./guide)
 directory of this repository.
 
-The [API reference](https://lux.postlight.com/docs/latest/api) section of the official
+The [API reference](https://lumen.postlight.com/docs/latest/api) section of the official
 documentation is generated from source code comments found in files within the [`./src`](./src)
 directory of this repository.
 
@@ -254,7 +254,7 @@ Commit messages should follow the format outlined below:
        chore | does not effect the production version of the app in any way.
         deps | add, update, or remove a dependency.
         docs | add, update, or remove documentation. no code changes.
-          dx | improve the development experience of lux core.
+          dx | improve the development experience of lumen core.
         feat | a feature or enhancement. can be incredibly small.
          fix | a bug fix for something that was broken.
         perf | add, update, or fix a test.
@@ -266,15 +266,15 @@ Commit messages should follow the format outlined below:
 
 Once you have submitted a pull request, a member of the core team must review it
 before it is merged. We try to review pull requests within 3 days but sometimes
-fall behind. Feel free to reach out to someone in the [*postlight/lux*](https://gitter.im/postlight/lux)
+fall behind. Feel free to reach out to someone in the [*postlight/lumen*](https://gitter.im/postlight/lumen)
 room on Gitter if you have not received a review after 3 days.
 
 ## Helpful Links and Information
 
 Some useful places to look for information are:
 
-*   The [*postlight/lux*](https://gitter.im/postlight/lux) room on Gitter
-*   The official [guides and documentation](https://lux.postlight.com/docs/latest)
+*   The [*postlight/lumen*](https://gitter.im/postlight/lumen) room on Gitter
+*   The official [guides and documentation](https://lumen.postlight.com/docs/latest)
 *   Example applications in [this repository](./examples)
 
 *Adapted from [Contributing to Node.js](https://github.com/nodejs/node/blob/master/CONTRIBUTING.md)

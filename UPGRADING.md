@@ -37,7 +37,7 @@ your app's Babel config, so these do nothing and can be deleted:
 - **`.babelrc`** (the `{"presets": ["lux"]}` file) — ignored.
 - **`babel-core`, `babel-preset-lux`** in `dependencies` — dead.
 - **`source-map-support`** in `dependencies` — dead. Source maps are automatic
-  now (the `lux` CLI runs with `--enable-source-maps`), so also remove any
+  now (the `lumen` CLI runs with `--enable-source-maps`), so also remove any
   `require('source-map-support').install()` you added yourself.
 
 ## 3. App source must be esbuild-compatible
@@ -61,11 +61,11 @@ async/await, `??` / `?.`. Standard modern JS passes straight through.
 - **Framework imports:** still `import { Model, Controller, Serializer,
   Application } from 'LUX_LOCAL'`. The magic specifier is the same.
 - **Runtime API:** `Model`, `Controller`, `Serializer`, `Application`,
-  `Logger`, `luxify` behave identically — the Flow → TypeScript conversion was
+  `Logger`, `lumenify` behave identically — the Flow → TypeScript conversion was
   behaviour-faithful, not a rewrite.
 - **App layout:** `app/{models,controllers,serializers}`,
   `config/environments/*.js`, `db/migrate`, `db/seed.js`, `app/routes.js`.
-- **CLI:** same commands (`lux serve`, `lux build`, `lux db:migrate`, …).
+- **CLI:** same commands (`lumen serve`, `lumen build`, `lumen db:migrate`, …).
 - **Your `.eslintrc`:** independent of the framework build. It still works as-is
   (even the old `babel-eslint` + `flowtype` setup); modernizing it is optional.
 

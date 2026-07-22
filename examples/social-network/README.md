@@ -8,15 +8,15 @@
 
 ## Running / Development
 
-*   `lux db:reset`
-*   `lux db:migrate`
-*   `lux db:seed`
-*   `lux serve`
+*   `lumen db:reset`
+*   `lumen db:migrate`
+*   `lumen db:seed`
+*   `lumen serve`
 
 ## Testing
 
-*   `lux test`
+*   `lumen test`
 
 ## Further Reading / Useful Links
-*   [Lux](https://github.com/postlight/lux/)
+*   [Lux](https://github.com/nickschot/lux/)
 *   [Chai](http://chaijs.com/) / [Mocha](http://mochajs.org/)

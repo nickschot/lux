@@ -11,7 +11,7 @@ export const NAMESPACED_RESOURCE_MESSAGE = template`
   🎉  It looks like the resource you generated is within a namespace!
 
   Lux will only update your 'routes.js' file if you generate a resource at the\
-  root namespace (i.e 'lux generate resource users').
+  root namespace (i.e 'lumen generate resource users').
 
   In order to access the resource you have created, remember to manually update\
   your 'routes.js' file.

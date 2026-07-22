@@ -11,12 +11,12 @@ export default {
   development: {
     pool: 5,
     driver: 'sqlite3',
-    database: 'lux_test'
+    database: 'lumen_test'
   },
   test: {
     pool: 5,
     driver: DATABASE_DRIVER,
-    database: 'lux_test',
+    database: 'lumen_test',
     username: DATABASE_USERNAME,
     password: DATABASE_PASSWORD,
     // Left undefined outside CI so each driver keeps its own default. CI sets
@@ -27,6 +27,6 @@ export default {
   production: {
     pool: 5,
     driver: 'sqlite3',
-    database: 'lux_test'
+    database: 'lumen_test'
   }
 };

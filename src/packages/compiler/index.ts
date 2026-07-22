@@ -68,7 +68,7 @@ export async function compile(
     format: 'cjs',
     target: 'node20',
     sourcemap: true,
-    // Reproduces `rollup-plugin-lux`: preserves each class's `.name` (Lux keys
+    // Reproduces `rollup-plugin-lumen`: preserves each class's `.name` (Lux keys
     // models/controllers/serializers off it) against esbuild's own renaming.
     keepNames: true,
     // Bare specifiers stay external (knex, inflection, the app's own deps);

@@ -105,7 +105,7 @@ process.on('exit', () => {
 
   process.chdir('./test/test-app');
 
-  await runCommand('lux', ['build'], ['Building Lux test-app...', 'Lux test-app built.']);
+  await runCommand('lumen', ['build'], ['Building Lux test-app...', 'Lux test-app built.']);
 
   await runInspector();
 

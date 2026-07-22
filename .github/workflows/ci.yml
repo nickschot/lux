@@ -150,18 +150,18 @@ jobs:
       # last build rather than the working tree. Must precede `pnpm test`.
       - run: pnpm build
 
-      # `lux db:reset` cannot provision pg/mysql (dbdrop connects to the database
+      # `lumen db:reset` cannot provision pg/mysql (dbdrop connects to the database
       # it is about to drop), so create it here and tell the global setup to skip
       # the reset. See test/vitest.global-setup.ts.
       - name: Create database (postgres)
         if: matrix.driver == 'pg'
         env:
           PGPASSWORD: postgres
-        run: psql -h 127.0.0.1 -U postgres -c 'CREATE DATABASE lux_test;'
+        run: psql -h 127.0.0.1 -U postgres -c 'CREATE DATABASE lumen_test;'
 
       - name: Create database (mysql)
         if: matrix.driver == 'mysql2'
-        run: mysql -h 127.0.0.1 -uroot -proot -e 'CREATE DATABASE lux_test;'
+        run: mysql -h 127.0.0.1 -uroot -proot -e 'CREATE DATABASE lumen_test;'
 
       - name: Test
         env:

@@ -23,7 +23,7 @@ while replacing legacy tooling.
 - **Language:** migrate Flow → **TypeScript**.
 - **Compatibility scope:** this fork is consumed **only by the maintainer's own apps**.
   There are no external downstream users, so the public API (`Model`, `Controller`,
-  `Serializer`, `Application`, `Logger`, `luxify`) and the app-facing compiler may change
+  `Serializer`, `Application`, `Logger`, `lumenify`) and the app-facing compiler may change
   freely — consumer apps are co-evolved. Optimize for a clean modern result over
   backward compatibility.
 - **Package manager:** **pnpm** (replacing yarn).
@@ -49,7 +49,7 @@ while replacing legacy tooling.
   source** (`main: src/index.js`), and the test bootstrap builds `test/test-app` *from that
   source* via the **legacy app compiler** (Rollup 0.43 + `rollup-plugin-lux` + Babel 6),
   which cannot resolve or transpile `.ts`. So the first `.ts` file in `src/` breaks
-  `lux db:*` and fails the whole suite. **The build/ship-model must become `.ts`-capable
+  `lumen db:*` and fails the whole suite. **The build/ship-model must become `.ts`-capable
   before source can be converted** — this inverts the naive order (compiler work can't come
   last). `flow-to-ts`/tsconfig/esbuild-register all work; the app compiler is the gate.
 - **Drop `source-map-support`** in favor of Node's built-in `--enable-source-maps`.
@@ -61,7 +61,7 @@ while replacing legacy tooling.
 2. ✅ **Decouple + unify the transpiler (the real unlock).** New two-stage build
    ([build.mjs](build.mjs)): **Babel 8** strips Flow (`.js`) + TS (`.ts`) → plain-JS ESM
    in `build/`; **esbuild** bundles → `dist/` (`index.js` CJS `main`, `index.mjs` ESM,
-   `cli.cjs` for `bin/lux`). App compiler's `LUX_LOCAL` now points at `dist/index.mjs`, so
+   `cli.cjs` for `bin/lumen`). App compiler's `LUX_LOCAL` now points at `dist/index.mjs`, so
    it bundles built JS (decoupled from source language). TS foundation in place: strict
    [tsconfig.json](tsconfig.json), `pnpm typecheck` (`tsc --noEmit`), and
    `lib/ts-hook.js` (esbuild-register ran `.ts` in Mocha, loaded via `babel-hook.js`
@@ -97,11 +97,11 @@ while replacing legacy tooling.
   `dist/index.mjs`, *not* source. **This is why the compiler unit test stubs esbuild** (via
   `vi.mock` — the namespace is non-configurable, so `spyOn` fails): imported from source,
   `__dirname` has no `index.mjs`. The real end-to-end path is covered by the global setup —
-  every `lux db:*` compiles the test-app through `dist/`.
+  every `lumen db:*` compiles the test-app through `dist/`.
 - **eslint-during-compile dropped**: it ran `useEslintrc:false` with no ruleset and no
   `throwError`, so it enforced nothing and couldn't fail the build (a parse check esbuild
   already does). Confirmed empirically before removing.
-- **`source-map-support` dropped** for `--enable-source-maps`, set via the `bin/lux`
+- **`source-map-support` dropped** for `--enable-source-maps`, set via the `bin/lumen`
   shebang (`#!/usr/bin/env -S node --enable-source-maps`) — process-wide, so the required
   bundle and cluster workers (inherit `execArgv`) both map traces.
 - Removed: the 7 `rollup*` deps, `source-map-support`, `compiler/utils/{is-external,
@@ -109,16 +109,16 @@ while replacing legacy tooling.
   ([test/utils/debugger](test/utils/debugger)) was converted to esbuild too.
 
 **✅ Generated-app scaffolding (`cli/templates/*`) modernized — Babel 6 fully retired.**
-`lux new` now emits a modern app: no `.babelrc`, `node >= 20`, a flat `eslint.config.mjs`
+`lumen new` now emits a modern app: no `.babelrc`, `node >= 20`, a flat `eslint.config.mjs`
 (with `eslint`/`@eslint/js`/`globals` devDeps), and — the real bug fix — **the selected DB
 driver** (the old template shipped none, so generated apps couldn't connect). Drivers are
 trimmed to the three CI-tested (`postgres`/`sqlite`/`mysql` → `pg`/`sqlite3`/`mysql2`); the
 dead `mariadb→mariasql` / `oracle→oracledb` mappings are gone (an unsupported `--database`
 falls back to sqlite via commander, rather than generating a broken app). With no template
-emitting Babel 6, the framework's last Babel-6 deps (`babel-core`, `babel-preset-lux`,
+emitting Babel 6, the framework's last Babel-6 deps (`babel-core`, `babel-preset-lumen`,
 `babel-eslint`) and root `.babelrc` were removed. **Only `@babel/*` v8 remains** — the
 framework's own TS-strip build ([build.mjs](build.mjs)). Templates have no test coverage;
-verify by running `lux new` and inspecting the output against `test/test-app`.
+verify by running `lumen new` and inspecting the output against `test/test-app`.
 
 ### Traps this migration hit (all pre-existing bugs the runner swap exposed)
 
@@ -174,7 +174,7 @@ commit, with all five gates green (see "Conversion recipe").
 **Converted: the entire source tree.** All of `src/utils/`, `src/interfaces`,
 `src/constants`, `freezeable`, `template`, `jsonapi`, `logger`, `server`, `router`,
 `serializer`, `controller`, **`database`** (the ORM core — the big one), `application`,
-`config`, `fs`, `pm`, `compiler`, `loader`, `luxify`, `cli` (44 files), both
+`config`, `fs`, `pm`, `compiler`, `loader`, `lumenify`, `cli` (44 files), both
 `src/errors/*`, and the public API barrel `src/index`.
 
 **Nothing is still Flow.** The test suites and test-support fixtures that were deferred
@@ -318,10 +318,10 @@ The public API is re-exported from `src/index.js`:
 - **`serializer`** — `Serializer` base class; declares which attributes/relationships
   appear in JSON:API output, driving query optimization.
 - **`jsonapi`** — JSON:API document types and helpers.
-- **`cli`** — the `lux` binary's commands (`new`/`create`, `serve`, `build`, `generate`,
+- **`cli`** — the `lumen` binary's commands (`new`/`create`, `serve`, `build`, `generate`,
   `destroy`, `db*`, `repl`, `test`). Entry: `src/packages/cli/commands/`.
 - **`compiler`** / **`loader`** — Rollup-based build of user apps and module loading.
-- **`luxify`** — adapter to use classic `(req, res, next)` middleware in
+- **`lumenify`** — adapter to use classic `(req, res, next)` middleware in
   `Controller#beforeAction`.
 - Support packages: `config`, `logger`, `fs`, `freezeable`, `template`, `pm` (cluster
   process management).
@@ -346,7 +346,7 @@ modules live beside their consumers as `.d.ts` (`fs/watcher/fb-watchman.d.ts`,
   Babel: **Babel is fully retired** (no `.babelrc`, no `babel-config.build.cjs`, no
   `@babel/*` or Babel-6 deps). `pnpm build`. **esbuild targets `node20`** — nothing
   re-parses the output with an older parser (the app compiler bundles `dist/index.mjs` with
-  esbuild; `dist/cli.cjs` is loaded straight by Node via `bin/lux`). esbuild reads
+  esbuild; `dist/cli.cjs` is loaded straight by Node via `bin/lumen`). esbuild reads
   `tsconfig.json` for `useDefineForClassFields` (true at ES2022), so **uninitialized class
   fields must stay `declare`** or they get emitted and shadow the prototype accessors.
 - **Types:** `pnpm build:types` (`tsc -p [tsconfig.build.json](tsconfig.build.json)`) emits
@@ -362,7 +362,7 @@ modules live beside their consumers as `.d.ts` (`fs/watcher/fb-watchman.d.ts`,
 - **Test:** **Vitest 4** ([vitest.config.ts](vitest.config.ts)) + Sinon, with chai-style
   `expect` (Vitest bundles chai 5). Single fork, `isolate: false`, `fileParallelism: false`
   — the `getTestApp()` singleton and the migrated DB are shared, matching Mocha's old
-  single-process model. `globalSetup: test/vitest.global-setup.ts` runs `lux db:*`.
+  single-process model. `globalSetup: test/vitest.global-setup.ts` runs `lumen db:*`.
   Run: `pnpm test` (= `vitest run`). Coverage is Vitest's **v8** provider
   (`pnpm test --coverage`), reported in CI as a job summary / PR comment.
   The Mocha stack — `mocha.opts`, `lib/`, `test/index.js`, mocha/nyc/chai — was removed
@@ -396,7 +396,7 @@ Things about the setup that are load-bearing, all learned by breaking them:
   than this project's pin, requires Node >= 22.13 (it imports `node:sqlite`), and would
   shadow corepack's shim — it hard-crashes on Node 20.
 - **`workspaceMount`/`workspaceFolder` are intentionally unset**, so the IDE controls where
-  the clone lands. The Dockerfile still pre-creates `/workspaces/lux` owned by `node`,
+  the clone lands. The Dockerfile still pre-creates `/workspaces/lumen` owned by `node`,
   because a volume mounted at a path the image lacks comes up root-owned and the clone
   then fails with "Permission denied"; post-create re-checks writability at runtime for
   whatever path is actually used.
@@ -422,13 +422,13 @@ This machine uses **Volta**, not nvm. Two gotchas when running the suite locally
   Node (18) instead of the project's pinned Node 20.
   Inside `test/test-app/` Volta also falls back to Node 18 because that nested
   `package.json` has no `volta` field — harmless (the legacy stack runs on 18).
-- **The `lux` CLI is resolved via `node_modules/.bin`.** The test bootstrap
-  ([test/index.js](test/index.js)) shells out to `lux db:reset / db:migrate / db:seed`
+- **The `lumen` CLI is resolved via `node_modules/.bin`.** The test bootstrap
+  ([test/index.js](test/index.js)) shells out to `lumen db:reset / db:migrate / db:seed`
   (each first runs a full app compile via the legacy Rollup+Babel pipeline). The old flow
   relied on `npm link`; instead the repo now self-links via a `lumen-framework: link:.`
-  devDependency, so `pnpm install` places `lux` in the root `node_modules/.bin`. pnpm
-  prepends that dir to PATH for `pnpm test`, and the child_process `exec('lux …')` inherits
-  it — so no `npm link` or manual PATH is needed. (Replacing these `exec('lux …')`
+  devDependency, so `pnpm install` places `lumen` in the root `node_modules/.bin`. pnpm
+  prepends that dir to PATH for `pnpm test`, and the child_process `exec('lumen …')` inherits
+  it — so no `npm link` or manual PATH is needed. (Replacing these `exec('lumen …')`
   shell-outs is still a later-phase cleanup.)
 
 ## Commands
@@ -477,7 +477,7 @@ Things worth knowing before editing it:
   releases (postgres:16, mysql:8.4) with ordinary password auth. `sqlite3` is already
   modern (5.1.7). **If a driver is ever pinned back, expect the server-side workarounds
   to come back with it.**
-- **`lux db:reset` cannot provision pg/mysql.** `dbdrop` connects *to* `lux_test` and then
+- **`lumen db:reset` cannot provision pg/mysql.** `dbdrop` connects *to* `lumen_test` and then
   drops it (Postgres refuses); `dbcreate` connects to a database it is about to create. So
   those legs create the database with the service container's client and set
   **`LUX_SKIP_DB_RESET=1`**, which [test/vitest.global-setup.ts](test/vitest.global-setup.ts)
@@ -526,6 +526,6 @@ specs carried through the runner swap — were fixed once the migration settled.
   part of Phase 2.
 - When modernizing, prefer changing tooling/config over rewriting framework behavior
   unless a change is explicitly requested. The public surface is `src/index.js` exports
-  (`Model`, `Controller`, `Serializer`, `Application`, `Logger`, `luxify`).
+  (`Model`, `Controller`, `Serializer`, `Application`, `Logger`, `lumenify`).
 - Upstream is unmaintained — this fork is the source of truth. When comparing against
   `postlight/lux`, remember fork commits (#2–#8) intentionally diverge.

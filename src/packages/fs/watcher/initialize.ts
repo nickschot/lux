@@ -11,7 +11,7 @@ import { freezeProps } from '../../freezeable';
 
 import type Watcher from './index';
 
-const SUBSCRIPTION_NAME = 'lux-watcher';
+const SUBSCRIPTION_NAME = 'lumen-watcher';
 
 /**
  * @private

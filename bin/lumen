@@ -18,7 +18,7 @@ const { version: VERSION } = require('../package.json');
 function inLuxProject() {
   const cwd = process.cwd();
 
-  if (cwd.indexOf(path.join('lux', 'test', 'test-app')) >= 0) {
+  if (cwd.indexOf(path.join('lumen', 'test', 'test-app')) >= 0) {
     return true;
   }
 
@@ -33,7 +33,7 @@ function inLuxProject() {
 function commandNotFound(cmd) {
   console.log(
     `${EOL}  ${red(cmd)} is not a valid command.${EOL.repeat(2)}`,
-    ` Use ${green('lux --help')} for a full list of commands.${EOL}`
+    ` Use ${green('lumen --help')} for a full list of commands.${EOL}`
   );
 }
 
@@ -144,7 +144,7 @@ cli
   .command('g <type> <name> [attrs...]')
   .alias('generate')
   .description(
-    'Example: lux generate model user name:string email:string admin:boolean'
+    'Example: lumen generate model user name:string email:string admin:boolean'
   )
   .action((type, name, attrs) => {
     exec('generate', { type, name, attrs }).then(exit).catch(rescue);
@@ -153,7 +153,7 @@ cli
 cli
   .command('d')
   .alias('destroy <type> <name>')
-  .description('Example: lux destroy model user')
+  .description('Example: lumen destroy model user')
   .action((type, name) => {
     exec('destroy', { type, name }).then(exit).catch(rescue);
   });
