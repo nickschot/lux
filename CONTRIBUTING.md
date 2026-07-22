@@ -46,7 +46,7 @@ and filling out the fields.
 ### Security
 
 If you find a security bug in Lumen, send an email with a descriptive subject line
-to [lumen+security@postlight.com](mailto:lumen+security@postlight.com). If you think
+to [lux+security@postlight.com](mailto:lux+security@postlight.com). If you think
 you’ve found a serious vulnerability, please do not file a public issue or share
 in the Lumen Gitter room.
 
@@ -63,7 +63,7 @@ A working list of public, known security-related issues can be found in the
 To request a change to the way that Lumen works, please open an issue in the RFCs
 repository rather than this one. New features and other significant API changes
 must go through the RFC process. For more information about the RFC process, head
-over to the [lumen-rfcs repository](https://github.com/postlight/lux-rfcs).
+over to the [lux-rfcs repository](https://github.com/postlight/lux-rfcs).
 
 ## Development Workflow
 
@@ -221,11 +221,11 @@ Improvements to documentation are a great way to start contributing to Lumen. Th
 sources for the official documentation are generated from source code comments
 and markdown files that live in this repository.
 
-The [Guide](https://lumen.postlight.com/docs/latest/guide) section of the official
+The [Guide](https://lux.postlight.com/docs/latest/guide) section of the official
 documentation is generated from markdown files found in files within the[`./guide`](./guide)
 directory of this repository.
 
-The [API reference](https://lumen.postlight.com/docs/latest/api) section of the official
+The [API reference](https://lux.postlight.com/docs/latest/api) section of the official
 documentation is generated from source code comments found in files within the [`./src`](./src)
 directory of this repository.
 
@@ -274,7 +274,7 @@ room on Gitter if you have not received a review after 3 days.
 Some useful places to look for information are:
 
 *   The [*postlight/lux*](https://gitter.im/postlight/lux) room on Gitter
-*   The official [guides and documentation](https://lumen.postlight.com/docs/latest)
+*   The official [guides and documentation](https://lux.postlight.com/docs/latest)
 *   Example applications in [this repository](./examples)
 
 *Adapted from [Contributing to Node.js](https://github.com/nodejs/node/blob/master/CONTRIBUTING.md)

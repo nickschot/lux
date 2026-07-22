@@ -41,7 +41,7 @@
   "author": "Zachary Golba",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/nickschot/lumen/issues"
+    "url": "https://github.com/nickschot/lux/issues"
   },
   "engines": {
     "node": ">= 20"

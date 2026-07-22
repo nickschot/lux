@@ -9,6 +9,7 @@
 
 const { EOL } = require('os');
 const path = require('path');
+const { existsSync } = require('fs');
 
 const cli = require('commander');
 const { red, green } = require('chalk');
@@ -18,16 +19,28 @@ const { version: VERSION } = require('../package.json');
 function inLumenProject() {
   const cwd = process.cwd();
 
-  if (cwd.indexOf(path.join('lumen', 'test', 'test-app')) >= 0) {
-    return true;
-  }
-
   try {
     const { dependencies } = require(path.join(cwd, 'package.json'));
-    return Boolean(dependencies['lumen-framework']);
+
+    if (dependencies && dependencies['lumen-framework']) {
+      return true;
+    }
   } catch (err) {
-    return false;
+    // No readable package.json here — fall through to the layout check below.
   }
+
+  // Fall back to detecting the application layout the compiler requires.
+  //
+  // This used to match a hardcoded `lumen/test/test-app` path fragment, which
+  // existed because the framework's own fixture app does not depend on the
+  // framework. That broke the moment the project was renamed (the checkout is
+  // still `lux/`), taking the whole suite with it — and it would break again
+  // for anyone whose directory happens to be named differently. Checking for
+  // the app's shape is both rename-proof and closer to the real question.
+  return (
+    existsSync(path.join(cwd, 'app', 'index.js'))
+    && existsSync(path.join(cwd, 'config', 'database.js'))
+  );
 }
 
 function commandNotFound(cmd) {

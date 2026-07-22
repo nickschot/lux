@@ -1,6 +1,6 @@
-# [![Lumen](https://lumen.postlight.com/src/components/Sidebar/logo.svg)](https://lumen.postlight.com)
+# [![Lumen](https://lux.postlight.com/src/components/Sidebar/logo.svg)](https://lux.postlight.com)
 
-[![CI](https://github.com/nickschot/lumen/actions/workflows/ci.yml/badge.svg)](https://github.com/nickschot/lumen/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/lumen-framework.svg?style=flat-square)](https://www.npmjs.com/package/lumen-framework)
+[![CI](https://github.com/nickschot/lux/actions/workflows/ci.yml/badge.svg)](https://github.com/nickschot/lux/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/lumen-framework.svg?style=flat-square)](https://www.npmjs.com/package/lumen-framework)
 
 A MVC style framework for building highly performant, large scale JSON APIs that anybody who knows the JavaScript language and its modern features will understand.
 
@@ -136,7 +136,7 @@ cd <app-name>
 lumen serve
 ```
 
-For more information checkout out the [Guides](https://lumen.postlight.com/).
+For more information checkout out the [Guides](https://lux.postlight.com/).
 
 
 ## Benchmarks
