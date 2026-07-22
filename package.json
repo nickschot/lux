@@ -2,7 +2,6 @@
   "name": "lumen-framework",
   "version": "3.0.0",
   "description": "Build scalable, Node.js-powered REST APIs with almost no code.",
-  "repository": "github:nickschot/lux",
   "keywords": [
     "mvc",
     "api",
@@ -12,6 +11,18 @@
     "json-api",
     "rest",
     "framework"
+  ],
+  "bugs": {
+    "url": "https://github.com/nickschot/lux/issues"
+  },
+  "repository": "github:nickschot/lux",
+  "license": "MIT",
+  "author": "Nick Schot <nickschot@gmail.com>",
+  "contributors": [
+    {
+      "name": "Zachary Golba",
+      "url": "https://github.com/zacharygolba"
+    }
   ],
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -27,32 +38,17 @@
   ],
   "scripts": {
     "build": "node build.mjs",
+    "build:debugger": "node test/utils/debugger/build.mjs",
     "build:types": "tsc -p tsconfig.build.json",
-    "prepack": "pnpm run build && pnpm run build:types",
     "clean": "shx rm -rf coverage dist test/test-app/dist",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
+    "debugger": "node --enable-source-maps test/utils/debugger/dist/debug.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "prepack": "pnpm run build && pnpm run build:types",
     "test": "vitest run",
-    "debugger": "node --enable-source-maps test/utils/debugger/dist/debug.js",
-    "build:debugger": "node test/utils/debugger/build.mjs"
+    "typecheck": "tsc --noEmit"
   },
-  "author": "Nick Schot <nickschot@gmail.com>",
-  "contributors": [
-    {
-      "name": "Zachary Golba",
-      "url": "https://github.com/zacharygolba"
-    }
-  ],
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/nickschot/lux/issues"
-  },
-  "engines": {
-    "node": ">= 20"
-  },
-  "packageManager": "pnpm@10.34.5",
   "dependencies": {
     "ansi-regex": "^5.0.1",
     "chalk": "^4.1.2",
@@ -75,11 +71,16 @@
     "lumen-framework": "link:.",
     "node-fetch": "^2.7.0",
     "prettier": "^3.9.5",
+    "release-plan": "^0.18.0",
     "shx": "^0.3.4",
     "sinon": "2.2.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.64.0",
     "vitest": "^4.1.10"
+  },
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": ">= 20"
   },
   "volta": {
     "node": "20.20.2"
