@@ -1,4 +1,4 @@
-# Lux Changelog
+# Lumen Changelog
 
 ### v1.2.3 (July 20, 2018)
 
