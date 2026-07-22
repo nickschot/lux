@@ -1,5 +1,16 @@
 # Lumen Changelog
 
+## Release (2026-07-22)
+
+* lumen-framework 3.0.1 (patch)
+
+#### :house: Internal
+* `lumen-framework`
+  * [#13](https://github.com/nickschot/lux/pull/13) Add release-plan setup ([@nickschot](https://github.com/nickschot))
+
+#### Committers: 1
+- Nick Schot ([@nickschot](https://github.com/nickschot))
+
 ### v1.2.3 (July 20, 2018)
 
 * [[`56225dac71`](https://github.com/postlight/lux/commit/56225dac71)] - **fix**: falsy IDs breaking relationships (#730) (Nick Schot)
