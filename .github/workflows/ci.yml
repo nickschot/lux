@@ -175,7 +175,7 @@ jobs:
         if: matrix.node == 20 && matrix.driver == 'sqlite3' && !cancelled()
         uses: davelosert/vitest-coverage-report-action@v2
 
-  # Consumption smoke test: installs lux-framework the way an app does -- as a
+  # Consumption smoke test: installs lumen-framework the way an app does -- as a
   # packaged, production-only dependency -- which the other jobs never do (they
   # run in-repo with devDeps and a portable layout). This catches install-only
   # bugs: a runtime need left in devDependencies (e.g. esbuild, which the app
@@ -219,15 +219,15 @@ jobs:
       - name: Runtime + CLI bundles load
         working-directory: /tmp/consumer
         run: |
-          node -e "require('lux-framework')"
-          node -e "require('lux-framework/dist/cli.cjs')"
+          node -e "require('lumen-framework')"
+          node -e "require('lumen-framework/dist/cli.cjs')"
 
       # A consumer gets real types from the shipped dist/types, not `any`.
       - name: Consumer types resolve
         working-directory: /tmp/consumer
         run: |
           cat > check.ts <<'TS'
-          import { Model, Controller, Serializer, Application } from 'lux-framework';
+          import { Model, Controller, Serializer, Application } from 'lumen-framework';
           class Post extends Model {}
           export class C extends Controller {}
           export class S extends Serializer<Post> {}

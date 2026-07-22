@@ -7,7 +7,7 @@ import createResponseProxy from './utils/create-response-proxy';
  * Convert traditional node HTTP server middleware into a lux compatible
  * function for use in Controller#beforeAction.
  *
- * @module lux-framework
+ * @module lumen-framework
  * @namespace Lux
  * @function luxify
  */

@@ -79,7 +79,7 @@ import type {
  *
  * ```javascript
  * // app/controllers/posts.js
- * import { Controller } from 'lux-framework';
+ * import { Controller } from 'lumen-framework';
  *
  * class PostsController extends Controller {
  *    index(request, response) {
@@ -102,7 +102,7 @@ import type {
  *
  * ```javascript
  * // app/controllers/health.js
- * import { Controller } from 'lux-framework';
+ * import { Controller } from 'lumen-framework';
  *
  * class HealthController extends Controller {
  *   async check() {
@@ -118,7 +118,7 @@ import type {
  *
  * ```javascript
  * // app/controllers/health.js
- * import { Controller } from 'lux-framework';
+ * import { Controller } from 'lumen-framework';
  *
  * class HealthController extends Controller {
  *   check = async () => 204;
@@ -139,7 +139,7 @@ import type {
  *
  * ```javascript
  * // app/controllers/posts.js
- * import { Controller } from 'lux-framework';
+ * import { Controller } from 'lumen-framework';
  * import Post from 'app/models/posts';
  *
  * class PostsController extends Controller {
@@ -160,7 +160,7 @@ import type {
  *
  * ```javascript
  * // app/controllers/posts.js
- * import { Controller } from 'lux-framework';
+ * import { Controller } from 'lumen-framework';
  *
  * class PostsController extends Controller {
  *   drafts(request, response) {
@@ -208,7 +208,7 @@ import type {
  *
  * ```javascript
  * // app/controllers/application.js
- * import { Controller } from 'lux-framework';
+ * import { Controller } from 'lumen-framework';
  *
  * class ApplicationController extends Controller {
  *   beforeAction = [
@@ -257,7 +257,7 @@ import type {
  *
  * ```javascript
  * // app/controllers/application.js
- * import { Controller } from 'lux-framework';
+ * import { Controller } from 'lumen-framework';
  * import authenticate from 'app/middleware/authenticate';
  *
  * class ApplicationController extends Controller {
@@ -360,7 +360,7 @@ class Controller {
    * **Example:**
    *
    * ```javascript
-   * import { Controller } from 'lux-framework';
+   * import { Controller } from 'lumen-framework';
    *
    * const UNSAFE_METHODS = /(?:POST|PATCH|DELETE)/i;
    *
@@ -416,7 +416,7 @@ class Controller {
    * **Example:**
    *
    * ```javascript
-   * import { Controller } from 'lux-framework';
+   * import { Controller } from 'lumen-framework';
    *
    * async function addCopyright(request, response, payload) {
    *   const { action } = request;

@@ -50,7 +50,7 @@ export default (name: string, attrs: Array<string>): string => {
   }, '');
 
   return template`
-    import { Controller } from 'lux-framework';
+    import { Controller } from 'lumen-framework';
 
     class ${normalized}Controller extends Controller {
     ${body}

@@ -1,6 +1,6 @@
 // Declaration-emit config: reuses the strict typecheck config but emits `.d.ts`
 // only (no `.js` -- esbuild owns the runtime bundle). Consumers get real types
-// for `lux-framework` instead of `any`. Run via `pnpm build:types`.
+// for `lumen-framework` instead of `any`. Run via `pnpm build:types`.
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {

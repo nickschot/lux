@@ -1,4 +1,4 @@
-import { Application } from 'lux-framework';
+import { Application } from 'lumen-framework';
 
 class Todo extends Application {
 

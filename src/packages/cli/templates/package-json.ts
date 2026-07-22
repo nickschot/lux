@@ -30,7 +30,7 @@ export default (name: string, driver: string): string => {
     license: 'MIT',
     dependencies: {
       knex: '^3.3.0',
-      'lux-framework': LUX_VERSION,
+      'lumen-framework': LUX_VERSION,
       [dbDriver.name]: dbDriver.version
     },
     devDependencies: {

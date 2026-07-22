@@ -24,7 +24,7 @@ function inLuxProject() {
 
   try {
     const { dependencies } = require(path.join(cwd, 'package.json'));
-    return Boolean(dependencies['lux-framework']);
+    return Boolean(dependencies['lumen-framework']);
   } catch (err) {
     return false;
   }

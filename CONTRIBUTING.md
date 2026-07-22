@@ -102,7 +102,7 @@ npm run clean
 # Run the build tools.
 npm run build
 
-# Symlink the lux-framework to the global node_modules directory. This ensures
+# Symlink the lumen-framework to the global node_modules directory. This ensures
 # that the "lux" command will use the files we just built instead of another
 # install.
 npm link

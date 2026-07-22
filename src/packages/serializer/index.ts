@@ -48,7 +48,7 @@ import type { Serializer$opts } from './interfaces';
  * what the Serializer needs to build the response.
  *
  * ```javascript
- * import { Serializer } from 'lux-framework';
+ * import { Serializer } from 'lumen-framework';
  *
  * class PostsSerializer extends Serializer {
  *   attributes = [
@@ -67,7 +67,7 @@ import type { Serializer$opts } from './interfaces';
  * to add `'isPublic'` to the `attributes` property.
  *
  * ```javascript
- * import { Serializer } from 'lux-framework';
+ * import { Serializer } from 'lumen-framework';
  *
  * class PostsSerializer extends Serializer {
  *   attributes = [
@@ -91,7 +91,7 @@ import type { Serializer$opts } from './interfaces';
  * `hasOne` array property.
  *
  * ```javascript
- * import { Model } from 'lux-framework';
+ * import { Model } from 'lumen-framework';
  *
  * class Post extends Model {
  *  static hasOne = {
@@ -126,7 +126,7 @@ import type { Serializer$opts } from './interfaces';
  * property array of the Serializer.
  *
  * ```javascript
- * import { Serializer } from 'lux-framework';
+ * import { Serializer } from 'lumen-framework';
  *
  * class PostsSerializer extends Serializer {
  *  hasOne = [
@@ -142,7 +142,7 @@ import type { Serializer$opts } from './interfaces';
  * have to add a `hasMany` array property containing `'tags'` and `'comments'`.
  *
  * ```javascript
- * import { Serializer } from 'lux-framework';
+ * import { Serializer } from 'lumen-framework';
  *
  * class PostsSerializer extends Serializer {
  *  hasOne = [
@@ -194,7 +194,7 @@ import type { Serializer$opts } from './interfaces';
  * `app/serializers/posts.js`, you are not required to extend `PostsSerializer`.
  *
  * ```javascript
- * import { Serializer } from 'lux-framework';
+ * import { Serializer } from 'lumen-framework';
  *
  * class PostsSerializer extends Serializer {
  *   attributes = [
@@ -240,7 +240,7 @@ import type { Serializer$opts } from './interfaces';
  *
  * ```javascript
  * // app/serializers/admin/posts.js
- * import { Serializer } from 'lux-framework';
+ * import { Serializer } from 'lumen-framework';
  *
  * class AdminPostsSerializer extends Serializer {
  *   attributes = [
@@ -268,7 +268,7 @@ import type { Serializer$opts } from './interfaces';
  * improve this code by exporting constants from `app/serializers/posts.js`.
  *
  * ```javascript
- * import { Serializer } from 'lux-framework';
+ * import { Serializer } from 'lumen-framework';
  *
  * export const HAS_ONE = [
  *   'user',
@@ -315,7 +315,7 @@ import type { Serializer$opts } from './interfaces';
  *
  * ```javascript
  * // app/serializers/admin/posts.js
- * import { Serializer } from 'lux-framework';
+ * import { Serializer } from 'lumen-framework';
  * import { HAS_ONE, HAS_MANY, ATTRIBUTES } from 'app/serializers/posts';
  *
  * class AdminPostsSerializer extends PostsSerializer {

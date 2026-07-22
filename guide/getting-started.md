@@ -1,7 +1,7 @@
 ### Installation
 
 ```bash
-npm install -g lux-framework
+npm install -g lumen-framework
 ```
 
 ### Creating Your First Project

@@ -4,7 +4,7 @@ Guidance for working in this repository.
 
 ## What this is
 
-`lux-framework` — an MVC-style Node.js framework for building JSON:API 1.0 compliant
+`lumen-framework` — an MVC-style Node.js framework for building JSON:API 1.0 compliant
 REST APIs with minimal boilerplate. Controllers get automatic CRUD, pagination,
 sorting, and filtering; the ORM sits on top of [Knex](http://knexjs.org/).
 
@@ -425,7 +425,7 @@ This machine uses **Volta**, not nvm. Two gotchas when running the suite locally
 - **The `lux` CLI is resolved via `node_modules/.bin`.** The test bootstrap
   ([test/index.js](test/index.js)) shells out to `lux db:reset / db:migrate / db:seed`
   (each first runs a full app compile via the legacy Rollup+Babel pipeline). The old flow
-  relied on `npm link`; instead the repo now self-links via a `lux-framework: link:.`
+  relied on `npm link`; instead the repo now self-links via a `lumen-framework: link:.`
   devDependency, so `pnpm install` places `lux` in the root `node_modules/.bin`. pnpm
   prepends that dir to PATH for `pnpm test`, and the child_process `exec('lux …')` inherits
   it — so no `npm link` or manual PATH is needed. (Replacing these `exec('lux …')`

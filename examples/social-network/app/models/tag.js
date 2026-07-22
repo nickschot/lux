@@ -1,4 +1,4 @@
-import { Model } from 'lux-framework';
+import { Model } from 'lumen-framework';
 
 class Tag extends Model {
   static hasMany = {

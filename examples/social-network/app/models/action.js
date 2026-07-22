@@ -1,4 +1,4 @@
-import { Model } from 'lux-framework';
+import { Model } from 'lumen-framework';
 
 import Comment from 'app/models/comment';
 import Notification from 'app/models/notification';

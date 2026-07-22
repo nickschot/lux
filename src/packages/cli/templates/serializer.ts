@@ -77,7 +77,7 @@ export default (name: string, attrs: Array<string>): string => {
   }, '');
 
   return template`
-    import { Serializer } from 'lux-framework';
+    import { Serializer } from 'lumen-framework';
 
     class ${normalized}Serializer extends Serializer {
     ${body}

@@ -1,8 +1,8 @@
 {
-  "name": "lux-framework",
+  "name": "lumen-framework",
   "version": "1.2.3",
   "description": "Build scalable, Node.js-powered REST APIs with almost no code.",
-  "repository": "github:postlight/lux",
+  "repository": "github:nickschot/lux",
   "keywords": [
     "mvc",
     "api",
@@ -66,7 +66,7 @@
     "eslint-config-prettier": "^10.1.8",
     "faker": "4.1.0",
     "globals": "^17.7.0",
-    "lux-framework": "link:.",
+    "lumen-framework": "link:.",
     "node-fetch": "^2.7.0",
     "prettier": "^3.9.5",
     "shx": "^0.3.4",

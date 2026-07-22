@@ -72,7 +72,7 @@ async/await, `??` / `?.`. Standard modern JS passes straight through.
 ## 5. Deployment note
 
 `LUX_LOCAL` resolves to the framework's **built** `dist/index.mjs`, and `dist/`
-is gitignored. If you consume `lux-framework` straight from a git branch (not a
+is gitignored. If you consume `lumen-framework` straight from a git branch (not a
 published tarball), make sure it gets built on install — a `prepare` script, or
 publish a built package. Installing from a registry (which builds before
 publish) is unaffected.

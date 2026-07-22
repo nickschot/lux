@@ -1,4 +1,4 @@
-import { Controller } from 'lux-framework';
+import { Controller } from 'lumen-framework';
 
 class ActionsController extends Controller {
 

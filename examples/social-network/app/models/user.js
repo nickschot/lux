@@ -1,4 +1,4 @@
-import { Model } from 'lux-framework';
+import { Model } from 'lumen-framework';
 
 import { hashPassword, comparePassword } from 'app/utils/password';
 
