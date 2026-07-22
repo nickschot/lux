@@ -1,6 +1,6 @@
 {
   "name": "lumen-framework",
-  "version": "1.2.3",
+  "version": "3.0.0",
   "description": "Build scalable, Node.js-powered REST APIs with almost no code.",
   "repository": "github:nickschot/lux",
   "keywords": [
