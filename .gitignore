@@ -3,16 +3,30 @@
 # compiled output
 .nyc_output/
 coverage/
+build/
 dist/
 *test-results.xml
 
 # dependencies
 node_modules/
 
+# pnpm relocates its content-addressed store next to node_modules when the
+# configured store is on a different filesystem — which happens inside the
+# devcontainer, where node_modules is a named volume.
+.pnpm-store/
+
 # misc
 *.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
 *.DS_Store
+.idea/
+yarn.lock
 
 # logs
 log/
 *npm-debug.log
+
+# npm pack output
+*.tgz

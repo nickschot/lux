@@ -1,0 +1,64 @@
+{
+  "name": "lux-framework",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+
+  // NOTE: workspaceMount/workspaceFolder are deliberately NOT set.
+  //
+  // The intended way in is IntelliJ's "Create Dev Container and Clone Sources",
+  // where the IDE clones the repo into the container itself — bind-mounting the
+  // macOS filesystem is slow for this project's workload (large node_modules,
+  // many-file test runs). Pinning paths here would fight the location the IDE
+  // picks for that clone.
+  //
+  // Left unset, tooling that mounts instead (the devcontainer CLI, VS Code)
+  // still works and bind-mounts the local folder by default — so both routes
+  // are usable.
+
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+  },
+
+  // Only home-directory state is pinned to volumes, so it survives rebuilds.
+  // node_modules deliberately has *no* volume any more: with sources cloned
+  // into the container they already live on a container-native filesystem, so
+  // the earlier volumes (which existed purely to dodge the macOS bind mount and
+  // its darwin-x64 sqlite3 binaries) are redundant — and their hardcoded
+  // /workspaces/lux paths would break a clone placed anywhere else.
+  "mounts": [
+    "source?=lux-claude-config,target=/home/node/.claude,type=volume",
+    "source=lux-gh-config,target=/home/node/.config/gh,type=volume"
+  ],
+
+  "remoteUser": "node",
+
+  // Optional passthrough. `gh` picks GH_TOKEN up automatically; the git identity
+  // is what commits from inside the container will be attributed to. All three
+  // are blank-safe if unset on the host.
+  "remoteEnv": {
+    "GH_TOKEN": "${localEnv:GH_TOKEN}",
+    "GIT_AUTHOR_NAME": "${localEnv:GIT_AUTHOR_NAME}",
+    "GIT_AUTHOR_EMAIL": "${localEnv:GIT_AUTHOR_EMAIL}"
+  },
+
+  // Locate the checkout rather than assuming it. A relative path fails outright
+  // (IntelliJ does not run lifecycle commands from the repo root), and a single
+  // absolute path is not safe either: the clone lands in ~/IdeaProjects/<repo>
+  // under IntelliJ but /workspaces/<repo> under the devcontainer CLI and VS
+  // Code. Empty candidates are skipped, so this degrades cleanly if
+  // ${containerWorkspaceFolder} is not substituted.
+  "postCreateCommand": "bash -c 'for d in \"${containerWorkspaceFolder}\" \"$PWD\" \"$HOME/IdeaProjects/lux\" /workspaces/lux; do [ -f \"$d/.devcontainer/post-create.sh\" ] && exec bash \"$d/.devcontainer/post-create.sh\"; done; echo \"ERROR: could not locate .devcontainer/post-create.sh\" >&2; exit 1'",
+
+  "customizations": {
+    "jetbrains": {
+      // Switch to "IntelliJ IDEA" if you'd rather open it there; WebStorm matches
+      // what this project is normally opened with.
+      "backend": "WebStorm"
+    },
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode"]
+    }
+  }
+}

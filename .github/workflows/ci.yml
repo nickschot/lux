@@ -1,0 +1,248 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, modernization]
+  pull_request:
+  workflow_dispatch:
+
+# One run per ref: pushing again supersedes an in-flight run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Meta's prebuilt watchman. Pinned, and kept in step with the devcontainer
+  # (.devcontainer/Dockerfile). Needs glibc >= 2.38, which ubuntu-24.04 has.
+  WATCHMAN_VERSION: v2026.07.13.00
+
+jobs:
+  static:
+    name: typecheck / lint / format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # No runtime build or database needed for any of these.
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm format:check
+      # Emits the consumer-facing .d.ts; also catches declaration-only errors
+      # (e.g. TS2742 "cannot be named") that `tsc --noEmit` doesn't.
+      - run: pnpm build:types
+
+  test:
+    name: test (node ${{ matrix.node }} / ${{ matrix.driver }})
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      # For the coverage summary comment on pull requests.
+      pull-requests: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Full driver coverage on the dev baseline (Node 20, the .nvmrc pin).
+          - node: 20
+            driver: sqlite3
+          - node: 20
+            driver: pg
+            username: postgres
+            password: postgres
+          - node: 20
+            driver: mysql2
+            username: root
+            password: root
+          # Forward-compat across Node versions (22 & 24 LTS, 26 current), run
+          # via sqlite3 — the one native (N-API) dependency and the ABI-sensitive
+          # surface. The pure-JS pg/mysql2 drivers aren't Node-version-sensitive.
+          - node: 22
+            driver: sqlite3
+          - node: 24
+            driver: sqlite3
+          - node: 26
+            driver: sqlite3
+
+    # GitHub evaluates `services` statically, so both containers start for every
+    # leg — the sqlite3 leg pays the health-check wait without using them. That
+    # is the price of keeping this one readable job instead of three.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      NODE_ENV: test
+      DATABASE_DRIVER: ${{ matrix.driver }}
+      DATABASE_USERNAME: ${{ matrix.username }}
+      DATABASE_PASSWORD: ${{ matrix.password }}
+      # The service containers publish on IPv4, but "localhost" can resolve to
+      # ::1 on modern Node — so pin the host explicitly rather than relying on
+      # each driver's default. sqlite3 ignores it (it connects to a file).
+      DATABASE_HOST: 127.0.0.1
+      # NB: deliberately no DATABASE_URL. It takes precedence over every other
+      # setting in src/packages/database/utils/connect.ts and would bypass the
+      # sqlite filename logic entirely.
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+
+      # Two dependency trees: the framework and the test-app it boots against.
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir test/test-app install --frozen-lockfile
+
+      # `module "fs" #watch()` asserts a real watchman client. The framework
+      # itself falls back to native fs.watch, but the test does not.
+      - name: Install watchman
+        run: |
+          curl -fsSL -o /tmp/watchman.zip \
+            "https://github.com/facebook/watchman/releases/download/${WATCHMAN_VERSION}/watchman-${WATCHMAN_VERSION}-linux.zip"
+          unzip -q /tmp/watchman.zip -d /tmp
+          sudo cp /tmp/watchman-${WATCHMAN_VERSION}-linux/bin/* /usr/local/bin/
+          sudo cp -r /tmp/watchman-${WATCHMAN_VERSION}-linux/lib/* /usr/local/lib/
+          sudo mkdir -p /usr/local/var/run/watchman
+          sudo chmod 2777 /usr/local/var/run/watchman
+          watchman --version
+
+      # The app compiler bundles dist/index.mjs, so the suite runs against the
+      # last build rather than the working tree. Must precede `pnpm test`.
+      - run: pnpm build
+
+      # `lux db:reset` cannot provision pg/mysql (dbdrop connects to the database
+      # it is about to drop), so create it here and tell the global setup to skip
+      # the reset. See test/vitest.global-setup.ts.
+      - name: Create database (postgres)
+        if: matrix.driver == 'pg'
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -c 'CREATE DATABASE lux_test;'
+
+      - name: Create database (mysql)
+        if: matrix.driver == 'mysql2'
+        run: mysql -h 127.0.0.1 -uroot -proot -e 'CREATE DATABASE lux_test;'
+
+      - name: Test
+        env:
+          LUX_SKIP_DB_RESET: ${{ matrix.driver != 'sqlite3' && '1' || '' }}
+        # Coverage only on the baseline sqlite3 leg — every leg exercises the
+        # same source, so collecting it repeatedly just slows the matrix down.
+        run: pnpm test ${{ matrix.node == 20 && matrix.driver == 'sqlite3' && '--coverage' || '' }}
+
+      - name: Report coverage
+        # Exactly one leg, or the action posts a comment per sqlite3 leg.
+        if: matrix.node == 20 && matrix.driver == 'sqlite3' && !cancelled()
+        uses: davelosert/vitest-coverage-report-action@v2
+
+  # Consumption smoke test: installs lux-framework the way an app does -- as a
+  # packaged, production-only dependency -- which the other jobs never do (they
+  # run in-repo with devDeps and a portable layout). This catches install-only
+  # bugs: a runtime need left in devDependencies (e.g. esbuild, which the app
+  # compiler require()s), or broken/missing shipped types.
+  consume:
+    name: consume (packaged, prod-only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      # devDeps (esbuild, typescript) are needed to build + pack.
+      - run: pnpm install --frozen-lockfile
+
+      # `pnpm pack` runs prepack -> build + build:types, then tars the `files`
+      # whitelist. This is the exact artifact a consumer would install. The
+      # tarball name is deterministic, so build it from package.json rather than
+      # parsing pack output (which interleaves the prepack build logs).
+      - name: Pack the package
+        run: |
+          pnpm pack
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          echo "TARBALL=$(pwd)/${NAME}-${VERSION}.tgz" >> "$GITHUB_ENV"
+
+      - name: Install into a throwaway app (production deps only)
+        run: |
+          mkdir -p /tmp/consumer
+          cd /tmp/consumer
+          npm init -y >/dev/null
+          npm install "$TARBALL" --omit=dev --no-audit --no-fund
+
+      # Loading the bundles require()s every runtime dep -- the compiler pulls in
+      # esbuild at module init, so this fails if a runtime need is a devDep.
+      - name: Runtime + CLI bundles load
+        working-directory: /tmp/consumer
+        run: |
+          node -e "require('lux-framework')"
+          node -e "require('lux-framework/dist/cli.cjs')"
+
+      # A consumer gets real types from the shipped dist/types, not `any`.
+      - name: Consumer types resolve
+        working-directory: /tmp/consumer
+        run: |
+          cat > check.ts <<'TS'
+          import { Model, Controller, Serializer, Application } from 'lux-framework';
+          class Post extends Model {}
+          export class C extends Controller {}
+          export class S extends Serializer<Post> {}
+          void Application;
+          TS
+          cat > tsconfig.json <<'JSON'
+          {
+            "compilerOptions": {
+              "strict": true,
+              "module": "esnext",
+              "moduleResolution": "bundler",
+              "noEmit": true,
+              "skipLibCheck": true,
+              "types": []
+            }
+          }
+          JSON
+          "$GITHUB_WORKSPACE/node_modules/.bin/tsc" -p tsconfig.json

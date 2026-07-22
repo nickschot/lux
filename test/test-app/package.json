@@ -14,11 +14,16 @@
     "babel-preset-lux": "2.0.2",
     "bcryptjs": "^2.4.3",
     "faker": "4.1.0",
-    "knex": "^0.16.3",
+    "knex": "^3.3.0",
     "mssql": "^4.3.0",
-    "mysql2": "^1.6.4",
-    "pg": "^7.8.0",
+    "mysql2": "^3.15.3",
+    "pg": "^8.16.3",
     "source-map-support": "0.4.15",
-    "sqlite3": "4.0.6"
+    "sqlite3": "^5.1.7"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sqlite3"
+    ]
   }
 }

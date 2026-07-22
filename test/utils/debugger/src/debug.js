@@ -97,11 +97,11 @@ process.on('exit', () => {
 
 (async function() {
 
-  const cleanArgs = 'rm -rf .nyc_output coverage dist test/test-app/dist test-results.xml'.split(' ');
+  const cleanArgs = 'rm -rf coverage dist test/test-app/dist'.split(' ');
 
   await runCommand('shx', cleanArgs, ['Cleaning Lux repo...', 'Repo cleaned.']);
 
-  await runCommand('rollup', ['-c'], ['Building Lux source...', 'Lux source built.']);
+  await runCommand('node', ['build.mjs'], ['Building Lux source...', 'Lux source built.']);
 
   process.chdir('./test/test-app');
 

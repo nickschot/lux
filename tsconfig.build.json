@@ -1,0 +1,16 @@
+// Declaration-emit config: reuses the strict typecheck config but emits `.d.ts`
+// only (no `.js` -- esbuild owns the runtime bundle). Consumers get real types
+// for `lux-framework` instead of `any`. Run via `pnpm build:types`.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": false,
+    // `src` so the tree lands at dist/types/index.d.ts, not dist/types/src/...
+    // (a stray `package.json` JSON import would otherwise infer the repo root).
+    "rootDir": "src",
+    "outDir": "dist/types"
+  }
+}

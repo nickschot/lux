@@ -1,6 +1,11 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S node --enable-source-maps
 
 'use strict';
+
+// `--enable-source-maps` (above) replaces the `source-map-support` shim the app
+// compiler used to inject into every bundle: the flag applies process-wide, so
+// the required app bundle and the cluster workers (which inherit execArgv) both
+// map stack traces back to source.
 
 const { EOL } = require('os');
 const path = require('path');
@@ -26,7 +31,6 @@ function inLuxProject() {
 }
 
 function commandNotFound(cmd) {
-  // eslint-disable-next-line no-console
   console.log(
     `${EOL}  ${red(cmd)} is not a valid command.${EOL.repeat(2)}`,
     ` Use ${green('lux --help')} for a full list of commands.${EOL}`
@@ -42,15 +46,15 @@ function setEnvVar(key, val, def) {
 }
 
 function exec(cmd, ...args) {
-  const handler = require('../dist')[cmd];
+  const handler = require('../dist/cli.cjs')[cmd];
   const needsProject = new RegExp(
     '^(?:db:.+|test|build|serve|console|generate|destroy)$'
   );
 
   if (needsProject.test(cmd) && !inLuxProject()) {
-    return Promise.reject(new Error(
-      'Directory does not contain a valid Lux application.'
-    ));
+    return Promise.reject(
+      new Error('Directory does not contain a valid Lux application.')
+    );
   }
 
   return handler(...args);
@@ -61,7 +65,6 @@ function exit(code) {
 }
 
 function rescue(err) {
-  // eslint-disable-next-line
   console.error(err.stack);
   exit(1);
 }
@@ -75,23 +78,19 @@ cli
   .option(
     '--database [database]',
     'Database driver',
-    /^(postgres|sqlite|mysql|mariadb|oracle)$/i,
+    /^(postgres|sqlite|mysql)$/i,
     'sqlite'
   )
   .action((name, { database }) => {
-    exec('create', name, database)
-      .then(exit)
-      .catch(rescue);
+    exec('create', name, database).then(exit).catch(rescue);
   });
 
 cli
   .command('t')
   .alias('test')
-  .description('Run your application\'s test suite')
+  .description("Run your application's test suite")
   .action(() => {
-    exec('test')
-      .then(exit)
-      .catch(rescue);
+    exec('test').then(exit).catch(rescue);
   });
 
 cli
@@ -100,9 +99,7 @@ cli
   .description('Build your application')
   .option('-w, --use-weak', 'Use weak mode')
   .action(({ useWeak }) => {
-    exec('build', !useWeak)
-      .then(exit)
-      .catch(rescue);
+    exec('build', !useWeak).then(exit).catch(rescue);
   });
 
 cli
@@ -127,10 +124,8 @@ cli
   .description('Serve your application')
   .option('-c, --cluster', 'Run in cluster mode')
   .option('-e, --environment [env]', '(Default: development)')
-  .option(
-    '-p, --port [port]',
-    '(Default: 4000)',
-    port => Number.parseInt(port, 10)
+  .option('-p, --port [port]', '(Default: 4000)', port =>
+    Number.parseInt(port, 10)
   )
   .option('-H, --hot', 'Reload when a file change is detected')
   .option('-w, --use-weak', 'Use weak mode')
@@ -148,11 +143,11 @@ cli
 cli
   .command('g <type> <name> [attrs...]')
   .alias('generate')
-  .description('Example: lux generate model user name:string email:string admin:boolean')
+  .description(
+    'Example: lux generate model user name:string email:string admin:boolean'
+  )
   .action((type, name, attrs) => {
-    exec('generate', { type, name, attrs })
-      .then(exit)
-      .catch(rescue);
+    exec('generate', { type, name, attrs }).then(exit).catch(rescue);
   });
 
 cli
@@ -160,9 +155,7 @@ cli
   .alias('destroy <type> <name>')
   .description('Example: lux destroy model user')
   .action((type, name) => {
-    exec('destroy', { type, name })
-      .then(exit)
-      .catch(rescue);
+    exec('destroy', { type, name }).then(exit).catch(rescue);
   });
 
 cli
@@ -262,9 +255,7 @@ cli
       .catch(rescue);
   });
 
-cli
-  .on('*', commandNotFound)
-  .parse(process.argv);
+cli.on('*', commandNotFound).parse(process.argv);
 
 if (!cli.args.length) {
   cli.help();
