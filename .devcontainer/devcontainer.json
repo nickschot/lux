@@ -16,9 +16,13 @@
   // still works and bind-mounts the local folder by default — so both routes
   // are usable.
 
+  // Claude Code is NOT installed via ghcr.io/anthropics/devcontainer-features/
+  // claude-code here: that feature installs through global npm, which lands
+  // root-owned and makes `claude update` fail with a permission error. The
+  // Dockerfile installs it natively under the `node` user instead, which can
+  // self-update. See the comment there.
   "features": {
-    "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
 
   // Only home-directory state is pinned to volumes, so it survives rebuilds.
@@ -28,7 +32,7 @@
   // its darwin-x64 sqlite3 binaries) are redundant — and their hardcoded
   // /workspaces/lumen paths would break a clone placed anywhere else.
   "mounts": [
-    "source?=lumen-claude-config,target=/home/node/.claude,type=volume",
+    "source=lumen-claude-config,target=/home/node/.claude,type=volume",
     "source=lumen-gh-config,target=/home/node/.config/gh,type=volume"
   ],
 

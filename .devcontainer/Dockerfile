@@ -31,9 +31,12 @@ RUN curl -fsSL -o /tmp/watchman.zip \
     && chmod 2777 /usr/local/var/run/watchman \
     && rm -rf /tmp/watchman*
 
-# NOTE: Claude Code is installed by the official
-# ghcr.io/anthropics/devcontainer-features/claude-code feature (see
-# devcontainer.json), not here.
+# NOTE: Claude Code is installed further down, as the `node` user, via the
+# native installer — NOT via the claude-code devcontainer feature. The feature
+# installs through global npm, which lands in
+# /usr/local/share/npm-global/lib/node_modules owned by root:npm with no group
+# write bit, so `claude update` fails with a permission error. The native
+# installer puts everything under the user's own $HOME instead.
 
 # pnpm comes from corepack, which honours the `packageManager` field in
 # package.json (pnpm@10.34.5) — so the container pins the same version as the
@@ -63,3 +66,34 @@ RUN mkdir -p \
     && chown -R node:node /workspaces /home/node/.claude /home/node/.config
 
 USER node
+
+# Claude Code, installed natively as the unprivileged user so it can update
+# itself. Layout this produces:
+#   ~/.local/bin/claude                  launcher symlink
+#   ~/.local/share/claude/versions/      the binaries `claude update` replaces
+#   ~/.claude/                           auth + config (a named volume, so
+#                                        logins survive a rebuild)
+# Only the first two matter for updating, and both are plain node-owned image
+# directories — nothing here is root-owned, and nothing the updater writes to is
+# shadowed by a mount.
+#
+# The installer refuses to run under sudo on purpose (it would install into
+# root's home), which is precisely the failure mode this replaces.
+#
+# This fetches whatever is current at build time, so a rebuild also refreshes
+# the version; `claude update` handles the gap in between. Updates land in the
+# image layer, so they reset on rebuild — deliberate, since a rebuild pulls a
+# newer version anyway.
+RUN curl -fsSL https://claude.ai/install.sh | bash
+
+# The installer appends this to the shell rc files, which non-interactive
+# lifecycle commands (postCreateCommand) and some IDE terminals do not source.
+# Setting it here makes `claude` resolvable in every context.
+ENV PATH="/home/node/.local/bin:${PATH}"
+
+# Cache the project's pinned pnpm as node's corepack default. Inside the repo
+# corepack reads `packageManager` and gets this anyway; OUTSIDE it (e.g. running
+# `pnpm` from $HOME) corepack otherwise fetches the newest pnpm, which requires
+# Node >= 22.13 and dies with a confusing `No such built-in module: node:sqlite`.
+# Pinning the fallback turns that into a working command.
+RUN corepack prepare pnpm@10.34.5 --activate

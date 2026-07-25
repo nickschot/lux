@@ -143,9 +143,19 @@ builds `dist/`. **Verified end-to-end in clone mode: `552 passing`** with
 typecheck/lint/format green, watchman tests included.
 
 Ships Node **20.20.2** (same as the host's Volta pin), pnpm **10.34.5** via corepack,
-watchman, the `gh` CLI, and Claude Code (via the official feature). First run: `claude`
+watchman, the `gh` CLI (devcontainer feature), and Claude Code. First run: `claude`
 prompts for login and `gh auth login` (or export `GH_TOKEN` on the host — `remoteEnv`
 forwards it, along with `GIT_AUTHOR_NAME`/`GIT_AUTHOR_EMAIL`).
+
+**Claude Code is installed natively as the `node` user, not via the claude-code
+devcontainer feature** — that feature installs through global npm into
+`/usr/local/share/npm-global/…`, owned `root:npm` with no group write bit, so
+`claude update` fails on a permission error. The native installer keeps the launcher
+(`~/.local/bin/claude`) and the binaries it swaps (`~/.local/share/claude/versions/`)
+in the user's own home, so self-updating works — verified by downgrading and running a
+real update. Auth/config stay in `~/.claude`, which is a named volume, so logins
+survive a rebuild. Updates land in the image layer and reset on rebuild, which is
+deliberate: a rebuild re-runs the installer and picks up a newer version anyway.
 
 Things about the setup that are load-bearing, all learned by breaking them:
 - **Base is `trixie`, not `bookworm`.** Meta's prebuilt watchman links against GLIBC 2.38;
