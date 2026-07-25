@@ -153,9 +153,19 @@ devcontainer feature** — that feature installs through global npm into
 `claude update` fails on a permission error. The native installer keeps the launcher
 (`~/.local/bin/claude`) and the binaries it swaps (`~/.local/share/claude/versions/`)
 in the user's own home, so self-updating works — verified by downgrading and running a
-real update. Auth/config stay in `~/.claude`, which is a named volume, so logins
-survive a rebuild. Updates land in the image layer and reset on rebuild, which is
-deliberate: a rebuild re-runs the installer and picks up a newer version anyway.
+real update. Auth/config stay in `~/.claude` and the installation itself in `~/.local`,
+both named volumes, so logins **and** updates survive a rebuild — Docker auto-populates an
+empty named volume from the image, so the build-time install seeds `~/.local` on first run
+with no bootstrap step.
+
+**`~/.local` is captured whole, not just `~/.local/share/claude`** — and that matters:
+the launcher (`~/.local/bin/claude`) is a symlink *into* `share/claude/versions/`, so
+volumising only one of them lets them desynchronize. After a rebuild the image's launcher
+then points at a version the volume does not contain and `claude` dies with
+`command not found` (observed, not theoretical). Kept together they can only ever disagree
+by being older, which still runs. Consequence: the volume **pins the version**, so a
+rebuilt image does not hand you a newer Claude Code — run `claude update`, or
+`docker volume rm lumen-claude-install` to re-seed from the image.
 
 Things about the setup that are load-bearing, all learned by breaking them:
 - **Base is `trixie`, not `bookworm`.** Meta's prebuilt watchman links against GLIBC 2.38;
@@ -164,10 +174,17 @@ Things about the setup that are load-bearing, all learned by breaking them:
   than this project's pin, requires Node >= 22.13 (it imports `node:sqlite`), and would
   shadow corepack's shim — it hard-crashes on Node 20.
 - **`workspaceMount`/`workspaceFolder` are intentionally unset**, so the IDE controls where
-  the clone lands. The Dockerfile still pre-creates `/workspaces/lumen` owned by `node`,
-  because a volume mounted at a path the image lacks comes up root-owned and the clone
-  then fails with "Permission denied"; post-create re-checks writability at runtime for
-  whatever path is actually used.
+  the clone lands: IntelliJ uses `/IdeaProjects/<repo>`, the devcontainer CLI and VS Code
+  use `/workspaces/<repo>`. The Dockerfile pre-creates those two **parents** as `node`, with
+  no repo name — the name is mid-rename and differs per tool, so hardcoding the leaf went
+  stale the moment the project was renamed. A node-owned parent is enough for the IDE's
+  clone (verified). *Caveat:* if a tool mounts a named **volume** at the leaf itself, that
+  leaf comes up `root:root` regardless of the parent and the clone fails with "Permission
+  denied" — post-create's runtime writability check (`sudo chown`) fixes it for anything
+  that runs after the clone, but not the clone itself.
+- **The postCreate locator globs `/IdeaProjects/*/` and `/workspaces/*/`** rather than
+  naming the repo, for the same reason. `${containerWorkspaceFolder}` is tried first and is
+  what actually resolves under IntelliJ; the globs are belt-and-braces.
 - **`node_modules` gets no volume.** With sources cloned into the container they are
   already on a container-native filesystem. (The earlier bind-mount setup needed volumes to
   keep the host's darwin-x64 sqlite3 binaries out of the linux install — that whole class

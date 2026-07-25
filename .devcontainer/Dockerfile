@@ -53,17 +53,25 @@ RUN npm uninstall -g pnpm || true \
 # pnpm, which would hang the non-interactive postCreate step.
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 
-# Pre-create the directories that get named volumes, owned by the non-root user.
-# A volume mounted at a path that does not exist in the image comes up
-# root-owned, and the clone then fails with "Permission denied" — so the
-# conventional workspace root is created here too. It is only a default: if the
-# IDE clones somewhere else this is simply unused, and post-create re-checks
-# writability at runtime.
+# Pre-create the directories that get named volumes, owned by the non-root user:
+# a volume mounted at a path the image lacks comes up root-owned.
+#
+# The checkout roots are created as node-owned PARENTS only, without a repo name.
+# The name is mid-rename (lux -> lumen) and differs per tool anyway — IntelliJ
+# clones to /IdeaProjects/<repo>, the devcontainer CLI and VS Code use
+# /workspaces/<repo> — so guessing the leaf was stale the moment the project was
+# renamed. post-create re-checks writability at runtime for whatever path is
+# actually used.
 RUN mkdir -p \
-        /workspaces/lumen \
+        /workspaces \
+        /IdeaProjects \
         /home/node/.claude \
         /home/node/.config/gh \
-    && chown -R node:node /workspaces /home/node/.claude /home/node/.config
+    && chown -R node:node \
+        /workspaces \
+        /IdeaProjects \
+        /home/node/.claude \
+        /home/node/.config
 
 USER node
 

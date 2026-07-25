@@ -33,7 +33,23 @@
   // /workspaces/lumen paths would break a clone placed anywhere else.
   "mounts": [
     "source=lumen-claude-config,target=/home/node/.claude,type=volume",
-    "source=lumen-gh-config,target=/home/node/.config/gh,type=volume"
+    "source=lumen-gh-config,target=/home/node/.config/gh,type=volume",
+
+    // Claude Code's own installation, so `claude update` survives a rebuild.
+    // Docker auto-populates an empty named volume from the image's content, so
+    // the build-time install seeds this on first run — no bootstrap needed.
+    //
+    // The whole of ~/.local is captured on purpose rather than just
+    // share/claude: the launcher (~/.local/bin/claude) is a symlink INTO
+    // share/claude/versions, and splitting them lets the two desynchronize —
+    // after a rebuild the image's launcher points at a version the volume does
+    // not have, and `claude` dies with "command not found". Kept together they
+    // can only ever disagree by being older, which still runs.
+    //
+    // Consequence worth knowing: once this volume exists it pins the version, so
+    // a rebuilt image does NOT hand you a newer Claude Code — run
+    // `claude update` (which now works), or delete the volume to re-seed.
+    "source=lumen-claude-install,target=/home/node/.local,type=volume"
   ],
 
   "remoteUser": "node",
@@ -48,12 +64,14 @@
   },
 
   // Locate the checkout rather than assuming it. A relative path fails outright
-  // (IntelliJ does not run lifecycle commands from the repo root), and a single
-  // absolute path is not safe either: the clone lands in ~/IdeaProjects/<repo>
-  // under IntelliJ but /workspaces/<repo> under the devcontainer CLI and VS
-  // Code. Empty candidates are skipped, so this degrades cleanly if
-  // ${containerWorkspaceFolder} is not substituted.
-  "postCreateCommand": "bash -c 'for d in \"${containerWorkspaceFolder}\" \"$PWD\" \"$HOME/IdeaProjects/lumen\" /workspaces/lumen; do [ -f \"$d/.devcontainer/post-create.sh\" ] && exec bash \"$d/.devcontainer/post-create.sh\"; done; echo \"ERROR: could not locate .devcontainer/post-create.sh\" >&2; exit 1'",
+  // (IntelliJ does not run lifecycle commands from the repo root), and no single
+  // absolute path is right either: the clone lands in /IdeaProjects/<repo> under
+  // IntelliJ but /workspaces/<repo> under the devcontainer CLI and VS Code.
+  // ${containerWorkspaceFolder} is the reliable answer and is tried first; the
+  // globs are belt-and-braces and deliberately do NOT hardcode the repo name,
+  // which is mid-rename (lux -> lumen). Empty candidates are skipped, so this
+  // degrades cleanly if the variable is not substituted.
+  "postCreateCommand": "bash -c 'for d in \"${containerWorkspaceFolder}\" \"$PWD\" /IdeaProjects/*/ /workspaces/*/; do [ -f \"$d/.devcontainer/post-create.sh\" ] && exec bash \"$d/.devcontainer/post-create.sh\"; done; echo \"ERROR: could not locate .devcontainer/post-create.sh\" >&2; exit 1'",
 
   "customizations": {
     "jetbrains": {
