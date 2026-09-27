@@ -1,5 +1,26 @@
 # Lumen Changelog
 
+## Release (2026-09-27)
+
+* lumen-framework 3.0.3 (patch)
+
+#### :bug: Bug Fix
+* `lumen-framework`
+  * [#24](https://github.com/nickschot/lux/pull/24) Fix compiler race writing dist/boot.js on a fresh checkout ([@schot-bot](https://github.com/schot-bot))
+  * [#22](https://github.com/nickschot/lux/pull/22) JSON:API 1.0 content negotiation (Accept / Content-Type) ([@schot-bot](https://github.com/schot-bot))
+
+#### :memo: Documentation
+* `lumen-framework`
+  * [#18](https://github.com/nickschot/lux/pull/18) Cleanup CLAUDE.md ([@nickschot](https://github.com/nickschot))
+
+#### :house: Internal
+* `lumen-framework`
+  * [#20](https://github.com/nickschot/lux/pull/20) Fix devcontainer claude not able to be updated & persist updates ([@nickschot](https://github.com/nickschot))
+
+#### Committers: 2
+- Nick Schot ([@nickschot](https://github.com/nickschot))
+- [@schot-bot](https://github.com/schot-bot)
+
 ## Release (2026-07-22)
 
 * lumen-framework 3.0.2 (patch)
