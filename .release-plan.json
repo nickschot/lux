@@ -2,10 +2,14 @@
   "solution": {
     "lumen-framework": {
       "impact": "patch",
-      "oldVersion": "3.0.1",
-      "newVersion": "3.0.2",
+      "oldVersion": "3.0.2",
+      "newVersion": "3.0.3",
       "tagName": "latest",
       "constraints": [
+        {
+          "impact": "patch",
+          "reason": "Appears in changelog section :bug: Bug Fix"
+        },
         {
           "impact": "patch",
           "reason": "Appears in changelog section :memo: Documentation"
@@ -18,5 +22,5 @@
       "pkgJSONPath": "./package.json"
     }
   },
-  "description": "## Release (2026-07-22)\n\n* lumen-framework 3.0.2 (patch)\n\n#### :memo: Documentation\n* `lumen-framework`\n  * [#15](https://github.com/nickschot/lux/pull/15) Fix npm badge in README.md ([@nickschot](https://github.com/nickschot))\n\n#### :house: Internal\n* `lumen-framework`\n  * [#17](https://github.com/nickschot/lux/pull/17) Only run CI on push on main branch ([@nickschot](https://github.com/nickschot))\n\n#### Committers: 1\n- Nick Schot ([@nickschot](https://github.com/nickschot))\n"
+  "description": "## Release (2026-09-27)\n\n* lumen-framework 3.0.3 (patch)\n\n#### :bug: Bug Fix\n* `lumen-framework`\n  * [#24](https://github.com/nickschot/lux/pull/24) Fix compiler race writing dist/boot.js on a fresh checkout ([@schot-bot](https://github.com/schot-bot))\n  * [#22](https://github.com/nickschot/lux/pull/22) JSON:API 1.0 content negotiation (Accept / Content-Type) ([@schot-bot](https://github.com/schot-bot))\n\n#### :memo: Documentation\n* `lumen-framework`\n  * [#18](https://github.com/nickschot/lux/pull/18) Cleanup CLAUDE.md ([@nickschot](https://github.com/nickschot))\n\n#### :house: Internal\n* `lumen-framework`\n  * [#20](https://github.com/nickschot/lux/pull/20) Fix devcontainer claude not able to be updated & persist updates ([@nickschot](https://github.com/nickschot))\n\n#### Committers: 2\n- Nick Schot ([@nickschot](https://github.com/nickschot))\n- [@schot-bot](https://github.com/schot-bot)\n"
 }
