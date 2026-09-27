@@ -38,7 +38,7 @@ export default async function loadLinkage(
     new Set(records.map(record => record.getPrimaryKey()))
   );
   const linkage = new Map<string, Linkage>();
-  const belongsTo: Array<[string, string]> = [];
+  const belongsTo: Array<[string, string, ModelClass]> = [];
   const queries: Array<Promise<void>> = [];
 
   ids.forEach(id => {
@@ -91,7 +91,7 @@ export default async function loadLinkage(
     const foreignKey = camelize(opts.foreignKey, true);
 
     if (type === 'belongsTo') {
-      belongsTo.push([name, foreignKey]);
+      belongsTo.push([name, foreignKey, related]);
     } else if (through) {
       // Mirrors `getHasManyThrough()`: the join model holds a key pointing at
       // the owner (`foreignKey`) and one pointing at the related record (the
@@ -144,6 +144,8 @@ export default async function loadLinkage(
             link(row.getPrimaryKey(), name, valueOf(row, key));
           });
         });
+
+        await dropDangling(linkage, belongsTo);
       })()
     );
   }
@@ -151,4 +153,63 @@ export default async function loadLinkage(
   await Promise.all(queries);
 
   return linkage;
+}
+
+/**
+ * A foreign key can outlive the record it points to (no FK constraint, or a
+ * row deleted out from under it). Resolve belongs-to linkage to `null` then,
+ * like the primary query's join does — rather than linking a resource that
+ * does not exist. One query per distinct related model.
+ *
+ * @private
+ */
+async function dropDangling(
+  linkage: Map<string, Linkage>,
+  belongsTo: Array<[string, string, ModelClass]>
+): Promise<void> {
+  const wanted = new Map<ModelClass, Set<string>>();
+
+  belongsTo.forEach(([name, , related]) => {
+    const ids = wanted.get(related) || new Set<string>();
+
+    linkage.forEach(({ [name]: id }) => {
+      if (typeof id === 'string') {
+        ids.add(id);
+      }
+    });
+
+    wanted.set(related, ids);
+  });
+
+  const existing = new Map<ModelClass, Set<string>>();
+
+  await Promise.all(
+    Array.from(wanted, async ([related, ids]) => {
+      if (!ids.size) {
+        existing.set(related, ids);
+        return;
+      }
+
+      const rows = await related
+        .select(related.primaryKey)
+        .where({ [related.primaryKey]: Array.from(ids) });
+
+      existing.set(
+        related,
+        new Set(rows.map(row => String(row.getPrimaryKey())))
+      );
+    })
+  );
+
+  belongsTo.forEach(([name, , related]) => {
+    const found = existing.get(related);
+
+    linkage.forEach(owner => {
+      const id = owner[name];
+
+      if (typeof id === 'string' && !found?.has(id)) {
+        owner[name] = null;
+      }
+    });
+  });
 }

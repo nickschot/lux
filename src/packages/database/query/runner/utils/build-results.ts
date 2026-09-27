@@ -109,19 +109,28 @@ export default async function buildResults<T extends Model>({
       );
     }
 
-    const absent: Array<string> = [];
+    // A left-joined relationship with no match comes back as a row of nulls.
+    // Drop all of its columns, not just its primary key: otherwise a record
+    // is built from the remaining nulls, and the model fills in its column
+    // defaults — on Postgres the primary key becomes the literal
+    // `nextval('<table>_id_seq'::regclass)`, i.e. a phantom related record.
+    const missing = new Set(
+      entries(record)
+        .filter(([key, value]) => value == null && pkPattern.test(key))
+        .map(([key]) => key.split('.')[0])
+    );
+
+    // An unmatched has-one is known to be absent, so its getter must not
+    // query for it again (belongs-to already skips the query on a null key).
+    const absent = Array.from(missing).filter(
+      name => model.relationshipFor(name)?.type === 'hasOne'
+    );
 
     const instance = Reflect.construct(model, [
       entries(record).reduce<Record<string, any>>((r, entry) => {
         let [key, value] = entry;
 
-        if (value == null && pkPattern.test(key)) {
-          const [name] = key.split('.');
-
-          if (model.relationshipFor(name)?.type === 'hasOne') {
-            absent.push(name);
-          }
-
+        if (key.indexOf('.') >= 0 && missing.has(key.split('.')[0])) {
           return r;
         } else if (key.indexOf('.') >= 0) {
           const [a, b] = key.split('.');

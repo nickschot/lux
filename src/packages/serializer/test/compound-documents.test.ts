@@ -6,6 +6,7 @@ import Server from '../../server';
 import type { Model, ModelClass } from '../../database';
 import underscore from '../../../utils/underscore';
 import { getTestApp } from '../../../../test/utils/get-test-app';
+import { getRelated } from '../../../../test/utils/get-related';
 
 // End-to-end coverage of `?include=` through the real router, controllers and
 // serializers of the test-app, over HTTP. The seed data is random and shared
@@ -126,8 +127,7 @@ describe('compound documents over HTTP', () => {
 
       for (const name of [...hasOne, ...hasMany]) {
         const key = dasherize(underscore(name));
-        const value = (await Reflect.get(record, name)) as
-          Model | Array<Model> | null;
+        const value = await getRelated(record, name);
         const expected = identifiersOf(
           Array.isArray(value)
             ? value.map(item => ref(item.resourceName, item))
