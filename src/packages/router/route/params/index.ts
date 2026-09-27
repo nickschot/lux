@@ -66,6 +66,7 @@ export function defaultParamsFor({
   return {};
 }
 
+export { default as validateClientId } from './utils/validate-client-id';
 export { default as validateResourceId } from './utils/validate-resource-id';
 
 export type { ParameterLike, ParameterLike$opts } from './interfaces';

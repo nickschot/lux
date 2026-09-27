@@ -1,4 +1,5 @@
 import Parameter from '../parameter';
+import ForbiddenParameter from '../parameter/forbidden-parameter';
 import ParameterGroup from '../parameter-group';
 import isNull from '../../../../../utils/is-null';
 import { typeForColumn } from '../../../../database';
@@ -80,18 +81,59 @@ function getRelationshipsParam({
   model,
   params
 }: Controller): [string, ParameterLike] {
+  // Relationships the model has but the controller does not accept get a 403
+  // (unsupported update) instead of the 400 an unknown member gets.
+  const forbidden = Object.keys(model.relationships)
+    .filter(key => !params.includes(key))
+    .map((key): [string, ParameterLike] => [
+      key,
+      new ForbiddenParameter(`data.relationships.${key}`)
+    ]);
+
   return [
     'relationships',
     new ParameterGroup(
-      params.reduce<Array<[string, ParameterLike]>>((group, param) => {
-        const path = `data.relationships.${param}`;
-        const opts = model.relationshipFor(param);
+      [
+        ...params.reduce<Array<[string, ParameterLike]>>((group, param) => {
+          const path = `data.relationships.${param}`;
+          const opts = model.relationshipFor(param);
 
-        if (!opts) {
-          return group;
-        }
+          if (!opts) {
+            return group;
+          }
 
-        if (opts.type === 'hasMany') {
+          if (opts.type === 'hasMany') {
+            return [
+              ...group,
+
+              [
+                param,
+                new ParameterGroup(
+                  [
+                    [
+                      'data',
+                      new Parameter({
+                        type: 'array',
+                        path: `${path}.data`,
+                        required: true
+                      })
+                    ]
+                  ],
+                  {
+                    path
+                  }
+                )
+              ]
+            ];
+          }
+
+          const primaryKeyColumn = opts.model.columnFor(opts.model.primaryKey);
+          let primaryKeyType: string | undefined = 'number';
+
+          if (primaryKeyColumn) {
+            primaryKeyType = typeForColumn(primaryKeyColumn);
+          }
+
           return [
             ...group,
 
@@ -101,11 +143,33 @@ function getRelationshipsParam({
                 [
                   [
                     'data',
-                    new Parameter({
-                      type: 'array',
-                      path: `${path}.data`,
-                      required: true
-                    })
+                    new ParameterGroup(
+                      [
+                        [
+                          'id',
+                          new Parameter({
+                            type: primaryKeyType,
+                            path: `${path}.data.id`,
+                            required: true
+                          })
+                        ],
+
+                        [
+                          'type',
+                          new Parameter({
+                            type: 'string',
+                            path: `${path}.data.type`,
+                            values: [opts.model.resourceName],
+                            required: true
+                          })
+                        ]
+                      ],
+                      {
+                        type: 'array',
+                        path: `${path}.data`,
+                        required: true
+                      }
+                    )
                   ]
                 ],
                 {
@@ -114,60 +178,9 @@ function getRelationshipsParam({
               )
             ]
           ];
-        }
-
-        const primaryKeyColumn = opts.model.columnFor(opts.model.primaryKey);
-        let primaryKeyType: string | undefined = 'number';
-
-        if (primaryKeyColumn) {
-          primaryKeyType = typeForColumn(primaryKeyColumn);
-        }
-
-        return [
-          ...group,
-
-          [
-            param,
-            new ParameterGroup(
-              [
-                [
-                  'data',
-                  new ParameterGroup(
-                    [
-                      [
-                        'id',
-                        new Parameter({
-                          type: primaryKeyType,
-                          path: `${path}.data.id`,
-                          required: true
-                        })
-                      ],
-
-                      [
-                        'type',
-                        new Parameter({
-                          type: 'string',
-                          path: `${path}.data.type`,
-                          values: [opts.model.resourceName],
-                          required: true
-                        })
-                      ]
-                    ],
-                    {
-                      type: 'array',
-                      path: `${path}.data`,
-                      required: true
-                    }
-                  )
-                ]
-              ],
-              {
-                path
-              }
-            )
-          ]
-        ];
-      }, []),
+        }, []),
+        ...forbidden
+      ],
       {
         path: 'data.relationships'
       }

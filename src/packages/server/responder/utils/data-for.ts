@@ -23,6 +23,15 @@ export default function dataFor(
     errData.title = title;
   }
 
+  // `source` only ever points into the client's own request, so unlike
+  // `detail` it is safe to expose in every environment.
+  const source = (err as { source?: JSONAPI$ErrorObject['source'] } | undefined)
+    ?.source;
+
+  if (source && (source.pointer || source.parameter)) {
+    errData.source = source;
+  }
+
   if (err && (env.isDevelopment() || /^\[public\]/gi.test(err.message))) {
     errData.detail = err.message.replace(/^\[public\]/gi, '');
   }

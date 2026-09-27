@@ -17,6 +17,12 @@ export type Server$opts = Server$config & {
   router: Router;
 };
 
+export type Server$ErrorSource = {
+  pointer?: string;
+  parameter?: string;
+};
+
 export interface Server$Error extends Error {
   statusCode: number;
+  source?: Server$ErrorSource;
 }

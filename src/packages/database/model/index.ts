@@ -24,6 +24,7 @@ import type { Transaction$ResultProxy } from '../transaction';
 import { create, update, destroy, createRunner } from './utils/persistence';
 import initializeClass from './initialize-class';
 import validate from './utils/validate';
+import { rethrowWriteError } from './utils/process-write-error';
 import runHooks from './utils/run-hooks';
 import type { Model$Hooks } from './interfaces';
 
@@ -1062,10 +1063,10 @@ class Model {
     };
 
     if (transaction) {
-      return run(transaction);
+      return run(transaction).catch(rethrowWriteError);
     }
 
-    return this.transaction(run);
+    return this.transaction(run).catch(rethrowWriteError);
   }
 
   /**
@@ -1221,10 +1222,10 @@ class Model {
     };
 
     if (transaction) {
-      return run(transaction);
+      return run(transaction).catch(rethrowWriteError);
     }
 
-    return this.transaction(run);
+    return this.transaction(run).catch(rethrowWriteError);
   }
 
   /**

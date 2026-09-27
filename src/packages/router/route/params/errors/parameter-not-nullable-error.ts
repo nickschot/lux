@@ -1,12 +1,17 @@
 import createServerError from '../../../../server/utils/create-server-error';
+import sourceFor from '../../../../server/utils/source-for';
+import type { Server$ErrorSource } from '../../../../server';
 import type { ParameterLike } from '../index';
 
 /**
  * @private
  */
 class ParameterNotNullableError extends TypeError {
+  declare source: Server$ErrorSource;
+
   constructor({ path }: ParameterLike) {
     super(`Parameter '${path}' is not nullable.`);
+    this.source = sourceFor(path);
   }
 }
 

@@ -7,6 +7,7 @@ import type { Request, Response } from '../server';
 import findOne from './utils/find-one';
 import findMany from './utils/find-many';
 import resolveRelationships from './utils/resolve-relationships';
+import validateRelationships from './utils/validate-relationships';
 import type {
   Controller$opts,
   Controller$beforeAction,
@@ -605,6 +606,8 @@ class Controller {
       }
     } = req;
 
+    await validateRelationships(model, relationships);
+
     const record = await model.create({
       ...attributes,
       ...resolveRelationships(model, relationships)
@@ -636,12 +639,14 @@ class Controller {
     const { model } = this;
 
     return findOne(model, req)
-      .then(record => {
+      .then(async record => {
         const {
           params: {
             data: { attributes, relationships }
           }
         } = req;
+
+        await validateRelationships(model, relationships);
 
         return record.update({
           ...attributes,

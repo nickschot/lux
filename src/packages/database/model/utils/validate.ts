@@ -17,7 +17,7 @@ export default function validate(instance: Model): true {
     .map(props => new Validation(props))
     .reduce<true>((result, validation) => {
       if (!validation.isValid()) {
-        throw new ValidationError(validation.key, String(validation.value));
+        throw new ValidationError(validation.key);
       }
 
       return result;
