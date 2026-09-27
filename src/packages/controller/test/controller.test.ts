@@ -459,7 +459,13 @@ describe('module "controller"', () => {
 
         const result = await subject.update(request);
 
-        assertRecord(result, [...attributes, 'user', 'comments']);
+        // The post had no user when it was loaded, so no `user` is eager-loaded
+        // into its column data (this used to be a phantom all-null record from
+        // the unmatched join) — the new one is reachable through the record.
+        assertRecord(result, [...attributes, 'comments']);
+        expect(
+          ((await Reflect.get(result, 'user')) as Model).getPrimaryKey()
+        ).to.equal(newUser.getPrimaryKey());
 
         item = await item.reload().include('user', 'comments');
         ({
