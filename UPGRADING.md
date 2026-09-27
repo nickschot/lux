@@ -77,6 +77,28 @@ published tarball), make sure it gets built on install — a `prepare` script, o
 publish a built package. Installing from a registry (which builds before
 publish) is unaffected.
 
+## 7. Content negotiation — status code changes
+
+`Accept` and `Content-Type` are now parsed as media types (whitespace, case,
+quoted values, multiple `Accept` entries) instead of matched against one regex,
+so the JSON:API 1.0 rules apply as written:
+
+- **`Content-Type` that is not `application/vnd.api+json` → `415`** (was
+  `400`), including a missing `Content-Type` on `POST`/`PATCH`.
+- **`Content-Type: application/vnd.api+json` with *any* parameter → `415`.**
+  Before, only `;charset=…` with no space was caught — `; charset=utf-8` or
+  `;ext=…` got through.
+- **`Accept` → `406` only if *every* `application/vnd.api+json` entry has
+  parameters.** `Accept: application/vnd.api+json;charset=utf-8,
+  application/vnd.api+json` used to be rejected and is now accepted; `;
+  charset=utf-8` (with a space) or `;ext=…` alone used to be accepted and is
+  now rejected. A `q` weight is not a media type parameter, and an `Accept`
+  without the JSON:API type (`*/*`, `text/html`) is still accepted.
+
+Clients that send exactly `application/vnd.api+json` (ember-data does) see no
+change. If a client or test sent `application/json` bodies and asserted `400`,
+expect `415`.
+
 ## 8. Error responses — status codes and `source`
 
 Several client errors that came back as `400` or `500` now use the status
