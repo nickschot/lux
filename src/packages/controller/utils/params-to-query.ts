@@ -22,6 +22,9 @@ export default function paramsToQuery(
 ): Controller$query {
   const relationships = entries(model.relationships);
   const includedFields = omit(fields, model.resourceName);
+  // Only the first segment of a nested path (`comments.user`) is loaded by this
+  // query; the serializer loads deeper levels when it builds `included`.
+  const included = include && include.map(path => path.split('.')[0]);
 
   let query: Controller$query = {
     id,
@@ -76,9 +79,9 @@ export default function paramsToQuery(
       value = [relationship.model.primaryKey, ...value];
     }
 
-    if (include && value.length === 1 && include.includes(name)) {
+    if (included && value.length === 1 && included.includes(name)) {
       value = [...value, ...relationship.model.serializer.attributes];
-    } else if (!include && value.length > 1) {
+    } else if (!included && value.length > 1) {
       value = value.slice(0, 1);
     }
 
