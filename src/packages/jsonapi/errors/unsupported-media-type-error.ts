@@ -8,8 +8,9 @@ import createServerError from '../../server/utils/create-server-error';
 class UnsupportedMediaTypeError extends TypeError {
   constructor(contentType: string) {
     super(line`
-      Media type parameters is not supported. Try your request again
-      without specifying '${contentType.replace(MIME_TYPE, '')}'.
+      Media type parameters are not supported in Content-Type:
+      '${contentType}'. Try your request again with Content-Type:
+      '${MIME_TYPE}' without parameters.
     `);
   }
 }

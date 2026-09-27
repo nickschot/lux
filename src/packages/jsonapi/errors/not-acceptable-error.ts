@@ -6,10 +6,11 @@ import createServerError from '../../server/utils/create-server-error';
  * @private
  */
 class NotAcceptableError extends TypeError {
-  constructor(contentType: string) {
+  constructor(accept: string) {
     super(line`
-      Media type parameters is not supported. Try your request again
-      without specifying '${contentType.replace(MIME_TYPE, '')}'.
+      Every '${MIME_TYPE}' in Accept: '${accept}' has media type parameters,
+      which are not supported. Try your request again with '${MIME_TYPE}'
+      without parameters.
     `);
   }
 }
