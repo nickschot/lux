@@ -44,7 +44,9 @@ export interface JSONAPI$ResourceObject {
 }
 
 export interface JSONAPI$RelationshipObject {
-  data: JSONAPI$IdentifierObject;
+  // Resource linkage: `null`/one identifier for to-one relationships, an array
+  // for to-many ones.
+  data: JSONAPI$IdentifierObject | Array<JSONAPI$IdentifierObject> | null;
   meta?: JSONAPI$BaseObject;
   links?: JSONAPI$ResourceLinksObject;
 }

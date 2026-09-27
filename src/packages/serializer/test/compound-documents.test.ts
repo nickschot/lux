@@ -1,8 +1,10 @@
 import fetch from 'node-fetch';
+import { dasherize } from 'inflection';
 import { it, describe, beforeAll, afterAll, expect } from 'vitest';
 
 import Server from '../../server';
-import type { Model } from '../../database';
+import type { Model, ModelClass } from '../../database';
+import underscore from '../../../utils/underscore';
 import { getTestApp } from '../../../../test/utils/get-test-app';
 
 // End-to-end coverage of `?include=` through the real router, controllers and
@@ -82,6 +84,7 @@ function expectValidCompoundDocument({ data, included = [] }: Document) {
 describe('compound documents over HTTP', () => {
   let server;
   let models;
+  let store;
   const fixtures: Record<string, Model> = {};
   const created: Array<Model> = [];
 
@@ -91,9 +94,79 @@ describe('compound documents over HTTP', () => {
     type
   });
 
+  const modelFor = (type: string): ModelClass => {
+    const model = Array.from(models.values() as Iterable<ModelClass>).find(
+      ({ resourceName }) => resourceName === type
+    );
+
+    if (!model) {
+      throw new Error(`No model for type "${type}".`);
+    }
+
+    return model;
+  };
+
+  /**
+   * The oracle: every relationship of every included resource must agree with
+   * what the model's own lazy relationship getters load from the database.
+   * Holds for any data, so it also checks collections over the random seed.
+   *
+   * Primary data is left to the exact fixture assertions above: its has-one
+   * linkage comes from the query's join, which picks an arbitrary row when the
+   * (random) seed gives a record several has-one candidates, whereas the
+   * getter — and the batch loader behind `included` — take the lowest id.
+   */
+  async function expectLinkageMatchesDatabase({ included = [] }: Document) {
+    const resources = included;
+
+    for (const { id, type, relationships = {} } of resources) {
+      const model = modelFor(type);
+      const record = await model.find(id);
+      const { hasOne, hasMany } = model.serializer;
+
+      for (const name of [...hasOne, ...hasMany]) {
+        const key = dasherize(underscore(name));
+        const value = (await Reflect.get(record, name)) as
+          Model | Array<Model> | null;
+        const expected = identifiersOf(
+          Array.isArray(value)
+            ? value.map(item => ref(item.resourceName, item))
+            : value
+              ? ref(value.resourceName, value)
+              : null
+        );
+
+        expect(relationships, `${type}:${id}`).to.have.property(key);
+        expect(
+          sortIdentifiers(identifiersOf(relationships[key].data)),
+          `${type}:${id} ${key}`
+        ).to.deep.equal(sortIdentifiers(expected));
+      }
+    }
+  }
+
+  /** Count the SQL queries issued while serving one request. */
+  async function countQueries(path: string): Promise<number> {
+    let count = 0;
+    const onQuery = () => {
+      count += 1;
+    };
+
+    store.connection.on('query', onQuery);
+
+    try {
+      const { status } = await get(path);
+      expect(status).to.equal(200);
+    } finally {
+      store.connection.removeListener('query', onQuery);
+    }
+
+    return count;
+  }
+
   beforeAll(async () => {
     const app = await getTestApp();
-    ({ models } = app);
+    ({ models, store } = app);
 
     server = new Server({
       logger: app.logger,
@@ -418,6 +491,207 @@ describe('compound documents over HTTP', () => {
       expect(status).to.equal(200);
       expect(body.data).to.be.an('array');
       expectValidCompoundDocument(body);
+    });
+  });
+
+  describe('relationships of included resources', () => {
+    it("serializes them with the included resource's serializer", async () => {
+      const { post, commenter, commentByCommenter, commentReaction } = fixtures;
+      const { body } = await get(`/posts/${idOf(post)}?include=comments`);
+      const comment = (body.included || []).find(
+        resource =>
+          keyFor(resource) === keyFor(ref('comments', commentByCommenter))
+      );
+
+      expect(comment).to.have.all.keys([
+        'id',
+        'type',
+        'attributes',
+        'relationships',
+        'links'
+      ]);
+      expect(comment?.relationships).to.deep.equal({
+        post: {
+          data: ref('posts', post),
+          links: { self: `${DOMAIN}/posts/${idOf(post)}` }
+        },
+        user: {
+          data: ref('users', commenter),
+          links: { self: `${DOMAIN}/users/${idOf(commenter)}` }
+        },
+        reactions: {
+          data: [ref('reactions', commentReaction)]
+        }
+      });
+    });
+
+    it('serializes empty relationships of included resources', async () => {
+      const { post, commentByAuthor } = fixtures;
+      const { body } = await get(`/posts/${idOf(post)}?include=comments`);
+      const comment = (body.included || []).find(
+        resource =>
+          keyFor(resource) === keyFor(ref('comments', commentByAuthor))
+      );
+
+      expect(comment?.relationships?.reactions).to.deep.equal({ data: [] });
+    });
+
+    it('serializes has-many-through relationships of included resources', async () => {
+      const { post, tagA, tagB } = fixtures;
+      const { body } = await get(`/posts/${idOf(post)}?include=tags`);
+
+      [tagA, tagB].forEach(tag => {
+        const resource = (body.included || []).find(
+          ({ id, type }) => type === 'tags' && id === idOf(tag)
+        );
+
+        expect(resource?.relationships).to.deep.equal({
+          posts: { data: [ref('posts', post)] }
+        });
+      });
+    });
+
+    it('matches the database for every relationship of a member', async () => {
+      const { body } = await get(
+        `/posts/${idOf(fixtures.post)}?include=user,image,comments,reactions,tags`
+      );
+
+      await expectLinkageMatchesDatabase(body);
+    });
+
+    it('matches the database for every relationship of a collection', async () => {
+      const { body } = await get(
+        '/posts?include=user,image,comments,reactions,tags&page[size]=10'
+      );
+
+      expectValidCompoundDocument(body);
+      await expectLinkageMatchesDatabase(body);
+    });
+
+    it('matches the database for self-referential relationships', async () => {
+      const { body } = await get(
+        '/users?include=followers,followees,comments&page[size]=10'
+      );
+
+      expectValidCompoundDocument(body);
+      await expectLinkageMatchesDatabase(body);
+    });
+
+    it('batch-loads included resources instead of querying per record', async () => {
+      // Sequential on purpose: the listener counts every query on the shared
+      // connection, so overlapping requests would count each other's.
+      const cost = async (query: string) => {
+        const few = await countQueries(`/posts?${query}&page[size]=10`);
+        const many = await countQueries(`/posts?${query}&page[size]=25`);
+
+        return { few, many };
+      };
+
+      // Primary data alone does not cost a constant number of queries (a
+      // has-one that is absent is re-queried per record), so measure what
+      // `include` adds on top of it rather than the absolute count. Both page
+      // sizes are large enough that every include level is non-empty over the
+      // seed — an empty level skips its queries, which is not an N+1.
+      const base = await cost('');
+      const compound = await cost('include=user,comments,tags,comments.user');
+
+      expect(compound.many - base.many).to.equal(compound.few - base.few);
+    });
+  });
+
+  describe('nested include paths', () => {
+    it('includes the intermediate and the leaf resources', async () => {
+      const { post, author, commenter, commentByAuthor, commentByCommenter } =
+        fixtures;
+      const { status, body } = await get(
+        `/posts/${idOf(post)}?include=comments.user`
+      );
+
+      expect(status).to.equal(200);
+      expectValidCompoundDocument(body);
+      expect(
+        sortIdentifiers(
+          (body.included || []).map(({ id, type }) => ({ id, type }))
+        )
+      ).to.deep.equal(
+        sortIdentifiers([
+          ref('comments', commentByCommenter),
+          ref('comments', commentByAuthor),
+          ref('users', commenter),
+          ref('users', author)
+        ])
+      );
+
+      const user = (body.included || []).find(
+        resource => keyFor(resource) === keyFor(ref('users', commenter))
+      );
+
+      expect(user?.attributes).to.deep.equal({
+        name: 'Cody Commenter',
+        email: 'cody.commenter@example.com'
+      });
+      expect(user?.relationships).to.have.all.keys([
+        'posts',
+        'comments',
+        'followees',
+        'followers',
+        'reactions'
+      ]);
+
+      await expectLinkageMatchesDatabase(body);
+    });
+
+    it('supports paths three relationships deep', async () => {
+      const { post, author, commentReaction } = fixtures;
+      const { status, body } = await get(
+        `/posts/${idOf(post)}?include=comments.reactions.user`
+      );
+
+      expect(status).to.equal(200);
+      expectValidCompoundDocument(body);
+
+      const keys = (body.included || []).map(keyFor);
+
+      expect(keys).to.include(keyFor(ref('reactions', commentReaction)));
+      expect(keys).to.include(keyFor(ref('users', author)));
+    });
+
+    it('does not repeat primary data in `included`', async () => {
+      const { author, commenter } = fixtures;
+      // author -> followees (commenter) -> followers (author, the primary data)
+      const { body } = await get(
+        `/users/${idOf(author)}?include=followees.followers`
+      );
+
+      expectValidCompoundDocument(body);
+      expect((body.included || []).map(keyFor)).to.deep.equal([
+        keyFor(ref('users', commenter))
+      ]);
+    });
+
+    it('matches the database for nested includes of a collection', async () => {
+      const { body } = await get(
+        '/posts?include=comments.user,comments.reactions,tags.posts&page[size]=5'
+      );
+
+      expectValidCompoundDocument(body);
+      await expectLinkageMatchesDatabase(body);
+    });
+
+    it('rejects an unknown nested relationship with 400', async () => {
+      const { status } = await get(
+        `/posts/${idOf(fixtures.post)}?include=comments.nope`
+      );
+
+      expect(status).to.equal(400);
+    });
+
+    it('rejects paths deeper than three relationships with 400', async () => {
+      const { status } = await get(
+        `/posts/${idOf(fixtures.post)}?include=comments.reactions.user.posts`
+      );
+
+      expect(status).to.equal(400);
     });
   });
 });

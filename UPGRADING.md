@@ -77,6 +77,31 @@ published tarball), make sure it gets built on install — a `prepare` script, o
 publish a built package. Installing from a registry (which builds before
 publish) is unaffected.
 
+## 6. Compound documents (`?include=`) — response changes
+
+`include` now produces JSON:API 1.0 compliant compound documents, so clients
+that follow resource linkage (ember-data with async relationships) can resolve
+relationships of included resources without extra requests. **Primary `data` is
+byte-for-byte unchanged**; what changed is `included`:
+
+- **Included resources carry `relationships`.** Each is serialized with its own
+  serializer's `hasOne`/`hasMany`, in the same shape as primary data (to-one:
+  `{ data, links }` or `{ data: null }`; to-many: `{ data: [...] }`). Before,
+  included resources had no `relationships` member at all. The linkage is
+  batch-loaded — one query per relationship per level, not one per record.
+- **Nested paths are supported**, up to three levels: `include=comments.user`,
+  `include=comments.reactions.user`. Intermediate resources are included too
+  (`comments.user` also includes the comments), as the spec requires. Nested
+  levels are serialized with the related serializer's `attributes`; `fields[]`
+  still only applies to the resource and its direct relationships.
+- **Primary resources are no longer repeated in `included`** (e.g. a user in
+  `/users?include=followers` who is also in the page).
+- Unknown paths are still rejected with `400`; top-level names that were
+  accepted before still are.
+
+Client-side, nothing is required — but if you worked around the missing linkage
+(extra `findRecord` calls, sync relationships), those can go.
+
 ## 7. Content negotiation — status code changes
 
 `Accept` and `Content-Type` are now parsed as media types (whitespace, case,

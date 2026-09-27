@@ -123,6 +123,26 @@ describe('module "controller"', () => {
           });
       });
 
+      it('loads the first segment of a nested include path', () => {
+        const subject = createParams({
+          fields: {
+            comments: ['id']
+          },
+          include: ['comments.user']
+        });
+
+        const result = paramsToQuery(Post, subject);
+
+        expect(result)
+          .to.have.property('include')
+          .and.deep.equal({
+            comments: [
+              'id',
+              ...Post.relationshipFor('comments').model.serializer.attributes
+            ]
+          });
+      });
+
       it('ignores invalid field sets', () => {
         const subject = createParams({
           fields: {
