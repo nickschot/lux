@@ -176,9 +176,9 @@ import type { IncludeTree } from './utils/include-tree';
  * The same goes for relationships: each included resource carries the
  * `relationships` its own Serializer declares in `hasOne` and `hasMany`.
  *
- * Relationship paths may be nested up to three levels deep, e.g.
- * `/posts?include=comments.user`. The intermediate resources (the comments)
- * are included along with the leaves (their users).
+ * Relationship paths may be nested, e.g. `/posts?include=comments.user`, up
+ * to the controller's `maxIncludeDepth` (3 by default). The intermediate
+ * resources (the comments) are included along with the leaves (their users).
  *
  * #### Sparse Fieldsets
  *

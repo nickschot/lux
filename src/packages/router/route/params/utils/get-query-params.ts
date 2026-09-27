@@ -5,14 +5,6 @@ import type { ParameterLike } from '../interfaces';
 import { enumerateIncludePaths } from '../../../../serializer/utils/include-tree';
 
 /**
- * How many relationships deep an `include` path may go (`a.b.c` is 3). Bounds
- * both the allowed values and the work a single request can ask for.
- *
- * @private
- */
-export const MAX_INCLUDE_DEPTH = 3;
-
-/**
  * @private
  */
 function getPageParam(): [string, ParameterLike] {
@@ -129,6 +121,7 @@ function getFieldsParam({
  */
 function getIncludeParam({
   model,
+  maxIncludeDepth,
   serializer: { hasOne, hasMany }
 }: Controller): [string, ParameterLike] {
   const relationships = [...hasOne, ...hasMany];
@@ -139,11 +132,12 @@ function getIncludeParam({
       path: 'include',
       type: 'array',
       // Every top level name stays allowed (as before), plus the nested paths
-      // (`comments.user`) reachable through each related serializer.
+      // (`comments.user`) reachable through each related serializer, down to
+      // the controller's `maxIncludeDepth`.
       values: Array.from(
         new Set([
           ...relationships,
-          ...enumerateIncludePaths(model, relationships, MAX_INCLUDE_DEPTH)
+          ...enumerateIncludePaths(model, relationships, maxIncludeDepth)
         ])
       )
     })

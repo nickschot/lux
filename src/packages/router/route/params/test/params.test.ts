@@ -35,6 +35,68 @@ describe('module "router/route/params"', () => {
     });
   });
 
+  describe('include paths', () => {
+    let controller: Controller;
+
+    // The allowed `include` values for a copy of the posts controller with
+    // the given `maxIncludeDepth`.
+    const includeFor = (maxIncludeDepth?: number) => {
+      const subject =
+        maxIncludeDepth === undefined
+          ? controller
+          : // Controllers are frozen, so shadow the property instead of
+            // assigning it.
+            (Object.create(controller, {
+              maxIncludeDepth: { value: maxIncludeDepth }
+            }) as Controller);
+
+      const params = paramsFor({
+        type: 'member',
+        method: 'GET',
+        controller: subject,
+        dynamicSegments: ['id']
+      });
+
+      return Array.from(params.get('include') as unknown as Iterable<string>);
+    };
+
+    beforeAll(async () => {
+      const { controllers } = await getTestApp();
+
+      controller = controllers.get('posts') as Controller;
+    });
+
+    it('allows paths three levels deep by default', () => {
+      expect(controller.maxIncludeDepth).to.equal(3);
+
+      const values = includeFor();
+
+      expect(values).to.include.members([
+        'comments',
+        'comments.user',
+        'comments.reactions.user'
+      ]);
+      expect(values.some(path => path.split('.').length > 3)).to.be.false;
+    });
+
+    it("honours a controller's `maxIncludeDepth`", () => {
+      const values = includeFor(2);
+
+      expect(values).to.include.members(['comments', 'comments.user']);
+      expect(values).to.not.include('comments.reactions.user');
+    });
+
+    it('only allows direct relationships at depth 1', () => {
+      expect(includeFor(1)).to.have.members([
+        'user',
+        'image',
+        'comments',
+        'reactions',
+        'tags'
+      ]);
+    });
+  });
+
   describe('#defaultParamsFor()', () => {
     let getController;
 
