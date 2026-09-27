@@ -1,5 +1,6 @@
 import path from 'path';
-import { existsSync, readFileSync } from 'fs';
+import { tmpdir } from 'os';
+import { existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from 'fs';
 
 import * as esbuild from 'esbuild';
 import { it, describe, beforeEach, expect, vi } from 'vitest';
@@ -76,6 +77,27 @@ describe('module "compiler"', () => {
           expect(existsSync(entry)).to.be.false;
         });
       });
+    });
+
+    // Regression: on a fresh checkout `dist/` does not exist yet. The manifest
+    // and the boot script are written concurrently, and the boot script used
+    // to race ahead of the manifest's `mkdir` (ENOENT on `dist/boot.js`, seen
+    // on CI). Mirror the test-app into a scratch dir that has no `dist/`.
+    it('creates `dist/` before writing into it', async () => {
+      const { path: source } = await getTestApp();
+      const dir = mkdtempSync(path.join(tmpdir(), 'lumen-compile-'));
+
+      try {
+        ['app', 'config', 'db'].forEach(name => {
+          symlinkSync(path.join(source, name), path.join(dir, name));
+        });
+
+        await compile(dir, 'test');
+
+        expect(existsSync(path.join(dir, 'dist', 'boot.js'))).to.be.true;
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
     });
   });
 });
