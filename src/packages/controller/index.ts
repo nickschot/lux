@@ -462,6 +462,32 @@ class Controller {
   defaultPerPage: number = 25;
 
   /**
+   * How many relationships deep an `?include` path may go on this
+   * controller's routes. `comments.reactions.user` is 3 levels deep; with `1`
+   * only direct relationships (`comments`) can be included. Paths deeper than
+   * this are rejected with `400 Bad Request`.
+   *
+   * Set it on `ApplicationController` to change it for the whole app, or on a
+   * single controller to override it there.
+   *
+   * ```javascript
+   * class ApplicationController extends Controller {
+   *   maxIncludeDepth = 2;
+   * }
+   * ```
+   *
+   * Every allowed path is enumerated up front from the serializers'
+   * relationships, and each nested level costs its own queries per request, so
+   * keep this small.
+   *
+   * @property maxIncludeDepth
+   * @type {Number}
+   * @default 3
+   * @public
+   */
+  maxIncludeDepth: number = 3;
+
+  /**
    * The resolved Model for a Controller instance.
    *
    * @property model

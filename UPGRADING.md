@@ -89,8 +89,11 @@ byte-for-byte unchanged**; what changed is `included`:
   `{ data, links }` or `{ data: null }`; to-many: `{ data: [...] }`). Before,
   included resources had no `relationships` member at all. The linkage is
   batch-loaded — one query per relationship per level, not one per record.
-- **Nested paths are supported**, up to three levels: `include=comments.user`,
-  `include=comments.reactions.user`. Intermediate resources are included too
+- **Nested paths are supported**, up to three levels by default:
+  `include=comments.user`, `include=comments.reactions.user`. Change the limit
+  with `maxIncludeDepth` on a controller (or on `ApplicationController` for the
+  whole app); `maxIncludeDepth = 1` restores the old behaviour of direct
+  relationships only. Intermediate resources are included too
   (`comments.user` also includes the comments), as the spec requires. Nested
   levels are serialized with the related serializer's `attributes`; `fields[]`
   still only applies to the resource and its direct relationships.
