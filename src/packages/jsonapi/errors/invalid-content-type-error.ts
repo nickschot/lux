@@ -14,4 +14,4 @@ class InvalidContentTypeError extends TypeError {
   }
 }
 
-export default createServerError(InvalidContentTypeError, 400);
+export default createServerError(InvalidContentTypeError, 415);
