@@ -2,7 +2,8 @@ import path from 'path';
 
 import * as esbuild from 'esbuild';
 
-import { rmrf, readdir, readdirRec, isJSFile } from '../fs';
+import { mkdir, rmrf, readdir, readdirRec, isJSFile } from '../fs';
+import tryCatch from '../../utils/try-catch';
 
 import createManifest from './utils/create-manifest';
 import createBootScript from './utils/create-boot-script';
@@ -54,6 +55,11 @@ export async function compile(
       ['serializers', serializers]
     ]);
   });
+
+  // Both writers below target `dist/`, so it must exist before they run
+  // concurrently — otherwise on a fresh checkout the boot script can race
+  // ahead of the manifest's own `mkdir` and fail with ENOENT.
+  await tryCatch(() => mkdir(path.join(dir, 'dist')));
 
   await Promise.all([
     createManifest(dir, assets, { useStrict }),
