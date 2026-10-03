@@ -15,16 +15,17 @@ type Controller$query = {
 };
 
 /**
- * `serializer` is the one the response is formatted with; included resources
- * are loaded with the attributes of their Serializer in its namespace (see
- * `Serializer#serializerFor()`), which defaults to the root one.
+ * `serializerFor` resolves the Serializer an included resource is serialized
+ * with — in the request's namespace (`Controller#serializerFor()`) — so its
+ * attributes are the ones loaded. Defaults to the related model's root one.
  *
  * @private
  */
 export default function paramsToQuery(
   model: ModelClass,
   { id, page, sort, filter, fields, include }: Request$params,
-  serializer?: Serializer<Model>
+  serializerFor: (related: ModelClass) => Serializer<Model> = related =>
+    related.serializer
 ): Controller$query {
   const relationships = entries(model.relationships);
   const includedFields = omit(fields, model.resourceName);
@@ -86,13 +87,7 @@ export default function paramsToQuery(
     }
 
     if (included && value.length === 1 && included.includes(name)) {
-      value = [
-        ...value,
-        ...(serializer
-          ? serializer.serializerFor(relationship.model)
-          : relationship.model.serializer
-        ).attributes
-      ];
+      value = [...value, ...serializerFor(relationship.model).attributes];
     } else if (!included && value.length > 1) {
       value = value.slice(0, 1);
     }
