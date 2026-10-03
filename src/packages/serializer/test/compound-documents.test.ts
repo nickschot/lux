@@ -587,15 +587,15 @@ describe('compound documents over HTTP', () => {
         return { few, many };
       };
 
-      // Primary data alone does not cost a constant number of queries (a
-      // has-one that is absent is re-queried per record), so measure what
-      // `include` adds on top of it rather than the absolute count. Both page
-      // sizes are large enough that every include level is non-empty over the
-      // seed — an empty level skips its queries, which is not an N+1.
+      // Both page sizes are large enough that every include level is
+      // non-empty over the seed — an empty level skips its queries, which is
+      // not an N+1.
       const base = await cost('');
       const compound = await cost('include=user,comments,tags,comments.user');
 
-      expect(compound.many - base.many).to.equal(compound.few - base.few);
+      // Neither primary data nor `include` may cost queries per record.
+      expect(base.many).to.equal(base.few);
+      expect(compound.many).to.equal(compound.few);
     });
   });
 
