@@ -16,6 +16,15 @@ class Parameter extends FreezeableSet<unknown> {
 
   declare sanitize: boolean;
 
+  /**
+   * Whether the parameter only accepts the given `values`. A parameter built
+   * without `values` accepts any value of its type; one built with `values`
+   * accepts only those — so an empty list accepts nothing. (Both used to look
+   * alike as an empty set, which let e.g. `?include=anything` through on a
+   * serializer without relationships, where JSON:API requires a 400.)
+   */
+  declare restricted: boolean;
+
   constructor({ path, type, values, required, sanitize }: Parameter$opts) {
     super(values);
 
@@ -23,7 +32,8 @@ class Parameter extends FreezeableSet<unknown> {
       path,
       type,
       required: Boolean(required),
-      sanitize: Boolean(sanitize)
+      sanitize: Boolean(sanitize),
+      restricted: values !== undefined
     });
 
     this.freeze();
@@ -32,7 +42,7 @@ class Parameter extends FreezeableSet<unknown> {
   validate<V>(value: V): V {
     validateType(this, value);
 
-    if (this.size > 0) {
+    if (this.restricted) {
       return validateValue(this, value);
     }
 

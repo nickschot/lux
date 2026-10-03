@@ -475,6 +475,28 @@ describe('compound documents over HTTP', () => {
       });
     });
 
+    // ActionsSerializer declares no relationships (and no attributes), so its
+    // allowed `include` (and `sort`) values are an empty list. JSON:API 1.0
+    // requires a 400 for a relationship path the server cannot identify, and
+    // for an unsupported sort — an empty list must not mean "anything goes".
+    it('rejects any include on a resource without relationships', async () => {
+      const { status } = await get('/actions?include=zzzprobe');
+
+      expect(status).to.equal(400);
+    });
+
+    it('rejects any sort on a resource without sortable attributes', async () => {
+      const { status } = await get('/actions?sort=zzzprobe');
+
+      expect(status).to.equal(400);
+    });
+
+    it('still serves a resource without relationships', async () => {
+      const { status } = await get('/actions?page[size]=1');
+
+      expect(status).to.equal(200);
+    });
+
     it('rejects an unknown relationship with 400', async () => {
       const { status } = await get(
         `/posts/${idOf(fixtures.post)}?include=nope`
