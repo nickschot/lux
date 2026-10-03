@@ -7,11 +7,14 @@ import { getTestApp } from '../../../../test/utils/get-test-app';
 
 const PORT = 4101;
 const DOMAIN = `http://localhost:${PORT}`;
+const FIXTURE_TITLE = 'absent-has-one fixture';
 
 describe('module "serializer"', () => {
   describe('absent has-one relationships', () => {
     let server;
     let store;
+    let Post;
+    let postId;
 
     // Counts the SQL statements issued while serving one request. Callers must
     // await each count before starting the next one, since the listener sees
@@ -41,6 +44,24 @@ describe('module "serializer"', () => {
       const { logger, router } = app;
 
       store = app.store;
+      Post = app.models.get('post');
+
+      // A post that is known to have no image. Inserted through knex rather
+      // than `Post.create()` so no hooks run and nothing else needs cleanup.
+      // The seed assigns images at random, so it cannot be relied on for this.
+      const now = new Date();
+
+      await store.connection('posts').insert({
+        title: FIXTURE_TITLE,
+        created_at: now,
+        updated_at: now
+      });
+
+      [{ id: postId }] = await store
+        .connection('posts')
+        .select('id')
+        .where({ title: FIXTURE_TITLE });
+
       server = new Server({
         logger,
         router,
@@ -54,6 +75,7 @@ describe('module "serializer"', () => {
 
     afterAll(async () => {
       await new Promise(resolve => server.instance.close(resolve));
+      await store.connection('posts').where({ title: FIXTURE_TITLE }).del();
     });
 
     it('does not query per record for posts without an image', async () => {
@@ -64,18 +86,15 @@ describe('module "serializer"', () => {
     });
 
     it('answers an eager-loaded absent image without a query or a change', async () => {
-      const app = await getTestApp();
-      const Post = app.models.get('post');
-      const posts = await Post.select('id')
+      const [post] = await Post.select('id')
         .include({ image: ['id'] })
-        .limit(25);
-      const post = posts.find(record => record.absentRelationships.size);
+        .where({ id: postId });
       let count = 0;
       const onQuery = () => {
         count += 1;
       };
 
-      expect(post).to.be.ok;
+      expect(Array.from(post.absentRelationships)).to.deep.equal(['image']);
 
       store.connection.on('query', onQuery);
 
@@ -91,13 +110,10 @@ describe('module "serializer"', () => {
     });
 
     it('still serializes the absent image as null', async () => {
-      const res = await fetch(`${DOMAIN}/posts?page[size]=25`);
+      const res = await fetch(`${DOMAIN}/posts/${postId}`);
       const { data } = await res.json();
-      const imageData = data.map(
-        ({ relationships }) => relationships?.image?.data
-      );
 
-      expect(imageData).to.include(null);
+      expect(data.relationships.image).to.have.property('data', null);
     });
   });
 });
