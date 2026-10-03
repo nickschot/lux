@@ -1,5 +1,21 @@
 # Lumen Changelog
 
+## Release (2026-10-03)
+
+* lumen-framework 3.1.0 (minor)
+
+#### :rocket: Enhancement
+* `lumen-framework`
+  * [#23](https://github.com/nickschot/lux/pull/23) JSON:API error statuses and error source members ([@schot-bot](https://github.com/schot-bot))
+
+#### :bug: Bug Fix
+* `lumen-framework`
+  * [#25](https://github.com/nickschot/lux/pull/25) Don't lazy-load has-one relationships the join found absent ([@schot-bot](https://github.com/schot-bot))
+  * [#23](https://github.com/nickschot/lux/pull/23) JSON:API error statuses and error source members ([@schot-bot](https://github.com/schot-bot))
+
+#### Committers: 1
+- [@schot-bot](https://github.com/schot-bot)
+
 ## Release (2026-09-27)
 
 * lumen-framework 3.0.3 (patch)
