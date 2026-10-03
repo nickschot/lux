@@ -97,6 +97,12 @@ byte-for-byte unchanged**; what changed is `included`:
   (`comments.user` also includes the comments), as the spec requires. Nested
   levels are serialized with the related serializer's `attributes`; `fields[]`
   still only applies to the resource and its direct relationships.
+- **Included resources follow the request's namespace.** On `/admin/posts`,
+  included comments use `AdminCommentsSerializer` if you have one, else
+  `CommentsSerializer` (the same fallback namespaced controllers use), and all
+  their links point into `/admin`. Before, included resources always used the
+  root serializers and linked outside the namespace. `fields[...]` for included
+  types follows the same serializers.
 - **Primary resources are no longer repeated in `included`** (e.g. a user in
   `/users?include=followers` who is also in the page).
 - Unknown paths are still rejected with `400`; top-level names that were

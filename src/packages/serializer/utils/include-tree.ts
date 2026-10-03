@@ -1,4 +1,5 @@
-import type { ModelClass } from '../../database';
+import type { Model, ModelClass } from '../../database';
+import type Serializer from '../index';
 
 /**
  * A parsed `include` parameter: each relationship name maps to the tree of
@@ -41,15 +42,20 @@ export function createIncludeTree(paths: Array<string> = []): IncludeTree {
 /**
  * Enumerate every include path available from `names` (relationships of
  * `model`), down to `depth` levels. Each level continues with the relationships
- * declared by the related model's serializer — the same ones its resources are
- * serialized with. Used to build the allowed values of the `include` parameter.
+ * declared by the related model's serializer as `serializerFor` resolves it —
+ * the same one its included resources are serialized with (namespaced, with a
+ * fallback to the root). Used to build the allowed values of the `include`
+ * parameter.
  *
  * @private
  */
 export function enumerateIncludePaths(
   model: ModelClass,
   names: Array<string>,
-  depth: number
+  depth: number,
+  serializerFor: (
+    model: ModelClass
+  ) => Serializer<Model> | undefined = related => related.serializer
 ): Array<string> {
   if (depth < 1) {
     return [];
@@ -63,19 +69,23 @@ export function enumerateIncludePaths(
     }
 
     const { model: related } = opts;
+    const serializer = serializerFor(related);
 
-    if (!related.serializer) {
+    if (!serializer) {
       return [...paths, name];
     }
 
-    const { hasOne, hasMany } = related.serializer;
+    const { hasOne, hasMany } = serializer;
 
     return [
       ...paths,
       name,
-      ...enumerateIncludePaths(related, [...hasOne, ...hasMany], depth - 1).map(
-        path => `${name}.${path}`
-      )
+      ...enumerateIncludePaths(
+        related,
+        [...hasOne, ...hasMany],
+        depth - 1,
+        serializerFor
+      ).map(path => `${name}.${path}`)
     ];
   }, []);
 }

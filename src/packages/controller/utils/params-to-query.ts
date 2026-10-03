@@ -1,6 +1,7 @@
 import omit from '../../../utils/omit';
 import entries from '../../../utils/entries';
-import type { ModelClass } from '../../database';
+import type { Model, ModelClass } from '../../database';
+import type Serializer from '../../serializer';
 import type { Request$params } from '../../server';
 
 type Controller$query = {
@@ -14,11 +15,16 @@ type Controller$query = {
 };
 
 /**
+ * `serializer` is the one the response is formatted with; included resources
+ * are loaded with the attributes of their Serializer in its namespace (see
+ * `Serializer#serializerFor()`), which defaults to the root one.
+ *
  * @private
  */
 export default function paramsToQuery(
   model: ModelClass,
-  { id, page, sort, filter, fields, include }: Request$params
+  { id, page, sort, filter, fields, include }: Request$params,
+  serializer?: Serializer<Model>
 ): Controller$query {
   const relationships = entries(model.relationships);
   const includedFields = omit(fields, model.resourceName);
@@ -80,7 +86,13 @@ export default function paramsToQuery(
     }
 
     if (included && value.length === 1 && included.includes(name)) {
-      value = [...value, ...relationship.model.serializer.attributes];
+      value = [
+        ...value,
+        ...(serializer
+          ? serializer.serializerFor(relationship.model)
+          : relationship.model.serializer
+        ).attributes
+      ];
     } else if (!included && value.length > 1) {
       value = value.slice(0, 1);
     }
