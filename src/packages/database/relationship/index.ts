@@ -59,7 +59,9 @@ export async function get(
     value = owner.currentChangeSet.get(key);
     foreignKey = camelize(foreignKey, true);
 
-    if (!value) {
+    if (!value && owner.absentRelationships.has(key)) {
+      value = null;
+    } else if (!value) {
       switch (type) {
         case 'hasOne':
           value = await getHasOne(owner, {

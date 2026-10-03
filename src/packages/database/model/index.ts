@@ -113,6 +113,18 @@ class Model {
   declare prevAssociations: Set<Model>;
 
   /**
+   * Names of `hasOne` relationships that were eager-loaded (joined) and found
+   * to have no related record. Lets the relationship getter answer `null`
+   * without a per-record query. Kept outside of the change sets so it never
+   * counts as a change to the record.
+   *
+   * @property absentRelationships
+   * @type {Set}
+   * @private
+   */
+  declare absentRelationships: Set<string>;
+
+  /**
    * @property changeSets
    * @type {Array}
    * @private
@@ -675,6 +687,12 @@ class Model {
         configurable: false
       },
       prevAssociations: {
+        value: new Set(),
+        writable: false,
+        enumerable: false,
+        configurable: false
+      },
+      absentRelationships: {
         value: new Set(),
         writable: false,
         enumerable: false,

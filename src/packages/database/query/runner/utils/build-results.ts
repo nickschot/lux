@@ -109,11 +109,19 @@ export default async function buildResults<T extends Model>({
       );
     }
 
+    const absent: Array<string> = [];
+
     const instance = Reflect.construct(model, [
       entries(record).reduce<Record<string, any>>((r, entry) => {
         let [key, value] = entry;
 
         if (value == null && pkPattern.test(key)) {
+          const [name] = key.split('.');
+
+          if (model.relationshipFor(name)?.type === 'hasOne') {
+            absent.push(name);
+          }
+
           return r;
         } else if (key.indexOf('.') >= 0) {
           const [a, b] = key.split('.');
@@ -137,6 +145,7 @@ export default async function buildResults<T extends Model>({
       }, {})
     ]);
 
+    absent.forEach(name => instance.absentRelationships.add(name));
     instance.currentChangeSet.persist();
 
     return instance;
