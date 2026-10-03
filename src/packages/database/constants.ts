@@ -1,4 +1,10 @@
-export const UNIQUE_CONSTRAINT = /UNIQUE\sCONSTRAINT/gi;
+// Driver error codes and messages for a unique-constraint violation: pg
+// (`23505`, "duplicate key value violates unique constraint"), mysql
+// (`ER_DUP_ENTRY`), sqlite ("UNIQUE constraint failed") and mssql
+// ("Violation of UNIQUE KEY constraint"). No `g` flag — `.test()` on a
+// global regex is stateful and would miss every other match.
+export const UNIQUE_CONSTRAINT_CODES = new Set(['23505', 'ER_DUP_ENTRY']);
+export const UNIQUE_CONSTRAINT = /unique(\s+key)?\s+constraint|duplicate key/i;
 
 export const VALID_DRIVERS = [
   'pg',

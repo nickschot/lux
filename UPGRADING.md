@@ -99,6 +99,37 @@ Clients that send exactly `application/vnd.api+json` (ember-data does) see no
 change. If a client or test sent `application/json` bodies and asserted `400`,
 expect `415`.
 
+## 8. Error responses — status codes and `source`
+
+Several client errors that came back as `400` or `500` now use the status
+JSON:API 1.0 (or plain HTTP) calls for, and error objects say *what* was wrong:
+
+| Situation | Was | Now |
+|---|---|---|
+| `POST` with `data.id` (client-generated IDs are unsupported) | `400` | `403` |
+| `data.relationships.<name>` for a relationship the model has but the controller's `params` does not list | `400` | `403` |
+| A relationship referencing a resource that does not exist (`POST`/`PATCH`) | `201`/`200`, dangling linkage saved | `404` |
+| A model validator (`static validates`) fails | `500` | `422` |
+| A unique constraint is violated on create/update | `500` (SQL in `detail` in development) | `409` |
+
+A relationship name the model does not have at all is still `400`.
+
+- **Error objects carry `source`** — `source.pointer` for request document
+  members (`/data/attributes/password`, `/data/relationships/tags/data/1`) and
+  `source.parameter` for query parameters (`page[size]`). Member names are
+  dasherized, matching responses. Unlike `detail`, `source` is included in
+  every environment. ember-data maps `422` + `source.pointer` onto
+  `record.errors` for the attribute.
+- **`ValidationError`'s message no longer includes the rejected value** — it
+  ended up in logs and could be a password. It also exposes `key` and is now a
+  server error (`statusCode: 422`); `instanceof ValidationError` still works.
+- **The related-resource check is one query per relationship** in the request,
+  run by the built-in `create`/`update` actions. Custom actions that write
+  relationships don't get it automatically.
+
+Attributes the controller does not accept are still silently dropped (clients
+such as ember-data send every attribute, including read-only ones).
+
 ## The short version
 
 Bump `pg`/`mysql2` and run Node 20 (required); delete `.babelrc` and the

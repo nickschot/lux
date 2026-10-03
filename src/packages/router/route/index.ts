@@ -3,7 +3,12 @@ import type Controller from '../../controller';
 import type { Request, Response, Request$method } from '../../server';
 
 import { FINAL_HANDLER, createAction } from './action';
-import { paramsFor, defaultParamsFor, validateResourceId } from './params';
+import {
+  paramsFor,
+  defaultParamsFor,
+  validateClientId,
+  validateResourceId
+} from './params';
 import getStaticPath from './utils/get-static-path';
 import getDynamicSegments from './utils/get-dynamic-segments';
 import type { Action } from './action';
@@ -138,6 +143,10 @@ class Route extends FreezeableSet<Action<unknown>> {
       ...req.params,
       ...this.parseParams(req.url.params)
     };
+
+    if (this.action === 'create' && req.method === 'POST') {
+      validateClientId(params);
+    }
 
     if (req.method !== 'OPTIONS') {
       params = this.params.validate(params);

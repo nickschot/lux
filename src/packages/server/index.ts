@@ -133,7 +133,9 @@ export default Server;
 export { REQUEST_METHODS, getDomain } from './request';
 export { default as createServerError } from './utils/create-server-error';
 
-export type { Server$config } from './interfaces';
+export { default as sourceFor } from './utils/source-for';
+
+export type { Server$config, Server$ErrorSource } from './interfaces';
 
 export type {
   Request,
