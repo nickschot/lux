@@ -503,11 +503,30 @@ describe('module "serializer"', () => {
           .with.lengthOf(comments.length);
 
         result.included.forEach(item => {
-          expect(item).to.have.all.keys(['id', 'type', 'links', 'attributes']);
+          expect(item).to.have.all.keys([
+            'id',
+            'type',
+            'links',
+            'attributes',
+            'relationships'
+          ]);
 
           expect(item).to.have.property('id').and.be.a('string');
           expect(item).to.have.property('type', 'comments');
           expect(item).to.have.property('attributes').and.be.an('object');
+
+          // Included resources carry their own serializer's relationships.
+          expect(item.relationships).to.have.all.keys([
+            'post',
+            'user',
+            'reactions'
+          ]);
+          expect(item.relationships.post).to.deep.equal({
+            data: { id: `${post.getPrimaryKey()}`, type: 'posts' },
+            links: { self: linkFor('posts', post.getPrimaryKey()) }
+          });
+          expect(item.relationships.user).to.deep.equal({ data: null });
+          expect(item.relationships.reactions).to.deep.equal({ data: [] });
         });
       });
 
@@ -535,11 +554,24 @@ describe('module "serializer"', () => {
         expect(result.included).to.be.an('array').with.lengthOf(tags.length);
 
         result.included.forEach(item => {
-          expect(item).to.have.all.keys(['id', 'type', 'links', 'attributes']);
+          expect(item).to.have.all.keys([
+            'id',
+            'type',
+            'links',
+            'attributes',
+            'relationships'
+          ]);
 
           expect(item).to.have.property('id').and.be.a('string');
           expect(item).to.have.property('type', 'tags');
           expect(item).to.have.property('attributes').and.be.an('object');
+
+          // Tags are fresh per post, so each links back to exactly this one.
+          expect(item.relationships).to.deep.equal({
+            posts: {
+              data: [{ id: `${post.getPrimaryKey()}`, type: 'posts' }]
+            }
+          });
         });
       });
     });

@@ -462,6 +462,80 @@ class Controller {
   defaultPerPage: number = 25;
 
   /**
+   * How many relationships deep an `?include` path may go on this
+   * controller's routes. `comments.reactions.user` is 3 levels deep; with `1`
+   * only direct relationships (`comments`) can be included. Paths deeper than
+   * this are rejected with `400 Bad Request`.
+   *
+   * Set it on `ApplicationController` to change it for the whole app, or on a
+   * single controller to override it there.
+   *
+   * ```javascript
+   * class ApplicationController extends Controller {
+   *   maxIncludeDepth = 2;
+   * }
+   * ```
+   *
+   * Every allowed path is enumerated up front from the serializers'
+   * relationships, and each nested level costs its own queries per request, so
+   * keep this small.
+   *
+   * @property maxIncludeDepth
+   * @type {Number}
+   * @default 3
+   * @public
+   */
+  maxIncludeDepth: number = 3;
+
+  /**
+   * Whether a namespace may fall back to the root Serializer of a type it has
+   * no Serializer for. Read from a namespace's `ApplicationController` and
+   * applies to the whole namespace.
+   *
+   * By default `app/controllers/acteur/assignments.js` without an
+   * `app/serializers/acteur/assignments.js` — or an included type without one —
+   * is serialized by the root Serializer, with every attribute and
+   * relationship it declares. For a namespace that must only expose what it
+   * declares itself, turn the fallback off:
+   *
+   * ```javascript
+   * // app/controllers/acteur/application.js
+   * class ActeurApplicationController extends ApplicationController {
+   *   serializerFallback = false;
+   * }
+   * ```
+   *
+   * The application then refuses to boot while any type the namespace can
+   * serialize or `include` (down to each controller's `maxIncludeDepth`) has
+   * no Serializer in that namespace, listing each missing one.
+   *
+   * @property serializerFallback
+   * @type {Boolean}
+   * @default true
+   * @public
+   */
+  serializerFallback: boolean = true;
+
+  /**
+   * The Serializer to serialize (and validate, and load) related resources of
+   * this Controller's responses with: the related model's Serializer in this
+   * Controller's namespace, falling back to the root one.
+   *
+   * Always this Controller's namespace — not its Serializer's, which is the
+   * root one when the namespace has no Serializer for this resource.
+   *
+   * @method serializerFor
+   * @private
+   */
+  serializerFor(model: ModelClass): Serializer<Model> {
+    const { serializer, namespace } = this;
+
+    return serializer
+      ? serializer.serializerFor(model, namespace)
+      : model.serializer;
+  }
+
+  /**
    * The resolved Model for a Controller instance.
    *
    * @property model
@@ -566,7 +640,7 @@ class Controller {
    * @public
    */
   index(req: Request): Query<Array<Model>> {
-    return findMany(this.model, req);
+    return findMany(this.model, req, related => this.serializerFor(related));
   }
 
   /**
@@ -582,7 +656,7 @@ class Controller {
    * @public
    */
   show(req: Request): Query<Model> {
-    return findOne(this.model, req);
+    return findOne(this.model, req, related => this.serializerFor(related));
   }
 
   /**
@@ -638,7 +712,7 @@ class Controller {
   update(req: Request): Promise<number | Model> {
     const { model } = this;
 
-    return findOne(model, req)
+    return findOne(model, req, related => this.serializerFor(related))
       .then(async record => {
         const {
           params: {
@@ -674,7 +748,7 @@ class Controller {
    * @public
    */
   destroy(req: Request): Promise<number> {
-    return findOne(this.model, req)
+    return findOne(this.model, req, related => this.serializerFor(related))
       .then(record => record.destroy())
       .then(() => 204);
   }

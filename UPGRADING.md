@@ -77,6 +77,53 @@ published tarball), make sure it gets built on install — a `prepare` script, o
 publish a built package. Installing from a registry (which builds before
 publish) is unaffected.
 
+## 6. Compound documents (`?include=`) — response changes
+
+`include` now produces JSON:API 1.0 compliant compound documents, so clients
+that follow resource linkage (ember-data with async relationships) can resolve
+relationships of included resources without extra requests. **Primary `data` is
+byte-for-byte unchanged**; what changed is `included`:
+
+- **Included resources carry `relationships`.** Each is serialized with its own
+  serializer's `hasOne`/`hasMany`, in the same shape as primary data (to-one:
+  `{ data, links }` or `{ data: null }`; to-many: `{ data: [...] }`). Before,
+  included resources had no `relationships` member at all. The linkage is
+  batch-loaded — one query per relationship per level, not one per record.
+- **Nested paths are supported**, up to three levels by default:
+  `include=comments.user`, `include=comments.reactions.user`. Change the limit
+  with `maxIncludeDepth` on a controller (or on `ApplicationController` for the
+  whole app); `maxIncludeDepth = 1` restores the old behaviour of direct
+  relationships only. Intermediate resources are included too
+  (`comments.user` also includes the comments), as the spec requires. Nested
+  levels are serialized with the related serializer's `attributes`; `fields[]`
+  still only applies to the resource and its direct relationships.
+- **Included resources follow the request's namespace** — the namespace of
+  the controller handling the request, at every level of the include tree. On
+  `/admin/posts`, included comments use `AdminCommentsSerializer` if you have
+  one, else `CommentsSerializer` (the same fallback namespaced controllers
+  use), and all their links point into `/admin`. The `include` allow-list,
+  `fields[...]` and the columns loaded for included types follow the same
+  serializers. Before, included resources always used the root serializers and
+  linked outside the namespace.
+- **A fallback serializer does not leave the namespace.** A namespaced
+  controller with no serializer of its own is still given the root one, but
+  the request stays in its namespace: what it includes resolves to namespaced
+  serializers, and its links — including the primary resource's relationship
+  links, which used to be root links — point into the namespace. Note that the
+  fallback serializer itself still applies its root `hasOne`/`hasMany`. To
+  rule that out for a namespace, set `serializerFallback = false` on its
+  `ApplicationController` (e.g. `app/controllers/acteur/application.js`): the
+  app then refuses to boot while any type the namespace can serialize or
+  `include` has no serializer in that namespace, and lists each missing one
+  with how it is reached.
+- **Primary resources are no longer repeated in `included`** (e.g. a user in
+  `/users?include=followers` who is also in the page).
+- Unknown paths are still rejected with `400`; top-level names that were
+  accepted before still are.
+
+Client-side, nothing is required — but if you worked around the missing linkage
+(extra `findRecord` calls, sync relationships), those can go.
+
 ## 7. Content negotiation — status code changes
 
 `Accept` and `Content-Type` are now parsed as media types (whitespace, case,

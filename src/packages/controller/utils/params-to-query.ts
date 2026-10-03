@@ -1,6 +1,7 @@
 import omit from '../../../utils/omit';
 import entries from '../../../utils/entries';
-import type { ModelClass } from '../../database';
+import type { Model, ModelClass } from '../../database';
+import type Serializer from '../../serializer';
 import type { Request$params } from '../../server';
 
 type Controller$query = {
@@ -14,14 +15,23 @@ type Controller$query = {
 };
 
 /**
+ * `serializerFor` resolves the Serializer an included resource is serialized
+ * with — in the request's namespace (`Controller#serializerFor()`) — so its
+ * attributes are the ones loaded. Defaults to the related model's root one.
+ *
  * @private
  */
 export default function paramsToQuery(
   model: ModelClass,
-  { id, page, sort, filter, fields, include }: Request$params
+  { id, page, sort, filter, fields, include }: Request$params,
+  serializerFor: (related: ModelClass) => Serializer<Model> = related =>
+    related.serializer
 ): Controller$query {
   const relationships = entries(model.relationships);
   const includedFields = omit(fields, model.resourceName);
+  // Only the first segment of a nested path (`comments.user`) is loaded by this
+  // query; the serializer loads deeper levels when it builds `included`.
+  const included = include && include.map(path => path.split('.')[0]);
 
   let query: Controller$query = {
     id,
@@ -76,9 +86,9 @@ export default function paramsToQuery(
       value = [relationship.model.primaryKey, ...value];
     }
 
-    if (include && value.length === 1 && include.includes(name)) {
-      value = [...value, ...relationship.model.serializer.attributes];
-    } else if (!include && value.length > 1) {
+    if (included && value.length === 1 && included.includes(name)) {
+      value = [...value, ...serializerFor(relationship.model).attributes];
+    } else if (!included && value.length > 1) {
       value = value.slice(0, 1);
     }
 
