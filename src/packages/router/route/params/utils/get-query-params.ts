@@ -62,8 +62,9 @@ function getFilterParam({ filter }: Controller): [string, ParameterLike] {
  */
 function getFieldsParam({
   model,
-  serializer: { hasOne, hasMany, attributes }
+  serializer
 }: Controller): [string, ParameterLike] {
+  const { hasOne, hasMany, attributes } = serializer;
   const relationships = [...hasOne, ...hasMany];
 
   return [
@@ -96,7 +97,7 @@ function getFieldsParam({
 
                     values: [
                       opts.model.primaryKey,
-                      ...opts.model.serializer.attributes
+                      ...serializer.serializerFor(opts.model).attributes
                     ]
                   })
                 ]
@@ -122,8 +123,9 @@ function getFieldsParam({
 function getIncludeParam({
   model,
   maxIncludeDepth,
-  serializer: { hasOne, hasMany }
+  serializer
 }: Controller): [string, ParameterLike] {
+  const { hasOne, hasMany } = serializer;
   const relationships = [...hasOne, ...hasMany];
 
   return [
@@ -132,12 +134,17 @@ function getIncludeParam({
       path: 'include',
       type: 'array',
       // Every top level name stays allowed (as before), plus the nested paths
-      // (`comments.user`) reachable through each related serializer, down to
-      // the controller's `maxIncludeDepth`.
+      // (`comments.user`) reachable through each related serializer in this
+      // controller's namespace, down to the controller's `maxIncludeDepth`.
       values: Array.from(
         new Set([
           ...relationships,
-          ...enumerateIncludePaths(model, relationships, maxIncludeDepth)
+          ...enumerateIncludePaths(
+            model,
+            relationships,
+            maxIncludeDepth,
+            related => serializer.serializerFor(related)
+          )
         ])
       )
     })

@@ -592,7 +592,7 @@ class Controller {
    * @public
    */
   index(req: Request): Query<Array<Model>> {
-    return findMany(this.model, req);
+    return findMany(this.model, req, this.serializer);
   }
 
   /**
@@ -608,7 +608,7 @@ class Controller {
    * @public
    */
   show(req: Request): Query<Model> {
-    return findOne(this.model, req);
+    return findOne(this.model, req, this.serializer);
   }
 
   /**
@@ -664,7 +664,7 @@ class Controller {
   update(req: Request): Promise<number | Model> {
     const { model } = this;
 
-    return findOne(model, req)
+    return findOne(model, req, this.serializer)
       .then(async record => {
         const {
           params: {
@@ -700,7 +700,7 @@ class Controller {
    * @public
    */
   destroy(req: Request): Promise<number> {
-    return findOne(this.model, req)
+    return findOne(this.model, req, this.serializer)
       .then(record => record.destroy())
       .then(() => 204);
   }
