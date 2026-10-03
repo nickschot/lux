@@ -110,8 +110,12 @@ byte-for-byte unchanged**; what changed is `included`:
   the request stays in its namespace: what it includes resolves to namespaced
   serializers, and its links — including the primary resource's relationship
   links, which used to be root links — point into the namespace. Note that the
-  fallback serializer itself still applies its root `hasOne`/`hasMany`; give a
-  namespace its own serializer for every type it exposes if those differ.
+  fallback serializer itself still applies its root `hasOne`/`hasMany`. To
+  rule that out for a namespace, set `serializerFallback = false` on its
+  `ApplicationController` (e.g. `app/controllers/admin/application.js`): the
+  app then refuses to boot while any type the namespace can serialize or
+  `include` has no serializer in that namespace, and lists each missing one
+  with how it is reached.
 - **Primary resources are no longer repeated in `included`** (e.g. a user in
   `/users?include=followers` who is also in the page).
 - Unknown paths are still rejected with `400`; top-level names that were

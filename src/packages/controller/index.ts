@@ -488,6 +488,35 @@ class Controller {
   maxIncludeDepth: number = 3;
 
   /**
+   * Whether a namespace may fall back to the root Serializer of a type it has
+   * no Serializer for. Read from a namespace's `ApplicationController` and
+   * applies to the whole namespace.
+   *
+   * By default `app/controllers/admin/comments.js` without an
+   * `app/serializers/admin/comments.js` — or an included type without one —
+   * is serialized by the root Serializer, with every attribute and
+   * relationship it declares. For a namespace that must only expose what it
+   * declares itself, turn the fallback off:
+   *
+   * ```javascript
+   * // app/controllers/admin/application.js
+   * class AdminApplicationController extends ApplicationController {
+   *   serializerFallback = false;
+   * }
+   * ```
+   *
+   * The application then refuses to boot while any type the namespace can
+   * serialize or `include` (down to each controller's `maxIncludeDepth`) has
+   * no Serializer in that namespace, listing each missing one.
+   *
+   * @property serializerFallback
+   * @type {Boolean}
+   * @default true
+   * @public
+   */
+  serializerFallback: boolean = true;
+
+  /**
    * The Serializer to serialize (and validate, and load) related resources of
    * this Controller's responses with: the related model's Serializer in this
    * Controller's namespace, falling back to the root one.
