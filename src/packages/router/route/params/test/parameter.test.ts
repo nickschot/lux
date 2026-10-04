@@ -233,5 +233,16 @@ describe('module "router/route/params"', () => {
         });
       });
     });
+
+    describe('type errors', () => {
+      it('name arrays and dates rather than "object"', () => {
+        const subject = new Parameter({ path: 'data', type: 'object' });
+
+        expect(() => subject.validate([])).to.throw(
+          TypeError,
+          "Expected type 'object' for parameter 'data' but got 'array'."
+        );
+      });
+    });
   });
 });

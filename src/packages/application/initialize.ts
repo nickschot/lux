@@ -12,6 +12,7 @@ import createController from './utils/create-controller';
 import createSerializer from './utils/create-serializer';
 import validateNamespacedSerializers from './utils/validate-namespaced-serializers';
 import resolveVisibility from './utils/resolve-visibility';
+import warnQueryParamNames from './utils/warn-query-param-names';
 
 import type Controller from '../controller';
 import type Serializer from '../serializer';
@@ -92,6 +93,7 @@ export default async function initialize<T extends Application>(
 
   validateNamespacedSerializers(controllers, serializers);
   resolveVisibility(controllers, store.models.values());
+  warnQueryParamNames(controllers, logger);
 
   const ApplicationController = controllers.get('application');
 

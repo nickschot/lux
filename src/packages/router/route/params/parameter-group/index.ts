@@ -1,12 +1,13 @@
 import { FreezeableMap } from '../../../../freezeable';
 import { InvalidParameterError } from '../errors';
 import IgnoredParameter from '../parameter/ignored-parameter';
+import { collectErrors } from '../../../../server/errors/error-list';
 import isNull from '../../../../../utils/is-null';
 import entries from '../../../../../utils/entries';
 import validateType from '../utils/validate-type';
 import type { ParameterLike, ParameterLike$opts } from '../index';
 
-import hasRequiredParams from './utils/has-required-params';
+import missingParams from './utils/missing-params';
 
 /**
  * @private
@@ -43,29 +44,30 @@ class ParameterGroup extends FreezeableMap<string, ParameterLike> {
       return params;
     }
 
-    if (
-      validateType(this, params) &&
-      hasRequiredParams(this, params as Record<string, unknown>)
-    ) {
-      const { sanitize } = this;
-      let { path } = this;
+    validateType(this, params);
 
-      if (path.length) {
-        path = `${path}.`;
-      }
+    const { sanitize } = this;
+    let { path } = this;
 
-      for (const [key, value] of entries(params as Record<string, unknown>)) {
+    if (path.length) {
+      path = `${path}.`;
+    }
+
+    // Every problem with the members is reported, not just the first.
+    collectErrors(
+      entries(params as Record<string, unknown>).map(([key, value]) => () => {
         const match = this.get(key);
 
         if (match instanceof IgnoredParameter) {
-          continue;
+          return;
         } else if (match) {
           Reflect.set(validated, key, match.validate(value));
         } else if (!sanitize) {
           throw new InvalidParameterError(`${path}${key}`);
         }
-      }
-    }
+      }),
+      missingParams(this, params as Record<string, unknown>)
+    );
 
     return validated as V;
   }

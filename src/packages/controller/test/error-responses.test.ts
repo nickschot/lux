@@ -88,6 +88,30 @@ describe('module "controller"', () => {
       }
     });
 
+    it('reports every problem with a request at once', async () => {
+      const res = await fetch(`${DOMAIN}/posts/1`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': MIME_TYPE },
+        body: JSON.stringify({
+          data: {
+            id: '1',
+            type: 'tags',
+            relationships: { nope: { data: null } }
+          }
+        })
+      });
+      const { errors } = await res.json();
+
+      // A 409 and a 400: the response takes the more general 400.
+      expect(res.status).to.equal(400);
+      expect(
+        errors.map(({ status, source }) => [status, source.pointer])
+      ).to.have.deep.members([
+        ['409', '/data/type'],
+        ['400', '/data/relationships/nope']
+      ]);
+    });
+
     it('responds 404 to a related resource that does not exist', async () => {
       const { status, error } = await request('POST', '/posts', {
         data: {

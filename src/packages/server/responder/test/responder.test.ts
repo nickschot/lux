@@ -14,6 +14,7 @@ import { MIME_TYPE, VERSION } from '../../../jsonapi';
 import { createRequest } from '../../request';
 import { createResponse } from '../../response';
 import { createResponder } from '../index';
+import ErrorList from '../../errors/error-list';
 
 import setEnv from '../../../../../test/utils/set-env';
 import { getTestApp } from '../../../../../test/utils/get-test-app';
@@ -267,6 +268,93 @@ describe('module "server/responder"', () => {
               version: VERSION
             }
           });
+        });
+      });
+
+      describe('- responding with errors carrying error object members', () => {
+        it('passes `id`, `code`, `title`, `meta` and `links.about` through', async () => {
+          const result = await test((req, res) => {
+            const respond = createResponder(req, res);
+
+            respond(
+              Object.assign(new Error('test'), {
+                statusCode: 422,
+                id: 'abc',
+                code: 'title-taken',
+                title: 'Title taken',
+                meta: { suggestion: 'Another title' },
+                links: { about: 'https://example.com/errors/title-taken' }
+              })
+            );
+          });
+
+          expect(result.status).to.equal(422);
+          expect(await result.json()).to.deep.equal({
+            errors: [
+              {
+                id: 'abc',
+                status: '422',
+                code: 'title-taken',
+                title: 'Title taken',
+                meta: { suggestion: 'Another title' },
+                links: { about: 'https://example.com/errors/title-taken' }
+              }
+            ],
+            jsonapi: {
+              version: VERSION
+            }
+          });
+        });
+
+        it('answers an `ErrorList` with one error object per error', async () => {
+          const result = await test((req, res) => {
+            const respond = createResponder(req, res);
+
+            respond(
+              new ErrorList([
+                Object.assign(new Error('a'), {
+                  statusCode: 403,
+                  source: { pointer: '/data/relationships/tags' }
+                }),
+                Object.assign(new Error('b'), {
+                  statusCode: 400,
+                  source: { parameter: 'sort' }
+                })
+              ])
+            );
+          });
+
+          // Mixed client errors: the most generally applicable status.
+          expect(result.status).to.equal(400);
+          expect((await result.json()).errors).to.deep.equal([
+            {
+              status: '403',
+              title: 'Forbidden',
+              source: { pointer: '/data/relationships/tags' }
+            },
+            {
+              status: '400',
+              title: 'Bad Request',
+              source: { parameter: 'sort' }
+            }
+          ]);
+        });
+
+        it('keeps the shared status of an `ErrorList`', async () => {
+          const result = await test((req, res) => {
+            const respond = createResponder(req, res);
+
+            respond(
+              new ErrorList(
+                ['a', 'b'].map(message =>
+                  Object.assign(new Error(message), { statusCode: 422 })
+                )
+              )
+            );
+          });
+
+          expect(result.status).to.equal(422);
+          expect((await result.json()).errors).to.have.lengthOf(2);
         });
       });
 
