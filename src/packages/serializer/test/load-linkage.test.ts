@@ -3,6 +3,7 @@ import { it, describe, beforeAll, expect } from 'vitest';
 import loadLinkage from '../utils/load-linkage';
 import type { Model, ModelClass } from '../../database';
 import { getTestApp } from '../../../../test/utils/get-test-app';
+import { getRelated } from '../../../../test/utils/get-related';
 
 const idsOf = (value: Model | Array<Model> | null | undefined) => {
   if (Array.isArray(value)) {
@@ -48,6 +49,36 @@ describe('module "serializer/utils/load-linkage"', () => {
       tags: [],
       nope: null
     });
+  });
+
+  it('resolves a belongs-to whose record no longer exists to null', async () => {
+    const Comment = models.get('comment') as ModelClass;
+    const Post = models.get('post') as ModelClass;
+    const Action = models.get('action') as ModelClass;
+    const [{ max }] = (await Post.table().max(
+      `${Post.primaryKey} as max`
+    )) as Array<{ max: number }>;
+    const comment = (await Comment.create({
+      message: 'dangling foreign key',
+      postId: Number(max) + 1000
+    })) as Model;
+
+    try {
+      const linkage = await loadLinkage(Comment, [comment], ['post', 'user']);
+
+      expect(linkage.get(String(comment.getPrimaryKey()))).to.deep.equal({
+        post: null,
+        user: null
+      });
+    } finally {
+      await Action.table()
+        .where({
+          trackable_id: comment.getPrimaryKey(),
+          trackable_type: 'Comment'
+        })
+        .del();
+      await comment.destroy();
+    }
   });
 
   // The oracle for every relationship shape the test-app serializes
@@ -120,7 +151,7 @@ describe('module "serializer/utils/load-linkage"', () => {
       const actual = linkage.get(String(record.getPrimaryKey()));
 
       for (const relationship of relationships) {
-        const expected = idsOf(await Reflect.get(fresh, relationship));
+        const expected = idsOf(await getRelated(fresh, relationship));
 
         expect(
           sorted(actual?.[relationship] ?? null),
