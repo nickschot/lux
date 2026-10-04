@@ -451,6 +451,11 @@ class Model {
    *   .page(1);
    * ```
    *
+   * A scope narrows only the queries it is called on. To hide records from
+   * every request in a namespace — listings, lookups, relationships and
+   * `include` — use a scope like `isPublic` in a Controller visibility rule
+   * (`static visibility` on the namespace's `ApplicationController`).
+   *
    * @property scopes
    * @type {Object}
    * @default {}
