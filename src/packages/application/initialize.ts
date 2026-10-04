@@ -11,6 +11,7 @@ import normalizePort from './utils/normalize-port';
 import createController from './utils/create-controller';
 import createSerializer from './utils/create-serializer';
 import validateNamespacedSerializers from './utils/validate-namespaced-serializers';
+import resolveVisibility from './utils/resolve-visibility';
 
 import type Controller from '../controller';
 import type Serializer from '../serializer';
@@ -90,6 +91,7 @@ export default async function initialize<T extends Application>(
   });
 
   validateNamespacedSerializers(controllers, serializers);
+  resolveVisibility(controllers, store.models.values());
 
   const ApplicationController = controllers.get('application');
 

@@ -203,6 +203,50 @@ relationship, never one per record.
   related records in their column data; read them through the relationship
   (`await post.user`).
 
+## 10. Visibility rules — replace hand-rolled scoping (opt-in)
+
+Nothing changes until you declare rules. A namespace's `ApplicationController`
+can now say, once, which rows of each type its requests may see:
+
+```js
+// app/controllers/application.js
+class ApplicationController extends Controller {
+  static visibility = {
+    posts: query => query.isPublic(),
+    comments: (query, request) => query.where({ userId: request.viewerId })
+  };
+}
+
+// app/controllers/admin/application.js
+class AdminApplicationController extends ApplicationController {
+  static visibility = {}; // or { ...super.visibility, tags: ... }
+}
+```
+
+Lumen applies a type's rule wherever it loads that type for a request in the
+namespace: `index` (and its page links), `show`/`update`/`destroy` (hidden →
+`404`), the resource linkage of every relationship (a hidden to-one is `null`,
+a hidden to-many member is left out), `included` at any depth, and the related
+records a `create`/`update` references (hidden → `404`, like a missing one).
+That makes these idioms redundant — delete them once a rule covers the type:
+
+- `super.index(req).where(...)` / a scoped `show` override for visibility;
+- pruning ids out of relationship linkage;
+- `afterAction` hooks that filter hidden records out of the payload.
+
+Rules must return the query they are given synchronously and may only add
+conditions (`where`, `not`, `whereBetween`, `whereRaw`, model scopes built
+from them); anything else throws when the rule first runs. Compute what a rule
+needs in a `beforeAction` and read it from the request. Declaring
+`visibility` on any controller other than a namespace's
+`ApplicationController` — or for an unknown type, or with a non-function
+rule — fails the boot. A namespace without an `ApplicationController` uses the
+closest ancestor namespace's rules.
+
+Rules do not reach queries your code builds itself (`Post.where(...)` in a
+custom action, `await post.comments`); narrow those with
+`this.visible(query, request)`.
+
 ## The short version
 
 Bump `pg`/`mysql2` and run Node 20 (required); delete `.babelrc` and the

@@ -18,6 +18,7 @@ import type {
 } from '../jsonapi';
 
 import type { Serializer$fields, Serializer$opts } from './interfaces';
+import { Scope } from '../controller/visibility';
 import loadLinkage from './utils/load-linkage';
 import type { Linkage } from './utils/load-linkage';
 import { createIncludeTree } from './utils/include-tree';
@@ -492,6 +493,10 @@ class Serializer<T extends Model> {
    * type. They narrow the attributes loaded for included resources; primary
    * data was already loaded with its own.
    *
+   * @param {Scope} options.scope - The visibility rules of the request. Every
+   * related record loaded for the document — its linkage and `included` — is
+   * narrowed by them; primary data was already loaded through them.
+   *
    * @param {String} options.namespace - The namespace of the request, i.e. of
    * the Controller handling it. Every link in the document is built in it, and
    * included resources are serialized by their Serializer in it (falling back
@@ -510,6 +515,7 @@ class Serializer<T extends Model> {
     domain,
     include,
     fields = {},
+    scope = Scope.none,
     namespace = this.namespace
   }: {
     data: T | Array<T>;
@@ -517,6 +523,7 @@ class Serializer<T extends Model> {
     domain: string;
     include: Array<string>;
     fields?: Serializer$fields;
+    scope?: Scope;
     namespace?: string;
   }): Promise<JSONAPI$Document> {
     const tree = createIncludeTree(include);
@@ -529,7 +536,7 @@ class Serializer<T extends Model> {
 
     // Primary data takes the same path as every include level: its linkage
     // is batch-loaded per relationship, then `included` is built from it.
-    const linkage = await loadLinkage(this.model, records, names);
+    const linkage = await loadLinkage(this.model, records, names, scope);
     const primary = await Promise.all(
       records.map(item =>
         this.formatOne({
@@ -545,6 +552,7 @@ class Serializer<T extends Model> {
     await this.includeRelated({
       tree,
       names,
+      scope,
       domain,
       linkage,
       included,
@@ -726,6 +734,7 @@ class Serializer<T extends Model> {
     model,
     records,
     tree,
+    scope,
     domain,
     fields,
     included,
@@ -734,6 +743,7 @@ class Serializer<T extends Model> {
     model: ModelClass;
     records: Array<Model>;
     tree: IncludeTree;
+    scope: Scope;
     domain: string;
     fields: Serializer$fields;
     included: Map<string, JSONAPI$ResourceObject>;
@@ -751,7 +761,7 @@ class Serializer<T extends Model> {
     }
 
     const names = [...serializer.hasOne, ...serializer.hasMany];
-    const linkage = await loadLinkage(model, unique, names);
+    const linkage = await loadLinkage(model, unique, names, scope);
 
     for (const item of unique) {
       const id = String(item.getPrimaryKey());
@@ -776,6 +786,7 @@ class Serializer<T extends Model> {
       tree,
       names,
       model,
+      scope,
       domain,
       fields,
       linkage,
@@ -800,6 +811,7 @@ class Serializer<T extends Model> {
     names,
     linkage,
     tree,
+    scope,
     domain,
     fields,
     included,
@@ -809,6 +821,7 @@ class Serializer<T extends Model> {
     names: Array<string>;
     linkage: Map<string, Linkage>;
     tree: IncludeTree;
+    scope: Scope;
     domain: string;
     fields: Serializer$fields;
     included: Map<string, JSONAPI$ResourceObject>;
@@ -833,14 +846,19 @@ class Serializer<T extends Model> {
       });
 
       if (ids.size) {
-        const records = await next
-          .select(
-            next.primaryKey,
-            ...this.attributesFor(next, namespace, fields)
-          )
-          .where({ [next.primaryKey]: Array.from(ids) });
+        // The linkage is already narrowed; applying the rules again costs
+        // nothing and keeps a hidden record out even if it were not.
+        const records = await scope.apply(
+          next
+            .select(
+              next.primaryKey,
+              ...this.attributesFor(next, namespace, fields)
+            )
+            .where({ [next.primaryKey]: Array.from(ids) })
+        );
 
         await this.addIncluded({
+          scope,
           domain,
           fields,
           records,
