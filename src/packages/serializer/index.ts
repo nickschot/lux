@@ -1,7 +1,11 @@
+import { posix } from 'path';
+
 import { dasherize } from 'inflection';
 
 import { VERSION } from '../jsonapi';
 import { freezeProps } from '../freezeable';
+import closestAncestor from '../loader/resolver/utils/closest-ancestor';
+import type { Bundle$Namespace } from '../loader';
 import underscore from '../../utils/underscore';
 import promiseHash from '../../utils/promise-hash';
 import { dasherizeKeys } from '../../utils/transform-keys';
@@ -175,6 +179,11 @@ import type { IncludeTree } from './utils/include-tree';
  * defined even though the response is processed by the `UsersSerializer`.
  * The same goes for relationships: each included resource carries the
  * `relationships` its own Serializer declares in `hasOne` and `hasMany`.
+ *
+ * Included resources follow the request's namespace: from `/admin/posts`,
+ * included comments are serialized by `AdminCommentsSerializer` when it
+ * exists and by `CommentsSerializer` otherwise (the same fallback a
+ * namespaced Controller uses), and their links point into `/admin`.
  *
  * Relationship paths may be nested, e.g. `/posts?include=comments.user`, up
  * to the controller's `maxIncludeDepth` (3 by default). The intermediate
@@ -431,6 +440,18 @@ class Serializer<T extends Model> {
    */
   declare namespace: string;
 
+  /**
+   * Every Serializer of the application, keyed by namespaced path (`posts`,
+   * `admin/posts`). Attached once all of them are built, and used by
+   * `serializerFor()` to serialize related resources in this Serializer's
+   * namespace.
+   *
+   * @property serializers
+   * @type {Map}
+   * @private
+   */
+  declare serializers?: Bundle$Namespace<Serializer<Model>>;
+
   constructor({ model, parent, namespace }: Serializer$opts<T>) {
     Object.assign(this, {
       model,
@@ -467,6 +488,13 @@ class Serializer<T extends Model> {
    * top level included object of the returned [JSON API](http://jsonapi.org)
    * document object. Intermediate resources of a nested path are included too.
    *
+   * @param {String} options.namespace - The namespace of the request, i.e. of
+   * the Controller handling it. Every link in the document is built in it, and
+   * included resources are serialized by their Serializer in it (falling back
+   * to the root). Defaults to this Serializer's namespace — which is the root
+   * one when a namespaced Controller has no Serializer of its own, so the
+   * Controller passes its namespace explicitly.
+   *
    * @return {Promise} Resolves with a [JSON API](http://jsonapi.org) document
    * object.
    *
@@ -476,12 +504,14 @@ class Serializer<T extends Model> {
     data,
     links,
     domain,
-    include
+    include,
+    namespace = this.namespace
   }: {
     data: T | Array<T>;
     links: JSONAPI$DocumentLinks;
     domain: string;
     include: Array<string>;
+    namespace?: string;
   }): Promise<JSONAPI$Document> {
     const tree = createIncludeTree(include);
     const related = new Map<string, Array<Model>>();
@@ -497,6 +527,7 @@ class Serializer<T extends Model> {
             item,
             domain,
             related,
+            namespace,
             include: names
           })
         )
@@ -507,6 +538,7 @@ class Serializer<T extends Model> {
       const resource = await this.formatOne({
         domain,
         related,
+        namespace,
         item: data,
         include: names,
         links: false
@@ -526,6 +558,7 @@ class Serializer<T extends Model> {
           domain,
           records,
           included,
+          namespace,
           model: opts.model,
           tree: children
         });
@@ -592,6 +625,10 @@ class Serializer<T extends Model> {
    * @param {Object} options.linkage - Pre-loaded resource linkage (related
    * primary keys per relationship key) to serialize relationships from.
    *
+   * @param {String} options.namespace - The namespace to build links in.
+   * Defaults to this Serializer's; included resources pass the namespace of
+   * the request, so every link in a document points into the same namespace.
+   *
    * @return {Promise} Resolves with a [JSON API](http://jsonapi.org) resource
    * object.
    *
@@ -603,7 +640,8 @@ class Serializer<T extends Model> {
     domain,
     include = [],
     related,
-    linkage
+    linkage,
+    namespace = this.namespace
   }: {
     item: T;
     links?: boolean;
@@ -611,6 +649,7 @@ class Serializer<T extends Model> {
     include?: Array<string>;
     related?: Map<string, Array<Model>>;
     linkage?: Linkage;
+    namespace?: string;
   }): Promise<JSONAPI$ResourceObject> {
     const { resourceName: type } = item;
     const id = String(item.getPrimaryKey());
@@ -638,7 +677,8 @@ class Serializer<T extends Model> {
           [dasherize(underscore(name))]: this.formatLinkage(
             domain,
             this.model.relationshipFor(name)?.model.resourceName,
-            linkage[name]
+            linkage[name],
+            namespace
           )
         }),
         {}
@@ -665,13 +705,14 @@ class Serializer<T extends Model> {
                 return {
                   data: value.map(
                     relatedItem =>
-                      this.formatRelationship(relatedItem, domain).data
+                      this.formatRelationship(relatedItem, domain, namespace)
+                        .data
                   )
                 };
               } else if (value && (value as { id?: unknown }).id != null) {
                 collect(name, [value]);
 
-                return this.formatRelationship(value, domain);
+                return this.formatRelationship(value, domain, namespace);
               }
 
               return {
@@ -690,7 +731,7 @@ class Serializer<T extends Model> {
 
     if (links || typeof links !== 'boolean') {
       serialized.links = {
-        self: this.linkFor(domain, type, id)
+        self: this.linkFor(domain, type, id, namespace)
       };
     }
 
@@ -713,11 +754,16 @@ class Serializer<T extends Model> {
    *
    * @private
    */
-  formatRelationship(item: Model, domain: string): JSONAPI$RelationshipObject {
+  formatRelationship(
+    item: Model,
+    domain: string,
+    namespace: string = this.namespace
+  ): JSONAPI$RelationshipObject {
     return this.formatLinkage(
       domain,
       item.resourceName,
-      String(item.getPrimaryKey())
+      String(item.getPrimaryKey()),
+      namespace
     );
   }
 
@@ -733,7 +779,8 @@ class Serializer<T extends Model> {
   formatLinkage(
     domain: string,
     type: string | undefined,
-    linkage: Array<string> | string | null | undefined
+    linkage: Array<string> | string | null | undefined,
+    namespace: string = this.namespace
   ): JSONAPI$RelationshipObject {
     if (Array.isArray(linkage)) {
       return {
@@ -753,16 +800,18 @@ class Serializer<T extends Model> {
         type
       },
       links: {
-        self: this.linkFor(domain, type, linkage)
+        self: this.linkFor(domain, type, linkage, namespace)
       }
     };
   }
 
   /**
-   * Add `records` (instances of `model`) to `included` as resource objects
-   * serialized by `model`'s own Serializer, then recurse into the relationships
-   * named in `tree`. The relationships of every level are batch-loaded with one
-   * query per relationship, not one per record.
+   * Add `records` (instances of `model`) to `included` as resource objects,
+   * then recurse into the relationships named in `tree`. Each is serialized by
+   * `model`'s Serializer in this Serializer's namespace (`serializerFor()`), so
+   * `/admin/posts?include=comments` uses `AdminCommentsSerializer` when there
+   * is one and `CommentsSerializer` otherwise. The relationships of every level
+   * are batch-loaded with one query per relationship, not one per record.
    *
    * @method addIncluded
    * @private
@@ -772,15 +821,19 @@ class Serializer<T extends Model> {
     records,
     tree,
     domain,
-    included
+    included,
+    namespace
   }: {
     model: ModelClass;
     records: Array<Model>;
     tree: IncludeTree;
     domain: string;
     included: Map<string, JSONAPI$ResourceObject>;
+    namespace: string;
   }): Promise<void> {
-    const { serializer } = model;
+    // Resolved in the request's namespace at every level — never in that of
+    // whichever (possibly root, fallback) Serializer serialized the parent.
+    const serializer = this.serializerFor(model, namespace);
     const unique = Array.from(
       new Map(records.map(record => [record.getPrimaryKey(), record])).values()
     );
@@ -804,7 +857,8 @@ class Serializer<T extends Model> {
           await serializer.formatOne({
             item,
             domain,
-            linkage: linkage.get(id)
+            linkage: linkage.get(id),
+            namespace
           })
         );
       }
@@ -830,9 +884,10 @@ class Serializer<T extends Model> {
 
       if (ids.size) {
         // Load exactly the attributes the included resource will serialize.
-        const attributes = next.serializer.attributes.filter(attr =>
-          next.attributeNames.includes(attr)
-        );
+        const attributes = this.serializerFor(
+          next,
+          namespace
+        ).attributes.filter(attr => next.attributeNames.includes(attr));
 
         const nextRecords = await next
           .select(next.primaryKey, ...attributes)
@@ -841,6 +896,7 @@ class Serializer<T extends Model> {
         await this.addIncluded({
           domain,
           included,
+          namespace,
           model: next,
           records: nextRecords,
           tree: children
@@ -850,11 +906,48 @@ class Serializer<T extends Model> {
   }
 
   /**
+   * Resolve the Serializer for `model` in `namespace` (this Serializer's by
+   * default), the way a namespaced Controller resolves its own:
+   * `admin/comments` if it exists, otherwise the closest ancestor namespace's,
+   * down to the root `comments` Serializer. Falls back to `model.serializer`
+   * when this Serializer was not created by an application (e.g. in
+   * isolation).
+   *
+   * Pass the request's namespace when there is one: a Serializer's own
+   * namespace is the root one whenever it is a namespaced Controller's
+   * fallback.
+   *
+   * @method serializerFor
    * @private
    */
-  linkFor(domain: string, type: string, id: string): string {
-    const { namespace } = this;
+  serializerFor(
+    model: ModelClass,
+    namespace: string = this.namespace
+  ): Serializer<Model> {
+    const { serializers } = this;
 
+    if (serializers) {
+      const key = posix.join(namespace || '.', model.resourceName);
+      const serializer =
+        serializers.get(key) || closestAncestor(serializers, key);
+
+      if (serializer) {
+        return serializer;
+      }
+    }
+
+    return model.serializer;
+  }
+
+  /**
+   * @private
+   */
+  linkFor(
+    domain: string,
+    type: string,
+    id: string,
+    namespace: string = this.namespace
+  ): string {
     if (namespace) {
       return `${domain}/${namespace}/${type}/${id}`;
     }

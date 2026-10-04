@@ -97,6 +97,25 @@ byte-for-byte unchanged**; what changed is `included`:
   (`comments.user` also includes the comments), as the spec requires. Nested
   levels are serialized with the related serializer's `attributes`; `fields[]`
   still only applies to the resource and its direct relationships.
+- **Included resources follow the request's namespace** — the namespace of
+  the controller handling the request, at every level of the include tree. On
+  `/admin/posts`, included comments use `AdminCommentsSerializer` if you have
+  one, else `CommentsSerializer` (the same fallback namespaced controllers
+  use), and all their links point into `/admin`. The `include` allow-list,
+  `fields[...]` and the columns loaded for included types follow the same
+  serializers. Before, included resources always used the root serializers and
+  linked outside the namespace.
+- **A fallback serializer does not leave the namespace.** A namespaced
+  controller with no serializer of its own is still given the root one, but
+  the request stays in its namespace: what it includes resolves to namespaced
+  serializers, and its links — including the primary resource's relationship
+  links, which used to be root links — point into the namespace. Note that the
+  fallback serializer itself still applies its root `hasOne`/`hasMany`. To
+  rule that out for a namespace, set `serializerFallback = false` on its
+  `ApplicationController` (e.g. `app/controllers/admin/application.js`): the
+  app then refuses to boot while any type the namespace can serialize or
+  `include` has no serializer in that namespace, and lists each missing one
+  with how it is reached.
 - **Primary resources are no longer repeated in `included`** (e.g. a user in
   `/users?include=followers` who is also in the page).
 - Unknown paths are still rejected with `400`; top-level names that were

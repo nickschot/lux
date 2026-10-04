@@ -58,7 +58,10 @@ export default function resource(action: Action<unknown>): Action<unknown> {
         data,
         links,
         domain,
-        include
+        include,
+        // The request's namespace, not the serializer's: a namespaced
+        // controller without its own serializer is given the root one.
+        namespace
       });
     }
 

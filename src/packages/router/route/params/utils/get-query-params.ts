@@ -60,10 +60,9 @@ function getFilterParam({ filter }: Controller): [string, ParameterLike] {
 /**
  * @private
  */
-function getFieldsParam({
-  model,
-  serializer: { hasOne, hasMany, attributes }
-}: Controller): [string, ParameterLike] {
+function getFieldsParam(controller: Controller): [string, ParameterLike] {
+  const { model, serializer } = controller;
+  const { hasOne, hasMany, attributes } = serializer;
   const relationships = [...hasOne, ...hasMany];
 
   return [
@@ -96,7 +95,7 @@ function getFieldsParam({
 
                     values: [
                       opts.model.primaryKey,
-                      ...opts.model.serializer.attributes
+                      ...controller.serializerFor(opts.model).attributes
                     ]
                   })
                 ]
@@ -119,11 +118,9 @@ function getFieldsParam({
 /**
  * @private
  */
-function getIncludeParam({
-  model,
-  maxIncludeDepth,
-  serializer: { hasOne, hasMany }
-}: Controller): [string, ParameterLike] {
+function getIncludeParam(controller: Controller): [string, ParameterLike] {
+  const { model, maxIncludeDepth, serializer } = controller;
+  const { hasOne, hasMany } = serializer;
   const relationships = [...hasOne, ...hasMany];
 
   return [
@@ -132,12 +129,18 @@ function getIncludeParam({
       path: 'include',
       type: 'array',
       // Every top level name stays allowed (as before), plus the nested paths
-      // (`comments.user`) reachable through each related serializer, down to
-      // the controller's `maxIncludeDepth`.
+      // (`comments.user`) reachable through each related serializer in the
+      // controller's namespace (at every level, even below a root fallback
+      // serializer), down to the controller's `maxIncludeDepth`.
       values: Array.from(
         new Set([
           ...relationships,
-          ...enumerateIncludePaths(model, relationships, maxIncludeDepth)
+          ...enumerateIncludePaths(
+            model,
+            relationships,
+            maxIncludeDepth,
+            related => controller.serializerFor(related)
+          )
         ])
       )
     })

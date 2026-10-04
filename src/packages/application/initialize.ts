@@ -10,6 +10,7 @@ import ControllerMissingError from '../../errors/controller-missing-error';
 import normalizePort from './utils/normalize-port';
 import createController from './utils/create-controller';
 import createSerializer from './utils/create-serializer';
+import validateNamespacedSerializers from './utils/validate-namespaced-serializers';
 
 import type Controller from '../controller';
 import type Serializer from '../serializer';
@@ -48,6 +49,17 @@ export default async function initialize<T extends Application>(
       })
   );
 
+  // Lets a Serializer resolve related resources' Serializers in its own
+  // namespace (`Serializer#serializerFor()`), as Controllers do.
+  serializers.forEach((serializer: Serializer<Model>) => {
+    Reflect.defineProperty(serializer, 'serializers', {
+      value: serializers,
+      writable: false,
+      enumerable: false,
+      configurable: false
+    });
+  });
+
   models.forEach((model: ModelClass) => {
     Reflect.defineProperty(model, 'serializer', {
       value: closestChild(serializers, model.resourceName),
@@ -76,6 +88,8 @@ export default async function initialize<T extends Application>(
       configurable: false
     });
   });
+
+  validateNamespacedSerializers(controllers, serializers);
 
   const ApplicationController = controllers.get('application');
 

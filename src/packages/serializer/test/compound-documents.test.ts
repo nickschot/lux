@@ -694,4 +694,197 @@ describe('compound documents over HTTP', () => {
       expect(status).to.equal(400);
     });
   });
+
+  describe('namespaces', () => {
+    // AdminUsersSerializer adds `createdAt` to UsersSerializer's attributes, so
+    // the attributes tell which serializer formatted an included user.
+    const byKey = (body: Document) =>
+      new Map(
+        (body.included || []).map(resource => [keyFor(resource), resource])
+      );
+
+    it('serializes included resources with the namespaced serializer', async () => {
+      const { post, author, commenter } = fixtures;
+      const { status, body } = await get(
+        `/admin/posts/${idOf(post)}?include=user,comments.user`
+      );
+
+      expect(status).to.equal(200);
+      expectValidCompoundDocument(body);
+
+      const included = byKey(body);
+
+      [author, commenter].forEach(user => {
+        const resource = included.get(keyFor(ref('users', user)));
+
+        expect(resource?.attributes).to.have.all.keys([
+          'name',
+          'email',
+          'created-at'
+        ]);
+        expect(resource?.links).to.deep.equal({
+          self: `${DOMAIN}/admin/users/${idOf(user)}`
+        });
+      });
+    });
+
+    it('builds every link of included resources in the request namespace', async () => {
+      const { post, commenter, commentByCommenter } = fixtures;
+      const { body } = await get(`/admin/posts/${idOf(post)}?include=comments`);
+      const comment = byKey(body).get(
+        keyFor(ref('comments', commentByCommenter))
+      );
+
+      expect(comment?.links).to.deep.equal({
+        self: `${DOMAIN}/admin/comments/${idOf(commentByCommenter)}`
+      });
+      expect(comment?.relationships?.user).to.deep.equal({
+        data: ref('users', commenter),
+        links: { self: `${DOMAIN}/admin/users/${idOf(commenter)}` }
+      });
+      expect(comment?.relationships?.post).to.deep.equal({
+        data: ref('posts', post),
+        links: { self: `${DOMAIN}/admin/posts/${idOf(post)}` }
+      });
+    });
+
+    it("accepts the namespaced serializer's attributes in `fields`", async () => {
+      const { post, author } = fixtures;
+      const { status, body } = await get(
+        `/admin/posts/${idOf(post)}?include=user&fields[users]=createdAt`
+      );
+
+      expect(status).to.equal(200);
+      expect(
+        byKey(body).get(keyFor(ref('users', author)))?.attributes
+      ).to.have.all.keys(['created-at']);
+    });
+
+    // `admin/comments` deliberately has no serializer of its own, so
+    // AdminCommentsController falls back to the root CommentsSerializer (whose
+    // namespace is ""). The request is still in `admin`, so everything it
+    // includes must resolve there — not in the fallback serializer's root.
+    describe('from a controller without a namespaced serializer', () => {
+      it('resolves included serializers in the request namespace', async () => {
+        const { post, author, commenter, commentByCommenter } = fixtures;
+        const { status, body } = await get(
+          `/admin/comments/${idOf(commentByCommenter)}?include=user,post.user`
+        );
+
+        expect(status).to.equal(200);
+        expectValidCompoundDocument(body);
+
+        const included = byKey(body);
+
+        [author, commenter].forEach(user => {
+          const resource = included.get(keyFor(ref('users', user)));
+
+          expect(resource?.attributes).to.have.all.keys([
+            'name',
+            'email',
+            'created-at'
+          ]);
+          expect(resource?.links).to.deep.equal({
+            self: `${DOMAIN}/admin/users/${idOf(user)}`
+          });
+        });
+
+        expect(included.get(keyFor(ref('posts', post)))?.links).to.deep.equal({
+          self: `${DOMAIN}/admin/posts/${idOf(post)}`
+        });
+      });
+
+      it("builds the primary resource's links in the request namespace", async () => {
+        const { post, commenter, commentByCommenter } = fixtures;
+        const { body } = await get(
+          `/admin/comments/${idOf(commentByCommenter)}`
+        );
+        const { relationships } = body.data as Resource;
+
+        expect(relationships?.user).to.deep.equal({
+          data: ref('users', commenter),
+          links: { self: `${DOMAIN}/admin/users/${idOf(commenter)}` }
+        });
+        expect(relationships?.post).to.deep.equal({
+          data: ref('posts', post),
+          links: { self: `${DOMAIN}/admin/posts/${idOf(post)}` }
+        });
+      });
+
+      it('gives included resources only the namespaced relationships', async () => {
+        const { commenter, commentByCommenter } = fixtures;
+        const { body } = await get(
+          `/admin/comments/${idOf(commentByCommenter)}?include=user`
+        );
+
+        // AdminUsersSerializer: hasMany = ['posts', 'comments'] — not the root
+        // serializer's followees/followers/reactions.
+        expect(
+          byKey(body).get(keyFor(ref('users', commenter)))?.relationships
+        ).to.have.all.keys(['posts', 'comments']);
+      });
+
+      it('only allows include paths the namespace exposes', async () => {
+        const { commentByCommenter, post } = fixtures;
+        const id = idOf(commentByCommenter);
+
+        // `user.followers` exists through UsersSerializer, not through
+        // AdminUsersSerializer: allowed publicly, rejected under `/admin` —
+        // directly below the fallback serializer and one level further down.
+        expect(
+          (await get(`/comments/${id}?include=user.followers`)).status
+        ).to.equal(200);
+        expect(
+          (await get(`/admin/comments/${id}?include=user.followers`)).status
+        ).to.equal(400);
+        expect(
+          (
+            await get(
+              `/admin/posts/${idOf(post)}?include=comments.user.followers`
+            )
+          ).status
+        ).to.equal(400);
+        expect(
+          (await get(`/admin/comments/${id}?include=user.posts`)).status
+        ).to.equal(200);
+      });
+
+      it('validates `fields` against the namespaced serializers', async () => {
+        const { commenter, commentByCommenter } = fixtures;
+        const { status, body } = await get(
+          `/admin/comments/${idOf(commentByCommenter)}?include=user&fields[users]=createdAt`
+        );
+
+        expect(status).to.equal(200);
+        expect(
+          byKey(body).get(keyFor(ref('users', commenter)))?.attributes
+        ).to.have.all.keys(['created-at']);
+      });
+
+      it('loads first-level includes with the namespaced attributes', async () => {
+        const { commenter, commentByCommenter } = fixtures;
+        const { body } = await get(
+          `/admin/comments/${idOf(commentByCommenter)}?include=user`
+        );
+
+        expect(byKey(body).get(keyFor(ref('users', commenter)))?.attributes)
+          .to.have.property('created-at')
+          .that.is.a('string');
+      });
+    });
+
+    it('keeps using the root serializers outside the namespace', async () => {
+      const { post, author } = fixtures;
+      const { body } = await get(`/posts/${idOf(post)}?include=user`);
+      const user = byKey(body).get(keyFor(ref('users', author)));
+
+      expect(user?.attributes).to.deep.equal({
+        name: 'Ada Author',
+        email: 'ada.author@example.com'
+      });
+      expect(user?.links).to.deep.equal({
+        self: `${DOMAIN}/users/${idOf(author)}`
+      });
+    });
+  });
 });
