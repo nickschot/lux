@@ -1,4 +1,5 @@
 import { FreezeableSet, freezeProps, deepFreezeProps } from '../../freezeable';
+import { primaryKeyType } from '../../database';
 import type Controller from '../../controller';
 import type { Request, Response, Request$method } from '../../server';
 
@@ -103,19 +104,29 @@ class Route extends FreezeableSet<Action<unknown>> {
     this.freeze();
   }
 
-  parseParams(params: Array<string>): Record<string, number> {
-    return params.reduce<Record<string, number>>((result, value, idx) => {
-      const key = this.dynamicSegments[idx];
+  /**
+   * The ids in the request path, keyed by their dynamic segment: a number for
+   * a numeric primary key (or a model-less controller), else as written.
+   */
+  parseParams(params: Array<string>): Record<string, number | string> {
+    const { model } = this.controller;
+    const isNumeric = !model || primaryKeyType(model) === 'number';
 
-      if (key) {
-        return {
-          ...result,
-          [key]: Number.parseInt(value, 10)
-        };
-      }
+    return params.reduce<Record<string, number | string>>(
+      (result, value, idx) => {
+        const key = this.dynamicSegments[idx];
 
-      return result;
-    }, {});
+        if (key) {
+          return {
+            ...result,
+            [key]: isNumeric ? Number.parseInt(value, 10) : value
+          };
+        }
+
+        return result;
+      },
+      {}
+    );
   }
 
   async execHandlers(req: Request, res: Response): Promise<unknown> {

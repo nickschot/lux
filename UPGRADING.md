@@ -375,6 +375,23 @@ created through the join model (so its timestamps and hooks apply), and rows
 that stay are left untouched. No app change is needed; an app that worked
 around this by writing join rows itself can drop the workaround.
 
+## 17. Routing — string ids, 405, HEAD and OPTIONS
+
+- **Resources with a non-numeric primary key are routable.** A request path
+  used to match a member route only if the id was an integer, so a uuid or
+  other string key gave `404` for every member route. Now a resource whose
+  primary key column is not numeric accepts any path segment as its id
+  (percent-decoded, passed to the controller as a string); integer keys still
+  only match integers (`/posts/abc` stays a `404`). Paths a route defines
+  literally (`/users/login`) are never read as ids.
+- **`405 Method Not Allowed`, with `Allow`, for a method a path does not
+  support** (`PUT /posts/1`, `GET /users/login`). It used to be a `404`.
+- **`HEAD` runs the `GET` action** and answers with its status and headers,
+  without a body. It used to answer `204` without running anything.
+- **`OPTIONS` responses list the path's methods in `Allow`.**
+- **A created resource's `links.self` equals its `Location`** (`/tags/101`).
+  It used to be the collection's URL (`/tags`).
+
 ## The short version
 
 Bump `pg`/`mysql2` and run Node 20 (required); delete `.babelrc` and the

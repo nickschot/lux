@@ -21,6 +21,11 @@ export default function routes() {
 
   this.resource('images');
 
+  // String ids, which the database cannot generate: no `create`.
+  this.resource('languages', {
+    only: ['show', 'index', 'update', 'destroy']
+  });
+
   this.resource('notifications', {
     only: ['show', 'index']
   });
