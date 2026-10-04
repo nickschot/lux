@@ -95,19 +95,19 @@ describe('module "controller"', () => {
         body: JSON.stringify({
           data: {
             id: '1',
-            type: 'posts',
-            relationships: { tags: { data: [] }, nope: { data: null } }
+            type: 'tags',
+            relationships: { nope: { data: null } }
           }
         })
       });
       const { errors } = await res.json();
 
-      // A 403 and a 400: the response takes the more general 400.
+      // A 409 and a 400: the response takes the more general 400.
       expect(res.status).to.equal(400);
       expect(
         errors.map(({ status, source }) => [status, source.pointer])
       ).to.have.deep.members([
-        ['403', '/data/relationships/tags'],
+        ['409', '/data/type'],
         ['400', '/data/relationships/nope']
       ]);
     });
