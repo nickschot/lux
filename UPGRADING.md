@@ -279,6 +279,22 @@ custom action, `await post.comments`); narrow those with
 - **Member names may be dasherized** (`fields[posts]=created-at`), as they
   appear in responses. Before, only the camelCase spelling matched.
 
+## 12. Pagination — links and page limits
+
+- **`links.self` is never `null`.** Past the last page it is the page that was
+  requested (`prev`/`next` are `null` there, as before). Before, `self` was
+  `null` whenever `page[number]` exceeded the last page.
+- **Page links keep the request's query string as written.** Only
+  `page[number]` changes between them. Before, links were rebuilt from the
+  parsed params, so member names came back camelCased (`sort=-createdAt` for a
+  request with `sort=-created-at`) and an empty value became `null`.
+- **`page[size]` and `page[number]` must be at least 1**, and `page[size]` at
+  most the controller's new **`maxPerPage`** (default `100`); anything else is
+  a `400` with `source.parameter`. Before, `page[size]=0` returned an empty
+  page with a `last` link to `page[number]=Infinity`, and any size was served.
+  Set `maxPerPage` on a controller (or `ApplicationController`) if clients
+  need larger pages.
+
 ## The short version
 
 Bump `pg`/`mysql2` and run Node 20 (required); delete `.babelrc` and the

@@ -1,6 +1,7 @@
 import { FreezeableSet } from '../../../../freezeable';
 import validateType from '../utils/validate-type';
 
+import validateRange from './utils/validate-range';
 import validateValue from './utils/validate-value';
 import type { Parameter$opts } from './interfaces';
 
@@ -25,12 +26,29 @@ class Parameter extends FreezeableSet<unknown> {
    */
   declare restricted: boolean;
 
-  constructor({ path, type, values, required, sanitize }: Parameter$opts) {
+  /**
+   * Inclusive bounds of a `number` parameter, when given.
+   */
+  declare min?: number;
+
+  declare max?: number;
+
+  constructor({
+    path,
+    type,
+    values,
+    min,
+    max,
+    required,
+    sanitize
+  }: Parameter$opts) {
     super(values);
 
     Object.assign(this, {
       path,
       type,
+      min,
+      max,
       required: Boolean(required),
       sanitize: Boolean(sanitize),
       restricted: values !== undefined
@@ -41,6 +59,7 @@ class Parameter extends FreezeableSet<unknown> {
 
   validate<V>(value: V): V {
     validateType(this, value);
+    validateRange(this, value);
 
     if (this.restricted) {
       return validateValue(this, value);

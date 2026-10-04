@@ -1,90 +1,74 @@
-import omit from '../../../../../utils/omit';
-import merge from '../../../../../utils/merge';
-import createQueryString from '../../../../../utils/create-query-string';
 import type { Request$params } from '../../../../server';
 import type { JSONAPI$DocumentLinks } from '../../../../jsonapi';
 
+const PAGE_NUMBER = 'page[number]';
+
+/**
+ * Percent-encode a query string component, leaving commas — which separate
+ * list values (`include=user,comments`) and are allowed in a query — as is.
+ *
+ * @private
+ */
+function encode(value: string): string {
+  return encodeURIComponent(value).replace(/%2C/gi, ',');
+}
+
 function createLinkTemplate({
-  total,
-  params,
+  search,
   domain,
-  pathname,
-  defaultPerPage
+  pathname
 }: {
-  total: number;
-  params: Request$params;
+  search: string;
   domain: string;
   pathname: string;
-  defaultPerPage: number;
 }) {
-  const { page: { size = defaultPerPage } = {} } = params;
   const baseURL = `${domain}${pathname}`;
-  const queryURL = `${baseURL}?`;
-  const baseParams = omit(params, 'page');
-  const lastPageNum = total > 0 ? Math.ceil(total / size) : 1;
 
-  if (size && size !== defaultPerPage) {
-    baseParams.page = { size };
-  }
+  // The request's own query, as the client wrote it (member names, order,
+  // values), so links round-trip exactly; only the page number varies.
+  const query = Array.from(new URLSearchParams(search)).filter(
+    ([key]) => key !== PAGE_NUMBER
+  );
 
-  const hasParams = Object.keys(baseParams).length;
+  return function linkTemplate(pageNum: number): string {
+    const pairs =
+      pageNum > 1 ? [...query, [PAGE_NUMBER, String(pageNum)]] : query;
 
-  return function linkTemplate(
-    pageNum: number | 'first' | 'last'
-  ): string | null {
-    let normalized: number;
-
-    switch (pageNum) {
-      case 'first':
-        normalized = 1;
-        break;
-
-      case 'last':
-        normalized = lastPageNum;
-        break;
-
-      default:
-        normalized = pageNum;
+    if (!pairs.length) {
+      return baseURL;
     }
 
-    if (normalized < 1 || normalized > lastPageNum) {
-      return null;
-    } else if (normalized > 1) {
-      const paramsForPage = merge(baseParams, {
-        page: {
-          number: normalized
-        }
-      });
-
-      return (
-        queryURL + createQueryString(paramsForPage as Record<string, unknown>)
-      );
-    }
-
-    return hasParams
-      ? queryURL + createQueryString(baseParams as Record<string, unknown>)
-      : baseURL;
+    return `${baseURL}?${pairs
+      .map(([key, value]) => `${encode(key)}=${encode(value)}`)
+      .join('&')}`;
   };
 }
 
 /**
+ * The top level `links` of a paginated collection. `self` is always the page
+ * requested — even past the last one, where `prev`/`next` are `null` — and
+ * every link keeps the rest of the request's query string as is.
+ *
  * @private
  */
 export default function createPageLinks(opts: {
   total: number;
   params: Request$params;
+  search: string;
   domain: string;
   pathname: string;
   defaultPerPage: number;
 }): JSONAPI$DocumentLinks {
-  const { page: { number = 1 } = {} } = opts.params;
+  const { page: { number = 1, size = opts.defaultPerPage } = {} } = opts.params;
+  const lastPageNum = opts.total > 0 ? Math.ceil(opts.total / size) : 1;
   const linkForPage = createLinkTemplate(opts);
+  const inRange = (pageNum: number) => pageNum >= 1 && pageNum <= lastPageNum;
 
   return {
     self: linkForPage(number),
-    first: linkForPage('first'),
-    last: linkForPage('last'),
-    prev: linkForPage(number - 1),
-    next: linkForPage(number + 1)
+    first: linkForPage(1),
+    last: linkForPage(lastPageNum),
+    prev: inRange(number - 1) ? linkForPage(number - 1) : null,
+    next: inRange(number + 1) ? linkForPage(number + 1) : null
   };
 }

@@ -30,7 +30,7 @@ export default function resource(action: Action<unknown>): Action<unknown> {
 
       const {
         params,
-        url: { path, pathname },
+        url: { path, pathname, search },
         route: { controller }
       } = req;
       const { namespace, serializer, defaultPerPage } = controller;
@@ -42,6 +42,7 @@ export default function resource(action: Action<unknown>): Action<unknown> {
           params,
           domain,
           pathname,
+          search: search || '',
           defaultPerPage,
           total: total || 0
         });
