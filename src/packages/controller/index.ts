@@ -517,7 +517,7 @@ class Controller {
   serializerFallback: boolean = true;
 
   /**
-   * The Serializer to serialize (and validate, and load) related resources of
+   * The Serializer to serialize (and validate the `fields` of) related resources of
    * this Controller's responses with: the related model's Serializer in this
    * Controller's namespace, falling back to the root one.
    *
@@ -640,7 +640,7 @@ class Controller {
    * @public
    */
   index(req: Request): Query<Array<Model>> {
-    return findMany(this.model, req, related => this.serializerFor(related));
+    return findMany(this.model, req);
   }
 
   /**
@@ -656,7 +656,7 @@ class Controller {
    * @public
    */
   show(req: Request): Query<Model> {
-    return findOne(this.model, req, related => this.serializerFor(related));
+    return findOne(this.model, req);
   }
 
   /**
@@ -712,7 +712,7 @@ class Controller {
   update(req: Request): Promise<number | Model> {
     const { model } = this;
 
-    return findOne(model, req, related => this.serializerFor(related))
+    return findOne(model, req)
       .then(async record => {
         const {
           params: {
@@ -748,7 +748,7 @@ class Controller {
    * @public
    */
   destroy(req: Request): Promise<number> {
-    return findOne(this.model, req, related => this.serializerFor(related))
+    return findOne(this.model, req)
       .then(record => record.destroy())
       .then(() => 204);
   }

@@ -108,17 +108,19 @@ describe('compound documents over HTTP', () => {
   };
 
   /**
-   * The oracle: every relationship of every included resource must agree with
-   * what the model's own lazy relationship getters load from the database.
-   * Holds for any data, so it also checks collections over the random seed.
-   *
-   * Primary data is left to the exact fixture assertions above: its has-one
-   * linkage comes from the query's join, which picks an arbitrary row when the
-   * (random) seed gives a record several has-one candidates, whereas the
-   * getter — and the batch loader behind `included` — take the lowest id.
+   * The oracle: every relationship of every resource — primary data and
+   * included alike — must agree with what the model's own lazy relationship
+   * getters load from the database. Holds for any data, so it also checks
+   * collections over the random seed.
    */
-  async function expectLinkageMatchesDatabase({ included = [] }: Document) {
-    const resources = included;
+  async function expectLinkageMatchesDatabase({
+    data,
+    included = []
+  }: Document) {
+    const resources = [
+      ...(Array.isArray(data) ? data : data ? [data] : []),
+      ...included
+    ];
 
     for (const { id, type, relationships = {} } of resources) {
       const model = modelFor(type);
@@ -600,6 +602,25 @@ describe('compound documents over HTTP', () => {
   });
 
   describe('nested include paths', () => {
+    it('applies `fields[type]` at every level the type appears', async () => {
+      const { post, author, commenter } = fixtures;
+      const { status, body } = await get(
+        `/posts/${idOf(post)}?include=user,comments.user&fields[users]=name`
+      );
+
+      expect(status).to.equal(200);
+      expectValidCompoundDocument(body);
+
+      // The author is reached directly, the commenter only through comments.
+      [author, commenter].forEach(user => {
+        const resource = (body.included || []).find(
+          item => keyFor(item) === keyFor(ref('users', user))
+        );
+
+        expect(resource?.attributes).to.have.all.keys(['name']);
+      });
+    });
+
     it('includes the intermediate and the leaf resources', async () => {
       const { post, author, commenter, commentByAuthor, commentByCommenter } =
         fixtures;

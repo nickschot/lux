@@ -63,6 +63,17 @@ describe('module "controller"', () => {
         .and.deep.equal(['id', 'body', 'title']);
     });
 
+    it('loads no relationships', () => {
+      const subject = createParams({
+        fields: {
+          users: ['name']
+        },
+        include: ['user', 'comments.user']
+      });
+
+      expect(paramsToQuery(Post, subject)).not.to.have.property('include');
+    });
+
     describe('- page', () => {
       const subject = createParams({
         page: {
@@ -102,74 +113,6 @@ describe('module "controller"', () => {
         expect(result)
           .to.have.property('sort')
           .and.deep.equal(['title', 'DESC']);
-      });
-    });
-
-    describe('- fields', () => {
-      it('can properly build included fields', () => {
-        const subject = createParams({
-          fields: {
-            users: ['name']
-          },
-          include: ['user']
-        });
-
-        const result = paramsToQuery(Post, subject);
-
-        expect(result)
-          .to.have.property('include')
-          .and.deep.equal({
-            user: ['id', 'name']
-          });
-      });
-
-      it('loads the first segment of a nested include path', () => {
-        const subject = createParams({
-          fields: {
-            comments: ['id']
-          },
-          include: ['comments.user']
-        });
-
-        const result = paramsToQuery(Post, subject);
-
-        expect(result)
-          .to.have.property('include')
-          .and.deep.equal({
-            comments: [
-              'id',
-              ...Post.relationshipFor('comments').model.serializer.attributes
-            ]
-          });
-      });
-
-      it('ignores invalid field sets', () => {
-        const subject = createParams({
-          fields: {
-            authors: ['name']
-          },
-          include: ['author']
-        });
-
-        const result = paramsToQuery(Post, subject);
-
-        expect(result).to.have.property('include').and.deep.equal({});
-      });
-
-      it('only adds `id` when the include array is `undefined`', () => {
-        const subject = createParams({
-          fields: {
-            images: ['id', 'url']
-          }
-        });
-
-        const result = paramsToQuery(Post, subject);
-
-        expect(result)
-          .to.have.property('include')
-          .and.deep.equal({
-            image: ['id']
-          });
       });
     });
   });

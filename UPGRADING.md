@@ -94,9 +94,10 @@ byte-for-byte unchanged**; what changed is `included`:
   with `maxIncludeDepth` on a controller (or on `ApplicationController` for the
   whole app); `maxIncludeDepth = 1` restores the old behaviour of direct
   relationships only. Intermediate resources are included too
-  (`comments.user` also includes the comments), as the spec requires. Nested
-  levels are serialized with the related serializer's `attributes`; `fields[]`
-  still only applies to the resource and its direct relationships.
+  (`comments.user` also includes the comments), as the spec requires.
+  `fields[type]` narrows included resources of that type at every level it
+  appears (§9); `fields[]` accepts the resource's own type and those of its
+  direct relationships.
 - **Included resources follow the request's namespace** — the namespace of
   the controller handling the request, at every level of the include tree. On
   `/admin/posts`, included comments use `AdminCommentsSerializer` if you have
@@ -176,6 +177,31 @@ A relationship name the model does not have at all is still `400`.
 
 Attributes the controller does not accept are still silently dropped (clients
 such as ember-data send every attribute, including read-only ones).
+
+## 9. Relationship loading — one batched path
+
+Built-in actions no longer join relationships into the primary query.
+`index`/`show`/`update`/`destroy` load only the primary rows; the serializer
+then batch-loads the resource linkage of primary data and builds `included`
+the same way it already did for nested include levels — one query per
+relationship, never one per record.
+
+- **Responses are unchanged**, with two corrections: a has-one with several
+  candidate rows now always links the lowest id (the join picked an arbitrary
+  one, and could repeat the primary row), and `fields[type]` now applies to
+  every included resource of that type, not only those reached through a
+  direct relationship. A fieldset for the primary type still only narrows
+  primary data.
+- **Query count per request is constant**, typically a few queries more than
+  before (the has-one and the belongs-to linkage are no longer folded into the
+  join), while self-referential relationships (`/users?include=followers`) stop
+  costing a query per record.
+- **Custom actions:** a relationship pre-loaded with `.include()` on a query a
+  custom action returns is no longer what gets serialized — linkage and
+  `included` are always loaded by the serializer. Drop the `.include()`.
+  Likewise, records returned by `super.index()`/`super.show()` no longer carry
+  related records in their column data; read them through the relationship
+  (`await post.user`).
 
 ## The short version
 

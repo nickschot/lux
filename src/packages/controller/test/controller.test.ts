@@ -125,7 +125,9 @@ describe('module "controller"', () => {
         result.forEach(item => assertRecord(item, ['id', 'title']));
       });
 
-      it('supports eager loading relationships', async () => {
+      // Relationships are batch-loaded by the serializer, not joined into
+      // the primary query (see compound-documents.test).
+      it('loads only primary data when relationships are included', async () => {
         const request = createRequest({
           include: ['user'],
           fields: {
@@ -136,16 +138,7 @@ describe('module "controller"', () => {
         const result = await subject.index(request);
 
         expect(result).to.be.an('array').with.lengthOf(25);
-
-        result.forEach(item => {
-          assertRecord(item, [...attributes, 'user']);
-
-          expect(item.rawColumnData.user).to.have.all.keys([
-            'id',
-            'name',
-            'email'
-          ]);
-        });
+        result.forEach(item => assertRecord(item));
       });
     });
 
@@ -196,7 +189,7 @@ describe('module "controller"', () => {
         assertRecord(result, ['id', 'title']);
       });
 
-      it('supports eager loading relationships', async () => {
+      it('loads only primary data when relationships are included', async () => {
         const request = createRequest({
           id: 1,
           include: ['user'],
@@ -208,16 +201,7 @@ describe('module "controller"', () => {
         const result = await subject.show(request);
 
         expect(result).to.be.ok;
-
-        if (result) {
-          assertRecord(result, [...attributes, 'user']);
-
-          expect(result.rawColumnData.user).to.have.all.keys([
-            'id',
-            'name',
-            'email'
-          ]);
-        }
+        assertRecord(result);
       });
     });
 
@@ -459,10 +443,9 @@ describe('module "controller"', () => {
 
         const result = await subject.update(request);
 
-        // The post had no user when it was loaded, so no `user` is eager-loaded
-        // into its column data (this used to be a phantom all-null record from
-        // the unmatched join) — the new one is reachable through the record.
-        assertRecord(result, [...attributes, 'comments']);
+        // No relationship is loaded into the column data; the new ones are
+        // reachable through the record.
+        assertRecord(result);
         expect(
           ((await Reflect.get(result, 'user')) as Model).getPrimaryKey()
         ).to.equal(newUser.getPrimaryKey());
