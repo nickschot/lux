@@ -154,7 +154,7 @@ JSON:API 1.0 (or plain HTTP) calls for, and error objects say *what* was wrong:
 | Situation | Was | Now |
 |---|---|---|
 | `POST` with `data.id` (client-generated IDs are unsupported) | `400` | `403` |
-| `data.relationships.<name>` for a relationship the model has but the controller's `params` does not list | `400` | `403` |
+| `data.relationships.<name>` for a relationship the model has but the controller's `params` does not list | `400` | ignored (see §15) |
 | A relationship referencing a resource that does not exist (`POST`/`PATCH`) | `201`/`200`, dangling linkage saved | `404` |
 | A model validator (`static validates`) fails | `500` | `422` |
 | A unique constraint is violated on create/update | `500` (SQL in `detail` in development) | `409` |
@@ -345,6 +345,24 @@ read or replace the linkage; the related resource's own URL is not that, and
 a client following it as one would misbehave. The URL itself is unchanged.
 Clients that read `relationships.*.links.self` must read `links.related`
 instead. To-many relationships still carry only `data`.
+
+## 15. Members the controller does not accept — ignored; unknown ones — `400`
+
+A `POST`/`PATCH` body is checked against the model and the controller's
+`params`, the same way for attributes and relationships:
+
+- **A member the model has but `params` does not list is ignored** — dropped
+  before the action runs, and the request succeeds. This lets clients that
+  send whole resources back keep working: ember-data serializes every
+  attribute (read-only ones such as `created-at` included) and every
+  `belongsTo`. Attributes were already ignored; **relationships used to be a
+  `403`** (§8) and are now ignored too.
+- **A member the model does not have is a `400 Bad Request`** with a pointer
+  (`/data/attributes/nope`). Attributes like that used to be silently dropped.
+
+Rejecting read-only members with a `403` instead is a defensible reading of
+JSON:API too; the trade-offs (and a strict variant) are discussed in
+nickschot/lux#47.
 
 ## The short version
 

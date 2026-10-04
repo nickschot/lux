@@ -1,5 +1,5 @@
 import Parameter from '../parameter';
-import ForbiddenParameter from '../parameter/forbidden-parameter';
+import IgnoredParameter from '../parameter/ignored-parameter';
 import ParameterGroup from '../parameter-group';
 import isNull from '../../../../../utils/is-null';
 import { typeForColumn } from '../../../../database';
@@ -67,32 +67,43 @@ function getAttributesParam(
   { model, params }: Controller,
   method: 'PATCH' | 'POST'
 ): [string, ParameterLike] {
+  // Attributes the model has but the controller does not accept are
+  // dropped; a name the model does not have at all is a 400.
+  const ignored = model.attributeNames
+    .filter(name => !params.includes(name))
+    .map((name): [string, ParameterLike] => [
+      name,
+      new IgnoredParameter(`data.attributes.${name}`)
+    ]);
+
   return [
     'attributes',
     new ParameterGroup(
-      params.reduce<Array<[string, ParameterLike]>>((group, param) => {
-        const col = model.columnFor(param);
+      [
+        ...params.reduce<Array<[string, ParameterLike]>>((group, param) => {
+          const col = model.columnFor(param);
 
-        if (col) {
-          const type = typeForColumn(col);
-          const path = `data.attributes.${param}`;
-          const required =
-            method !== 'PATCH' && !col.nullable && isNull(col.defaultValue);
+          if (col) {
+            const type = typeForColumn(col);
+            const path = `data.attributes.${param}`;
+            const required =
+              method !== 'PATCH' && !col.nullable && isNull(col.defaultValue);
 
-          return [
-            ...group,
-            [
-              param,
-              new Parameter({ type, path, required, parse: parserFor(type) })
-            ]
-          ];
-        }
+            return [
+              ...group,
+              [
+                param,
+                new Parameter({ type, path, required, parse: parserFor(type) })
+              ]
+            ];
+          }
 
-        return group;
-      }, []),
+          return group;
+        }, []),
+        ...ignored
+      ],
       {
-        path: 'data.attributes',
-        sanitize: true
+        path: 'data.attributes'
       }
     )
   ];
@@ -144,13 +155,13 @@ function getRelationshipsParam({
   model,
   params
 }: Controller): [string, ParameterLike] {
-  // Relationships the model has but the controller does not accept get a 403
-  // (unsupported update) instead of the 400 an unknown member gets.
-  const forbidden = Object.keys(model.relationships)
+  // Relationships the model has but the controller does not accept are
+  // dropped, like attributes; a name the model does not have is a 400.
+  const ignored = Object.keys(model.relationships)
     .filter(key => !params.includes(key))
     .map((key): [string, ParameterLike] => [
       key,
-      new ForbiddenParameter(`data.relationships.${key}`)
+      new IgnoredParameter(`data.relationships.${key}`)
     ]);
 
   return [
@@ -194,7 +205,7 @@ function getRelationshipsParam({
             ]
           ];
         }, []),
-        ...forbidden
+        ...ignored
       ],
       {
         path: 'data.relationships'

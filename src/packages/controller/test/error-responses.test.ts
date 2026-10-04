@@ -52,22 +52,7 @@ describe('module "controller"', () => {
       expect(error.source).to.deep.equal({ pointer: '/data/id' });
     });
 
-    it('responds 403 to a relationship the controller does not accept', async () => {
-      const { status, error } = await request('PATCH', '/posts/1', {
-        data: {
-          id: '1',
-          type: 'posts',
-          relationships: { tags: { data: [] } }
-        }
-      });
-
-      expect(status).to.equal(403);
-      expect(error.source).to.deep.equal({
-        pointer: '/data/relationships/tags'
-      });
-    });
-
-    it('still responds 400 to a relationship the model does not have', async () => {
+    it('responds 400 to a relationship the model does not have', async () => {
       const { status, error } = await request('PATCH', '/posts/1', {
         data: {
           id: '1',
@@ -80,6 +65,27 @@ describe('module "controller"', () => {
       expect(error.source).to.deep.equal({
         pointer: '/data/relationships/nope'
       });
+    });
+
+    it('responds 400 to an attribute the model does not have', async () => {
+      for (const method of ['POST', 'PATCH']) {
+        const { status, error } = await request(
+          method,
+          method === 'POST' ? '/tags' : '/tags/1',
+          {
+            data: {
+              ...(method === 'PATCH' && { id: '1' }),
+              type: 'tags',
+              attributes: { name: 'x', nope: true }
+            }
+          }
+        );
+
+        expect(status, method).to.equal(400);
+        expect(error.source, method).to.deep.equal({
+          pointer: '/data/attributes/nope'
+        });
+      }
     });
 
     it('responds 404 to a related resource that does not exist', async () => {

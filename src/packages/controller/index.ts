@@ -344,6 +344,11 @@ class Controller {
    * Serializer that represents a Controller's resource. If the Serializer
    * cannot be resolved, this property will default to an empty array.
    *
+   * An attribute or relationship the model has but this list does not name is
+   * ignored (dropped from `request.params`), so clients may send read-only
+   * members back; a member the model does not have at all is answered with
+   * `400 Bad Request`.
+   *
    * @property params
    * @type {Array}
    * @default []

@@ -4,5 +4,4 @@ export { default as InvalidParameterError } from './invalid-parameter-error';
 export { default as ResourceMismatchError } from './resource-mismatch-error';
 export { default as ParameterRequiredError } from './parameter-required-error';
 export { default as ClientGeneratedIdError } from './client-generated-id-error';
-export { default as ForbiddenParameterError } from './forbidden-parameter-error';
 export { default as ParameterRangeError } from './parameter-range-error';
