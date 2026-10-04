@@ -6,8 +6,8 @@ import { VERSION } from '../jsonapi';
 import { freezeProps } from '../freezeable';
 import closestAncestor from '../loader/resolver/utils/closest-ancestor';
 import type { Bundle$Namespace } from '../loader';
+import omit from '../../utils/omit';
 import underscore from '../../utils/underscore';
-import promiseHash from '../../utils/promise-hash';
 import { dasherizeKeys } from '../../utils/transform-keys';
 import type { Model, ModelClass } from '../database';
 import type {
@@ -17,7 +17,8 @@ import type {
   JSONAPI$RelationshipObject
 } from '../jsonapi';
 
-import type { Serializer$opts } from './interfaces';
+import type { Serializer$fields, Serializer$opts } from './interfaces';
+import { Scope } from '../controller/visibility';
 import loadLinkage from './utils/load-linkage';
 import type { Linkage } from './utils/load-linkage';
 import { createIncludeTree } from './utils/include-tree';
@@ -488,6 +489,14 @@ class Serializer<T extends Model> {
    * top level included object of the returned [JSON API](http://jsonapi.org)
    * document object. Intermediate resources of a nested path are included too.
    *
+   * @param {Object} options.fields - The request's sparse fieldsets, keyed by
+   * type. They narrow the attributes loaded for included resources; primary
+   * data was already loaded with its own.
+   *
+   * @param {Scope} options.scope - The visibility rules of the request. Every
+   * related record loaded for the document — its linkage and `included` — is
+   * narrowed by them; primary data was already loaded through them.
+   *
    * @param {String} options.namespace - The namespace of the request, i.e. of
    * the Controller handling it. Every link in the document is built in it, and
    * included resources are serialized by their Serializer in it (falling back
@@ -505,65 +514,56 @@ class Serializer<T extends Model> {
     links,
     domain,
     include,
+    fields = {},
+    scope = Scope.none,
     namespace = this.namespace
   }: {
     data: T | Array<T>;
     links: JSONAPI$DocumentLinks;
     domain: string;
     include: Array<string>;
+    fields?: Serializer$fields;
+    scope?: Scope;
     namespace?: string;
   }): Promise<JSONAPI$Document> {
     const tree = createIncludeTree(include);
-    const related = new Map<string, Array<Model>>();
     const included = new Map<string, JSONAPI$ResourceObject>();
-    const names = Array.from(tree.keys());
-    let primary: Array<JSONAPI$ResourceObject>;
-    let serialized: Record<string, unknown>;
+    const records = Array.isArray(data) ? data : [data];
+    const names = [...this.hasOne, ...this.hasMany];
+    // A fieldset for the primary type selects primary data's attributes (the
+    // query already did); included resources of that type stay complete.
+    const related = omit(fields, this.model.resourceName) as Serializer$fields;
 
-    if (Array.isArray(data)) {
-      primary = await Promise.all(
-        data.map(item =>
-          this.formatOne({
-            item,
-            domain,
-            related,
-            namespace,
-            include: names
-          })
-        )
-      );
-
-      serialized = { data: primary };
-    } else {
-      const resource = await this.formatOne({
-        domain,
-        related,
-        namespace,
-        item: data,
-        include: names,
-        links: false
-      });
-
-      primary = [resource];
-      serialized = { data: resource };
-    }
-
-    // Walk the include tree in request order, so `included` is deterministic.
-    for (const [name, children] of tree) {
-      const opts = this.model.relationshipFor(name);
-      const records = related.get(name);
-
-      if (opts && records) {
-        await this.addIncluded({
+    // Primary data takes the same path as every include level: its linkage
+    // is batch-loaded per relationship, then `included` is built from it.
+    const linkage = await loadLinkage(this.model, records, names, scope);
+    const primary = await Promise.all(
+      records.map(item =>
+        this.formatOne({
+          item,
           domain,
-          records,
-          included,
           namespace,
-          model: opts.model,
-          tree: children
-        });
-      }
-    }
+          linkage: linkage.get(String(item.getPrimaryKey())),
+          links: Array.isArray(data) ? undefined : false
+        })
+      )
+    );
+
+    await this.includeRelated({
+      tree,
+      names,
+      scope,
+      domain,
+      linkage,
+      included,
+      namespace,
+      model: this.model,
+      fields: related
+    });
+
+    let serialized: Record<string, unknown> = {
+      data: Array.isArray(data) ? primary : primary[0]
+    };
 
     // A compound document must not repeat a primary resource in `included`.
     primary.forEach(resource => {
@@ -591,13 +591,9 @@ class Serializer<T extends Model> {
 
   /**
    * Transform a single Model instance into a [JSON API](http://jsonapi.org)
-   * resource object.
-   *
-   * Relationships are serialized in one of two ways. By default each one is
-   * read from the Model instance (for primary data the query has already
-   * loaded them). When `linkage` is given — as it is for included resources,
-   * whose relationships are batch-loaded by `addIncluded()` — the resource
-   * linkage is built from it instead, without touching the database.
+   * resource object. Its attributes are the ones both loaded on `item` and
+   * declared by this Serializer; its relationships are built from `linkage`,
+   * batch-loaded by `loadLinkage()`, without touching the database.
    *
    * @method formatOne
    *
@@ -615,15 +611,8 @@ class Serializer<T extends Model> {
    * the top level links object or relationship links objects in the returned
    * [JSON API](http://jsonapi.org) resource object.
    *
-   * @param {Array} options.include - An array of the relationship keys whose
-   * related records should be collected into `options.related`.
-   *
-   * @param {Map} options.related - Collects, per relationship key in
-   * `options.include`, the related Model instances that belong in the top
-   * level included object of a [JSON API](http://jsonapi.org) document object.
-   *
-   * @param {Object} options.linkage - Pre-loaded resource linkage (related
-   * primary keys per relationship key) to serialize relationships from.
+   * @param {Object} options.linkage - The resource linkage (related primary
+   * keys per relationship key) to serialize relationships from.
    *
    * @param {String} options.namespace - The namespace to build links in.
    * Defaults to this Serializer's; included resources pass the namespace of
@@ -638,23 +627,18 @@ class Serializer<T extends Model> {
     item,
     links,
     domain,
-    include = [],
-    related,
-    linkage,
+    linkage = {},
     namespace = this.namespace
   }: {
     item: T;
     links?: boolean;
     domain: string;
-    include?: Array<string>;
-    related?: Map<string, Array<Model>>;
     linkage?: Linkage;
     namespace?: string;
   }): Promise<JSONAPI$ResourceObject> {
     const { resourceName: type } = item;
     const id = String(item.getPrimaryKey());
     const names = [...this.hasOne, ...this.hasMany];
-    let relationships: Record<string, JSONAPI$RelationshipObject>;
 
     const attributes = dasherizeKeys(
       item.getAttributes(
@@ -670,60 +654,20 @@ class Serializer<T extends Model> {
       attributes: attributes as JSONAPI$ResourceObject['attributes']
     };
 
-    if (linkage) {
-      relationships = names.reduce<Record<string, JSONAPI$RelationshipObject>>(
-        (hash, name) => ({
-          ...hash,
-          [dasherize(underscore(name))]: this.formatLinkage(
-            domain,
-            this.model.relationshipFor(name)?.model.resourceName,
-            linkage[name],
-            namespace
-          )
-        }),
-        {}
-      );
-    } else {
-      const collect = (name: string, records: Array<Model>) => {
-        if (related && include.includes(name)) {
-          related.set(name, [...(related.get(name) || []), ...records]);
-        }
-      };
-
-      relationships = (await promiseHash(
-        names.reduce<Record<string, unknown>>(
-          (hash, name) => ({
-            ...hash,
-
-            [dasherize(underscore(name))]: (async () => {
-              const value = (await Reflect.get(item, name)) as
-                Model | Array<Model> | null | undefined;
-
-              if (Array.isArray(value)) {
-                collect(name, value);
-
-                return {
-                  data: value.map(
-                    relatedItem =>
-                      this.formatRelationship(relatedItem, domain, namespace)
-                        .data
-                  )
-                };
-              } else if (value && (value as { id?: unknown }).id != null) {
-                collect(name, [value]);
-
-                return this.formatRelationship(value, domain, namespace);
-              }
-
-              return {
-                data: null
-              };
-            })()
-          }),
-          {}
+    const relationships = names.reduce<
+      Record<string, JSONAPI$RelationshipObject>
+    >(
+      (hash, name) => ({
+        ...hash,
+        [dasherize(underscore(name))]: this.formatLinkage(
+          domain,
+          this.model.relationshipFor(name)?.model.resourceName,
+          linkage[name],
+          namespace
         )
-      )) as Record<string, JSONAPI$RelationshipObject>;
-    }
+      }),
+      {}
+    );
 
     if (Object.keys(relationships).length) {
       serialized.relationships = relationships;
@@ -739,38 +683,8 @@ class Serializer<T extends Model> {
   }
 
   /**
-   * Transform a single Model instance into a [JSON API](http://jsonapi.org)
-   * relationship object.
-   *
-   * @method formatRelationship
-   *
-   * @param {Model} item - The Model instance to transform into the returned
-   * [JSON API](http://jsonapi.org) relationship object.
-   *
-   * @param {String} domain - A string used to build links included in the
-   * returned [JSON API](http://jsonapi.org) relationship object.
-   *
-   * @return {Object} A [JSON API](http://jsonapi.org) relationship object.
-   *
-   * @private
-   */
-  formatRelationship(
-    item: Model,
-    domain: string,
-    namespace: string = this.namespace
-  ): JSONAPI$RelationshipObject {
-    return this.formatLinkage(
-      domain,
-      item.resourceName,
-      String(item.getPrimaryKey()),
-      namespace
-    );
-  }
-
-  /**
    * Build a [JSON API](http://jsonapi.org) relationship object from resource
-   * linkage, in the same shape `formatRelationship()` produces from Model
-   * instances: to-one relationships carry a `links` object, to-many ones only
+   * linkage: to-one relationships carry a `links` object, to-many ones only
    * `data`, and a missing to-one relationship is `{ data: null }`.
    *
    * @method formatLinkage
@@ -820,14 +734,18 @@ class Serializer<T extends Model> {
     model,
     records,
     tree,
+    scope,
     domain,
+    fields,
     included,
     namespace
   }: {
     model: ModelClass;
     records: Array<Model>;
     tree: IncludeTree;
+    scope: Scope;
     domain: string;
+    fields: Serializer$fields;
     included: Map<string, JSONAPI$ResourceObject>;
     namespace: string;
   }): Promise<void> {
@@ -843,7 +761,7 @@ class Serializer<T extends Model> {
     }
 
     const names = [...serializer.hasOne, ...serializer.hasMany];
-    const linkage = await loadLinkage(model, unique, names);
+    const linkage = await loadLinkage(model, unique, names, scope);
 
     for (const item of unique) {
       const id = String(item.getPrimaryKey());
@@ -864,6 +782,51 @@ class Serializer<T extends Model> {
       }
     }
 
+    await this.includeRelated({
+      tree,
+      names,
+      model,
+      scope,
+      domain,
+      fields,
+      linkage,
+      included,
+      namespace
+    });
+  }
+
+  /**
+   * Load the records `linkage` points to through each relationship named in
+   * `tree` — one query per relationship, selecting the attributes their
+   * Serializer (narrowed by the request's `fields[type]`) will serialize —
+   * and add them to `included` with `addIncluded()`. Only the relationships in
+   * `names`, those the parent's Serializer exposes, are followed. The tree is
+   * walked in request order, so `included` is deterministic.
+   *
+   * @method includeRelated
+   * @private
+   */
+  async includeRelated({
+    model,
+    names,
+    linkage,
+    tree,
+    scope,
+    domain,
+    fields,
+    included,
+    namespace
+  }: {
+    model: ModelClass;
+    names: Array<string>;
+    linkage: Map<string, Linkage>;
+    tree: IncludeTree;
+    scope: Scope;
+    domain: string;
+    fields: Serializer$fields;
+    included: Map<string, JSONAPI$ResourceObject>;
+    namespace: string;
+  }): Promise<void> {
     for (const [name, children] of tree) {
       const opts = model.relationshipFor(name);
 
@@ -883,26 +846,55 @@ class Serializer<T extends Model> {
       });
 
       if (ids.size) {
-        // Load exactly the attributes the included resource will serialize.
-        const attributes = this.serializerFor(
-          next,
-          namespace
-        ).attributes.filter(attr => next.attributeNames.includes(attr));
-
-        const nextRecords = await next
-          .select(next.primaryKey, ...attributes)
-          .where({ [next.primaryKey]: Array.from(ids) });
+        // The linkage is already narrowed; applying the rules again costs
+        // nothing and keeps a hidden record out even if it were not.
+        const records = await scope.apply(
+          next
+            .select(
+              next.primaryKey,
+              ...this.attributesFor(next, namespace, fields)
+            )
+            .where({ [next.primaryKey]: Array.from(ids) })
+        );
 
         await this.addIncluded({
+          scope,
           domain,
+          fields,
+          records,
           included,
           namespace,
           model: next,
-          records: nextRecords,
           tree: children
         });
       }
     }
+  }
+
+  /**
+   * The attributes to load for included resources of `model`: those its
+   * Serializer in `namespace` declares, narrowed to the request's
+   * `fields[type]` when that names any of them.
+   *
+   * @method attributesFor
+   * @private
+   */
+  attributesFor(
+    model: ModelClass,
+    namespace: string,
+    fields: Serializer$fields
+  ): Array<string> {
+    const attributes = this.serializerFor(model, namespace).attributes.filter(
+      attr => model.attributeNames.includes(attr)
+    );
+    const fieldset = fields[model.resourceName];
+    const selected = fieldset
+      ? attributes.filter(attr => fieldset.includes(attr))
+      : attributes;
+
+    // A fieldset of just the primary key — what every related type defaults
+    // to — selects nothing, and so asks for the whole resource.
+    return selected.length ? selected : attributes;
   }
 
   /**

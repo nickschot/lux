@@ -94,9 +94,10 @@ byte-for-byte unchanged**; what changed is `included`:
   with `maxIncludeDepth` on a controller (or on `ApplicationController` for the
   whole app); `maxIncludeDepth = 1` restores the old behaviour of direct
   relationships only. Intermediate resources are included too
-  (`comments.user` also includes the comments), as the spec requires. Nested
-  levels are serialized with the related serializer's `attributes`; `fields[]`
-  still only applies to the resource and its direct relationships.
+  (`comments.user` also includes the comments), as the spec requires.
+  `fields[type]` narrows included resources of that type at every level it
+  appears (§9); `fields[]` accepts the resource's own type and those of its
+  direct relationships.
 - **Included resources follow the request's namespace** — the namespace of
   the controller handling the request, at every level of the include tree. On
   `/admin/posts`, included comments use `AdminCommentsSerializer` if you have
@@ -176,6 +177,75 @@ A relationship name the model does not have at all is still `400`.
 
 Attributes the controller does not accept are still silently dropped (clients
 such as ember-data send every attribute, including read-only ones).
+
+## 9. Relationship loading — one batched path
+
+Built-in actions no longer join relationships into the primary query.
+`index`/`show`/`update`/`destroy` load only the primary rows; the serializer
+then batch-loads the resource linkage of primary data and builds `included`
+the same way it already did for nested include levels — one query per
+relationship, never one per record.
+
+- **Responses are unchanged**, with two corrections: a has-one with several
+  candidate rows now always links the lowest id (the join picked an arbitrary
+  one, and could repeat the primary row), and `fields[type]` now applies to
+  every included resource of that type, not only those reached through a
+  direct relationship. A fieldset for the primary type still only narrows
+  primary data.
+- **Query count per request is constant**, typically a few queries more than
+  before (the has-one and the belongs-to linkage are no longer folded into the
+  join), while self-referential relationships (`/users?include=followers`) stop
+  costing a query per record.
+- **Custom actions:** a relationship pre-loaded with `.include()` on a query a
+  custom action returns is no longer what gets serialized — linkage and
+  `included` are always loaded by the serializer. Drop the `.include()`.
+  Likewise, records returned by `super.index()`/`super.show()` no longer carry
+  related records in their column data; read them through the relationship
+  (`await post.user`).
+
+## 10. Visibility rules — replace hand-rolled scoping (opt-in)
+
+Nothing changes until you declare rules. A namespace's `ApplicationController`
+can now say, once, which rows of each type its requests may see:
+
+```js
+// app/controllers/application.js
+class ApplicationController extends Controller {
+  static visibility = {
+    posts: query => query.isPublic(),
+    comments: (query, request) => query.where({ userId: request.viewerId })
+  };
+}
+
+// app/controllers/admin/application.js
+class AdminApplicationController extends ApplicationController {
+  static visibility = {}; // or { ...super.visibility, tags: ... }
+}
+```
+
+Lumen applies a type's rule wherever it loads that type for a request in the
+namespace: `index` (and its page links), `show`/`update`/`destroy` (hidden →
+`404`), the resource linkage of every relationship (a hidden to-one is `null`,
+a hidden to-many member is left out), `included` at any depth, and the related
+records a `create`/`update` references (hidden → `404`, like a missing one).
+That makes these idioms redundant — delete them once a rule covers the type:
+
+- `super.index(req).where(...)` / a scoped `show` override for visibility;
+- pruning ids out of relationship linkage;
+- `afterAction` hooks that filter hidden records out of the payload.
+
+Rules must return the query they are given synchronously and may only add
+conditions (`where`, `not`, `whereBetween`, `whereRaw`, model scopes built
+from them); anything else throws when the rule first runs. Compute what a rule
+needs in a `beforeAction` and read it from the request. Declaring
+`visibility` on any controller other than a namespace's
+`ApplicationController` — or for an unknown type, or with a non-function
+rule — fails the boot. A namespace without an `ApplicationController` uses the
+closest ancestor namespace's rules.
+
+Rules do not reach queries your code builds itself (`Post.where(...)` in a
+custom action, `await post.comments`); narrow those with
+`this.visible(query, request)`.
 
 ## The short version
 

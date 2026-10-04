@@ -8,6 +8,8 @@ import findOne from './utils/find-one';
 import findMany from './utils/find-many';
 import resolveRelationships from './utils/resolve-relationships';
 import validateRelationships from './utils/validate-relationships';
+import { scopeFor } from './visibility';
+import type { Visibility } from './visibility';
 import type {
   Controller$opts,
   Controller$beforeAction,
@@ -517,7 +519,84 @@ class Controller {
   serializerFallback: boolean = true;
 
   /**
-   * The Serializer to serialize (and validate, and load) related resources of
+   * Which rows of each type a request may see, declared once per namespace on
+   * its `ApplicationController`. Each rule receives a query of its type and
+   * the request, and returns the query narrowed:
+   *
+   * ```javascript
+   * // app/controllers/application.js
+   * class ApplicationController extends Controller {
+   *   static visibility = {
+   *     posts: query => query.isPublic(),
+   *     comments: (query, { currentUser }) =>
+   *       query.where({ userId: currentUser.id })
+   *   };
+   * }
+   * ```
+   *
+   * Lumen applies the rule wherever it loads rows of that type for a request
+   * in the namespace: `index` and its page links, `show`, `update` and
+   * `destroy` (a hidden record is `404 Not Found`, like a missing one), every
+   * relationship's resource linkage, `included` resources at any depth, and
+   * the related records referenced by a `create` or `update` (a hidden one is
+   * reported as not found). A to-one relationship to a hidden record is
+   * serialized as `null`; a to-many one leaves it out.
+   *
+   * Rules must be synchronous and may only add conditions (`where`, `not`,
+   * `whereBetween`, `whereRaw`, or model scopes built from them). Load what
+   * a rule needs in a `beforeAction` hook and read it from the request.
+   *
+   * A namespace's `ApplicationController` inherits its parent class's rules;
+   * extend or replace them with `super`:
+   *
+   * ```javascript
+   * // app/controllers/admin/application.js
+   * class AdminApplicationController extends ApplicationController {
+   *   static visibility = {}; // admins see everything
+   * }
+   * ```
+   *
+   * A namespace without an `ApplicationController` uses the closest ancestor
+   * namespace's rules. Declaring `visibility` on any other controller is a
+   * boot error: types are included across controllers, so a rule must hold
+   * for the whole namespace.
+   *
+   * Rules do not apply to queries an application builds itself, such as a
+   * custom action's `Post.where(...)` or a relationship read from a model
+   * (`await post.comments`). Narrow those with `visible()`.
+   *
+   * @property visibility
+   * @type {Object}
+   * @default {}
+   * @static
+   * @public
+   */
+  static visibility: Visibility = {};
+
+  /**
+   * Narrow `query` with the visibility rule for its type that applies to
+   * `request`'s namespace, as the built-in actions do.
+   *
+   * ```javascript
+   * class PostsController extends Controller {
+   *   drafts(request) {
+   *     return this.visible(Post.where({ isPublic: false }), request);
+   *   }
+   * }
+   * ```
+   *
+   * @method visible
+   * @param {Query} query - A query of any type.
+   * @param {Request} request - The request object.
+   * @return {Query} The same query, narrowed.
+   * @public
+   */
+  visible<Q extends Query<unknown>>(query: Q, request: Request): Q {
+    return scopeFor(this.visibility, request).apply(query);
+  }
+
+  /**
+   * The Serializer to serialize (and validate the `fields` of) related resources of
    * this Controller's responses with: the related model's Serializer in this
    * Controller's namespace, falling back to the root one.
    *
@@ -583,6 +662,17 @@ class Controller {
   declare controllers: Map<string, Controller>;
 
   /**
+   * The visibility rules of this Controller's namespace, resolved at boot
+   * from the `static visibility` of its (or the closest ancestor
+   * namespace's) `ApplicationController`.
+   *
+   * @property visibility
+   * @type {Object}
+   * @private
+   */
+  declare visibility: Visibility;
+
+  /**
    * A boolean value representing whether or not a Controller instance has a
    * Model.
    *
@@ -617,6 +707,8 @@ class Controller {
       model,
       namespace,
       serializer,
+      // Replaced at boot with the namespace's rules (`resolveVisibility()`).
+      visibility: (this.constructor as typeof Controller).visibility,
       hasModel: Boolean(model),
       hasNamespace: Boolean(namespace),
       hasSerializer: Boolean(serializer)
@@ -640,7 +732,7 @@ class Controller {
    * @public
    */
   index(req: Request): Query<Array<Model>> {
-    return findMany(this.model, req, related => this.serializerFor(related));
+    return this.visible(findMany(this.model, req), req);
   }
 
   /**
@@ -656,7 +748,7 @@ class Controller {
    * @public
    */
   show(req: Request): Query<Model> {
-    return findOne(this.model, req, related => this.serializerFor(related));
+    return this.visible(findOne(this.model, req), req);
   }
 
   /**
@@ -680,7 +772,11 @@ class Controller {
       }
     } = req;
 
-    await validateRelationships(model, relationships);
+    await validateRelationships(
+      model,
+      relationships,
+      scopeFor(this.visibility, req)
+    );
 
     const record = await model.create({
       ...attributes,
@@ -712,7 +808,7 @@ class Controller {
   update(req: Request): Promise<number | Model> {
     const { model } = this;
 
-    return findOne(model, req, related => this.serializerFor(related))
+    return this.visible(findOne(model, req), req)
       .then(async record => {
         const {
           params: {
@@ -720,7 +816,11 @@ class Controller {
           }
         } = req;
 
-        await validateRelationships(model, relationships);
+        await validateRelationships(
+          model,
+          relationships,
+          scopeFor(this.visibility, req)
+        );
 
         return record.update({
           ...attributes,
@@ -748,7 +848,7 @@ class Controller {
    * @public
    */
   destroy(req: Request): Promise<number> {
-    return findOne(this.model, req, related => this.serializerFor(related))
+    return this.visible(findOne(this.model, req), req)
       .then(record => record.destroy())
       .then(() => 204);
   }
@@ -770,6 +870,8 @@ class Controller {
 export default Controller;
 export { BUILT_IN_ACTIONS } from './constants';
 
+export { Scope } from './visibility';
+export type { Visibility } from './visibility';
 export type {
   Controller$opts,
   Controller$builtIn,

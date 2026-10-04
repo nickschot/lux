@@ -1,5 +1,6 @@
 import { camelize } from 'inflection';
 
+import { Scope } from '../../controller/visibility';
 import type { Model, ModelClass } from '../../database';
 
 /**
@@ -27,18 +28,26 @@ const toId = (value: unknown): string | null =>
  * many records there are. The queries mirror the lazy relationship getters in
  * `database/relationship/utils/getters.ts`, which remain the source of truth.
  *
+ * `scope` hides related records from the linkage: has-one and has-many queries
+ * are narrowed by it directly; belongs-to and has-many-through linkage — read
+ * from foreign keys, not from the related table — is checked against it
+ * afterwards (`dropHidden()`).
+ *
  * @private
  */
 export default async function loadLinkage(
   model: ModelClass,
   records: Array<Model>,
-  names: Array<string>
+  names: Array<string>,
+  scope: Scope = Scope.none
 ): Promise<Map<string, Linkage>> {
   const ids = Array.from(
     new Set(records.map(record => record.getPrimaryKey()))
   );
   const linkage = new Map<string, Linkage>();
-  const belongsTo: Array<[string, string, ModelClass]> = [];
+  // Linkage read from foreign keys, to check against the related table.
+  const unchecked: Array<[string, ModelClass]> = [];
+  const belongsTo: Array<[string, string]> = [];
   const queries: Array<Promise<void>> = [];
 
   ids.forEach(id => {
@@ -91,7 +100,8 @@ export default async function loadLinkage(
     const foreignKey = camelize(opts.foreignKey, true);
 
     if (type === 'belongsTo') {
-      belongsTo.push([name, foreignKey, related]);
+      belongsTo.push([name, foreignKey]);
+      unchecked.push([name, related]);
     } else if (through) {
       // Mirrors `getHasManyThrough()`: the join model holds a key pointing at
       // the owner (`foreignKey`) and one pointing at the related record (the
@@ -103,6 +113,12 @@ export default async function loadLinkage(
       }
 
       const relatedKey = camelize(inverse.foreignKey, true);
+
+      // A join row is not the related record: the ids it holds are checked
+      // against the related table when a rule could hide some of them.
+      if (scope.covers(related)) {
+        unchecked.push([name, related]);
+      }
 
       queries.push(
         (async () => {
@@ -119,10 +135,12 @@ export default async function loadLinkage(
       // has-one and has-many: the foreign key lives on the related model.
       queries.push(
         (async () => {
-          const rows = await related
-            .select(related.primaryKey, foreignKey)
-            .where({ [foreignKey]: ids })
-            .order(related.primaryKey, 'ASC');
+          const rows = await scope.apply(
+            related
+              .select(related.primaryKey, foreignKey)
+              .where({ [foreignKey]: ids })
+              .order(related.primaryKey, 'ASC')
+          );
 
           rows.forEach(row => {
             link(valueOf(row, foreignKey), name, row.getPrimaryKey());
@@ -144,38 +162,42 @@ export default async function loadLinkage(
             link(row.getPrimaryKey(), name, valueOf(row, key));
           });
         });
-
-        await dropDangling(linkage, belongsTo);
       })()
     );
   }
 
   await Promise.all(queries);
+  await dropHidden(linkage, unchecked, scope);
 
   return linkage;
 }
 
 /**
- * A foreign key can outlive the record it points to (no FK constraint, or a
- * row deleted out from under it). Resolve belongs-to linkage to `null` then,
- * like the primary query's join does — rather than linking a resource that
- * does not exist. One query per distinct related model.
+ * Linkage read from foreign keys can point at records the request must not
+ * see: a foreign key can outlive the record it points to (no FK constraint,
+ * or a row deleted out from under it), and `scope` can hide it. Unlink those —
+ * a to-one becomes `null` like the primary query's join made it, a to-many
+ * drops the id — rather than link a resource that is not there. One query per
+ * distinct related model.
  *
  * @private
  */
-async function dropDangling(
+async function dropHidden(
   linkage: Map<string, Linkage>,
-  belongsTo: Array<[string, string, ModelClass]>
+  unchecked: Array<[string, ModelClass]>,
+  scope: Scope
 ): Promise<void> {
   const wanted = new Map<ModelClass, Set<string>>();
 
-  belongsTo.forEach(([name, , related]) => {
+  unchecked.forEach(([name, related]) => {
     const ids = wanted.get(related) || new Set<string>();
 
-    linkage.forEach(({ [name]: id }) => {
-      if (typeof id === 'string') {
-        ids.add(id);
-      }
+    linkage.forEach(({ [name]: value }) => {
+      (Array.isArray(value) ? value : [value]).forEach(id => {
+        if (typeof id === 'string') {
+          ids.add(id);
+        }
+      });
     });
 
     wanted.set(related, ids);
@@ -190,9 +212,11 @@ async function dropDangling(
         return;
       }
 
-      const rows = await related
-        .select(related.primaryKey)
-        .where({ [related.primaryKey]: Array.from(ids) });
+      const rows = await scope.apply(
+        related
+          .select(related.primaryKey)
+          .where({ [related.primaryKey]: Array.from(ids) })
+      );
 
       existing.set(
         related,
@@ -201,13 +225,15 @@ async function dropDangling(
     })
   );
 
-  belongsTo.forEach(([name, , related]) => {
+  unchecked.forEach(([name, related]) => {
     const found = existing.get(related);
 
     linkage.forEach(owner => {
-      const id = owner[name];
+      const value = owner[name];
 
-      if (typeof id === 'string' && !found?.has(id)) {
+      if (Array.isArray(value)) {
+        owner[name] = value.filter(id => found?.has(id));
+      } else if (typeof value === 'string' && !found?.has(value)) {
         owner[name] = null;
       }
     });
