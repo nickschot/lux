@@ -1,10 +1,11 @@
 import fetch from 'node-fetch';
 import { createServer } from 'http';
 import { parse as parseURL } from 'url';
-import { it, describe, beforeAll, expect } from 'vitest';
+import { it, describe, beforeAll, afterAll, expect } from 'vitest';
 
 import { MIME_TYPE } from '../../../jsonapi';
 import { getDomain, createRequest, parseRequest } from '../index';
+import { MalformedRequestError } from '../parser/errors';
 
 import { getTestApp } from '../../../../../test/utils/get-test-app';
 
@@ -12,48 +13,78 @@ const DOMAIN = 'http://localhost:4100';
 
 describe('module "server/request"', () => {
   let test;
+  let server;
+  let handler;
+  let appLogger;
 
+  // One listener for the whole suite: a per-test `listen()` + `close()` races
+  // itself because `close()` is asynchronous (see responder.test).
+  //
+  // The handler's outcome is captured and re-thrown in the test after the
+  // response arrives. Previously the handler ran `fn(req).then(close, close)`,
+  // which swallowed every rejection, so no assertion in this file could fail.
   beforeAll(async () => {
     const { logger, router } = await getTestApp();
 
-    test = (path, opts, fn) => {
-      const server = createServer((req, res) => {
-        req = createRequest(req, {
-          logger,
-          router
-        });
+    appLogger = logger;
 
-        const close = () => {
+    server = createServer((req, res) => {
+      handler(createRequest(req, { logger, router }), res);
+    });
+
+    await new Promise(resolve => {
+      server.listen(4100, resolve);
+    });
+
+    test = async (path, opts, fn) => {
+      let outcome;
+
+      handler = (req, res) => {
+        outcome = Promise.resolve()
+          .then(() => fn(req))
+          .then(
+            () => ({ ok: true }),
+            error => ({ ok: false, error })
+          );
+
+        outcome.then(() => {
           res.statusCode = 200;
           res.end();
-        };
-
-        fn(req).then(close, close);
-      });
-
-      const cleanup = () => {
-        server.close();
+        });
       };
 
-      server.listen(4100);
+      await fetch(DOMAIN + path, opts);
 
-      return fetch(DOMAIN + path, opts).then(cleanup, cleanup);
+      expect(outcome, 'request handler was never invoked').to.be.ok;
+
+      const result = await outcome;
+
+      if (!result.ok) {
+        throw result.error;
+      }
     };
   });
+
+  afterAll(
+    () =>
+      new Promise(resolve => {
+        server.close(resolve);
+      })
+  );
 
   describe('#getDomain()', () => {
     it('returns the domain (`${PROTOCOL}://${HOST}`) of a request', () => {
       return test(
-        '/post',
+        '/posts',
         {
           headers: {
-            host: 'localhost'
+            host: 'example.com'
           }
         },
         async req => {
           const result = getDomain(req);
 
-          expect(result).to.equal(DOMAIN);
+          expect(result).to.equal('http://example.com');
         }
       );
     });
@@ -69,25 +100,26 @@ describe('module "server/request"', () => {
           }
         },
         async ({ url, route, method, logger, headers }) => {
-          const parsed = parseURL(`${DOMAIN}/posts`);
-
-          expect(url).to.deep.equal(parsed);
+          expect(url).to.deep.equal({
+            ...parseURL('/posts', true),
+            params: []
+          });
           expect(route).to.be.ok;
           expect(method).to.equal('GET');
-          expect(logger).to.equal(logger);
+          expect(logger).to.equal(appLogger);
           expect(headers).to.be.an.instanceof(Map);
           expect(headers.get('x-test')).to.equal('true');
         }
       );
     });
 
-    it('accepts a HTTP-Method-Override header', () => {
+    it('accepts an X-HTTP-Method-Override header', () => {
       return test(
         '/posts',
         {
           method: 'POST',
           headers: {
-            'HTTP-Method-Override': 'PATCH'
+            'X-HTTP-Method-Override': 'PATCH'
           }
         },
         async ({ method }) => {
@@ -119,20 +151,20 @@ describe('module "server/request"', () => {
           const params = await parseRequest(req);
 
           expect(params).to.deep.equal({
-            fields: ['body', 'title'],
+            fields: {
+              posts: ['body', 'title'],
+              users: ['name']
+            },
             include: ['user'],
             filter: {
               body: null,
               title: 123,
-              isPublic: true
+              isPublic: true,
+              createdAt: new Date(now)
             }
           });
 
           expect(params.filter.createdAt).to.be.an.instanceOf(Date);
-
-          expect(params.filter.createdAt.valueOf()).to.equal(
-            new Date(now).valueOf()
-          );
         }
       );
     });
@@ -144,7 +176,7 @@ describe('module "server/request"', () => {
         '/posts?include=user',
         {
           method: 'POST',
-          body: {
+          body: JSON.stringify({
             data: {
               type: 'posts',
               attributes: {
@@ -180,7 +212,7 @@ describe('module "server/request"', () => {
                 }
               }
             }
-          },
+          }),
           headers: {
             'Content-Type': MIME_TYPE
           }
@@ -197,7 +229,7 @@ describe('module "server/request"', () => {
                 intString: '123',
                 nullString: 'null',
                 boolString: 'true',
-                dateString: now
+                dateString: new Date(now)
               },
               relationships: {
                 user: {
@@ -237,42 +269,44 @@ describe('module "server/request"', () => {
         '/posts/1?include=user',
         {
           method: 'PATCH',
-          data: {
-            id: 1,
-            type: 'posts',
-            attributes: {
-              title: 'New Post 1',
-              'is-public': true,
-              intString: '123',
-              nullString: 'null',
-              boolString: 'true',
-              dateString: now
-            },
-            relationships: {
-              user: {
-                data: {
-                  type: 'users',
-                  id: 1
-                }
+          body: JSON.stringify({
+            data: {
+              id: 1,
+              type: 'posts',
+              attributes: {
+                title: 'New Post 1',
+                'is-public': true,
+                intString: '123',
+                nullString: 'null',
+                boolString: 'true',
+                dateString: now
               },
-              tags: {
-                data: [
-                  {
-                    type: 'tags',
+              relationships: {
+                user: {
+                  data: {
+                    type: 'users',
                     id: 1
-                  },
-                  {
-                    type: 'tags',
-                    id: 2
-                  },
-                  {
-                    type: 'tags',
-                    id: 3
                   }
-                ]
+                },
+                tags: {
+                  data: [
+                    {
+                      type: 'tags',
+                      id: 1
+                    },
+                    {
+                      type: 'tags',
+                      id: 2
+                    },
+                    {
+                      type: 'tags',
+                      id: 3
+                    }
+                  ]
+                }
               }
             }
-          },
+          }),
           headers: {
             'Content-Type': MIME_TYPE
           }
@@ -282,6 +316,7 @@ describe('module "server/request"', () => {
 
           expect(params).to.deep.equal({
             data: {
+              id: 1,
               type: 'posts',
               attributes: {
                 title: 'New Post 1',
@@ -289,7 +324,7 @@ describe('module "server/request"', () => {
                 intString: '123',
                 nullString: 'null',
                 boolString: 'true',
-                dateString: now
+                dateString: new Date(now)
               },
               relationships: {
                 user: {
@@ -332,10 +367,10 @@ describe('module "server/request"', () => {
             'Content-Type': MIME_TYPE
           }
         },
-        req => {
-          return parseRequest(req).catch(err => {
-            expect(err).to.be.an.instanceof(SyntaxError);
-          });
+        async req => {
+          await expect(parseRequest(req)).rejects.toBeInstanceOf(
+            MalformedRequestError
+          );
         }
       );
     });
@@ -350,10 +385,10 @@ describe('module "server/request"', () => {
             'Content-Type': MIME_TYPE
           }
         },
-        req => {
-          return parseRequest(req).catch(err => {
-            expect(err).to.be.an.instanceof(SyntaxError);
-          });
+        async req => {
+          await expect(parseRequest(req)).rejects.toBeInstanceOf(
+            MalformedRequestError
+          );
         }
       );
     });
