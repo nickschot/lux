@@ -206,6 +206,32 @@ describe('module "router/route/params"', () => {
           });
         });
       });
+
+      describe('- allowed values', () => {
+        it('accepts any value when no values are given', () => {
+          subject = new Parameter({ path: 'test', type: 'string' });
+
+          expect(subject.validate('anything')).to.equal('anything');
+        });
+
+        it('accepts no value when an empty list is given', () => {
+          subject = new Parameter({ path: 'test', type: 'array', values: [] });
+
+          expect(() => subject.validate(['anything'])).to.throw(TypeError);
+          expect(subject.validate([])).to.deep.equal([]);
+        });
+
+        it('drops every value of an empty, sanitized list', () => {
+          subject = new Parameter({
+            path: 'test',
+            type: 'array',
+            values: [],
+            sanitize: true
+          });
+
+          expect(subject.validate(['anything'])).to.deep.equal([]);
+        });
+      });
     });
   });
 });

@@ -130,4 +130,37 @@ describe('module "router/route/params"', () => {
       });
     });
   });
+
+  // ActionsSerializer declares no relationships and no attributes, so the
+  // allowed `include` and `sort` values of its routes are empty lists.
+  // JSON:API 1.0 requires a 400 for a relationship path the server cannot
+  // identify and for an unsupported sort, so empty must mean "nothing".
+  describe('with a serializer without relationships or attributes', () => {
+    let params;
+
+    beforeAll(async () => {
+      const { controllers } = await getTestApp();
+
+      params = paramsFor({
+        type: 'collection',
+        method: 'GET',
+        controller: controllers.get('actions') as Controller,
+        dynamicSegments: []
+      });
+    });
+
+    it('rejects any include', () => {
+      expect(() => params.get('include').validate(['zzzprobe'])).to.throw(
+        TypeError
+      );
+    });
+
+    it('rejects any sort', () => {
+      expect(() => params.get('sort').validate('zzzprobe')).to.throw(TypeError);
+    });
+
+    it('still accepts a request without them', () => {
+      expect(params.get('include').validate([])).to.deep.equal([]);
+    });
+  });
 });
