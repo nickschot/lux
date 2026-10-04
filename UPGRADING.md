@@ -234,6 +234,12 @@ That makes these idioms redundant — delete them once a rule covers the type:
 - pruning ids out of relationship linkage;
 - `afterAction` hooks that filter hidden records out of the payload.
 
+The reference app shows the swap: `PostsController#index`'s `.isPublic()` and
+`AdminPostsController`'s `.unscope('isPublic')` became a `posts` rule on the
+root `ApplicationController` and `static visibility = {}` on the admin one —
+which also closed the gaps the old idiom left (`GET /posts/:id` of a private
+post, and private posts reachable through `/users?include=posts`).
+
 Rules must return the query they are given synchronously and may only add
 conditions (`where`, `not`, `whereBetween`, `whereRaw`, model scopes built
 from them); anything else throws when the rule first runs. Compute what a rule

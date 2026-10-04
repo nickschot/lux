@@ -8,10 +8,6 @@ class PostsController extends Controller {
     'image',
     'isPublic'
   ];
-
-  index(req, res) {
-    return super.index(req, res).isPublic();
-  }
 }
 
 export default PostsController;

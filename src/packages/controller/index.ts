@@ -95,6 +95,11 @@ import type {
  *  export default PostsController;
  * ```
  *
+ * A `where` like this only narrows the index: the excluded posts are still
+ * served by `show` and reachable through relationships and `include`. To hide
+ * records from every request, declare a visibility rule instead (see
+ * `visibility`).
+ *
  * **Custom Actions**
  *
  * Sometimes it is necessary to add a custom action to a Controller. Lumen allows

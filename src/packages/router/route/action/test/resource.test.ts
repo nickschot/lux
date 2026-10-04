@@ -87,21 +87,29 @@ describe('module "router/route/action"', () => {
 
     describe('- type "member"', () => {
       describe('- with "root" namespace', () => {
-        const path = '/posts/1';
+        let path: string;
         let subject: Action<unknown>;
         let createRequest;
 
         beforeAll(async () => {
-          const { router, controllers } = await getTestApp();
+          const { router, controllers, models } = await getTestApp();
 
           const controller: Controller = controllers.get('posts');
+          // Private posts are hidden outside `admin`, and the seed picks
+          // `isPublic` at random.
+          const post = await models
+            .get('post')
+            .where({ isPublic: true })
+            .first();
+          const id = post.getPrimaryKey();
 
+          path = `/posts/${id}`;
           subject = resource(controller.show.bind(controller));
           createRequest = createRequestBuilder({
             path,
             route: router.get('GET:/posts/:dynamic'),
             params: {
-              id: 1
+              id
             }
           });
         });
