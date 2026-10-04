@@ -327,6 +327,25 @@ value.
   was accepted and passed to the ORM. A request body must be a JSON object;
   a top-level array is now a `400` like other malformed bodies.
 
+## 14. Relationship links — `related`, not `self`
+
+A to-one relationship's link to the related resource is now
+`links.related`:
+
+```json
+"user": {
+  "data": { "id": "2", "type": "users" },
+  "links": { "related": "https://api.example.com/users/2" }
+}
+```
+
+It used to be `links.self`. In JSON:API, a relationship's `self` is the
+*relationship* URL (`/posts/1/relationships/user`), which clients may use to
+read or replace the linkage; the related resource's own URL is not that, and
+a client following it as one would misbehave. The URL itself is unchanged.
+Clients that read `relationships.*.links.self` must read `links.related`
+instead. To-many relationships still carry only `data`.
+
 ## The short version
 
 Bump `pg`/`mysql2` and run Node 20 (required); delete `.babelrc` and the

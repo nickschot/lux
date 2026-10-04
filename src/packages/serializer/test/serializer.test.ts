@@ -239,7 +239,7 @@ describe('module "serializer"', () => {
             type: 'users'
           },
           links: {
-            self: userLink
+            related: userLink
           }
         });
 
@@ -259,7 +259,7 @@ describe('module "serializer"', () => {
               type: 'images'
             },
             links: {
-              self: imageLink
+              related: imageLink
             }
           });
         } else {
@@ -523,7 +523,7 @@ describe('module "serializer"', () => {
           ]);
           expect(item.relationships.post).to.deep.equal({
             data: { id: `${post.getPrimaryKey()}`, type: 'posts' },
-            links: { self: linkFor('posts', post.getPrimaryKey()) }
+            links: { related: linkFor('posts', post.getPrimaryKey()) }
           });
           expect(item.relationships.user).to.deep.equal({ data: null });
           expect(item.relationships.reactions).to.deep.equal({ data: [] });
