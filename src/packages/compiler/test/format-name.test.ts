@@ -34,6 +34,7 @@ describe('module "compiler"', () => {
         'Friendships',
         'Health',
         'Images',
+        'Languages',
         'Members$Application',
         'Members$Comments',
         'Members$Posts',

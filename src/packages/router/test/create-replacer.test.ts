@@ -19,6 +19,7 @@ describe('module "router"', () => {
           ['posts', app.controllers.get('posts')],
           ['health', healthController],
           ['admin/posts', app.controllers.get('admin/posts')],
+          ['languages', app.controllers.get('languages')],
           [
             'admin/health',
             new AdminHealthController({
@@ -29,18 +30,42 @@ describe('module "router"', () => {
       );
     });
 
-    it('returns an instance of RegExp', () => {
-      expect(subject).to.be.an.instanceOf(RegExp);
+    it('replaces an integer id after a resource name', () => {
+      expect(subject('/posts/1')).to.deep.equal({
+        staticPath: '/posts/:dynamic',
+        params: ['1']
+      });
+
+      expect(subject('/health/1')).to.deep.equal({
+        staticPath: '/health/:dynamic',
+        params: ['1']
+      });
     });
 
-    it('correctly replaces dynamic parts', () => {
-      expect('posts/1'.replace(subject, '$1/:dynamic')).to.equal(
-        'posts/:dynamic'
-      );
+    it('leaves a non-integer segment of a numeric resource alone', () => {
+      expect(subject('/posts/abc')).to.deep.equal({
+        staticPath: '/posts/abc',
+        params: []
+      });
+    });
 
-      expect('health/1'.replace(subject, '$1/:dynamic')).to.equal(
-        'health/:dynamic'
-      );
+    it('accepts any id of a resource with a non-numeric key', () => {
+      expect(subject('/languages/pt-BR')).to.deep.equal({
+        staticPath: '/languages/:dynamic',
+        params: ['pt-BR']
+      });
+
+      expect(subject('/languages/a%2Fb')).to.deep.equal({
+        staticPath: '/languages/:dynamic',
+        params: ['a/b']
+      });
+    });
+
+    it('only matches whole segments', () => {
+      expect(subject('/blogposts/1')).to.deep.equal({
+        staticPath: '/blogposts/1',
+        params: []
+      });
     });
   });
 });

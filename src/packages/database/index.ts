@@ -50,6 +50,7 @@ export { default as Query } from './query';
 export { default as Migration, generateTimestamp } from './migration';
 export { default as connect } from './utils/connect';
 export { default as typeForColumn } from './utils/type-for-column';
+export { default as primaryKeyType } from './utils/primary-key-type';
 export { default as createMigrations } from './utils/create-migrations';
 export { default as pendingMigrations } from './utils/pending-migrations';
 

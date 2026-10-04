@@ -10,6 +10,7 @@ import { HAS_BODY } from './constants';
 import { createRequest, parseRequest } from './request';
 import { createResponse } from './response';
 import { createResponder } from './responder';
+import MethodNotAllowedError from './errors/method-not-allowed-error';
 import validateAccept from './utils/validate-accept';
 import validateContentType from './utils/validate-content-type';
 import setCORSHeaders from './utils/set-cors-headers';
@@ -108,14 +109,22 @@ class Server {
     if (isValid) {
       parseRequest(request)
         .then(params => {
-          const { route } = request;
+          const { route, method } = request;
+          const allowed = this.router.methodsFor(request);
 
           Object.assign(request, {
             params
           });
 
           if (route) {
+            if (method === 'OPTIONS') {
+              response.setHeader('Allow', allowed.join(', '));
+            }
+
             return route.visit(request, response);
+          } else if (allowed.length) {
+            response.setHeader('Allow', allowed.join(', '));
+            throw new MethodNotAllowedError(method, allowed);
           }
 
           return undefined;

@@ -46,6 +46,11 @@ export default function resource(action: Action<unknown>): Action<unknown> {
           defaultPerPage,
           total: total || 0
         });
+      } else if (actionName === 'create' && res.getHeader('Location')) {
+        // The created resource, as `Location` says (JSON:API: they match).
+        links = {
+          self: res.getHeader('Location')
+        };
       } else if (actionName !== 'index' && namespace) {
         links = {
           self: domain.replace(`/${namespace}`, '') + path

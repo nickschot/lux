@@ -36,23 +36,20 @@ export default function createDefinition({
       controller
     };
 
-    namespace
-      .add(new Route(opts))
-      .add(
-        new Route({
-          ...opts,
-          type: 'custom',
-          method: 'HEAD',
-          action: 'preflight'
-        })
-      )
-      .add(
-        new Route({
-          ...opts,
-          type: 'custom',
-          method: 'OPTIONS',
-          action: 'preflight'
-        })
-      );
+    namespace.add(new Route(opts));
+
+    // HEAD is GET without a body (Node drops it), so it runs the GET action.
+    if (method === 'GET') {
+      namespace.add(new Route({ ...opts, method: 'HEAD' }));
+    }
+
+    namespace.add(
+      new Route({
+        ...opts,
+        type: 'custom',
+        method: 'OPTIONS',
+        action: 'preflight'
+      })
+    );
   };
 }
