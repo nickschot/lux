@@ -570,6 +570,41 @@ class Controller {
    * custom action's `Post.where(...)` or a relationship read from a model
    * (`await post.comments`). Narrow those with `visible()`.
    *
+   * **Visibility rules and model scopes**
+   *
+   * A model scope (`static scopes` on a Model, e.g. `Post.isPublic()`) is a
+   * reusable piece of a query: it narrows the one query it is called on, and
+   * only when application code calls it. A visibility rule is an access
+   * policy: Lumen applies it to every query it issues for a request. The two
+   * compose — a rule is usually written with a scope.
+   *
+   * |                   | Model scope          | Visibility rule         |
+   * |-------------------|----------------------|-------------------------|
+   * | Declared on       | the Model            | a namespace's           |
+   * |                   |                      | `ApplicationController` |
+   * | Applied           | where code calls it  | to every query Lumen    |
+   * |                   |                      | issues for the request  |
+   * | Sees the request  | no                   | yes                     |
+   * | Per namespace     | no                   | yes                     |
+   * | May use           | any query method     | conditions only         |
+   * | `unscope()`       | removes it           | cannot remove it        |
+   *
+   * Scoping a built-in action is not the same as hiding records. With
+   *
+   * ```javascript
+   * class PostsController extends Controller {
+   *   index(request) {
+   *     return super.index(request).isPublic();
+   *   }
+   * }
+   * ```
+   *
+   * private posts are left out of `GET /posts`, but are still served by
+   * `GET /posts/:id`, listed in the `posts` linkage of a user and in
+   * `included` for `/users?include=posts`, linked from a comment's `post`,
+   * and accepted as the `post` of a new comment. `posts: query =>
+   * query.isPublic()` as a visibility rule closes every one of those paths.
+   *
    * @property visibility
    * @type {Object}
    * @default {}
@@ -601,9 +636,9 @@ class Controller {
   }
 
   /**
-   * The Serializer to serialize (and validate the `fields` of) related resources of
-   * this Controller's responses with: the related model's Serializer in this
-   * Controller's namespace, falling back to the root one.
+   * The Serializer to serialize (and validate the `fields` of) related
+   * resources of this Controller's responses with: the related model's
+   * Serializer in this Controller's namespace, falling back to the root one.
    *
    * Always this Controller's namespace — not its Serializer's, which is the
    * root one when the namespace has no Serializer for this resource.

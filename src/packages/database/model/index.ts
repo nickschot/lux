@@ -451,10 +451,15 @@ class Model {
    *   .page(1);
    * ```
    *
-   * A scope narrows only the queries it is called on. To hide records from
-   * every request in a namespace — listings, lookups, relationships and
-   * `include` — use a scope like `isPublic` in a Controller visibility rule
-   * (`static visibility` on the namespace's `ApplicationController`).
+   * A scope narrows only the queries it is called on, and knows nothing of
+   * the request. Calling `isPublic()` in a Controller's `index` hides private
+   * posts from that listing alone: `show`, relationship linkage, `include` and
+   * the relationships of a write still reach them, and `unscope('isPublic')`
+   * undoes it. To hide records from every request in a namespace, use the
+   * scope in a Controller visibility rule instead (`static visibility` on the
+   * namespace's `ApplicationController`), which Lumen applies to every query
+   * it issues for the request and `unscope()` cannot remove. See
+   * `Controller.visibility` for a side-by-side comparison.
    *
    * @property scopes
    * @type {Object}
