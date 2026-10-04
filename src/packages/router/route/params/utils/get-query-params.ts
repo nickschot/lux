@@ -2,7 +2,10 @@ import Parameter from '../parameter';
 import ParameterGroup from '../parameter-group';
 import type Controller from '../../../../controller';
 import type { ParameterLike } from '../interfaces';
-import { enumerateIncludePaths } from '../../../../serializer/utils/include-tree';
+import {
+  enumerateIncludePaths,
+  enumerateIncludeTypes
+} from '../../../../serializer/utils/include-tree';
 
 /**
  * @private
@@ -58,55 +61,36 @@ function getFilterParam({ filter }: Controller): [string, ParameterLike] {
 }
 
 /**
+ * One `fields[TYPE]` parameter per type the response can contain, accepting
+ * the fields that type's Serializer exposes: its attributes and relationships.
+ * Unknown types are ignored (a client may send the same fieldsets everywhere);
+ * an unknown field of a known type is a 400.
+ *
  * @private
  */
 function getFieldsParam(controller: Controller): [string, ParameterLike] {
-  const { model, serializer } = controller;
-  const { hasOne, hasMany, attributes } = serializer;
-  const relationships = [...hasOne, ...hasMany];
+  const { model, serializer, maxIncludeDepth } = controller;
+  const types = enumerateIncludeTypes(
+    model,
+    serializer,
+    maxIncludeDepth,
+    related => controller.serializerFor(related)
+  );
 
   return [
     'fields',
     new ParameterGroup(
-      [
-        [
-          model.resourceName,
+      Array.from(
+        types,
+        ([type, { attributes, hasOne, hasMany }]): [string, ParameterLike] => [
+          type,
           new Parameter({
-            path: `fields.${model.resourceName}`,
+            path: `fields.${type}`,
             type: 'array',
-            values: attributes,
-            sanitize: true
+            values: [...attributes, ...hasOne, ...hasMany]
           })
-        ],
-        ...relationships.reduce<Array<[string, ParameterLike]>>(
-          (result, relationship) => {
-            const opts = model.relationshipFor(relationship);
-
-            if (opts) {
-              return [
-                ...result,
-
-                [
-                  opts.model.resourceName,
-                  new Parameter({
-                    path: `fields.${opts.model.resourceName}`,
-                    type: 'array',
-                    sanitize: true,
-
-                    values: [
-                      opts.model.primaryKey,
-                      ...controller.serializerFor(opts.model).attributes
-                    ]
-                  })
-                ]
-              ];
-            }
-
-            return result;
-          },
-          []
-        )
-      ],
+        ]
+      ),
       {
         path: 'fields',
         sanitize: true

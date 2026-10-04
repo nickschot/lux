@@ -724,6 +724,143 @@ describe('compound documents over HTTP', () => {
     });
   });
 
+  // JSON:API 1.0, "Sparse Fieldsets": a fieldset names the fields — attributes
+  // and relationships — of every resource of its type in the document.
+  describe('sparse fieldsets', () => {
+    const findIn = (body: Document, identifier: Identifier) =>
+      (body.included || []).find(item => keyFor(item) === keyFor(identifier));
+
+    it('leaves out relationships the fieldset does not name', async () => {
+      const { post } = fixtures;
+      const { status, body } = await get(
+        `/posts/${idOf(post)}?fields[posts]=title`
+      );
+      const data = body.data as Resource;
+
+      expect(status).to.equal(200);
+      expect(data.attributes).to.have.all.keys(['title']);
+      expect(data).not.to.have.property('relationships');
+    });
+
+    it('keeps the relationships the fieldset names', async () => {
+      const { post, author } = fixtures;
+      const { status, body } = await get(
+        `/posts/${idOf(post)}?fields[posts]=title,user`
+      );
+      const data = body.data as Resource;
+
+      expect(status).to.equal(200);
+      expect(data.attributes).to.have.all.keys(['title']);
+      expect(data.relationships).to.have.all.keys(['user']);
+      expect(data.relationships?.user.data).to.deep.equal(ref('users', author));
+    });
+
+    it('accepts dasherized member names', async () => {
+      const { post } = fixtures;
+      const { status, body } = await get(
+        `/posts/${idOf(post)}?fields[posts]=created-at`
+      );
+
+      expect(status).to.equal(200);
+      expect((body.data as Resource).attributes).to.have.all.keys([
+        'created-at'
+      ]);
+    });
+
+    it('applies to included resources of the primary type', async () => {
+      const { commentByAuthor, commentByCommenter } = fixtures;
+      const { status, body } = await get(
+        `/comments/${idOf(commentByAuthor)}?include=post.comments` +
+          '&fields[comments]=message'
+      );
+      const included = findIn(body, ref('comments', commentByCommenter));
+
+      expect(status).to.equal(200);
+      expect(included?.attributes).to.deep.equal({ message: 'First!' });
+      expect(included).not.to.have.property('relationships');
+    });
+
+    it('applies to types reached only through a nested include', async () => {
+      const { commentByAuthor, tagA } = fixtures;
+      const { status, body } = await get(
+        `/comments/${idOf(commentByAuthor)}?include=post.tags` +
+          '&fields[tags]=name'
+      );
+      const tag = findIn(body, ref('tags', tagA));
+
+      expect(status).to.equal(200);
+      expect(tag?.attributes).to.deep.equal({ name: 'compound-a' });
+      expect(tag).not.to.have.property('relationships');
+    });
+
+    it('applies several fieldsets at once', async () => {
+      const { post, author } = fixtures;
+      const { status, body } = await get(
+        `/posts/${idOf(post)}?fields[posts]=title,user&fields[users]=name` +
+          '&include=user'
+      );
+
+      expect(status).to.equal(200);
+      expect((body.data as Resource).attributes).to.have.all.keys(['title']);
+      expect(findIn(body, ref('users', author))?.attributes).to.deep.equal({
+        name: 'Ada Author'
+      });
+    });
+
+    it('selects no fields with an empty fieldset', async () => {
+      const { post, author } = fixtures;
+      const { status, body } = await get(
+        `/posts/${idOf(post)}?include=user&fields[users]=`
+      );
+      const user = findIn(body, ref('users', author));
+
+      expect(status).to.equal(200);
+      expect(user?.attributes).to.deep.equal({});
+      expect(user).not.to.have.property('relationships');
+    });
+
+    it('still includes a relationship the fieldset leaves out', async () => {
+      const { post, author } = fixtures;
+      const { status, body } = await get(
+        `/posts/${idOf(post)}?include=user&fields[posts]=title`
+      );
+
+      expect(status).to.equal(200);
+      expect(body.data).not.to.have.property('relationships');
+      expect(findIn(body, ref('users', author))).to.be.ok;
+    });
+
+    it('rejects an unknown field of a known type with 400', async () => {
+      const { post } = fixtures;
+      const { status, body } = await get(
+        `/posts/${idOf(post)}?fields[posts]=title,bogus`
+      );
+
+      expect(status).to.equal(400);
+      expect(body.errors).to.have.lengthOf(1);
+      expect(body.errors?.[0]).to.have.nested.property(
+        'source.parameter',
+        'fields[posts]'
+      );
+    });
+
+    it('rejects the primary key, which is not a field, with 400', async () => {
+      const { post } = fixtures;
+      const { status } = await get(`/posts/${idOf(post)}?fields[posts]=id`);
+
+      expect(status).to.equal(400);
+    });
+
+    it('ignores fieldsets for types the response cannot contain', async () => {
+      const { post } = fixtures;
+      const { status } = await get(
+        `/posts/${idOf(post)}?fields[bogus]=anything`
+      );
+
+      expect(status).to.equal(200);
+    });
+  });
+
   describe('namespaces', () => {
     // AdminUsersSerializer adds `createdAt` to UsersSerializer's attributes, so
     // the attributes tell which serializer formatted an included user.

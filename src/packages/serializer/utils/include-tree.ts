@@ -89,3 +89,45 @@ export function enumerateIncludePaths(
     ];
   }, []);
 }
+
+/**
+ * Every resource type a response can contain, with the Serializer each is
+ * serialized by: `model` itself (`serializer`), and every type reachable
+ * through `include` from it down to `depth` levels — direct relationships
+ * always, as with `include`. Used to build the allowed `fields[TYPE]`.
+ *
+ * @private
+ */
+export function enumerateIncludeTypes(
+  model: ModelClass,
+  serializer: Serializer<Model>,
+  depth: number,
+  serializerFor: (
+    model: ModelClass
+  ) => Serializer<Model> | undefined = related => related.serializer
+): Map<string, Serializer<Model>> {
+  const types = new Map([[model.resourceName, serializer]]);
+  let level: Array<[ModelClass, Serializer<Model>]> = [[model, serializer]];
+
+  for (let current = 0; current < Math.max(depth, 1); current += 1) {
+    const next: typeof level = [];
+
+    level.forEach(([parent, parentSerializer]) => {
+      [...parentSerializer.hasOne, ...parentSerializer.hasMany].forEach(
+        name => {
+          const opts = parent.relationshipFor(name);
+          const related = opts && serializerFor(opts.model);
+
+          if (opts && related && !types.has(opts.model.resourceName)) {
+            types.set(opts.model.resourceName, related);
+            next.push([opts.model, related]);
+          }
+        }
+      );
+    });
+
+    level = next;
+  }
+
+  return types;
+}

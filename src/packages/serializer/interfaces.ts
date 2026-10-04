@@ -8,7 +8,8 @@ export type Serializer$opts<T extends Model> = {
 };
 
 /**
- * The request's sparse fieldsets: attribute names keyed by resource type
- * (`fields[users]=name` → `{ users: ['name'] }`).
+ * The request's sparse fieldsets: field (attribute and relationship) names
+ * keyed by resource type (`fields[users]=name,posts` →
+ * `{ users: ['name', 'posts'] }`). An empty list selects no fields.
  */
 export type Serializer$fields = Record<string, Array<string>>;

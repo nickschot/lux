@@ -95,9 +95,8 @@ byte-for-byte unchanged**; what changed is `included`:
   whole app); `maxIncludeDepth = 1` restores the old behaviour of direct
   relationships only. Intermediate resources are included too
   (`comments.user` also includes the comments), as the spec requires.
-  `fields[type]` narrows included resources of that type at every level it
-  appears (§9); `fields[]` accepts the resource's own type and those of its
-  direct relationships.
+  `fields[type]` narrows every resource of that type in the document, at
+  every level it appears (§11).
 - **Included resources follow the request's namespace** — the namespace of
   the controller handling the request, at every level of the include tree. On
   `/admin/posts`, included comments use `AdminCommentsSerializer` if you have
@@ -190,8 +189,8 @@ relationship, never one per record.
   candidate rows now always links the lowest id (the join picked an arbitrary
   one, and could repeat the primary row), and `fields[type]` now applies to
   every included resource of that type, not only those reached through a
-  direct relationship. A fieldset for the primary type still only narrows
-  primary data.
+  direct relationship. (§11 extends this to the primary type and to
+  relationships.)
 - **Query count per request is constant**, typically a few queries more than
   before (the has-one and the belongs-to linkage are no longer folded into the
   join), while self-referential relationships (`/users?include=followers`) stop
@@ -252,6 +251,33 @@ closest ancestor namespace's rules.
 Rules do not reach queries your code builds itself (`Post.where(...)` in a
 custom action, `await post.comments`); narrow those with
 `this.visible(query, request)`.
+
+## 11. Sparse fieldsets — now per the spec
+
+`fields[TYPE]` now behaves as JSON:API 1.0 specifies. Requests without
+`fields` are unaffected.
+
+- **A fieldset selects relationships too.** `fields[posts]=title` returns
+  posts with only a `title` attribute and **no `relationships`**; name a
+  relationship to keep it (`fields[posts]=title,user`). Before, every
+  relationship was always serialized and relationship names were silently
+  dropped from the fieldset. A relationship left out of the fieldset can still
+  be `include`d.
+- **It applies to every resource of its type**, including included resources
+  of the primary type (`/comments/1?include=post.comments&fields[comments]=message`
+  narrows the included comments as well as the primary one).
+- **Every type the response can contain is accepted** — the resource's own,
+  and every type reachable through `include` down to `maxIncludeDepth` (before:
+  only direct relationships; others were silently ignored). Fieldsets for
+  types the response cannot contain are still ignored.
+- **Unknown field names are a `400`** with `source.parameter` (`fields[posts]`),
+  like an unknown `include` or `sort`. Before, they were silently dropped. The
+  primary key is not a field: `fields[posts]=id` is now a `400` too.
+- **An empty fieldset selects no fields** (`fields[users]=` → `attributes: {}`
+  and no `relationships`). Before, included resources fell back to all
+  attributes.
+- **Member names may be dasherized** (`fields[posts]=created-at`), as they
+  appear in responses. Before, only the camelCase spelling matched.
 
 ## The short version
 

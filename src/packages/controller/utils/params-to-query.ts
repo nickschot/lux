@@ -24,9 +24,12 @@ export default function paramsToQuery(
   let query: Controller$query = {
     id,
     filter,
+    // A fieldset may also name relationships, which are not columns.
     select: [
       model.primaryKey,
-      ...(Reflect.get(fields, model.resourceName) as Array<string>)
+      ...(Reflect.get(fields, model.resourceName) as Array<string>).filter(
+        name => model.attributeNames.includes(name)
+      )
     ]
   };
 

@@ -6,7 +6,6 @@ import { VERSION } from '../jsonapi';
 import { freezeProps } from '../freezeable';
 import closestAncestor from '../loader/resolver/utils/closest-ancestor';
 import type { Bundle$Namespace } from '../loader';
-import omit from '../../utils/omit';
 import underscore from '../../utils/underscore';
 import { dasherizeKeys } from '../../utils/transform-keys';
 import type { Model, ModelClass } from '../database';
@@ -192,9 +191,14 @@ import type { IncludeTree } from './utils/include-tree';
  *
  * #### Sparse Fieldsets
  *
- * When a request specifies the fields that it would like included in the
- * response, the fields **MUST** be declared in the `attributes` property array
- * of the resources Serializer, or they will be ignored.
+ * A request may narrow the fields of each resource type with `fields[TYPE]`
+ * (e.g. `/posts?include=user&fields[posts]=title,user&fields[users]=name`).
+ * A fieldset applies to every resource of its type in the document — primary
+ * data and included resources alike — and selects attributes and
+ * relationships: anything it does not name is left out, and an empty fieldset
+ * leaves out all of them. It may name only fields the type's Serializer
+ * declares (in `attributes`, `hasOne` or `hasMany`); any other name is
+ * answered with `400 Bad Request`.
  *
  * #### Namespaces
  *
@@ -490,8 +494,8 @@ class Serializer<T extends Model> {
    * document object. Intermediate resources of a nested path are included too.
    *
    * @param {Object} options.fields - The request's sparse fieldsets, keyed by
-   * type. They narrow the attributes loaded for included resources; primary
-   * data was already loaded with its own.
+   * type. Each narrows the attributes and relationships of every resource of
+   * its type in the document; primary data was already loaded with its own.
    *
    * @param {Scope} options.scope - The visibility rules of the request. Every
    * related record loaded for the document — its linkage and `included` — is
@@ -530,18 +534,21 @@ class Serializer<T extends Model> {
     const included = new Map<string, JSONAPI$ResourceObject>();
     const records = Array.isArray(data) ? data : [data];
     const names = [...this.hasOne, ...this.hasMany];
-    // A fieldset for the primary type selects primary data's attributes (the
-    // query already did); included resources of that type stay complete.
-    const related = omit(fields, this.model.resourceName) as Serializer$fields;
 
     // Primary data takes the same path as every include level: its linkage
     // is batch-loaded per relationship, then `included` is built from it.
-    const linkage = await loadLinkage(this.model, records, names, scope);
+    const linkage = await loadLinkage(
+      this.model,
+      records,
+      linkedNames(names, fields[this.model.resourceName], tree),
+      scope
+    );
     const primary = await Promise.all(
       records.map(item =>
         this.formatOne({
           item,
           domain,
+          fields,
           namespace,
           linkage: linkage.get(String(item.getPrimaryKey())),
           links: Array.isArray(data) ? undefined : false
@@ -555,10 +562,10 @@ class Serializer<T extends Model> {
       scope,
       domain,
       linkage,
+      fields,
       included,
       namespace,
-      model: this.model,
-      fields: related
+      model: this.model
     });
 
     let serialized: Record<string, unknown> = {
@@ -591,8 +598,9 @@ class Serializer<T extends Model> {
 
   /**
    * Transform a single Model instance into a [JSON API](http://jsonapi.org)
-   * resource object. Its attributes are the ones both loaded on `item` and
-   * declared by this Serializer; its relationships are built from `linkage`,
+   * resource object. Its attributes are the ones loaded on `item`, declared by
+   * this Serializer and kept by the request's fieldset for its type; its
+   * relationships, those declared and kept, are built from `linkage`,
    * batch-loaded by `loadLinkage()`, without touching the database.
    *
    * @method formatOne
@@ -614,6 +622,9 @@ class Serializer<T extends Model> {
    * @param {Object} options.linkage - The resource linkage (related primary
    * keys per relationship key) to serialize relationships from.
    *
+   * @param {Object} options.fields - The request's sparse fieldsets, keyed by
+   * type. Only the one for this resource's type applies.
+   *
    * @param {String} options.namespace - The namespace to build links in.
    * Defaults to this Serializer's; included resources pass the namespace of
    * the request, so every link in a document points into the same namespace.
@@ -628,22 +639,26 @@ class Serializer<T extends Model> {
     links,
     domain,
     linkage = {},
+    fields = {},
     namespace = this.namespace
   }: {
     item: T;
     links?: boolean;
     domain: string;
     linkage?: Linkage;
+    fields?: Serializer$fields;
     namespace?: string;
   }): Promise<JSONAPI$ResourceObject> {
     const { resourceName: type } = item;
     const id = String(item.getPrimaryKey());
-    const names = [...this.hasOne, ...this.hasMany];
+    const fieldset = fields[type];
+    const keep = (name: string) => !fieldset || fieldset.includes(name);
+    const names = [...this.hasOne, ...this.hasMany].filter(keep);
 
     const attributes = dasherizeKeys(
       item.getAttributes(
-        ...Object.keys(item.rawColumnData).filter(key =>
-          this.attributes.includes(key)
+        ...Object.keys(item.rawColumnData).filter(
+          key => this.attributes.includes(key) && keep(key)
         )
       )
     );
@@ -761,7 +776,12 @@ class Serializer<T extends Model> {
     }
 
     const names = [...serializer.hasOne, ...serializer.hasMany];
-    const linkage = await loadLinkage(model, unique, names, scope);
+    const linkage = await loadLinkage(
+      model,
+      unique,
+      linkedNames(names, fields[model.resourceName], tree),
+      scope
+    );
 
     for (const item of unique) {
       const id = String(item.getPrimaryKey());
@@ -775,6 +795,7 @@ class Serializer<T extends Model> {
           await serializer.formatOne({
             item,
             domain,
+            fields,
             linkage: linkage.get(id),
             namespace
           })
@@ -874,7 +895,7 @@ class Serializer<T extends Model> {
   /**
    * The attributes to load for included resources of `model`: those its
    * Serializer in `namespace` declares, narrowed to the request's
-   * `fields[type]` when that names any of them.
+   * `fields[type]` when there is one — possibly to none.
    *
    * @method attributesFor
    * @private
@@ -888,13 +909,10 @@ class Serializer<T extends Model> {
       attr => model.attributeNames.includes(attr)
     );
     const fieldset = fields[model.resourceName];
-    const selected = fieldset
+
+    return fieldset
       ? attributes.filter(attr => fieldset.includes(attr))
       : attributes;
-
-    // A fieldset of just the primary key — what every related type defaults
-    // to — selects nothing, and so asks for the whole resource.
-    return selected.length ? selected : attributes;
   }
 
   /**
@@ -953,6 +971,23 @@ class Serializer<T extends Model> {
  */
 function resourceKey({ id, type }: { id: string; type: string }): string {
   return `${type}:${id}`;
+}
+
+/**
+ * The relationships of `names` whose linkage a document needs: those the
+ * type's fieldset keeps (all of them without one), and those `include`
+ * follows — which may be left out of the fieldset and still be included.
+ *
+ * @private
+ */
+function linkedNames(
+  names: Array<string>,
+  fieldset: Array<string> | undefined,
+  tree: IncludeTree
+): Array<string> {
+  return names.filter(
+    name => !fieldset || fieldset.includes(name) || tree.has(name)
+  );
 }
 
 export default Serializer;
