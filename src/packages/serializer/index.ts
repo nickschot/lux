@@ -699,8 +699,13 @@ class Serializer<T extends Model> {
 
   /**
    * Build a [JSON API](http://jsonapi.org) relationship object from resource
-   * linkage: to-one relationships carry a `links` object, to-many ones only
-   * `data`, and a missing to-one relationship is `{ data: null }`.
+   * linkage: to-one relationships carry a `links.related` link to the related
+   * resource, to-many ones only `data`, and a missing to-one relationship is
+   * `{ data: null }`.
+   *
+   * The link is `related`, not `self`: in JSON:API a relationship's `self`
+   * is the relationship URL (`/posts/1/relationships/user`), which the
+   * related resource's own URL (`/users/2`) is not.
    *
    * @method formatLinkage
    * @private
@@ -729,7 +734,7 @@ class Serializer<T extends Model> {
         type
       },
       links: {
-        self: this.linkFor(domain, type, linkage, namespace)
+        related: this.linkFor(domain, type, linkage, namespace)
       }
     };
   }
