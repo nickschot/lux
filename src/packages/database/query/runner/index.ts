@@ -26,6 +26,23 @@ export function createRunner(
     let didRun = false;
 
     RUNNERS.set(target, async () => {
+      if (didRun) {
+        return;
+      }
+
+      didRun = true;
+
+      // Any failure below (a rejected SQL query included) must reject the
+      // Query. Without this it became an unhandled rejection and the awaiting
+      // caller — e.g. a request being served — never settled.
+      try {
+        await run();
+      } catch (err) {
+        reject(err as Error);
+      }
+    });
+
+    async function run() {
       let results;
       const {
         model,
@@ -35,12 +52,6 @@ export function createRunner(
         shouldCount,
         relationships
       } = target;
-
-      if (didRun) {
-        return;
-      }
-
-      didRun = true;
 
       if (!shouldCount && !snapshots.some(([name]) => name === 'select')) {
         target.select(...target.model.attributeNames);
@@ -94,7 +105,7 @@ export function createRunner(
           resolve(result);
         }
       }
-    });
+    }
   }
 }
 
