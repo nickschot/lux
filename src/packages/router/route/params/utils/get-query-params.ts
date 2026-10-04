@@ -10,13 +10,24 @@ import {
 /**
  * @private
  */
-function getPageParam(): [string, ParameterLike] {
+function getPageParam({ maxPerPage }: Controller): [string, ParameterLike] {
   return [
     'page',
     new ParameterGroup(
       [
-        ['size', new Parameter({ path: 'page.size', type: 'number' })],
-        ['number', new Parameter({ path: 'page.number', type: 'number' })]
+        [
+          'size',
+          new Parameter({
+            path: 'page.size',
+            type: 'number',
+            min: 1,
+            max: maxPerPage
+          })
+        ],
+        [
+          'number',
+          new Parameter({ path: 'page.number', type: 'number', min: 1 })
+        ]
       ],
       {
         path: 'page'
@@ -170,7 +181,7 @@ export function getCollectionQueryParams(
 ): Array<[string, ParameterLike]> {
   if (controller.hasModel) {
     return [
-      getPageParam(),
+      getPageParam(controller),
       getSortParam(controller),
       getFilterParam(controller),
       getFieldsParam(controller),

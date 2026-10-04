@@ -142,6 +142,28 @@ describe('module "controller"', () => {
       expect(res.status).to.equal(400);
       expect(errors[0].source).to.deep.equal({ parameter: 'page[size]' });
     });
+
+    it('responds 400 to a page size or number out of range', async () => {
+      const cases: Array<[string, string]> = [
+        ['page%5Bsize%5D=0', 'page[size]'],
+        ['page%5Bsize%5D=101', 'page[size]'],
+        ['page%5Bnumber%5D=0', 'page[number]']
+      ];
+
+      for (const [query, parameter] of cases) {
+        const res = await fetch(`${DOMAIN}/posts?${query}`);
+        const { errors } = await res.json();
+
+        expect(res.status, query).to.equal(400);
+        expect(errors[0].source, query).to.deep.equal({ parameter });
+      }
+    });
+
+    it('accepts a page size up to `maxPerPage`', async () => {
+      const res = await fetch(`${DOMAIN}/posts?page%5Bsize%5D=100`);
+
+      expect(res.status).to.equal(200);
+    });
   });
 
   describe('#validateRelationships()', () => {

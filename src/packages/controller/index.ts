@@ -469,6 +469,18 @@ class Controller {
   defaultPerPage: number = 25;
 
   /**
+   * The largest `?page[size]` the index action accepts. A larger one is
+   * answered with `400 Bad Request` (as is a `page[size]` or `page[number]`
+   * below 1).
+   *
+   * @property maxPerPage
+   * @type {Number}
+   * @default 100
+   * @public
+   */
+  maxPerPage: number = 100;
+
+  /**
    * How many relationships deep an `?include` path may go on this
    * controller's routes. `comments.reactions.user` is 3 levels deep; with `1`
    * only direct relationships (`comments`) can be included. Paths deeper than
