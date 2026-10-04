@@ -889,6 +889,46 @@ describe('module "database/query"', () => {
           result.forEach(assertItem);
         }
       });
+
+      // Regression: a left join with no match used to leave its non-key
+      // columns behind, so a phantom related record was built from them (on
+      // Postgres its id became the column default `nextval(...)`).
+      it('does not build a related record for an unmatched join', async () => {
+        const { store } = await getTestApp();
+        const Post = store.modelFor('post');
+        const Action = store.modelFor('action');
+        const post = await Post.create({
+          title: 'No author',
+          body: 'This post has no user.',
+          isPublic: false
+        });
+
+        try {
+          const result = await new Query(TestModel)
+            .find(post.getPrimaryKey())
+            .include({ user: ['id', 'name', 'email'] });
+
+          expect(await Reflect.get(result, 'user')).to.equal(null);
+        } finally {
+          await Action.table()
+            .where({
+              trackable_id: post.getPrimaryKey(),
+              trackable_type: 'Post'
+            })
+            .del();
+          await post.destroy();
+        }
+      });
+    });
+
+    describe('errors', () => {
+      // Regression: a failing query used to become an unhandled rejection and
+      // the Query never settled, hanging whatever awaited it.
+      it('rejects when the SQL query fails', async () => {
+        await expect(
+          new Query(TestModel).whereRaw('this_column_does_not_exist = 1')
+        ).rejects.toThrow();
+      });
     });
 
     describe('#scope()', () => {
