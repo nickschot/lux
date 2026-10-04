@@ -1,26 +1,18 @@
 {
   "solution": {
     "lumen-framework": {
-      "impact": "minor",
-      "oldVersion": "3.0.3",
-      "newVersion": "3.1.0",
+      "impact": "patch",
+      "oldVersion": "3.1.0",
+      "newVersion": "3.1.1",
       "tagName": "latest",
       "constraints": [
         {
-          "impact": "minor",
-          "reason": "Appears in changelog section :rocket: Enhancement"
-        },
-        {
           "impact": "patch",
           "reason": "Appears in changelog section :bug: Bug Fix"
-        },
-        {
-          "impact": "patch",
-          "reason": "Appears in changelog section :house: Internal"
         }
       ],
       "pkgJSONPath": "./package.json"
     }
   },
-  "description": "## Release (2026-10-04)\n\n* lumen-framework 3.1.0 (minor)\n\n#### :rocket: Enhancement\n* `lumen-framework`\n  * [#31](https://github.com/nickschot/lux/pull/31) JSON:API includes follow the request's namespace; strict namespaces ([@schot-bot](https://github.com/schot-bot))\n  * [#30](https://github.com/nickschot/lux/pull/30) JSON:API compound documents: relationships on included resources, nested includes ([@schot-bot](https://github.com/schot-bot))\n  * [#23](https://github.com/nickschot/lux/pull/23) JSON:API error statuses and error source members ([@schot-bot](https://github.com/schot-bot))\n\n#### :bug: Bug Fix\n* `lumen-framework`\n  * [#28](https://github.com/nickschot/lux/pull/28) Reject include/sort values when the allow-list is empty (JSON:API 400) ([@schot-bot](https://github.com/schot-bot))\n  * [#27](https://github.com/nickschot/lux/pull/27) Fix phantom records from unmatched joins and hanging failed queries ([@schot-bot](https://github.com/schot-bot))\n  * [#25](https://github.com/nickschot/lux/pull/25) Don't lazy-load has-one relationships the join found absent ([@schot-bot](https://github.com/schot-bot))\n  * [#23](https://github.com/nickschot/lux/pull/23) JSON:API error statuses and error source members ([@schot-bot](https://github.com/schot-bot))\n\n#### :house: Internal\n* `lumen-framework`\n  * [#29](https://github.com/nickschot/lux/pull/29) Characterize compound documents (?include=) over HTTP ([@schot-bot](https://github.com/schot-bot))\n\n#### Committers: 1\n- [@schot-bot](https://github.com/schot-bot)\n"
+  "description": "## Release (2026-10-04)\n\n* lumen-framework 3.1.1 (patch)\n\n#### :bug: Bug Fix\n* `lumen-framework`\n  * [#32](https://github.com/nickschot/lux/pull/32) fix(query): count every filter condition in `count()` ([@schot-bot](https://github.com/schot-bot))\n\n#### Committers: 1\n- [@schot-bot](https://github.com/schot-bot)\n"
 }

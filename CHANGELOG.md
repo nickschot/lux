@@ -2,6 +2,17 @@
 
 ## Release (2026-10-04)
 
+* lumen-framework 3.1.1 (patch)
+
+#### :bug: Bug Fix
+* `lumen-framework`
+  * [#32](https://github.com/nickschot/lux/pull/32) fix(query): count every filter condition in `count()` ([@schot-bot](https://github.com/schot-bot))
+
+#### Committers: 1
+- [@schot-bot](https://github.com/schot-bot)
+
+## Release (2026-10-04)
+
 * lumen-framework 3.1.0 (minor)
 
 #### :rocket: Enhancement
