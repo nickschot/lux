@@ -52,22 +52,7 @@ describe('module "controller"', () => {
       expect(error.source).to.deep.equal({ pointer: '/data/id' });
     });
 
-    it('responds 403 to a relationship the controller does not accept', async () => {
-      const { status, error } = await request('PATCH', '/posts/1', {
-        data: {
-          id: '1',
-          type: 'posts',
-          relationships: { tags: { data: [] } }
-        }
-      });
-
-      expect(status).to.equal(403);
-      expect(error.source).to.deep.equal({
-        pointer: '/data/relationships/tags'
-      });
-    });
-
-    it('still responds 400 to a relationship the model does not have', async () => {
+    it('responds 400 to a relationship the model does not have', async () => {
       const { status, error } = await request('PATCH', '/posts/1', {
         data: {
           id: '1',
@@ -79,21 +64,6 @@ describe('module "controller"', () => {
       expect(status).to.equal(400);
       expect(error.source).to.deep.equal({
         pointer: '/data/relationships/nope'
-      });
-    });
-
-    it('responds 403 to an attribute the controller does not accept', async () => {
-      const { status, error } = await request('PATCH', '/posts/1', {
-        data: {
-          id: '1',
-          type: 'posts',
-          attributes: { title: 'x', createdAt: '2020-01-01T00:00:00Z' }
-        }
-      });
-
-      expect(status).to.equal(403);
-      expect(error.source).to.deep.equal({
-        pointer: '/data/attributes/created-at'
       });
     });
 

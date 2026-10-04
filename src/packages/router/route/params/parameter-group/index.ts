@@ -1,5 +1,6 @@
 import { FreezeableMap } from '../../../../freezeable';
 import { InvalidParameterError } from '../errors';
+import IgnoredParameter from '../parameter/ignored-parameter';
 import isNull from '../../../../../utils/is-null';
 import entries from '../../../../../utils/entries';
 import validateType from '../utils/validate-type';
@@ -56,9 +57,11 @@ class ParameterGroup extends FreezeableMap<string, ParameterLike> {
       for (const [key, value] of entries(params as Record<string, unknown>)) {
         const match = this.get(key);
 
-        if (match) {
+        if (match instanceof IgnoredParameter) {
+          continue;
+        } else if (match) {
           Reflect.set(validated, key, match.validate(value));
-        } else if (!match && !sanitize) {
+        } else if (!sanitize) {
           throw new InvalidParameterError(`${path}${key}`);
         }
       }

@@ -260,6 +260,71 @@ describe('request documents over HTTP', () => {
     });
   });
 
+  // Read-only members are dropped, not rejected, so clients that send whole
+  // resources back (ember-data) keep working; see nickschot/lux#47.
+  describe('members the controller does not accept', () => {
+    it('ignores an attribute the model has', async () => {
+      const { otherPost } = fixtures;
+      const before = await models.get('post').find(idOf(otherPost));
+      const { status, body } = await request(
+        'PATCH',
+        `/posts/${idOf(otherPost)}`,
+        {
+          data: {
+            id: idOf(otherPost),
+            type: 'posts',
+            attributes: {
+              title: 'Renamed',
+              'created-at': '2000-01-01T00:00:00.000Z'
+            }
+          }
+        }
+      );
+      const after = await models.get('post').find(idOf(otherPost));
+
+      expect(status).to.equal(200);
+      expect(body.data?.attributes?.title).to.equal('Renamed');
+      expect(after.createdAt.valueOf()).to.equal(before.createdAt.valueOf());
+    });
+
+    it('ignores a relationship the model has', async () => {
+      const { post } = fixtures;
+      const commentsOf = async () =>
+        (await models.get('comment').where({ postId: post.getPrimaryKey() }))
+          .map(comment => idOf(comment))
+          .sort();
+      const before = await commentsOf();
+
+      // `/posts` does not accept `comments` (only `/admin/posts` does).
+      const { status } = await request('PATCH', `/posts/${idOf(post)}`, {
+        data: {
+          id: idOf(post),
+          type: 'posts',
+          relationships: { comments: { data: [] } }
+        }
+      });
+
+      expect(status).to.be.oneOf([200, 204]);
+      expect(await commentsOf()).to.deep.equal(before);
+    });
+
+    it('still rejects a member the model does not have with 400', async () => {
+      const { post } = fixtures;
+      const { status, body } = await request('PATCH', `/posts/${idOf(post)}`, {
+        data: {
+          id: idOf(post),
+          type: 'posts',
+          attributes: { nope: true }
+        }
+      });
+
+      expect(status).to.equal(400);
+      expect(body.errors?.[0].source).to.deep.equal({
+        pointer: '/data/attributes/nope'
+      });
+    });
+  });
+
   describe('values', () => {
     it('stores a string attribute exactly as sent', async () => {
       // Used to be turned into a Date, failing the string column's type.
