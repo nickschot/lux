@@ -108,10 +108,18 @@ describe('compound documents over HTTP', () => {
   };
 
   /**
+   * The test-app's root visibility rule, restated independently of Lumen's
+   * implementation: private posts are hidden outside `admin`.
+   */
+  const isVisible = (record: Model) =>
+    record.resourceName !== 'posts' || Reflect.get(record, 'isPublic') === true;
+
+  /**
    * The oracle: every relationship of every resource — primary data and
    * included alike — must agree with what the model's own lazy relationship
-   * getters load from the database. Holds for any data, so it also checks
-   * collections over the random seed.
+   * getters load from the database, less what the root visibility rule hides
+   * (the getters know nothing of requests). Holds for any data, so it also
+   * checks collections over the random seed.
    */
   async function expectLinkageMatchesDatabase({
     data,
@@ -132,8 +140,8 @@ describe('compound documents over HTTP', () => {
         const value = await getRelated(record, name);
         const expected = identifiersOf(
           Array.isArray(value)
-            ? value.map(item => ref(item.resourceName, item))
-            : value
+            ? value.filter(isVisible).map(item => ref(item.resourceName, item))
+            : value && isVisible(value)
               ? ref(value.resourceName, value)
               : null
         );

@@ -18,6 +18,8 @@ This isn't another wrapper around [Express](http://expressjs.com/) or a framewor
 
 *   Automatic CRUD actions in controllers
 *   Automatic pagination, sorting, filtering via query params in controllers
+*   Visibility rules declared once per namespace, applied to every query a
+    request makes — listings, lookups, relationships and includes
 *   CLI for eliminating boiler plate
 *   [JSON API](http://jsonapi.org/) 1.0 compliant out of the box
 *   Optimized database queries based on serialized attributes and associations

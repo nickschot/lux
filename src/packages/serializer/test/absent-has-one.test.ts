@@ -53,6 +53,8 @@ describe('module "serializer"', () => {
 
       await store.connection('posts').insert({
         title: FIXTURE_TITLE,
+        // Private posts are hidden outside `admin`.
+        is_public: true,
         created_at: now,
         updated_at: now
       });

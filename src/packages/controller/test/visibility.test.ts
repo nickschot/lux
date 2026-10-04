@@ -11,9 +11,10 @@ import type { Model, ModelClass } from '../../database';
 import type { Request } from '../../server';
 import { getTestApp } from '../../../../test/utils/get-test-app';
 
-// The test-app's `members` namespace hides private posts, and the comments on
-// them (`app/controllers/members/application.js`). The root namespace has no
-// rules, so every hidden record stays reachable there. The seed is random and
+// The test-app hides private posts everywhere but `admin`
+// (`app/controllers/application.js`); its `members` namespace extends that
+// rule to hide the comments on them too (`members/application.js`). `admin`
+// lifts every rule, so each hidden record stays reachable there. The seed is random and
 // shared with other suites, so exact assertions target a fixture graph created
 // (and torn down) here.
 
@@ -210,10 +211,14 @@ describe('visibility rules', () => {
       expect(
         (await request(`/members/posts/${idOf(privatePost)}`)).status
       ).to.equal(404);
-      // Root has no rules.
+      // The root rule is what `members` inherits.
       expect((await request(`/posts/${idOf(privatePost)}`)).status).to.equal(
-        200
+        404
       );
+      // Admins see everything.
+      expect(
+        (await request(`/admin/posts/${idOf(privatePost)}`)).status
+      ).to.equal(200);
     });
 
     it('cannot update or destroy a hidden record', async () => {
