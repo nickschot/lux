@@ -495,3 +495,4 @@ class Query<T = any> extends Promise<T> {
 
 export default Query;
 export { RecordNotFoundError } from './errors';
+export { CONDITIONS };

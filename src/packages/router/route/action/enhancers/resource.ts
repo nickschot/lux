@@ -1,6 +1,7 @@
 import { Query } from '../../../../database';
 import { getDomain } from '../../../../server';
 import type { Request, Response } from '../../../../server';
+import { scopeFor } from '../../../../controller/visibility';
 import type { Serializer$fields } from '../../../../serializer/interfaces';
 import createPageLinks from '../utils/create-page-links';
 import type { Action } from '../interfaces';
@@ -30,10 +31,9 @@ export default function resource(action: Action<unknown>): Action<unknown> {
       const {
         params,
         url: { path, pathname },
-        route: {
-          controller: { namespace, serializer, defaultPerPage }
-        }
+        route: { controller }
       } = req;
+      const { namespace, serializer, defaultPerPage } = controller;
 
       const include = params.include || [];
 
@@ -61,6 +61,7 @@ export default function resource(action: Action<unknown>): Action<unknown> {
         domain,
         include,
         fields: params.fields as Serializer$fields,
+        scope: scopeFor(controller.visibility, req),
         // The request's namespace, not the serializer's: a namespaced
         // controller without its own serializer is given the root one.
         namespace

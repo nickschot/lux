@@ -46,4 +46,18 @@ export default function routes() {
     this.resource('tags');
     this.resource('users');
   });
+
+  this.namespace('members', function () {
+    this.resource('comments');
+    this.resource('posts');
+    this.resource('reactions', {
+      only: ['show', 'index']
+    });
+    this.resource('tags', {
+      only: ['show', 'index']
+    });
+    this.resource('users', {
+      only: ['show', 'index']
+    });
+  });
 }
