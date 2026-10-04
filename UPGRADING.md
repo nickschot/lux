@@ -86,7 +86,7 @@ byte-for-byte unchanged**; what changed is `included`:
 
 - **Included resources carry `relationships`.** Each is serialized with its own
   serializer's `hasOne`/`hasMany`, in the same shape as primary data (to-one:
-  `{ data, links }` or `{ data: null }`; to-many: `{ data: [...] }`). Before,
+  `{ data }` or `{ data: null }`; to-many: `{ data: [...] }`; see §14). Before,
   included resources had no `relationships` member at all. The linkage is
   batch-loaded — one query per relationship per level, not one per record.
 - **Nested paths are supported**, up to three levels by default:
@@ -108,8 +108,7 @@ byte-for-byte unchanged**; what changed is `included`:
 - **A fallback serializer does not leave the namespace.** A namespaced
   controller with no serializer of its own is still given the root one, but
   the request stays in its namespace: what it includes resolves to namespaced
-  serializers, and its links — including the primary resource's relationship
-  links, which used to be root links — point into the namespace. Note that the
+  serializers, and its links point into the namespace. Note that the
   fallback serializer itself still applies its root `hasOne`/`hasMany`. To
   rule that out for a namespace, set `serializerFallback = false` on its
   `ApplicationController` (e.g. `app/controllers/admin/application.js`): the
@@ -327,24 +326,31 @@ value.
   was accepted and passed to the ORM. A request body must be a JSON object;
   a top-level array is now a `400` like other malformed bodies.
 
-## 14. Relationship links — `related`, not `self`
+## 14. Relationship links — removed until relationship endpoints exist
 
-A to-one relationship's link to the related resource is now
-`links.related`:
+To-one relationships no longer carry a `links` member; like to-many ones, they
+are just their linkage:
 
 ```json
 "user": {
-  "data": { "id": "2", "type": "users" },
-  "links": { "related": "https://api.example.com/users/2" }
+  "data": { "id": "2", "type": "users" }
 }
 ```
 
-It used to be `links.self`. In JSON:API, a relationship's `self` is the
-*relationship* URL (`/posts/1/relationships/user`), which clients may use to
-read or replace the linkage; the related resource's own URL is not that, and
-a client following it as one would misbehave. The URL itself is unchanged.
-Clients that read `relationships.*.links.self` must read `links.related`
-instead. To-many relationships still carry only `data`.
+They used to carry `links.self` pointing at the related resource's own URL
+(`/users/2`). JSON:API gives relationship links specific meanings that URL
+cannot meet:
+
+- a relationship's `self` link is the relationship URL
+  (`/posts/1/relationships/user`), and every one a response contains MUST be
+  served;
+- a `related` link MUST NOT change when the relationship's content does — but
+  `/users/2` changes as soon as the post's user changes.
+
+Lumen does not serve relationship or related endpoints yet, so it sends no
+relationship links at all. Clients that read `relationships.*.links` must use
+the linkage (`data`) instead — e.g. ember-data loads `data` and does not need
+the link. The links come back, with proper URLs, once those endpoints exist.
 
 ## 15. Members the controller does not accept — ignored; unknown ones — `400`
 

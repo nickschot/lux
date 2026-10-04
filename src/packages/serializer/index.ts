@@ -675,10 +675,8 @@ class Serializer<T extends Model> {
       (hash, name) => ({
         ...hash,
         [dasherize(underscore(name))]: this.formatLinkage(
-          domain,
           this.model.relationshipFor(name)?.model.resourceName,
-          linkage[name],
-          namespace
+          linkage[name]
         )
       }),
       {}
@@ -699,22 +697,20 @@ class Serializer<T extends Model> {
 
   /**
    * Build a [JSON API](http://jsonapi.org) relationship object from resource
-   * linkage: to-one relationships carry a `links.related` link to the related
-   * resource, to-many ones only `data`, and a missing to-one relationship is
-   * `{ data: null }`.
+   * linkage: `{ data }`, where `data` is an identifier (or `null`) for a
+   * to-one relationship and an array of them for a to-many one.
    *
-   * The link is `related`, not `self`: in JSON:API a relationship's `self`
-   * is the relationship URL (`/posts/1/relationships/user`), which the
-   * related resource's own URL (`/users/2`) is not.
+   * Relationships carry no `links` until Lumen serves relationship and related
+   * endpoints. JSON:API requires a relationship's `self` link to be served,
+   * and a `related` link not to change when the relationship's content does —
+   * so the related resource's own URL (`/users/2`) fits neither.
    *
    * @method formatLinkage
    * @private
    */
   formatLinkage(
-    domain: string,
     type: string | undefined,
-    linkage: Array<string> | string | null | undefined,
-    namespace: string = this.namespace
+    linkage: Array<string> | string | null | undefined
   ): JSONAPI$RelationshipObject {
     if (Array.isArray(linkage)) {
       return {
@@ -732,9 +728,6 @@ class Serializer<T extends Model> {
       data: {
         id: linkage,
         type
-      },
-      links: {
-        related: this.linkFor(domain, type, linkage, namespace)
       }
     };
   }
