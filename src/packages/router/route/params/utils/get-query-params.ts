@@ -2,6 +2,7 @@ import Parameter from '../parameter';
 import ParameterGroup from '../parameter-group';
 import type Controller from '../../../../controller';
 import type { ParameterLike } from '../interfaces';
+import { enumerateIncludePaths } from '../../../../serializer/utils/include-tree';
 
 /**
  * @private
@@ -119,6 +120,8 @@ function getFieldsParam({
  * @private
  */
 function getIncludeParam({
+  model,
+  maxIncludeDepth,
   serializer: { hasOne, hasMany }
 }: Controller): [string, ParameterLike] {
   const relationships = [...hasOne, ...hasMany];
@@ -128,7 +131,15 @@ function getIncludeParam({
     new Parameter({
       path: 'include',
       type: 'array',
-      values: relationships
+      // Every top level name stays allowed (as before), plus the nested paths
+      // (`comments.user`) reachable through each related serializer, down to
+      // the controller's `maxIncludeDepth`.
+      values: Array.from(
+        new Set([
+          ...relationships,
+          ...enumerateIncludePaths(model, relationships, maxIncludeDepth)
+        ])
+      )
     })
   ];
 }
