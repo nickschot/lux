@@ -651,10 +651,72 @@ describe('module "database/query"', () => {
         ]);
       });
 
+      it('keeps every kind of filter condition', () => {
+        const result = subject
+          .where({ isPublic: true })
+          .where({ userId: 1 })
+          .not({ id: 1 })
+          .where({ id: [1, 2] })
+          .not({ id: [3, 4] })
+          .where({ body: null })
+          .not({ title: null })
+          .whereBetween({ id: [1, 10] })
+          .whereBetween({ id: [20, 30] }, true)
+          .whereRaw('posts.id > ?', [0])
+          .count();
+
+        expect(result.snapshots.map(([name]) => name)).to.deep.equal([
+          'count',
+          'where',
+          'where',
+          'whereNot',
+          'whereIn',
+          'whereNotIn',
+          'whereNull',
+          'whereNotNull',
+          'whereBetween',
+          'whereNotBetween',
+          'whereRaw'
+        ]);
+      });
+
       it('resolves with the number of matching records', async () => {
         const result = await subject.count();
 
         expect(result).to.equal(100);
+      });
+
+      // Each case below used to count rows its second condition excludes:
+      // the filter reused a `/g` regex, whose `lastIndex` made it skip the
+      // condition after any kept one, and `whereNull`/`whereNotNull` never
+      // matched at all.
+      const ids = (from: number, to: number) =>
+        Array.from({ length: to - from + 1 }, (_, i) => from + i);
+
+      [
+        [
+          'consecutive conditions',
+          q => q.not({ id: ids(1, 50) }).not({ id: ids(51, 60) }),
+          40
+        ],
+        [
+          'null conditions',
+          q => q.whereBetween({ id: [1, 50] }).where({ body: null }),
+          0
+        ],
+        [
+          'raw conditions',
+          q => q.whereBetween({ id: [1, 100] }).whereRaw('posts.id <= ?', [50]),
+          50
+        ]
+      ].forEach(([label, narrow, expected]) => {
+        it(`agrees with the matching rows for ${label}`, async () => {
+          const rows = await narrow(new Query(TestModel));
+          const count = await narrow(subject).count();
+
+          expect(rows).to.have.lengthOf(expected);
+          expect(count).to.equal(expected);
+        });
       });
     });
 

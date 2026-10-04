@@ -16,6 +16,25 @@ import formatSelect from './utils/format-select';
 import { runQuery, createRunner } from './runner';
 
 /**
+ * The snapshots that narrow which rows match — the only ones `count()` keeps.
+ * Every condition the query builder can push belongs here: dropping one makes
+ * the count (and so the index action's page links) disagree with the rows.
+ *
+ * @private
+ */
+const CONDITIONS = new Set([
+  'where',
+  'whereNot',
+  'whereIn',
+  'whereNotIn',
+  'whereNull',
+  'whereNotNull',
+  'whereBetween',
+  'whereNotBetween',
+  'whereRaw'
+]);
+
+/**
  * @class Query
  * @extends Promise
  * @private
@@ -280,14 +299,12 @@ class Query<T = any> extends Promise<T> {
   }
 
   count(): Query<number> {
-    const validName = /^(where(((Not)?(In)?)|(Raw)|(Between)))$/g;
-
     Object.assign(this, {
       shouldCount: true,
 
       snapshots: [
         ['count', '* as countAll'],
-        ...this.snapshots.filter(([name]) => validName.test(name))
+        ...this.snapshots.filter(([name]) => CONDITIONS.has(name))
       ]
     });
 
