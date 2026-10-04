@@ -364,6 +364,17 @@ Rejecting read-only members with a `403` instead is a defensible reading of
 JSON:API too; the trade-offs (and a strict variant) are discussed in
 nickschot/lux#47.
 
+## 16. Has-many-through writes — fixed
+
+Writing a has-many-through relationship (`tags` through `categorizations`)
+with `create`/`update` — or a `POST`/`PATCH` whose controller accepts it —
+used to fail with a database error: the ORM set the foreign key on the
+related table (`tags.post_id`), which does not exist. It now replaces the join
+rows: rows for related records no longer linked are deleted, missing ones are
+created through the join model (so its timestamps and hooks apply), and rows
+that stay are left untouched. No app change is needed; an app that worked
+around this by writing join rows itself can drop the workaround.
+
 ## The short version
 
 Bump `pg`/`mysql2` and run Node 20 (required); delete `.babelrc` and the

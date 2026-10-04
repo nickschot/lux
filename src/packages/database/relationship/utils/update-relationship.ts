@@ -1,3 +1,5 @@
+import { camelize } from 'inflection';
+
 import type Model from '../../model';
 import type { Relationship$opts } from '../interfaces';
 
@@ -80,6 +82,68 @@ function updateHasMany({ record, value, opts, trx }: Params): Array<unknown> {
   ];
 }
 
+/**
+ * Replace the join rows of a has-many-through relationship: delete the rows
+ * linking `record` to anything not in `value`, and create the missing ones
+ * through the join model (so its timestamps and hooks apply). Rows that stay
+ * are left untouched. Runs in `trx` itself, since it has to read the existing
+ * rows first.
+ *
+ * @private
+ */
+async function updateHasManyThrough({
+  record,
+  value,
+  opts,
+  trx
+}: Params): Promise<Array<unknown>> {
+  const { model, inverse, through, foreignKey: ownerKey } = opts;
+  const inverseOpts = model.relationshipFor(inverse);
+
+  if (!through || !inverseOpts) {
+    return [];
+  }
+
+  const { foreignKey: relatedKey } = inverseOpts;
+  const ownerId = record.getPrimaryKey();
+  const ids = (Array.isArray(value) ? value : []).map(item =>
+    item.getPrimaryKey()
+  );
+
+  await through
+    .table()
+    .transacting(trx)
+    .where(ownerKey, ownerId)
+    .whereNotIn(relatedKey, ids)
+    .del();
+
+  const existing = new Set(
+    (
+      await through
+        .table()
+        .transacting(trx)
+        .select(relatedKey)
+        .where(ownerKey, ownerId)
+    ).map((row: Record<string, unknown>) => String(row[relatedKey]))
+  );
+
+  for (const id of ids) {
+    if (!existing.has(String(id))) {
+      existing.add(String(id));
+
+      await through.create(
+        {
+          [camelize(ownerKey, true)]: ownerId,
+          [camelize(relatedKey, true)]: id
+        },
+        trx
+      );
+    }
+  }
+
+  return [];
+}
+
 function updateBelongsTo({ record, value, opts, trx }: Params): Array<unknown> {
   if (value instanceof opts.model) {
     const inverseOpts = opts.model.relationshipFor(opts.inverse);
@@ -106,13 +170,17 @@ function updateBelongsTo({ record, value, opts, trx }: Params): Array<unknown> {
 }
 
 /**
+ * The statements that persist the relationship `name` of `record`, if it
+ * changed. A has-many-through relationship is written to its join table
+ * before this resolves, and contributes no statements.
+ *
  * @private
  */
-export default function updateRelationship(
+export default async function updateRelationship(
   record: Model,
   name: string,
   trx: unknown
-): Array<unknown> {
+): Promise<Array<unknown>> {
   const opts = record.constructor.relationshipFor(name);
 
   if (!opts) {
@@ -142,6 +210,15 @@ export default function updateRelationship(
       });
 
     case 'hasMany':
+      if (opts.through) {
+        return updateHasManyThrough({
+          record,
+          value,
+          opts,
+          trx
+        });
+      }
+
       return updateHasMany({
         record,
         value,

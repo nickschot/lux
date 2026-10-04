@@ -65,6 +65,8 @@ describe('request documents over HTTP', () => {
     const User = models.get('user');
     const Post = models.get('post');
     const Comment = models.get('comment');
+    const Tag = models.get('tag');
+    const Categorization = models.get('categorization');
 
     await Post.transaction(async trx => {
       const create = async (model, attrs) => {
@@ -96,7 +98,28 @@ describe('request documents over HTTP', () => {
         message: 'Move me.'
       });
 
-      Object.assign(fixtures, { author, post, otherPost, comment });
+      const [keptTag, droppedTag, addedTag] = await Promise.all(
+        ['kept', 'dropped', 'added'].map(name =>
+          create(Tag, { name: `request-documents-${name}` })
+        )
+      );
+
+      for (const tag of [keptTag, droppedTag]) {
+        await create(Categorization, {
+          postId: post.getPrimaryKey(),
+          tagId: tag.getPrimaryKey()
+        });
+      }
+
+      Object.assign(fixtures, {
+        author,
+        post,
+        otherPost,
+        comment,
+        keptTag,
+        droppedTag,
+        addedTag
+      });
     });
   });
 
@@ -118,6 +141,18 @@ describe('request documents over HTTP', () => {
 
     await Notification.table()
       .where('recipient_id', fixtures.author.getPrimaryKey())
+      .del();
+
+    // Join rows written through the API, not created above.
+    await models
+      .get('categorization')
+      .table()
+      .whereIn(
+        'post_id',
+        created
+          .filter(record => record.resourceName === 'posts')
+          .map(record => record.getPrimaryKey())
+      )
       .del();
 
     for (const record of [...created].reverse()) {
@@ -322,6 +357,82 @@ describe('request documents over HTTP', () => {
       expect(body.errors?.[0].source).to.deep.equal({
         pointer: '/data/attributes/nope'
       });
+    });
+  });
+
+  describe('to-many resource linkage through a join model', () => {
+    const tagIdsOf = async (post: Model) => {
+      const rows = await models
+        .get('categorization')
+        .select('tagId')
+        .where({ postId: post.getPrimaryKey() });
+
+      return rows.map(row => String(Reflect.get(row, 'tagId'))).sort();
+    };
+
+    const patchTags = (data: unknown) => {
+      const { post } = fixtures;
+
+      return request('PATCH', `/admin/posts/${idOf(post)}`, {
+        data: {
+          id: idOf(post),
+          type: 'posts',
+          relationships: { tags: { data } }
+        }
+      });
+    };
+
+    it('replaces the join rows, keeping the ones that stay', async () => {
+      const { post, keptTag, addedTag } = fixtures;
+      const keptRow = async () =>
+        (
+          await models.get('categorization').first().where({
+            postId: post.getPrimaryKey(),
+            tagId: keptTag.getPrimaryKey()
+          })
+        )?.getPrimaryKey();
+      const keptRowId = await keptRow();
+      const expected = [idOf(keptTag), idOf(addedTag)].sort();
+      const { status, body } = await patchTags(
+        expected.map(id => ({ id, type: 'tags' }))
+      );
+
+      expect(status).to.equal(200);
+      expect(
+        (body.data?.relationships?.tags.data as Array<{ id: string }>)
+          .map(({ id }) => id)
+          .sort()
+      ).to.deep.equal(expected);
+      expect(await tagIdsOf(post)).to.deep.equal(expected);
+      expect(await keptRow()).to.equal(keptRowId);
+    });
+
+    it('creates the join rows of a new resource', async () => {
+      const { author, keptTag } = fixtures;
+      const { status, body } = await request('POST', '/admin/posts', {
+        data: {
+          type: 'posts',
+          attributes: { title: 'Tagged on create', body: 'x', isPublic: true },
+          relationships: {
+            user: { data: { id: idOf(author), type: 'users' } },
+            tags: { data: [{ id: idOf(keptTag), type: 'tags' }] }
+          }
+        }
+      });
+      const post = await models.get('post').find(body.data?.id);
+
+      created.push(post);
+
+      expect(status).to.equal(201);
+      expect(await tagIdsOf(post)).to.deep.equal([idOf(keptTag)]);
+    });
+
+    it('clears the join rows with an empty array', async () => {
+      const { post } = fixtures;
+      const { status } = await patchTags([]);
+
+      expect(status).to.equal(200);
+      expect(await tagIdsOf(post)).to.deep.equal([]);
     });
   });
 

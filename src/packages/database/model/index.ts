@@ -1054,10 +1054,13 @@ class Model {
 
       if (associations.length) {
         hadDirtyAssoc = true;
-        statements = associations.reduce<Array<unknown>>(
-          (arr, key) => [...arr, ...updateRelationship(this, key, trx)],
-          []
-        );
+
+        for (const key of associations) {
+          statements = [
+            ...statements,
+            ...(await updateRelationship(this, key, trx))
+          ];
+        }
       }
 
       if (this.isDirty) {
@@ -1226,11 +1229,11 @@ class Model {
         Boolean(this.relationshipFor(key))
       );
 
-      if (associations.length) {
-        statements = associations.reduce<Array<unknown>>(
-          (arr, key) => [...arr, ...updateRelationship(instance, key, trx)],
-          []
-        );
+      for (const key of associations) {
+        statements = [
+          ...statements,
+          ...(await updateRelationship(instance, key, trx))
+        ];
       }
 
       await Promise.all(statements);
