@@ -17,13 +17,21 @@ export default function parseRead({
     params.sort = typeof sort === 'string' ? formatSort(sort) : sort;
   }
 
-  if (fields) {
-    params.fields = isObject(fields) ? formatFields(fields) : fields;
+  if (fields && !isObject(fields)) {
+    params.fields = fields;
   }
 
   if (include) {
     params.include = formatInclude(include as string | Array<string>);
   }
 
-  return format(params, method);
+  const result = format(params, method);
+
+  // Added after `format()`, whose key camelizing would rewrite resource types
+  // (`fields[blog-posts]` -> `blogPosts`).
+  if (isObject(fields)) {
+    result.fields = formatFields(fields);
+  }
+
+  return result;
 }

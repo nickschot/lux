@@ -1,6 +1,8 @@
 import entries from '../../../../../utils/entries';
 
-const DELIMITER = /^(.+)\[(.+)]$/g;
+// Not global: `test()` on a global regex is stateful (`lastIndex`). Only the
+// `replace()` that follows every match, which resets it, kept that harmless.
+const DELIMITER = /^(.+)\[(.+)]$/;
 
 /**
  * @private

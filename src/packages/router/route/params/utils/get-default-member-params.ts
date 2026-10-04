@@ -1,30 +1,18 @@
 import type Controller from '../../../../controller';
 
 /**
+ * Without a fieldset, primary data loads every attribute its Serializer
+ * declares. Other types need no default: an absent fieldset means all fields.
+ *
  * @private
  */
 export default function getDefaultMemberParams({
   model,
-  serializer: { hasOne, hasMany, attributes }
+  serializer: { attributes }
 }: Controller): Record<string, unknown> {
   return {
     fields: {
-      [model.resourceName]: attributes,
-      ...[...hasOne, ...hasMany].reduce<Record<string, unknown>>(
-        (include, key) => {
-          const opts = model.relationshipFor(key);
-
-          if (!opts || model === opts.model) {
-            return include;
-          }
-
-          return {
-            ...include,
-            [opts.model.resourceName]: [opts.model.primaryKey]
-          };
-        },
-        {}
-      )
+      [model.resourceName]: attributes
     }
   };
 }

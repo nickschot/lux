@@ -86,11 +86,16 @@ export function formatSort(sort: string): string {
  */
 export function formatFields(
   fields: Record<string, unknown>
-): Record<string, unknown> {
-  return entries(fields).reduce<Record<string, unknown>>(
+): Record<string, Array<string>> {
+  // Keys are resource types and stay as written; values are member names,
+  // camelized like `sort` (`created-at` -> `createdAt`). An empty value is an
+  // empty fieldset, which the spec defines as "no fields".
+  return entries(fields).reduce<Record<string, Array<string>>>(
     (result, [key, value]) => ({
       ...result,
       [key]: makeArray(value as string | Array<string>)
+        .filter(Boolean)
+        .map(name => camelize(underscore(name), true))
     }),
     {}
   );
