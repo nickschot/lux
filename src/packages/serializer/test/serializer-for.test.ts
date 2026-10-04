@@ -8,6 +8,7 @@ describe('module "serializer"', () => {
   describe('#serializerFor()', () => {
     let serializers: Map<string, Serializer<Model>>;
     let Comment: ModelClass;
+    let User: ModelClass;
 
     const get = (key: string) => serializers.get(key) as Serializer<Model>;
 
@@ -19,28 +20,35 @@ describe('module "serializer"', () => {
         Serializer<Model>
       >;
       Comment = app.models.get('comment') as ModelClass;
+      User = app.models.get('user') as ModelClass;
     });
 
     it('resolves in the root namespace', () => {
       expect(get('posts').serializerFor(Comment)).to.equal(get('comments'));
     });
 
-    it("resolves in the serializer's own namespace", () => {
-      expect(get('admin/posts').serializerFor(Comment)).to.equal(
-        get('admin/comments')
+    it("resolves in the serializer's own namespace by default", () => {
+      expect(get('admin/posts').serializerFor(User)).to.equal(
+        get('admin/users')
       );
     });
 
     it('falls back to the root serializer when the namespace has none', () => {
-      // `admin/posts`, in an application without `admin/comments`.
-      const withoutAdminComments = new Map(
-        Array.from(serializers).filter(([key]) => key !== 'admin/comments')
+      // The test-app has no `admin/comments` serializer.
+      expect(serializers.has('admin/comments')).to.be.false;
+      expect(get('admin/posts').serializerFor(Comment)).to.equal(
+        get('comments')
       );
-      const subject = Object.create(get('admin/posts'), {
-        serializers: { value: withoutAdminComments }
-      }) as Serializer<Model>;
+    });
 
-      expect(subject.serializerFor(Comment)).to.equal(get('comments'));
+    // Regression: a namespaced controller without its own serializer is given
+    // the root one, whose namespace is "". The request's namespace must win,
+    // or everything it includes resolves to root serializers.
+    it('resolves in an explicitly given namespace', () => {
+      expect(get('comments').serializerFor(User, 'admin')).to.equal(
+        get('admin/users')
+      );
+      expect(get('admin/posts').serializerFor(User, '')).to.equal(get('users'));
     });
 
     it("falls back to the model's serializer outside an application", () => {

@@ -11,13 +11,13 @@ import paramsToQuery from './params-to-query';
 export default function findMany<T extends Model>(
   model: ModelClass<T>,
   req: Request,
-  serializer?: Serializer<Model>
+  serializerFor?: (model: ModelClass) => Serializer<Model>
 ): Query<Array<Model>> {
   const params = merge(req.defaultParams, req.params);
   const { sort, page, limit, select, filter, include } = paramsToQuery(
     model,
     params,
-    serializer
+    serializerFor
   );
 
   return model

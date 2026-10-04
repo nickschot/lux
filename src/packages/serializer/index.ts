@@ -488,6 +488,13 @@ class Serializer<T extends Model> {
    * top level included object of the returned [JSON API](http://jsonapi.org)
    * document object. Intermediate resources of a nested path are included too.
    *
+   * @param {String} options.namespace - The namespace of the request, i.e. of
+   * the Controller handling it. Every link in the document is built in it, and
+   * included resources are serialized by their Serializer in it (falling back
+   * to the root). Defaults to this Serializer's namespace — which is the root
+   * one when a namespaced Controller has no Serializer of its own, so the
+   * Controller passes its namespace explicitly.
+   *
    * @return {Promise} Resolves with a [JSON API](http://jsonapi.org) document
    * object.
    *
@@ -497,12 +504,14 @@ class Serializer<T extends Model> {
     data,
     links,
     domain,
-    include
+    include,
+    namespace = this.namespace
   }: {
     data: T | Array<T>;
     links: JSONAPI$DocumentLinks;
     domain: string;
     include: Array<string>;
+    namespace?: string;
   }): Promise<JSONAPI$Document> {
     const tree = createIncludeTree(include);
     const related = new Map<string, Array<Model>>();
@@ -518,6 +527,7 @@ class Serializer<T extends Model> {
             item,
             domain,
             related,
+            namespace,
             include: names
           })
         )
@@ -528,6 +538,7 @@ class Serializer<T extends Model> {
       const resource = await this.formatOne({
         domain,
         related,
+        namespace,
         item: data,
         include: names,
         links: false
@@ -547,6 +558,7 @@ class Serializer<T extends Model> {
           domain,
           records,
           included,
+          namespace,
           model: opts.model,
           tree: children
         });
@@ -693,13 +705,14 @@ class Serializer<T extends Model> {
                 return {
                   data: value.map(
                     relatedItem =>
-                      this.formatRelationship(relatedItem, domain).data
+                      this.formatRelationship(relatedItem, domain, namespace)
+                        .data
                   )
                 };
               } else if (value && (value as { id?: unknown }).id != null) {
                 collect(name, [value]);
 
-                return this.formatRelationship(value, domain);
+                return this.formatRelationship(value, domain, namespace);
               }
 
               return {
@@ -741,11 +754,16 @@ class Serializer<T extends Model> {
    *
    * @private
    */
-  formatRelationship(item: Model, domain: string): JSONAPI$RelationshipObject {
+  formatRelationship(
+    item: Model,
+    domain: string,
+    namespace: string = this.namespace
+  ): JSONAPI$RelationshipObject {
     return this.formatLinkage(
       domain,
       item.resourceName,
-      String(item.getPrimaryKey())
+      String(item.getPrimaryKey()),
+      namespace
     );
   }
 
@@ -803,15 +821,19 @@ class Serializer<T extends Model> {
     records,
     tree,
     domain,
-    included
+    included,
+    namespace
   }: {
     model: ModelClass;
     records: Array<Model>;
     tree: IncludeTree;
     domain: string;
     included: Map<string, JSONAPI$ResourceObject>;
+    namespace: string;
   }): Promise<void> {
-    const serializer = this.serializerFor(model);
+    // Resolved in the request's namespace at every level — never in that of
+    // whichever (possibly root, fallback) Serializer serialized the parent.
+    const serializer = this.serializerFor(model, namespace);
     const unique = Array.from(
       new Map(records.map(record => [record.getPrimaryKey(), record])).values()
     );
@@ -836,7 +858,7 @@ class Serializer<T extends Model> {
             item,
             domain,
             linkage: linkage.get(id),
-            namespace: this.namespace
+            namespace
           })
         );
       }
@@ -862,9 +884,10 @@ class Serializer<T extends Model> {
 
       if (ids.size) {
         // Load exactly the attributes the included resource will serialize.
-        const attributes = this.serializerFor(next).attributes.filter(attr =>
-          next.attributeNames.includes(attr)
-        );
+        const attributes = this.serializerFor(
+          next,
+          namespace
+        ).attributes.filter(attr => next.attributeNames.includes(attr));
 
         const nextRecords = await next
           .select(next.primaryKey, ...attributes)
@@ -873,6 +896,7 @@ class Serializer<T extends Model> {
         await this.addIncluded({
           domain,
           included,
+          namespace,
           model: next,
           records: nextRecords,
           tree: children
@@ -882,17 +906,25 @@ class Serializer<T extends Model> {
   }
 
   /**
-   * Resolve the Serializer for `model` in this Serializer's namespace, the
-   * way a namespaced Controller resolves its own: `admin/comments` if it
-   * exists, otherwise the closest ancestor namespace's, down to the root
-   * `comments` Serializer. Falls back to `model.serializer` when this
-   * Serializer was not created by an application (e.g. in isolation).
+   * Resolve the Serializer for `model` in `namespace` (this Serializer's by
+   * default), the way a namespaced Controller resolves its own:
+   * `admin/comments` if it exists, otherwise the closest ancestor namespace's,
+   * down to the root `comments` Serializer. Falls back to `model.serializer`
+   * when this Serializer was not created by an application (e.g. in
+   * isolation).
+   *
+   * Pass the request's namespace when there is one: a Serializer's own
+   * namespace is the root one whenever it is a namespaced Controller's
+   * fallback.
    *
    * @method serializerFor
    * @private
    */
-  serializerFor(model: ModelClass): Serializer<Model> {
-    const { serializers, namespace } = this;
+  serializerFor(
+    model: ModelClass,
+    namespace: string = this.namespace
+  ): Serializer<Model> {
+    const { serializers } = this;
 
     if (serializers) {
       const key = posix.join(namespace || '.', model.resourceName);

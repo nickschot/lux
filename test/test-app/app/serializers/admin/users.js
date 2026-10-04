@@ -1,12 +1,17 @@
 import UsersSerializer from '../users';
 
-// Admins see one attribute more than the public serializer, so tests can
-// tell which serializer formatted a user (e.g. as an included resource of an
-// `/admin/*` request).
+// Differs from the public serializer on purpose, so tests can tell which one
+// formatted a user (e.g. as an included resource of an `/admin/*` request):
+// one attribute more, and fewer relationships.
 class AdminUsersSerializer extends UsersSerializer {
   attributes = [
     ...this.attributes,
     'createdAt'
+  ];
+
+  hasMany = [
+    'posts',
+    'comments'
   ];
 }
 

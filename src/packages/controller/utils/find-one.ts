@@ -11,10 +11,10 @@ import paramsToQuery from './params-to-query';
 export default function findOne<T extends Model>(
   model: ModelClass<T>,
   req: Request,
-  serializer?: Serializer<Model>
+  serializerFor?: (model: ModelClass) => Serializer<Model>
 ): Query<T> {
   const params = merge(req.defaultParams, req.params);
-  const { id, select, include } = paramsToQuery(model, params, serializer);
+  const { id, select, include } = paramsToQuery(model, params, serializerFor);
 
   return model
     .find(id)

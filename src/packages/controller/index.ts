@@ -488,6 +488,25 @@ class Controller {
   maxIncludeDepth: number = 3;
 
   /**
+   * The Serializer to serialize (and validate, and load) related resources of
+   * this Controller's responses with: the related model's Serializer in this
+   * Controller's namespace, falling back to the root one.
+   *
+   * Always this Controller's namespace — not its Serializer's, which is the
+   * root one when the namespace has no Serializer for this resource.
+   *
+   * @method serializerFor
+   * @private
+   */
+  serializerFor(model: ModelClass): Serializer<Model> {
+    const { serializer, namespace } = this;
+
+    return serializer
+      ? serializer.serializerFor(model, namespace)
+      : model.serializer;
+  }
+
+  /**
    * The resolved Model for a Controller instance.
    *
    * @property model
@@ -592,7 +611,7 @@ class Controller {
    * @public
    */
   index(req: Request): Query<Array<Model>> {
-    return findMany(this.model, req, this.serializer);
+    return findMany(this.model, req, related => this.serializerFor(related));
   }
 
   /**
@@ -608,7 +627,7 @@ class Controller {
    * @public
    */
   show(req: Request): Query<Model> {
-    return findOne(this.model, req, this.serializer);
+    return findOne(this.model, req, related => this.serializerFor(related));
   }
 
   /**
@@ -664,7 +683,7 @@ class Controller {
   update(req: Request): Promise<number | Model> {
     const { model } = this;
 
-    return findOne(model, req, this.serializer)
+    return findOne(model, req, related => this.serializerFor(related))
       .then(async record => {
         const {
           params: {
@@ -700,7 +719,7 @@ class Controller {
    * @public
    */
   destroy(req: Request): Promise<number> {
-    return findOne(this.model, req, this.serializer)
+    return findOne(this.model, req, related => this.serializerFor(related))
       .then(record => record.destroy())
       .then(() => 204);
   }
