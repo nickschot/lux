@@ -2,9 +2,17 @@
 // esbuild strips the types and bundles in one pass -- no Babel stage, no
 // intermediate build/ dir. Bundling (not transpile-only) is required: the
 // source has circular imports and extensionless imports that only resolve at
-// bundle time. esbuild reads tsconfig.json for `useDefineForClassFields`
-// (true at target ES2022), so uninitialized fields must stay `declare` (they
-// are) or they would be emitted and shadow the prototype accessors.
+// bundle time.
+//
+// The compiler options that change emitted code are passed explicitly via
+// `tsconfigRaw` rather than discovered from tsconfig.json (esbuild then reads
+// no tsconfig at all), so the output does not depend on which config file
+// happens to sit above the sources:
+//   - `useDefineForClassFields: true` -- uninitialized fields must stay
+//     `declare` (they are) or they would be emitted and shadow the prototype
+//     accessors `Model.initialize()` installs.
+//   - `alwaysStrict: true` -- emits `"use strict"` in the CJS outputs, which
+//     ESM input otherwise loses when esbuild converts it to CommonJS.
 //
 // Outputs:
 //   dist/index.js   CJS library    -> package "main" / require()
@@ -26,7 +34,13 @@ const shared = {
   target: 'node20',
   packages: 'external', // deps come from node_modules, don't inline them
   sourcemap: true,
-  logLevel: 'info'
+  logLevel: 'info',
+  tsconfigRaw: {
+    compilerOptions: {
+      useDefineForClassFields: true,
+      alwaysStrict: true
+    }
+  }
 };
 
 rmSync('dist', { recursive: true, force: true });

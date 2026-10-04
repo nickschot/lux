@@ -1,4 +1,13 @@
-import K from './k';
+/**
+ * The default `rescue`: swallow the error and yield `undefined`.
+ *
+ * This is deliberately not `K` — `K` returns `this`, which is the global
+ * object when the bundle runs in sloppy mode (`lumen --use-weak`), so a failed
+ * lookup like `store.modelFor()` would come back truthy.
+ *
+ * @private
+ */
+const noop = (): undefined => undefined;
 
 /**
  * A utility function used for wrapping async code that would otherwise need a
@@ -33,7 +42,7 @@ import K from './k';
  */
 export default async function tryCatch<T>(
   fn: () => Promise<T>,
-  rescue: (err: unknown) => unknown = K
+  rescue: (err: unknown) => unknown = noop
 ): Promise<T | undefined> {
   let result: T | undefined;
 
@@ -72,7 +81,7 @@ export default async function tryCatch<T>(
  */
 export function tryCatchSync<T>(
   fn: () => T,
-  rescue: (err: unknown) => unknown = K
+  rescue: (err: unknown) => unknown = noop
 ): T | undefined {
   let result: T | undefined;
 
