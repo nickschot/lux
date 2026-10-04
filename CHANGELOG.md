@@ -1,5 +1,29 @@
 # Lumen Changelog
 
+## Release (2026-10-04)
+
+* lumen-framework 3.1.0 (minor)
+
+#### :rocket: Enhancement
+* `lumen-framework`
+  * [#31](https://github.com/nickschot/lux/pull/31) JSON:API includes follow the request's namespace; strict namespaces ([@schot-bot](https://github.com/schot-bot))
+  * [#30](https://github.com/nickschot/lux/pull/30) JSON:API compound documents: relationships on included resources, nested includes ([@schot-bot](https://github.com/schot-bot))
+  * [#23](https://github.com/nickschot/lux/pull/23) JSON:API error statuses and error source members ([@schot-bot](https://github.com/schot-bot))
+
+#### :bug: Bug Fix
+* `lumen-framework`
+  * [#28](https://github.com/nickschot/lux/pull/28) Reject include/sort values when the allow-list is empty (JSON:API 400) ([@schot-bot](https://github.com/schot-bot))
+  * [#27](https://github.com/nickschot/lux/pull/27) Fix phantom records from unmatched joins and hanging failed queries ([@schot-bot](https://github.com/schot-bot))
+  * [#25](https://github.com/nickschot/lux/pull/25) Don't lazy-load has-one relationships the join found absent ([@schot-bot](https://github.com/schot-bot))
+  * [#23](https://github.com/nickschot/lux/pull/23) JSON:API error statuses and error source members ([@schot-bot](https://github.com/schot-bot))
+
+#### :house: Internal
+* `lumen-framework`
+  * [#29](https://github.com/nickschot/lux/pull/29) Characterize compound documents (?include=) over HTTP ([@schot-bot](https://github.com/schot-bot))
+
+#### Committers: 1
+- [@schot-bot](https://github.com/schot-bot)
+
 ## Release (2026-09-27)
 
 * lumen-framework 3.0.3 (patch)

@@ -1,18 +1,18 @@
 {
   "solution": {
     "lumen-framework": {
-      "impact": "patch",
-      "oldVersion": "3.0.2",
-      "newVersion": "3.0.3",
+      "impact": "minor",
+      "oldVersion": "3.0.3",
+      "newVersion": "3.1.0",
       "tagName": "latest",
       "constraints": [
         {
-          "impact": "patch",
-          "reason": "Appears in changelog section :bug: Bug Fix"
+          "impact": "minor",
+          "reason": "Appears in changelog section :rocket: Enhancement"
         },
         {
           "impact": "patch",
-          "reason": "Appears in changelog section :memo: Documentation"
+          "reason": "Appears in changelog section :bug: Bug Fix"
         },
         {
           "impact": "patch",
@@ -22,5 +22,5 @@
       "pkgJSONPath": "./package.json"
     }
   },
-  "description": "## Release (2026-09-27)\n\n* lumen-framework 3.0.3 (patch)\n\n#### :bug: Bug Fix\n* `lumen-framework`\n  * [#24](https://github.com/nickschot/lux/pull/24) Fix compiler race writing dist/boot.js on a fresh checkout ([@schot-bot](https://github.com/schot-bot))\n  * [#22](https://github.com/nickschot/lux/pull/22) JSON:API 1.0 content negotiation (Accept / Content-Type) ([@schot-bot](https://github.com/schot-bot))\n\n#### :memo: Documentation\n* `lumen-framework`\n  * [#18](https://github.com/nickschot/lux/pull/18) Cleanup CLAUDE.md ([@nickschot](https://github.com/nickschot))\n\n#### :house: Internal\n* `lumen-framework`\n  * [#20](https://github.com/nickschot/lux/pull/20) Fix devcontainer claude not able to be updated & persist updates ([@nickschot](https://github.com/nickschot))\n\n#### Committers: 2\n- Nick Schot ([@nickschot](https://github.com/nickschot))\n- [@schot-bot](https://github.com/schot-bot)\n"
+  "description": "## Release (2026-10-04)\n\n* lumen-framework 3.1.0 (minor)\n\n#### :rocket: Enhancement\n* `lumen-framework`\n  * [#31](https://github.com/nickschot/lux/pull/31) JSON:API includes follow the request's namespace; strict namespaces ([@schot-bot](https://github.com/schot-bot))\n  * [#30](https://github.com/nickschot/lux/pull/30) JSON:API compound documents: relationships on included resources, nested includes ([@schot-bot](https://github.com/schot-bot))\n  * [#23](https://github.com/nickschot/lux/pull/23) JSON:API error statuses and error source members ([@schot-bot](https://github.com/schot-bot))\n\n#### :bug: Bug Fix\n* `lumen-framework`\n  * [#28](https://github.com/nickschot/lux/pull/28) Reject include/sort values when the allow-list is empty (JSON:API 400) ([@schot-bot](https://github.com/schot-bot))\n  * [#27](https://github.com/nickschot/lux/pull/27) Fix phantom records from unmatched joins and hanging failed queries ([@schot-bot](https://github.com/schot-bot))\n  * [#25](https://github.com/nickschot/lux/pull/25) Don't lazy-load has-one relationships the join found absent ([@schot-bot](https://github.com/schot-bot))\n  * [#23](https://github.com/nickschot/lux/pull/23) JSON:API error statuses and error source members ([@schot-bot](https://github.com/schot-bot))\n\n#### :house: Internal\n* `lumen-framework`\n  * [#29](https://github.com/nickschot/lux/pull/29) Characterize compound documents (?include=) over HTTP ([@schot-bot](https://github.com/schot-bot))\n\n#### Committers: 1\n- [@schot-bot](https://github.com/schot-bot)\n"
 }
