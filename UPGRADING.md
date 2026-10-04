@@ -295,6 +295,38 @@ custom action, `await post.comments`); narrow those with
   Set `maxPerPage` on a controller (or `ApplicationController`) if clients
   need larger pages.
 
+## 13. Request parsing — values arrive as sent
+
+Requests are parsed more strictly by member name and more faithfully by
+value.
+
+- **Request bodies keep their values.** Only the names of
+  `data.attributes` and `data.relationships` are camelized. Before, the whole
+  body was rewritten:
+  - every string that looked like an ISO date became a `Date` — so a string
+    column could not store one (`400`);
+  - keys *inside* object/JSON attribute values were camelized;
+  - numeric strings inside array attributes became numbers.
+
+  Dates are now parsed for **date columns only**, from any ISO 8601 string
+  (`2020-01-01`, `2020-01-01T10:20:30+02:00`, …). Ids (`data.id` and resource
+  linkage) are strings per the spec and are converted to a numeric primary
+  key by its column type, as before.
+- **Query values keep their case.** A comma-separated value is still a list
+  (`filter[title]=a,b` matches either), but its items are no longer camelized
+  (`filter[title]=Mixed Case` used to look for `mixed Case`). Values are
+  coerced the same way for every method (`123`, `true`, `null`, ISO dates).
+  `include` paths are camelized like other member names
+  (`include=comments.blog-author`).
+- **`meta` (and `links`, `jsonapi`) are accepted** at the top level, in
+  `data` and in relationship objects, instead of being a `400`. They are not
+  acted on; a controller can read the top-level ones from `request.params`.
+- **To-many linkage is validated per element.** Each must be a resource
+  identifier of the related type with an id — otherwise a `400` pointing at
+  the element (`/data/relationships/comments/data/1/id`). Before, any array
+  was accepted and passed to the ORM. A request body must be a JSON object;
+  a top-level array is now a `400` like other malformed bodies.
+
 ## The short version
 
 Bump `pg`/`mysql2` and run Node 20 (required); delete `.babelrc` and the

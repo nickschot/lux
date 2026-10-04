@@ -4,6 +4,7 @@ import validateType from '../utils/validate-type';
 import validateRange from './utils/validate-range';
 import validateValue from './utils/validate-value';
 import type { Parameter$opts } from './interfaces';
+import type { ParameterLike } from '../interfaces';
 
 /**
  * @private
@@ -33,12 +34,28 @@ class Parameter extends FreezeableSet<unknown> {
 
   declare max?: number;
 
+  /**
+   * Converts a value as the client sent it into the parameter's type before
+   * it is validated (e.g. a JSON:API string id into a numeric primary key),
+   * when given. Values it does not recognize are returned as is, and so fail
+   * validation.
+   */
+  declare parse?: (value: unknown) => unknown;
+
+  /**
+   * For an `array` parameter, builds the parameter each element is validated
+   * with, given the element's path (`data.relationships.tags.data.0`).
+   */
+  declare items?: (path: string) => ParameterLike;
+
   constructor({
     path,
     type,
     values,
     min,
     max,
+    parse,
+    items,
     required,
     sanitize
   }: Parameter$opts) {
@@ -49,6 +66,8 @@ class Parameter extends FreezeableSet<unknown> {
       type,
       min,
       max,
+      parse,
+      items,
       required: Boolean(required),
       sanitize: Boolean(sanitize),
       restricted: values !== undefined
@@ -58,14 +77,29 @@ class Parameter extends FreezeableSet<unknown> {
   }
 
   validate<V>(value: V): V {
-    validateType(this, value);
-    validateRange(this, value);
+    const parsed = (this.parse ? this.parse(value) : value) as V;
 
-    if (this.restricted) {
-      return validateValue(this, value);
+    validateType(this, parsed);
+    validateRange(this, parsed);
+
+    if (this.items && Array.isArray(parsed)) {
+      const { items, path } = this;
+
+      return parsed.map((item, index) => {
+        const param = items(`${path}.${index}`);
+
+        // A group lets `null` through; an element must be present.
+        validateType(param, item);
+
+        return param.validate(item);
+      }) as V;
     }
 
-    return value;
+    if (this.restricted) {
+      return validateValue(this, parsed);
+    }
+
+    return parsed;
   }
 }
 
