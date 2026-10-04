@@ -3,25 +3,43 @@ import ForbiddenParameter from '../parameter/forbidden-parameter';
 import ParameterGroup from '../parameter-group';
 import isNull from '../../../../../utils/is-null';
 import { typeForColumn } from '../../../../database';
+import type { ModelClass } from '../../../../database';
 import type Controller from '../../../../controller';
 import type { ParameterLike } from '../interfaces';
+
+import { parseId, parserFor } from './parse-column-value';
+
+/**
+ * @private
+ */
+function primaryKeyTypeFor(model: ModelClass): string | undefined {
+  const primaryKeyColumn = model.columnFor(model.primaryKey);
+
+  return primaryKeyColumn ? typeForColumn(primaryKeyColumn) : 'number';
+}
+
+/**
+ * An optional object member the spec allows in a request document (`meta`,
+ * `links`, `jsonapi`). It is accepted, not acted on.
+ *
+ * @private
+ */
+function getObjectParam(name: string, path: string): [string, ParameterLike] {
+  return [name, new Parameter({ path, type: 'object' })];
+}
 
 /**
  * @private
  */
 function getIDParam({ model }: Controller): [string, ParameterLike] {
-  const primaryKeyColumn = model.columnFor(model.primaryKey);
-  let primaryKeyType: string | undefined = 'number';
-
-  if (primaryKeyColumn) {
-    primaryKeyType = typeForColumn(primaryKeyColumn);
-  }
+  const type = primaryKeyTypeFor(model);
 
   return [
     'id',
     new Parameter({
-      type: primaryKeyType,
+      type,
       path: 'data.id',
+      parse: parseId(type),
       required: true
     })
   ];
@@ -61,7 +79,13 @@ function getAttributesParam(
           const required =
             method !== 'PATCH' && !col.nullable && isNull(col.defaultValue);
 
-          return [...group, [param, new Parameter({ type, path, required })]];
+          return [
+            ...group,
+            [
+              param,
+              new Parameter({ type, path, required, parse: parserFor(type) })
+            ]
+          ];
         }
 
         return group;
@@ -72,6 +96,45 @@ function getAttributesParam(
       }
     )
   ];
+}
+
+/**
+ * A resource identifier object (`{ id, type }`) of `model` at `path`.
+ *
+ * @private
+ */
+function getIdentifierParam(path: string, model: ModelClass): ParameterGroup {
+  const type = primaryKeyTypeFor(model);
+
+  return new ParameterGroup(
+    [
+      [
+        'id',
+        new Parameter({
+          type,
+          path: `${path}.id`,
+          parse: parseId(type),
+          required: true
+        })
+      ],
+
+      [
+        'type',
+        new Parameter({
+          type: 'string',
+          path: `${path}.type`,
+          values: [model.resourceName],
+          required: true
+        })
+      ],
+
+      getObjectParam('meta', `${path}.meta`)
+    ],
+    {
+      path,
+      required: true
+    }
+  );
 }
 
 /**
@@ -102,75 +165,27 @@ function getRelationshipsParam({
             return group;
           }
 
-          if (opts.type === 'hasMany') {
-            return [
-              ...group,
-
-              [
-                param,
-                new ParameterGroup(
-                  [
-                    [
-                      'data',
-                      new Parameter({
-                        type: 'array',
-                        path: `${path}.data`,
-                        required: true
-                      })
-                    ]
-                  ],
-                  {
-                    path
-                  }
-                )
-              ]
-            ];
-          }
-
-          const primaryKeyColumn = opts.model.columnFor(opts.model.primaryKey);
-          let primaryKeyType: string | undefined = 'number';
-
-          if (primaryKeyColumn) {
-            primaryKeyType = typeForColumn(primaryKeyColumn);
-          }
+          // Resource linkage: an array of identifiers for a to-many
+          // relationship, an identifier (or `null`) for a to-one.
+          const data: ParameterLike =
+            opts.type === 'hasMany'
+              ? new Parameter({
+                  type: 'array',
+                  path: `${path}.data`,
+                  required: true,
+                  items: itemPath => getIdentifierParam(itemPath, opts.model)
+                })
+              : getIdentifierParam(`${path}.data`, opts.model);
 
           return [
             ...group,
-
             [
               param,
               new ParameterGroup(
                 [
-                  [
-                    'data',
-                    new ParameterGroup(
-                      [
-                        [
-                          'id',
-                          new Parameter({
-                            type: primaryKeyType,
-                            path: `${path}.data.id`,
-                            required: true
-                          })
-                        ],
-
-                        [
-                          'type',
-                          new Parameter({
-                            type: 'string',
-                            path: `${path}.data.type`,
-                            values: [opts.model.resourceName],
-                            required: true
-                          })
-                        ]
-                      ],
-                      {
-                        type: 'array',
-                        path: `${path}.data`,
-                        required: true
-                      }
-                    )
-                  ]
+                  ['data', data],
+                  getObjectParam('links', `${path}.links`),
+                  getObjectParam('meta', `${path}.meta`)
                 ],
                 {
                   path
@@ -189,6 +204,19 @@ function getRelationshipsParam({
 }
 
 /**
+ * The top level members of a request document besides `data`.
+ *
+ * @private
+ */
+export function getDocumentParams(): Array<[string, ParameterLike]> {
+  return [
+    getObjectParam('meta', 'meta'),
+    getObjectParam('links', 'links'),
+    getObjectParam('jsonapi', 'jsonapi')
+  ];
+}
+
+/**
  * @private
  */
 export default function getDataParams(
@@ -196,7 +224,11 @@ export default function getDataParams(
   method: 'PATCH' | 'POST',
   includeID: boolean
 ): [string, ParameterLike] {
-  let params = [getTypeParam(controller)];
+  let params = [
+    getTypeParam(controller),
+    getObjectParam('links', 'data.links'),
+    getObjectParam('meta', 'data.meta')
+  ];
 
   if (controller.hasModel) {
     params = [

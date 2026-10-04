@@ -16,6 +16,8 @@ export type ParameterLike$opts = {
   values?: Array<unknown>;
   min?: number;
   max?: number;
+  parse?: (value: unknown) => unknown;
+  items?: (path: string) => ParameterLike;
   required?: boolean;
   sanitize?: boolean;
 };

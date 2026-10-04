@@ -229,7 +229,9 @@ describe('module "server/request"', () => {
                 intString: '123',
                 nullString: 'null',
                 boolString: 'true',
-                dateString: new Date(now)
+                // Values arrive as sent: dates are parsed by parameter
+                // validation, and only for date columns.
+                dateString: now
               },
               relationships: {
                 user: {
@@ -324,7 +326,9 @@ describe('module "server/request"', () => {
                 intString: '123',
                 nullString: 'null',
                 boolString: 'true',
-                dateString: new Date(now)
+                // Values arrive as sent: dates are parsed by parameter
+                // validation, and only for date columns.
+                dateString: now
               },
               relationships: {
                 user: {

@@ -46,4 +46,26 @@ describe('module "server/request/parser" #parseRead()', () => {
       });
     });
   });
+
+  describe('values', () => {
+    it('keeps the case of comma-separated values', () => {
+      expect(paramsFor('filter[title]=Mixed Case,Other').filter).to.deep.equal({
+        title: ['Mixed Case', 'Other']
+      });
+    });
+
+    it('coerces each value of a list', () => {
+      expect(paramsFor('filter[user-id]=1,2,null').filter).to.deep.equal({
+        userId: [1, 2, null]
+      });
+    });
+  });
+
+  describe('include', () => {
+    it('camelizes every member name of a path', () => {
+      expect(
+        paramsFor('include=user,comments.blog-author').include
+      ).to.deep.equal(['user', 'comments.blogAuthor']);
+    });
+  });
 });

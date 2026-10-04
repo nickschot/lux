@@ -1,8 +1,9 @@
 import { MalformedRequestError } from '../errors';
+import isObject from '../../../../../utils/is-object';
 import { tryCatchSync } from '../../../../../utils/try-catch';
 import type { Request } from '../../interfaces';
 
-import format from './format';
+import normalizeDocument from './normalize-document';
 
 /**
  * @private
@@ -27,8 +28,8 @@ export default function parseWrite(
 
       cleanUp();
 
-      if (parsed) {
-        resolve(format(parsed, req.method));
+      if (isObject(parsed)) {
+        resolve(normalizeDocument(parsed) as Record<string, unknown>);
       } else {
         reject(new MalformedRequestError());
       }

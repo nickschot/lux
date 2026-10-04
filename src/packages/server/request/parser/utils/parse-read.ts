@@ -8,7 +8,6 @@ import format, { formatSort, formatFields, formatInclude } from './format';
  * @private
  */
 export default function parseRead({
-  method,
   url: { query }
 }: Request): Record<string, unknown> {
   const { sort, fields, include, ...params } = parseNestedObject(query);
@@ -25,7 +24,7 @@ export default function parseRead({
     params.include = formatInclude(include as string | Array<string>);
   }
 
-  const result = format(params, method);
+  const result = format(params);
 
   // Added after `format()`, whose key camelizing would rewrite resource types
   // (`fields[blog-posts]` -> `blogPosts`).

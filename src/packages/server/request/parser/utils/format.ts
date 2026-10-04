@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any --
- * Request query/body parsing coerces genuinely untyped input (nested arrays of
- * string values from the URL) into normalized param shapes; the `any` arrays
- * are confined to those raw-value positions.
+ * Query parsing coerces genuinely untyped input (nested arrays of string
+ * values from the URL) into normalized param shapes; the `any` arrays are
+ * confined to those raw-value positions.
  */
 import { camelize } from 'inflection';
 
@@ -10,7 +10,16 @@ import isNull from '../../../../../utils/is-null';
 import entries from '../../../../../utils/entries';
 import underscore from '../../../../../utils/underscore';
 import { camelizeKeys } from '../../../../../utils/transform-keys';
-import type { Request$method } from '../../interfaces';
+
+/**
+ * A member name as the client writes it (`created-at`) in its internal form
+ * (`createdAt`).
+ *
+ * @private
+ */
+function memberName(name: string): string {
+  return camelize(underscore(name), true);
+}
 
 /**
  * @private
@@ -26,20 +35,16 @@ function makeArray(source: string | Array<string>): Array<string> {
 /**
  * @private
  */
-function formatString(source: string, method: Request$method): unknown {
-  if (method === 'GET') {
-    if (source.indexOf(',') >= 0) {
-      return source.split(',').map(str => camelize(underscore(str), true));
-    } else if (INT.test(source)) {
-      return Number.parseInt(source, 10);
-    } else if (BOOL.test(source)) {
-      return TRUE.test(source);
-    } else if (NULL.test(source)) {
-      return null;
-    }
-  }
-
-  if (DATE.test(source)) {
+function formatScalar(source: unknown): unknown {
+  if (typeof source !== 'string') {
+    return source;
+  } else if (INT.test(source)) {
+    return Number.parseInt(source, 10);
+  } else if (BOOL.test(source)) {
+    return TRUE.test(source);
+  } else if (NULL.test(source)) {
+    return null;
+  } else if (DATE.test(source)) {
     return new Date(source);
   }
 
@@ -47,27 +52,18 @@ function formatString(source: string, method: Request$method): unknown {
 }
 
 /**
+ * A query parameter's value. A comma-separated list becomes an array
+ * (`filter[id]=1,2` matches either). Values are data: unlike member names,
+ * they are never camelized.
+ *
  * @private
  */
-function formatObject(
-  source: Record<string, unknown> | Array<any>,
-  method: Request$method,
-  formatter: (
-    params: Record<string, unknown>,
-    method: Request$method
-  ) => Record<string, unknown>
-): Record<string, unknown> | Array<any> {
-  if (Array.isArray(source)) {
-    return source.map(value => {
-      if (INT.test(value)) {
-        return Number.parseInt(value, 10);
-      }
-
-      return value;
-    });
+function formatValue(source: string): unknown {
+  if (source.includes(',')) {
+    return source.split(',').map(formatScalar);
   }
 
-  return formatter(source, method);
+  return formatScalar(source);
 }
 
 /**
@@ -75,10 +71,10 @@ function formatObject(
  */
 export function formatSort(sort: string): string {
   if (sort.startsWith('-')) {
-    return `-${camelize(underscore(sort.substr(1)), true)}`;
+    return `-${memberName(sort.substr(1))}`;
   }
 
-  return camelize(underscore(sort), true);
+  return memberName(sort);
 }
 
 /**
@@ -95,58 +91,47 @@ export function formatFields(
       ...result,
       [key]: makeArray(value as string | Array<string>)
         .filter(Boolean)
-        .map(name => camelize(underscore(name), true))
+        .map(memberName)
     }),
     {}
   );
 }
 
 /**
+ * Relationship paths, with each member name camelized
+ * (`comments.blog-author` -> `comments.blogAuthor`).
+ *
  * @private
  */
 export function formatInclude(include: string | Array<string>): Array<string> {
-  return makeArray(include);
+  return makeArray(include).map(path =>
+    path.split('.').map(memberName).join('.')
+  );
 }
 
 /**
+ * Format query parameters: keys are camelized (they are member names, e.g.
+ * `filter[is-public]`), values are coerced (`123`, `true`, `null`, ISO dates)
+ * and split on commas, but otherwise left as written.
+ *
  * @private
  */
 export default function format(
-  params: Record<string, unknown>,
-  method: Request$method
+  params: Record<string, unknown>
 ): Record<string, unknown> {
   const result = entries(params).reduce<Record<string, unknown>>(
-    (obj, param) => {
-      const [, value] = param;
-      let [key] = param;
+    (obj, [key, value]) => {
+      const name = key.replace(BRACKETS, '');
 
-      key = key.replace(BRACKETS, '');
-
-      switch (typeof value) {
-        case 'object':
-          return {
-            ...obj,
-            [key]: isNull(value)
-              ? null
-              : formatObject(
-                  value as Record<string, unknown> | Array<any>,
-                  method,
-                  format
-                )
-          };
-
-        case 'string':
-          return {
-            ...obj,
-            [key]: formatString(value, key === 'id' ? 'GET' : method)
-          };
-
-        default:
-          return {
-            ...obj,
-            [key]: value
-          };
+      if (Array.isArray(value)) {
+        return { ...obj, [name]: value.map(formatScalar) };
+      } else if (value && typeof value === 'object') {
+        return { ...obj, [name]: format(value as Record<string, any>) };
+      } else if (typeof value === 'string') {
+        return { ...obj, [name]: formatValue(value) };
       }
+
+      return { ...obj, [name]: isNull(value) ? null : value };
     },
     {}
   );

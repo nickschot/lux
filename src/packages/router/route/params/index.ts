@@ -2,7 +2,7 @@ import type Controller from '../../../controller';
 
 import ParameterGroup from './parameter-group';
 import getURLParams from './utils/get-url-params';
-import getDataParams from './utils/get-data-params';
+import getDataParams, { getDocumentParams } from './utils/get-data-params';
 import getDefaultMemberParams from './utils/get-default-member-params';
 import getDefaultCollectionParams from './utils/get-default-collection-params';
 import type { Params$opts } from './interfaces';
@@ -27,13 +27,21 @@ export function paramsFor({
     params = [...params, ...getMemberQueryParams(controller)];
 
     if (method === 'POST' || method === 'PATCH') {
-      params = [...params, getDataParams(controller, method, true)];
+      params = [
+        ...params,
+        getDataParams(controller, method, true),
+        ...getDocumentParams()
+      ];
     }
   } else if (type === 'collection') {
     params = [...params, ...getCollectionQueryParams(controller)];
 
     if (method === 'POST' || method === 'PATCH') {
-      params = [...params, getDataParams(controller, method, false)];
+      params = [
+        ...params,
+        getDataParams(controller, method, false),
+        ...getDocumentParams()
+      ];
     }
   } else if (type === 'custom') {
     params = [...params, ...getCustomParams(controller)];
