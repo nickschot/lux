@@ -6,6 +6,22 @@ import isBuffer from '../../../../../utils/is-buffer';
 import type { ParameterLike } from '../index';
 
 /**
+ * The type of `value` as an error message should name it: unlike `typeof`,
+ * telling arrays and dates apart from other objects.
+ *
+ * @private
+ */
+function describeType(value: unknown): string {
+  if (Array.isArray(value)) {
+    return 'array';
+  } else if (value instanceof Date) {
+    return 'date';
+  }
+
+  return typeof value;
+}
+
+/**
  * @private
  */
 export default function validateType(
@@ -46,7 +62,7 @@ export default function validateType(
   }
 
   if (!isValid) {
-    throw new ParameterTypeError(param, valueType);
+    throw new ParameterTypeError(param, describeType(value));
   }
 
   return true;

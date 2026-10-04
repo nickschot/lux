@@ -283,6 +283,18 @@ describe('request documents over HTTP', () => {
       }
     });
 
+    it('reports every invalid element', async () => {
+      const { status, body } = await patchComments(['x', { type: 'comments' }]);
+
+      expect(status).to.equal(400);
+      expect(body.errors?.map(({ source }) => source?.pointer)).to.have.members(
+        [
+          '/data/relationships/comments/data/0',
+          '/data/relationships/comments/data/1/id'
+        ]
+      );
+    });
+
     it('rejects linkage that is not an array with 400', async () => {
       const { comment } = fixtures;
       const { status, body } = await patchComments({

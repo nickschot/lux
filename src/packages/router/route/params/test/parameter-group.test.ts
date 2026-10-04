@@ -2,6 +2,7 @@ import { it, describe, beforeAll, expect } from 'vitest';
 
 import Parameter from '../parameter';
 import ParameterGroup from '../parameter-group';
+import ErrorList from '../../../../server/errors/error-list';
 
 describe('module "router/route/params"', () => {
   describe('class ParameterGroup', () => {
@@ -65,6 +66,7 @@ describe('module "router/route/params"', () => {
 
       it('fails when there is a type mismatch', () => {
         expect(() => subject.validate({ id: '1' })).to.throw(TypeError);
+        // Both mismatches are reported together.
         expect(() => {
           subject.validate({
             id: '1',
@@ -72,7 +74,13 @@ describe('module "router/route/params"', () => {
               date: Date.now()
             }
           });
-        }).to.throw(TypeError);
+        })
+          .to.throw(ErrorList)
+          .with.property('errors')
+          .that.satisfies((errors: Array<Error>) =>
+            errors.every(error => error instanceof TypeError)
+          )
+          .and.has.lengthOf(2);
       });
 
       it('fails when there is a value mismatch', () => {
@@ -100,7 +108,24 @@ describe('module "router/route/params"', () => {
       });
 
       it('fails when an unsanitized group contains an invalid key', () => {
-        expect(() => subject.validate({ test: true })).to.throw(TypeError);
+        expect(() => subject.validate({ id: 1, test: true })).to.throw(
+          TypeError,
+          "'test' is not a valid parameter"
+        );
+      });
+
+      it('reports every problem at once', () => {
+        // The missing `id` and the invalid `test`, each with its own path.
+        expect(() => subject.validate({ test: true }))
+          .to.throw(ErrorList)
+          .with.property('errors')
+          .that.satisfies((errors: Array<{ source: unknown }>) =>
+            [{ parameter: 'id' }, { parameter: 'test' }].every(source =>
+              errors.some(
+                error => JSON.stringify(error.source) === JSON.stringify(source)
+              )
+            )
+          );
       });
 
       it('strips out invalid keys when a group is santized ', () => {

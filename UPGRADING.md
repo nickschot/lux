@@ -392,6 +392,37 @@ around this by writing join rows itself can drop the workaround.
 - **A created resource's `links.self` equals its `Location`** (`/tags/101`).
   It used to be the collection's URL (`/tags`).
 
+## 18. Error responses — every problem, richer error objects
+
+- **A request with several problems gets one error object per problem.**
+  Parameter validation used to stop at the first; now every invalid member
+  is reported (`errors` holds e.g. a missing `data.type` *and* an unknown
+  attribute), as does every invalid element of to-many linkage and every
+  attribute a model validator rejects (one `422` each). Each error object has
+  its own `status`; the response takes the shared one, or `400` when they
+  differ (JSON:API: "the most generally applicable HTTP error code"). Clients
+  that only read `errors[0]` keep working.
+- **Errors can carry more of the error object.** An error thrown from an
+  action (or hook) is rendered with the `id`, `code`, `title`, `meta` and
+  `links.about` it has — e.g.
+
+  ```js
+  throw Object.assign(new Error('[public] That title is taken.'), {
+    statusCode: 422,
+    code: 'title-taken',
+    source: { pointer: '/data/attributes/title' }
+  });
+  ```
+
+  `detail` (the message) is still only exposed in development or with a
+  `[public]` prefix.
+- **Type errors name arrays and dates** ("got 'array'") instead of the
+  confusing "Expected type 'object' … but got 'object'".
+- **A boot warning for custom `query` parameters named only with a-z**
+  (`search`): JSON:API reserves that shape for its own parameters and requires
+  implementation-specific ones to contain another character (`searchTerm`,
+  `search-term`). They keep working.
+
 ## The short version
 
 Bump `pg`/`mysql2` and run Node 20 (required); delete `.babelrc` and the

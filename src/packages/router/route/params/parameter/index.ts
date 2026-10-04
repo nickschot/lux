@@ -1,5 +1,6 @@
 import { FreezeableSet } from '../../../../freezeable';
 import validateType from '../utils/validate-type';
+import { collectErrors } from '../../../../server/errors/error-list';
 
 import validateRange from './utils/validate-range';
 import validateValue from './utils/validate-value';
@@ -85,14 +86,20 @@ class Parameter extends FreezeableSet<unknown> {
     if (this.items && Array.isArray(parsed)) {
       const { items, path } = this;
 
-      return parsed.map((item, index) => {
-        const param = items(`${path}.${index}`);
+      const validated: Array<unknown> = [];
 
-        // A group lets `null` through; an element must be present.
-        validateType(param, item);
+      // Every invalid element is reported, not just the first.
+      collectErrors(
+        parsed.map((item, index) => () => {
+          const param = items(`${path}.${index}`);
 
-        return param.validate(item);
-      }) as V;
+          // A group lets `null` through; an element must be present.
+          validateType(param, item);
+          validated[index] = param.validate(item);
+        })
+      );
+
+      return validated as V;
     }
 
     if (this.restricted) {

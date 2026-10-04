@@ -1,11 +1,15 @@
 import Validation, { ValidationError } from '../../validation';
+import ErrorList from '../../../server/errors/error-list';
 import type { Model } from '../../index';
 
 /**
+ * Run the model's validators over its dirty attributes. Every attribute that
+ * fails is reported (one 422 error object each), not just the first.
+ *
  * @private
  */
 export default function validate(instance: Model): true {
-  return Array.from(instance.dirtyAttributes)
+  const failed = Array.from(instance.dirtyAttributes)
     .map(([key, value]) => ({
       key,
       value,
@@ -15,11 +19,12 @@ export default function validate(instance: Model): true {
     }))
     .filter(({ validator }) => validator)
     .map(props => new Validation(props))
-    .reduce<true>((result, validation) => {
-      if (!validation.isValid()) {
-        throw new ValidationError(validation.key);
-      }
+    .filter(validation => !validation.isValid())
+    .map(({ key }) => new ValidationError(key));
 
-      return result;
-    }, true);
+  if (failed.length) {
+    throw ErrorList.from(failed);
+  }
+
+  return true;
 }
