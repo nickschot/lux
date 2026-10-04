@@ -77,6 +77,10 @@ export async function compile(
     // Reproduces `rollup-plugin-lumen`: preserves each class's `.name` (Lumen keys
     // models/controllers/serializers off it) against esbuild's own renaming.
     keepNames: true,
+    // Strictness follows `useStrict` alone. Without this, esbuild would apply
+    // whatever tsconfig.json it finds above the app (its `strict` implies
+    // `alwaysStrict`, even for .js files), silently overriding `--use-weak`.
+    tsconfigRaw: { compilerOptions: { alwaysStrict: useStrict } },
     // Bare specifiers stay external (knex, inflection, the app's own deps);
     // relative paths and the two aliases below are bundled in. This matches the
     // old `is-external` split, with the framework itself pulled in via LUMEN_LOCAL.

@@ -19,6 +19,12 @@ describe('util tryCatch()', () => {
 
     expect(value).to.be.true;
   });
+
+  it('resolves to `undefined` by default when `fn` rejects', async () => {
+    const value = await tryCatch(() => Promise.reject(new Error('Test')));
+
+    expect(value).to.be.undefined;
+  });
 });
 
 describe('util tryCatchSync()', () => {
@@ -37,5 +43,13 @@ describe('util tryCatchSync()', () => {
     );
 
     expect(value).to.be.true;
+  });
+
+  it('returns `undefined` by default when `fn` throws', () => {
+    const value = tryCatchSync(() => {
+      throw new Error('Test');
+    });
+
+    expect(value).to.be.undefined;
   });
 });

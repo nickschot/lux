@@ -59,6 +59,10 @@ describe('module "compiler"', () => {
           expect(options.platform).to.equal('node');
           // keepNames replaces rollup-plugin-lumen's class-name preservation.
           expect(options.keepNames).to.be.true;
+          // Strictness is pinned rather than read from an ambient tsconfig.
+          expect(options.tsconfigRaw).to.deep.equal({
+            compilerOptions: { alwaysStrict: opt === 'use strict' }
+          });
           // The framework and the app tree resolve through aliases; bare deps
           // stay external.
           expect(options.packages).to.equal('external');

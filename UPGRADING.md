@@ -429,6 +429,15 @@ around this by writing join rows itself can drop the workaround.
   implementation-specific ones to contain another character (`searchTerm`,
   `search-term`). They keep working.
 
+## 19. Build strictness — the CLI flag alone decides
+
+- **Your app's `tsconfig.json` no longer affects `dist/bundle.js`.** esbuild
+  used to pick up any `tsconfig.json` above the app and apply its `strict`
+  (→ `alwaysStrict`) even to `.js` files, so `--use-weak` was silently ignored
+  in an app with a strict config. Strict mode is now the CLI default, and
+  `--use-weak` really turns it off. No action needed unless you relied on that
+  override.
+
 ## The short version
 
 Bump `pg`/`mysql2` and run Node 20 (required); delete `.babelrc` and the
