@@ -82,6 +82,42 @@ describe('module "controller"', () => {
       });
     });
 
+    it('responds 403 to an attribute the controller does not accept', async () => {
+      const { status, error } = await request('PATCH', '/posts/1', {
+        data: {
+          id: '1',
+          type: 'posts',
+          attributes: { title: 'x', createdAt: '2020-01-01T00:00:00Z' }
+        }
+      });
+
+      expect(status).to.equal(403);
+      expect(error.source).to.deep.equal({
+        pointer: '/data/attributes/created-at'
+      });
+    });
+
+    it('responds 400 to an attribute the model does not have', async () => {
+      for (const method of ['POST', 'PATCH']) {
+        const { status, error } = await request(
+          method,
+          method === 'POST' ? '/tags' : '/tags/1',
+          {
+            data: {
+              ...(method === 'PATCH' && { id: '1' }),
+              type: 'tags',
+              attributes: { name: 'x', nope: true }
+            }
+          }
+        );
+
+        expect(status, method).to.equal(400);
+        expect(error.source, method).to.deep.equal({
+          pointer: '/data/attributes/nope'
+        });
+      }
+    });
+
     it('responds 404 to a related resource that does not exist', async () => {
       const { status, error } = await request('POST', '/posts', {
         data: {

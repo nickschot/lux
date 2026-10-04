@@ -344,6 +344,10 @@ class Controller {
    * Serializer that represents a Controller's resource. If the Serializer
    * cannot be resolved, this property will default to an empty array.
    *
+   * An attribute or relationship the model has but this list does not name is
+   * answered with `403 Forbidden` (an unsupported update, per JSON:API); a
+   * member the model does not have at all with `400 Bad Request`.
+   *
    * @property params
    * @type {Array}
    * @default []

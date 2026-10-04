@@ -67,32 +67,44 @@ function getAttributesParam(
   { model, params }: Controller,
   method: 'PATCH' | 'POST'
 ): [string, ParameterLike] {
+  // Attributes the model has but the controller does not accept get a 403
+  // (unsupported update), like relationships; a name the model does not have
+  // at all is a 400.
+  const forbidden = model.attributeNames
+    .filter(name => !params.includes(name))
+    .map((name): [string, ParameterLike] => [
+      name,
+      new ForbiddenParameter(`data.attributes.${name}`)
+    ]);
+
   return [
     'attributes',
     new ParameterGroup(
-      params.reduce<Array<[string, ParameterLike]>>((group, param) => {
-        const col = model.columnFor(param);
+      [
+        ...params.reduce<Array<[string, ParameterLike]>>((group, param) => {
+          const col = model.columnFor(param);
 
-        if (col) {
-          const type = typeForColumn(col);
-          const path = `data.attributes.${param}`;
-          const required =
-            method !== 'PATCH' && !col.nullable && isNull(col.defaultValue);
+          if (col) {
+            const type = typeForColumn(col);
+            const path = `data.attributes.${param}`;
+            const required =
+              method !== 'PATCH' && !col.nullable && isNull(col.defaultValue);
 
-          return [
-            ...group,
-            [
-              param,
-              new Parameter({ type, path, required, parse: parserFor(type) })
-            ]
-          ];
-        }
+            return [
+              ...group,
+              [
+                param,
+                new Parameter({ type, path, required, parse: parserFor(type) })
+              ]
+            ];
+          }
 
-        return group;
-      }, []),
+          return group;
+        }, []),
+        ...forbidden
+      ],
       {
-        path: 'data.attributes',
-        sanitize: true
+        path: 'data.attributes'
       }
     )
   ];

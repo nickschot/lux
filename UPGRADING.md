@@ -346,6 +346,21 @@ a client following it as one would misbehave. The URL itself is unchanged.
 Clients that read `relationships.*.links.self` must read `links.related`
 instead. To-many relationships still carry only `data`.
 
+## 15. Attribute permissions — rejected, not ignored
+
+Attributes in a `POST`/`PATCH` body are now checked like relationships:
+
+- **An attribute the model has but the controller's `params` does not list is
+  a `403 Forbidden`** (JSON:API's answer to an unsupported update), with a
+  pointer (`/data/attributes/created-at`). Before, it was silently dropped and
+  the request succeeded.
+- **An attribute the model does not have is a `400 Bad Request`.** Before, it
+  was silently dropped too.
+
+Clients that send read-only attributes back (e.g. echoing `created-at` from a
+response into a `PATCH`) must leave them out, or the controller must accept
+them.
+
 ## The short version
 
 Bump `pg`/`mysql2` and run Node 20 (required); delete `.babelrc` and the
