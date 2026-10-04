@@ -355,12 +355,10 @@ describe('compound documents over HTTP', () => {
       ]);
 
       expect(relationships.user).to.deep.equal({
-        data: ref('users', author),
-        links: { related: `${DOMAIN}/users/${idOf(author)}` }
+        data: ref('users', author)
       });
       expect(relationships.image).to.deep.equal({
-        data: ref('images', image),
-        links: { related: `${DOMAIN}/images/${idOf(image)}` }
+        data: ref('images', image)
       });
       expect(relationships.tags).to.have.all.keys(['data']);
       expect(
@@ -522,12 +520,10 @@ describe('compound documents over HTTP', () => {
       ]);
       expect(comment?.relationships).to.deep.equal({
         post: {
-          data: ref('posts', post),
-          links: { related: `${DOMAIN}/posts/${idOf(post)}` }
+          data: ref('posts', post)
         },
         user: {
-          data: ref('users', commenter),
-          links: { related: `${DOMAIN}/users/${idOf(commenter)}` }
+          data: ref('users', commenter)
         },
         reactions: {
           data: [ref('reactions', commentReaction)]
@@ -905,12 +901,10 @@ describe('compound documents over HTTP', () => {
         self: `${DOMAIN}/admin/comments/${idOf(commentByCommenter)}`
       });
       expect(comment?.relationships?.user).to.deep.equal({
-        data: ref('users', commenter),
-        links: { related: `${DOMAIN}/admin/users/${idOf(commenter)}` }
+        data: ref('users', commenter)
       });
       expect(comment?.relationships?.post).to.deep.equal({
-        data: ref('posts', post),
-        links: { related: `${DOMAIN}/admin/posts/${idOf(post)}` }
+        data: ref('posts', post)
       });
     });
 
@@ -968,12 +962,10 @@ describe('compound documents over HTTP', () => {
         const { relationships } = body.data as Resource;
 
         expect(relationships?.user).to.deep.equal({
-          data: ref('users', commenter),
-          links: { related: `${DOMAIN}/admin/users/${idOf(commenter)}` }
+          data: ref('users', commenter)
         });
         expect(relationships?.post).to.deep.equal({
-          data: ref('posts', post),
-          links: { related: `${DOMAIN}/admin/posts/${idOf(post)}` }
+          data: ref('posts', post)
         });
       });
 

@@ -206,7 +206,6 @@ describe('module "serializer"', () => {
 
         const postId = post.getPrimaryKey();
         const userId = user.getPrimaryKey();
-        const imageId = image ? image.getPrimaryKey() : null;
 
         const tagIds = tags.map(tag => tag.getPrimaryKey()).map(String);
 
@@ -224,42 +223,20 @@ describe('module "serializer"', () => {
         expect(attributes).to.have.property('created-at', createdAt);
         expect(attributes).to.have.property('updated-at', updatedAt);
 
-        let userLink;
-
-        if (subject.namespace) {
-          userLink = linkFor(`${subject.namespace}/users`, userId);
-        } else {
-          userLink = linkFor('users', userId);
-        }
-
         expect(relationships).to.have.property('user').and.be.an('object');
         expect(relationships.user).to.deep.equal({
           data: {
             id: `${userId}`,
             type: 'users'
-          },
-          links: {
-            related: userLink
           }
         });
 
         if (includeImage) {
-          let imageLink;
-
-          if (subject.namespace) {
-            imageLink = linkFor(`${subject.namespace}/images`, imageId);
-          } else {
-            imageLink = linkFor('images', imageId);
-          }
-
           expect(relationships).to.have.property('image').and.be.an('object');
           expect(relationships.image).to.deep.equal({
             data: {
               id: `${image.getPrimaryKey()}`,
               type: 'images'
-            },
-            links: {
-              related: imageLink
             }
           });
         } else {
@@ -522,8 +499,7 @@ describe('module "serializer"', () => {
             'reactions'
           ]);
           expect(item.relationships.post).to.deep.equal({
-            data: { id: `${post.getPrimaryKey()}`, type: 'posts' },
-            links: { related: linkFor('posts', post.getPrimaryKey()) }
+            data: { id: `${post.getPrimaryKey()}`, type: 'posts' }
           });
           expect(item.relationships.user).to.deep.equal({ data: null });
           expect(item.relationships.reactions).to.deep.equal({ data: [] });
