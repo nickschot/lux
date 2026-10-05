@@ -163,6 +163,72 @@ describe('module "router"', () => {
       });
     });
 
+    describe('- the `relationships` option of a resource', () => {
+      const routesFor = (relationships?: boolean | Array<string>) =>
+        new Router({
+          controller,
+          controllers,
+
+          routes() {
+            this.resource('posts', { relationships });
+            this.resource('users');
+            this.resource('comments');
+          }
+        });
+      const has = (router: Router, name: string) => ({
+        relationship: router.has(`GET:/posts/:dynamic/relationships/${name}`),
+        related: router.has(`GET:/posts/:dynamic/${name}`)
+      });
+
+      it('routes every exposed relationship by default', () => {
+        const subject = routesFor();
+
+        expect(has(subject, 'user')).to.deep.equal({
+          relationship: true,
+          related: true
+        });
+        expect(has(subject, 'comments')).to.deep.equal({
+          relationship: true,
+          related: true
+        });
+      });
+
+      it('routes none with `false`', () => {
+        const subject = routesFor(false);
+
+        expect(subject.has('GET:/posts/:dynamic')).to.be.true;
+        ['user', 'image', 'comments', 'reactions', 'tags'].forEach(name => {
+          expect(has(subject, name), name).to.deep.equal({
+            relationship: false,
+            related: false
+          });
+        });
+        expect(subject.has('OPTIONS:/posts/:dynamic/relationships/user')).to.be
+          .false;
+      });
+
+      it('routes only the ones listed', () => {
+        const subject = routesFor(['user']);
+
+        expect(has(subject, 'user')).to.deep.equal({
+          relationship: true,
+          related: true
+        });
+        expect(has(subject, 'comments')).to.deep.equal({
+          relationship: false,
+          related: false
+        });
+      });
+
+      it('rejects a relationship the serializer does not expose', () => {
+        expect(() => routesFor(['user', 'nope', 'categorizations'])).to.throw(
+          TypeError,
+          "The `relationships` of resource '/posts' must be ones its " +
+            "Serializer exposes, but 'nope', 'categorizations' are not."
+        );
+      });
+    });
+
     describe('#match()', () => {
       let subject: Router;
 

@@ -570,6 +570,21 @@ rule as `self`: only when the endpoint is served. Unlike the link removed in
 }
 ```
 
+**Choosing which relationships are routed.** A resource's new
+`relationships` option narrows the relationship and related endpoints (§20,
+§21) to those named, or turns them off with `false`; their links go with
+them:
+
+```javascript
+this.resource('posts', { relationships: ['user', 'tags'] });
+this.resource('reports', { relationships: false });
+```
+
+It defaults to `true`: every relationship the resource's Serializer exposes.
+Naming one it does not expose is a boot error. A relationship left out keeps
+its linkage in documents and stays includable — use the Serializer (or
+`linksOnly`) to change what documents contain.
+
 A custom member route on a resource (`this.get('comments')` in its `member`
 block) takes precedence over the related endpoint of the same name, and the
 `related` link then points at it — rename one of them.

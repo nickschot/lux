@@ -59,17 +59,38 @@ function relatedControllerFor(
 }
 
 /**
- * For each relationship the resource's Serializer exposes, a relationship
- * endpoint (`/posts/1/relationships/comments`) and, when the related type has
- * a controller, a related endpoint (`/posts/1/comments`). Anything they serve
- * can already be read through `?include=`.
+ * For each relationship the resource's Serializer exposes — narrowed by its
+ * `relationships` option (`false` for none, or a list of names) — a
+ * relationship endpoint (`/posts/1/relationships/comments`) and, when the
+ * related type has a controller, a related endpoint (`/posts/1/comments`).
+ * Naming a relationship the Serializer does not expose is a boot error.
  *
  * @private
  */
 function defineRelationships(namespace: Resource): void {
-  const { controller, controllers, path } = namespace;
+  const { controller, controllers, path, relationships } = namespace;
+  const exposed = relationshipsFor(controller);
 
-  relationshipsFor(controller).forEach(name => {
+  if (Array.isArray(relationships)) {
+    const unknown = relationships.filter(name => !exposed.includes(name));
+
+    if (unknown.length) {
+      throw new TypeError(
+        `The \`relationships\` of resource '${path}' must be ones its ` +
+          `Serializer exposes, but ${unknown
+            .map(name => `'${name}'`)
+            .join(', ')} ${unknown.length === 1 ? 'is' : 'are'} not.`
+      );
+    }
+  }
+
+  const served = Array.isArray(relationships)
+    ? exposed.filter(name => relationships.includes(name))
+    : relationships
+      ? exposed
+      : [];
+
+  served.forEach(name => {
     const segment = dasherize(underscore(name));
     const related = relatedControllerFor(controller, controllers, name);
 

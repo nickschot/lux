@@ -16,6 +16,7 @@ export default function normalizeResourceArgs(args: Array<any>): [
     name: string;
     path: string;
     only: Array<Controller$builtIn>;
+    relationships?: boolean | Array<string>;
   },
   () => void
 ] {
