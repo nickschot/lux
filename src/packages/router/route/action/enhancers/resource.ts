@@ -30,10 +30,24 @@ export default function resource(action: Action<unknown>): Action<unknown> {
 
       const {
         params,
+        router,
         url: { path, pathname, search },
-        route: { controller }
+        route: { controller, relationship }
       } = req;
       const { namespace, serializer, defaultPerPage } = controller;
+      const scope = scopeFor(controller.visibility, req);
+      const routed = (key: string) => router.has(`GET:${key}`);
+
+      if (relationship && !Array.isArray(data)) {
+        return serializer.formatRelationship({
+          scope,
+          domain,
+          routed,
+          namespace,
+          item: data,
+          name: relationship
+        });
+      }
 
       const include = params.include || [];
 
@@ -70,7 +84,8 @@ export default function resource(action: Action<unknown>): Action<unknown> {
         domain,
         include,
         fields: params.fields as Serializer$fields,
-        scope: scopeFor(controller.visibility, req),
+        scope,
+        routed,
         // The request's namespace, not the serializer's: a namespaced
         // controller without its own serializer is given the root one.
         namespace

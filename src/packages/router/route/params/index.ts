@@ -43,6 +43,8 @@ export function paramsFor({
         ...getDocumentParams()
       ];
     }
+  } else if (type === 'relationship') {
+    // The id alone: a relationship endpoint takes no query parameters.
   } else if (type === 'custom') {
     params = [...params, ...getCustomParams(controller)];
   }

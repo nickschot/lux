@@ -13,5 +13,6 @@ export type {
   JSONAPI$DocumentLinks,
   JSONAPI$ResourceObject,
   JSONAPI$IdentifierObject,
-  JSONAPI$RelationshipObject
+  JSONAPI$RelationshipObject,
+  JSONAPI$RelationshipDocument
 } from './interfaces';

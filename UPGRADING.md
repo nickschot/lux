@@ -331,7 +331,7 @@ value.
   was accepted and passed to the ORM. A request body must be a JSON object;
   a top-level array is now a `400` like other malformed bodies.
 
-## 14. Relationship links — removed until relationship endpoints exist
+## 14. Relationship links — removed, then back as relationship endpoints (§20)
 
 To-one relationships no longer carry a `links` member; like to-many ones, they
 are just their linkage:
@@ -356,6 +356,9 @@ Lumen does not serve relationship or related endpoints yet, so it sends no
 relationship links at all. Clients that read `relationships.*.links` must use
 the linkage (`data`) instead — e.g. ember-data loads `data` and does not need
 the link. The links come back, with proper URLs, once those endpoints exist.
+
+Relationship endpoints now exist (§20), and every relationship links to its
+own as `links.self`. A `related` link comes with related endpoints.
 
 ## 15. Members the controller does not accept — configurable; unknown ones — `400`
 
@@ -466,6 +469,46 @@ around this by writing join rows itself can drop the workaround.
   in an app with a strict config. Strict mode is now the CLI default, and
   `--use-weak` really turns it off. No action needed unless you relied on that
   override.
+
+## 20. Relationship endpoints — `GET /posts/1/relationships/user`
+
+Every resource with a `show` route now also serves a **relationship endpoint**
+for each relationship its Serializer exposes, as JSON:API describes under
+"Fetching Relationships":
+
+```
+GET /posts/1/relationships/user       → { "data": { "id": "2", "type": "users" }, … }
+GET /posts/1/relationships/comments   → { "data": [{ "id": "7", "type": "comments" }], … }
+```
+
+- The response is the relationship's resource linkage (`null` or `[]` when
+  empty) with `links.self`. To-many linkage is not paginated, like the linkage
+  already embedded in resources.
+- The path dasherizes the relationship name (`friendRequests` →
+  `/relationships/friend-requests`), like the document's member names.
+- Visibility rules apply as for `show` and `include`: a resource the request
+  may not see is a `404`, and hidden related records are left out of the
+  linkage. An unknown relationship is a `404`; `HEAD` and `OPTIONS` work; a
+  write is a `405` (relationship writes come later). Query parameters are a
+  `400`.
+- It exposes nothing new: the same linkage was already readable through
+  `?include=`.
+- Override `showRelationship(request)` on a controller to change how the
+  owning resource is found; the relationship is `request.route.relationship`.
+
+**Relationship objects now carry `links.self`** pointing at that endpoint —
+in the request's namespace, and only when the endpoint is served (an included
+type without a resource in the namespace has no links):
+
+```json
+"user": {
+  "data": { "id": "2", "type": "users" },
+  "links": { "self": "https://api.example.com/posts/1/relationships/user" }
+}
+```
+
+Clients that compare relationship objects as a whole must allow the extra
+member; ember-data keeps reading `data`.
 
 ## The short version
 

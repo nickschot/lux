@@ -95,6 +95,13 @@ describe('compound documents over HTTP', () => {
     type
   });
 
+  // A relationship object: its linkage, and a `self` link to the
+  // relationship endpoint of the resource at `path` (`/posts/1`).
+  const relationship = (path: string, name: string, data: unknown) => ({
+    data,
+    links: { self: `${DOMAIN}${path}/relationships/${name}` }
+  });
+
   const modelFor = (type: string): ModelClass => {
     const model = Array.from(models.values() as Iterable<ModelClass>).find(
       ({ resourceName }) => resourceName === type
@@ -354,13 +361,15 @@ describe('compound documents over HTTP', () => {
         'tags'
       ]);
 
-      expect(relationships.user).to.deep.equal({
-        data: ref('users', author)
-      });
-      expect(relationships.image).to.deep.equal({
-        data: ref('images', image)
-      });
-      expect(relationships.tags).to.have.all.keys(['data']);
+      const path = `/posts/${idOf(post)}`;
+
+      expect(relationships.user).to.deep.equal(
+        relationship(path, 'user', ref('users', author))
+      );
+      expect(relationships.image).to.deep.equal(
+        relationship(path, 'image', ref('images', image))
+      );
+      expect(relationships.tags).to.have.all.keys(['data', 'links']);
       expect(
         sortIdentifiers(relationships.tags.data as Array<Identifier>)
       ).to.deep.equal(sortIdentifiers([ref('tags', tagA), ref('tags', tagB)]));
@@ -378,15 +387,16 @@ describe('compound documents over HTTP', () => {
     });
 
     it('serializes empty relationships', async () => {
-      const { body } = await get(`/posts/${idOf(fixtures.emptyPost)}`);
+      const path = `/posts/${idOf(fixtures.emptyPost)}`;
+      const { body } = await get(path);
       const { relationships } = body.data as Resource;
 
       expect(relationships).to.deep.equal({
-        user: { data: null },
-        image: { data: null },
-        comments: { data: [] },
-        reactions: { data: [] },
-        tags: { data: [] }
+        user: relationship(path, 'user', null),
+        image: relationship(path, 'image', null),
+        comments: relationship(path, 'comments', []),
+        reactions: relationship(path, 'reactions', []),
+        tags: relationship(path, 'tags', [])
       });
     });
 
@@ -518,16 +528,14 @@ describe('compound documents over HTTP', () => {
         'relationships',
         'links'
       ]);
+      const path = `/comments/${idOf(commentByCommenter)}`;
+
       expect(comment?.relationships).to.deep.equal({
-        post: {
-          data: ref('posts', post)
-        },
-        user: {
-          data: ref('users', commenter)
-        },
-        reactions: {
-          data: [ref('reactions', commentReaction)]
-        }
+        post: relationship(path, 'post', ref('posts', post)),
+        user: relationship(path, 'user', ref('users', commenter)),
+        reactions: relationship(path, 'reactions', [
+          ref('reactions', commentReaction)
+        ])
       });
     });
 
@@ -539,7 +547,9 @@ describe('compound documents over HTTP', () => {
           keyFor(resource) === keyFor(ref('comments', commentByAuthor))
       );
 
-      expect(comment?.relationships?.reactions).to.deep.equal({ data: [] });
+      expect(comment?.relationships?.reactions).to.deep.equal(
+        relationship(`/comments/${idOf(commentByAuthor)}`, 'reactions', [])
+      );
     });
 
     it('serializes has-many-through relationships of included resources', async () => {
@@ -552,7 +562,9 @@ describe('compound documents over HTTP', () => {
         );
 
         expect(resource?.relationships).to.deep.equal({
-          posts: { data: [ref('posts', post)] }
+          posts: relationship(`/tags/${idOf(tag)}`, 'posts', [
+            ref('posts', post)
+          ])
         });
       });
     });
@@ -900,12 +912,14 @@ describe('compound documents over HTTP', () => {
       expect(comment?.links).to.deep.equal({
         self: `${DOMAIN}/admin/comments/${idOf(commentByCommenter)}`
       });
-      expect(comment?.relationships?.user).to.deep.equal({
-        data: ref('users', commenter)
-      });
-      expect(comment?.relationships?.post).to.deep.equal({
-        data: ref('posts', post)
-      });
+      const path = `/admin/comments/${idOf(commentByCommenter)}`;
+
+      expect(comment?.relationships?.user).to.deep.equal(
+        relationship(path, 'user', ref('users', commenter))
+      );
+      expect(comment?.relationships?.post).to.deep.equal(
+        relationship(path, 'post', ref('posts', post))
+      );
     });
 
     it("accepts the namespaced serializer's attributes in `fields`", async () => {
@@ -960,13 +974,14 @@ describe('compound documents over HTTP', () => {
           `/admin/comments/${idOf(commentByCommenter)}`
         );
         const { relationships } = body.data as Resource;
+        const path = `/admin/comments/${idOf(commentByCommenter)}`;
 
-        expect(relationships?.user).to.deep.equal({
-          data: ref('users', commenter)
-        });
-        expect(relationships?.post).to.deep.equal({
-          data: ref('posts', post)
-        });
+        expect(relationships?.user).to.deep.equal(
+          relationship(path, 'user', ref('users', commenter))
+        );
+        expect(relationships?.post).to.deep.equal(
+          relationship(path, 'post', ref('posts', post))
+        );
       });
 
       it('gives included resources only the namespaced relationships', async () => {

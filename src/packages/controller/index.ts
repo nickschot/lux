@@ -846,6 +846,32 @@ class Controller {
   }
 
   /**
+   * Serve a relationship endpoint (`GET /posts/1/relationships/comments`):
+   * resolve the resource that owns the relationship, which the response's
+   * resource linkage is then loaded for. The relationship is the route's
+   * (`request.route.relationship`). For more information, see the [fetching
+   * relationships](https://jsonapi.org/format/1.0/#fetching-relationships)
+   * section of the JSON API specification.
+   *
+   * A resource the request may not see is `404 Not Found`, like in `show`.
+   *
+   * @method showRelationship
+   * @param {Request} request - The request object.
+   * @param {Response} response - The response object.
+   * @return {Promise} Resolves with the Model instance with the id equal to
+   * the id url parameter.
+   * @public
+   */
+  showRelationship(req: Request): Query<Model> {
+    const { model } = this;
+
+    return this.visible(
+      model.find(req.params.id).select(model.primaryKey),
+      req
+    );
+  }
+
+  /**
    * Create and return a single Model instance that the Controller instance
    * represents. For more information, see the [creating resources](
    * https://goo.gl/4Obc9t) section of the JSON API specification.

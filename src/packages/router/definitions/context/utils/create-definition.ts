@@ -1,3 +1,5 @@
+import { dasherize, underscore } from 'inflection';
+
 import { Route } from '../../../index';
 import { normalizeName, normalizePath } from '../../../namespace';
 import type { Request$method } from '../../../../server';
@@ -22,6 +24,8 @@ export default function createDefinition({
 
     if (type === 'member') {
       path += `/:id/${normalized}`;
+    } else if (type === 'relationship') {
+      path += `/:id/relationships/${dasherize(underscore(normalized))}`;
     } else {
       path += `/${normalized}`;
     }
@@ -33,7 +37,8 @@ export default function createDefinition({
       path,
       action,
       method,
-      controller
+      controller,
+      ...(type === 'relationship' && { relationship: normalized })
     };
 
     namespace.add(new Route(opts));

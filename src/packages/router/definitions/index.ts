@@ -1,10 +1,29 @@
 import Route from '../route';
 import Resource from '../resource';
 import type Router from '../index';
+import type Controller from '../../controller';
 import type { Router$Namespace } from '../index';
 
 import { contextFor } from './context';
+import createDefinitionGroup from './context/utils/create-definition-group';
 import type { DefinitionContext } from './context';
+
+/**
+ * The relationships of `controller`'s model its Serializer exposes.
+ *
+ * @private
+ */
+function relationshipsFor(controller: Controller): Array<string> {
+  const { model, serializer, hasModel, hasSerializer } = controller;
+
+  if (!hasModel || !hasSerializer) {
+    return [];
+  }
+
+  return [...serializer.hasOne, ...serializer.hasMany].filter(name =>
+    Boolean(model.relationshipFor(name))
+  );
+}
 
 /**
  * @private
@@ -31,6 +50,18 @@ export function build<T extends Router$Namespace>(
         this.delete('/', 'destroy');
       }
     });
+
+    // A relationship endpoint (`/posts/1/relationships/comments`) for each
+    // relationship the resource's Serializer exposes, wherever it is shown.
+    // Anything it serves can already be read through `?include=`.
+    if (only.has('show')) {
+      const { controller } = namespace;
+      const relationships = createDefinitionGroup('relationship', namespace);
+
+      relationshipsFor(controller).forEach(name => {
+        relationships.get(name, 'showRelationship');
+      });
+    }
 
     context.collection(function collection(this: DefinitionContext) {
       if (only.has('index')) {

@@ -32,13 +32,22 @@ class Route extends FreezeableSet<Action<unknown>> {
 
   declare controller: Controller;
 
+  declare relationship: string | undefined;
+
   declare staticPath: string;
 
   declare defaultParams: Record<string, unknown>;
 
   declare dynamicSegments: Array<string>;
 
-  constructor({ type, path, action, method, controller }: Route$opts) {
+  constructor({
+    type,
+    path,
+    action,
+    method,
+    controller,
+    relationship
+  }: Route$opts) {
     const dynamicSegments = getDynamicSegments(path);
 
     if (action && controller) {
@@ -69,6 +78,7 @@ class Route extends FreezeableSet<Action<unknown>> {
           method,
           controller,
           staticPath,
+          relationship,
           defaultParams,
           dynamicSegments
         });
@@ -82,7 +92,8 @@ class Route extends FreezeableSet<Action<unknown>> {
           'params',
           'method',
           'controller',
-          'staticPath'
+          'staticPath',
+          'relationship'
         );
 
         deepFreezeProps(this, false, 'defaultParams', 'dynamicSegments');

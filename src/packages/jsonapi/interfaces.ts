@@ -88,3 +88,18 @@ export interface JSONAPI$Document {
     meta?: JSONAPI$BaseObject;
   };
 }
+
+/**
+ * The document a relationship endpoint responds with: the relationship's
+ * resource linkage as primary data.
+ */
+export interface JSONAPI$RelationshipDocument extends Omit<
+  JSONAPI$RelationshipObject,
+  'links'
+> {
+  links: JSONAPI$ResourceLinksObject;
+
+  jsonapi: {
+    version: JSONAPI$versions;
+  };
+}

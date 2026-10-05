@@ -13,10 +13,15 @@ import type {
   JSONAPI$Document,
   JSONAPI$DocumentLinks,
   JSONAPI$ResourceObject,
-  JSONAPI$RelationshipObject
+  JSONAPI$RelationshipObject,
+  JSONAPI$RelationshipDocument
 } from '../jsonapi';
 
-import type { Serializer$fields, Serializer$opts } from './interfaces';
+import type {
+  Serializer$fields,
+  Serializer$opts,
+  Serializer$routed
+} from './interfaces';
 import { Scope } from '../controller/visibility';
 import loadLinkage from './utils/load-linkage';
 import type { Linkage } from './utils/load-linkage';
@@ -511,6 +516,11 @@ class Serializer<T extends Model> {
    * one when a namespaced Controller has no Serializer of its own, so the
    * Controller passes its namespace explicitly.
    *
+   * @param {Function} options.routed - Whether the application serves a path
+   * (`/posts/:dynamic/relationships/user`). A relationship is only given the
+   * links of the endpoints it is served by, since JSON:API requires every
+   * relationship `self` link to be served. Without it, none are.
+   *
    * @return {Promise} Resolves with a [JSON API](http://jsonapi.org) document
    * object.
    *
@@ -524,7 +534,8 @@ class Serializer<T extends Model> {
     include,
     fields = {},
     scope = Scope.none,
-    namespace = this.namespace
+    namespace = this.namespace,
+    routed = notRouted
   }: {
     data: T | Array<T>;
     meta?: JSONAPI$Document['meta'];
@@ -534,6 +545,7 @@ class Serializer<T extends Model> {
     fields?: Serializer$fields;
     scope?: Scope;
     namespace?: string;
+    routed?: Serializer$routed;
   }): Promise<JSONAPI$Document> {
     const tree = createIncludeTree(include);
     const included = new Map<string, JSONAPI$ResourceObject>();
@@ -554,6 +566,7 @@ class Serializer<T extends Model> {
           item,
           domain,
           fields,
+          routed,
           namespace,
           linkage: linkage.get(String(item.getPrimaryKey())),
           links: Array.isArray(data) ? undefined : false
@@ -568,6 +581,7 @@ class Serializer<T extends Model> {
       domain,
       linkage,
       fields,
+      routed,
       included,
       namespace,
       model: this.model
@@ -635,6 +649,9 @@ class Serializer<T extends Model> {
    * Defaults to this Serializer's; included resources pass the namespace of
    * the request, so every link in a document points into the same namespace.
    *
+   * @param {Function} options.routed - Whether the application serves a path;
+   * see `format()`.
+   *
    * @return {Promise} Resolves with a [JSON API](http://jsonapi.org) resource
    * object.
    *
@@ -646,7 +663,8 @@ class Serializer<T extends Model> {
     domain,
     linkage = {},
     fields = {},
-    namespace = this.namespace
+    namespace = this.namespace,
+    routed = notRouted
   }: {
     item: T;
     links?: boolean;
@@ -654,6 +672,7 @@ class Serializer<T extends Model> {
     linkage?: Linkage;
     fields?: Serializer$fields;
     namespace?: string;
+    routed?: Serializer$routed;
   }): Promise<JSONAPI$ResourceObject> {
     const { resourceName: type } = item;
     const id = String(item.getPrimaryKey());
@@ -680,10 +699,20 @@ class Serializer<T extends Model> {
     >(
       (hash, name) => ({
         ...hash,
-        [dasherize(underscore(name))]: this.formatLinkage(
-          this.model.relationshipFor(name)?.model.resourceName,
-          linkage[name]
-        )
+        [dasherize(underscore(name))]: {
+          ...this.formatLinkage(
+            this.model.relationshipFor(name)?.model.resourceName,
+            linkage[name]
+          ),
+          ...this.relationshipLinksFor({
+            name,
+            type,
+            id,
+            domain,
+            routed,
+            namespace
+          })
+        }
       }),
       {}
     );
@@ -702,14 +731,97 @@ class Serializer<T extends Model> {
   }
 
   /**
+   * The document a relationship endpoint (`/posts/1/relationships/user`)
+   * responds with: the relationship of `item` named `name` as resource
+   * linkage, narrowed by `scope` like any other linkage, and its links.
+   *
+   * @method formatRelationship
+   * @private
+   */
+  async formatRelationship({
+    item,
+    name,
+    domain,
+    scope = Scope.none,
+    namespace = this.namespace,
+    routed = notRouted
+  }: {
+    item: T;
+    name: string;
+    domain: string;
+    scope?: Scope;
+    namespace?: string;
+    routed?: Serializer$routed;
+  }): Promise<JSONAPI$RelationshipDocument> {
+    const id = String(item.getPrimaryKey());
+    const linkage = await loadLinkage(this.model, [item], [name], scope);
+    const { links = {} } = this.relationshipLinksFor({
+      id,
+      name,
+      domain,
+      routed,
+      namespace,
+      type: item.resourceName
+    });
+
+    return {
+      ...this.formatLinkage(
+        this.model.relationshipFor(name)?.model.resourceName,
+        linkage.get(id)?.[name]
+      ),
+      links,
+      jsonapi: {
+        version: VERSION
+      }
+    };
+  }
+
+  /**
+   * The `links` of the relationship `name` of the resource `type`/`id`: a
+   * `self` link to its relationship endpoint, when the application serves
+   * one in `namespace` (JSON:API requires every relationship `self` link to
+   * be served). Without one the relationship has no links.
+   *
+   * A related resource's own URL (`/users/2`) is never a relationship's
+   * `related` link: that link must not change when the relationship's content
+   * does.
+   *
+   * @method relationshipLinksFor
+   * @private
+   */
+  relationshipLinksFor({
+    id,
+    type,
+    name,
+    domain,
+    routed,
+    namespace
+  }: {
+    id: string;
+    type: string;
+    name: string;
+    domain: string;
+    routed: Serializer$routed;
+    namespace: string;
+  }): Pick<JSONAPI$RelationshipObject, 'links'> {
+    const path = `/relationships/${dasherize(underscore(name))}`;
+
+    if (!routed(this.pathFor(type, ':dynamic', namespace) + path)) {
+      return {};
+    }
+
+    return {
+      links: {
+        self: domain + this.pathFor(type, id, namespace) + path
+      }
+    };
+  }
+
+  /**
    * Build a [JSON API](http://jsonapi.org) relationship object from resource
    * linkage: `{ data }`, where `data` is an identifier (or `null`) for a
-   * to-one relationship and an array of them for a to-many one.
-   *
-   * Relationships carry no `links` until Lumen serves relationship and related
-   * endpoints. JSON:API requires a relationship's `self` link to be served,
-   * and a `related` link not to change when the relationship's content does —
-   * so the related resource's own URL (`/users/2`) fits neither.
+   * to-one relationship and an array of them for a to-many one. Its links
+   * come from `relationshipLinksFor()`.
    *
    * @method formatLinkage
    * @private
@@ -756,6 +868,7 @@ class Serializer<T extends Model> {
     scope,
     domain,
     fields,
+    routed,
     included,
     namespace
   }: {
@@ -765,6 +878,7 @@ class Serializer<T extends Model> {
     scope: Scope;
     domain: string;
     fields: Serializer$fields;
+    routed: Serializer$routed;
     included: Map<string, JSONAPI$ResourceObject>;
     namespace: string;
   }): Promise<void> {
@@ -800,6 +914,7 @@ class Serializer<T extends Model> {
             item,
             domain,
             fields,
+            routed,
             linkage: linkage.get(id),
             namespace
           })
@@ -814,6 +929,7 @@ class Serializer<T extends Model> {
       scope,
       domain,
       fields,
+      routed,
       linkage,
       included,
       namespace
@@ -839,6 +955,7 @@ class Serializer<T extends Model> {
     scope,
     domain,
     fields,
+    routed,
     included,
     namespace
   }: {
@@ -849,6 +966,7 @@ class Serializer<T extends Model> {
     scope: Scope;
     domain: string;
     fields: Serializer$fields;
+    routed: Serializer$routed;
     included: Map<string, JSONAPI$ResourceObject>;
     namespace: string;
   }): Promise<void> {
@@ -886,6 +1004,7 @@ class Serializer<T extends Model> {
           scope,
           domain,
           fields,
+          routed,
           records,
           included,
           namespace,
@@ -962,12 +1081,24 @@ class Serializer<T extends Model> {
     id: string,
     namespace: string = this.namespace
   ): string {
-    if (namespace) {
-      return `${domain}/${namespace}/${type}/${id}`;
-    }
-
-    return `${domain}/${type}/${id}`;
+    return domain + this.pathFor(type, id, namespace);
   }
+
+  /**
+   * The path of the resource `type`/`id` in `namespace`.
+   *
+   * @private
+   */
+  pathFor(type: string, id: string, namespace: string = this.namespace) {
+    return namespace ? `/${namespace}/${type}/${id}` : `/${type}/${id}`;
+  }
+}
+
+/**
+ * @private
+ */
+function notRouted(): boolean {
+  return false;
 }
 
 /**
