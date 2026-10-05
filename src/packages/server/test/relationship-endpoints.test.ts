@@ -284,6 +284,34 @@ describe('relationship endpoints over HTTP', () => {
     });
   });
 
+  describe('the owning resource', () => {
+    it("is resolved through the controller's `show`", async () => {
+      const app = await getTestApp();
+      const requests: Array<unknown> = [];
+      // Controllers are frozen, so `show` is shadowed rather than assigned.
+      const controller = Object.create(app.controllers.get('posts'), {
+        show: {
+          value: req => {
+            requests.push({ params: req.params, defaults: req.defaultParams });
+            throw new Error('rejected by show');
+          }
+        }
+      });
+
+      expect(() =>
+        controller.showRelationship({
+          params: { id: 7, include: ['user'] }
+        })
+      ).to.throw('rejected by show');
+      expect(requests).to.deep.equal([
+        {
+          params: { id: 7, fields: { posts: [] } },
+          defaults: { fields: { posts: [] } }
+        }
+      ]);
+    });
+  });
+
   describe('methods', () => {
     it('answers HEAD like GET, without a body', async () => {
       const path = `/posts/${idOf(fixtures.post)}/relationships/comments`;

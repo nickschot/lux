@@ -853,7 +853,11 @@ class Controller {
    * relationships](https://jsonapi.org/format/1.0/#fetching-relationships)
    * section of the JSON API specification.
    *
-   * A resource the request may not see is `404 Not Found`, like in `show`.
+   * The resource is resolved through this controller's `show`, with a
+   * request for its primary key only, so whatever `show` enforces holds here
+   * too: an override that narrows its query or rejects the request applies,
+   * and a resource the request may not see is `404 Not Found`. Hooks see the
+   * action `showRelationship` (`request.route.type` is `relationship`).
    *
    * @method showRelationship
    * @param {Request} request - The request object.
@@ -863,11 +867,15 @@ class Controller {
    * @public
    */
   showRelationship(req: Request): Query<Model> {
-    const { model } = this;
+    const fields = { [this.model.resourceName]: [] };
 
-    return this.visible(
-      model.find(req.params.id).select(model.primaryKey),
-      req
+    // The request as `show` would get it for this resource, selecting no
+    // attributes: the route's own params are not `show`'s.
+    return this.show(
+      Object.create(req, {
+        params: { value: { id: req.params.id, fields } },
+        defaultParams: { value: { fields } }
+      })
     );
   }
 

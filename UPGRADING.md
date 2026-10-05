@@ -491,10 +491,16 @@ GET /posts/1/relationships/comments   → { "data": [{ "id": "7", "type": "comme
   linkage. An unknown relationship is a `404`; `HEAD` and `OPTIONS` work; a
   write is a `405` (relationship writes come later). Query parameters are a
   `400`.
-- It exposes nothing new: the same linkage was already readable through
-  `?include=`.
-- Override `showRelationship(request)` on a controller to change how the
-  owning resource is found; the relationship is `request.route.relationship`.
+- **The owning resource is resolved through the controller's `show`** (with
+  a request for its primary key only), so a check in an overridden `show` —
+  narrowing its query, or rejecting the request — applies here too. Override
+  `showRelationship(request)` to resolve it differently; the relationship is
+  `request.route.relationship`.
+- **Hooks see the action `showRelationship`**, not `show`. A `beforeAction`
+  that authorizes by action name (`request.route.action === 'show'`) must
+  allow it too, or test `request.route.type === 'relationship'`.
+- The linkage it serves was already readable through `?include=` under the
+  same visibility rules.
 
 **Relationship objects now carry `links.self`** pointing at that endpoint —
 in the request's namespace, and only when the endpoint is served (an included
