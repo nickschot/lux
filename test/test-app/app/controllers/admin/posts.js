@@ -13,6 +13,12 @@ class AdminPostsController extends PostsController {
     'comments',
     'tags'
   ];
+
+  // The opposite of the defaults, so both ways of handling a member the
+  // model has but `params` does not list are covered.
+  rejectUnlistedAttributes = true;
+
+  rejectUnlistedRelationships = false;
 }
 
 export default AdminPostsController;

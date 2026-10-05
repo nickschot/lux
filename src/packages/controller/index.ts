@@ -344,9 +344,11 @@ class Controller {
    * Serializer that represents a Controller's resource. If the Serializer
    * cannot be resolved, this property will default to an empty array.
    *
-   * An attribute or relationship the model has but this list does not name is
-   * ignored (dropped from `request.params`), so clients may send read-only
-   * members back; a member the model does not have at all is answered with
+   * An attribute the model has but this list does not name is ignored
+   * (dropped from `request.params`), so clients may send read-only attributes
+   * back; a relationship like that is answered with `403 Forbidden`. See
+   * `rejectUnlistedAttributes` and `rejectUnlistedRelationships` to change
+   * either. A member the model does not have at all is answered with
    * `400 Bad Request`.
    *
    * @property params
@@ -484,6 +486,41 @@ class Controller {
    * @public
    */
   maxPerPage: number = 100;
+
+  /**
+   * Answer an attribute the model has but `params` does not list with
+   * `403 Forbidden` (an unsupported update, per JSON:API) instead of ignoring
+   * it. Off by default: clients like ember-data send every attribute back on
+   * save, read-only ones (`createdAt`) included.
+   *
+   * Set it on `ApplicationController` to change it for the whole app, or on a
+   * single controller to override it there.
+   *
+   * @property rejectUnlistedAttributes
+   * @type {Boolean}
+   * @default false
+   * @public
+   */
+  rejectUnlistedAttributes: boolean = false;
+
+  /**
+   * Answer a relationship the model has but `params` does not list with
+   * `403 Forbidden` (an unsupported update, per JSON:API). Turn it off to
+   * ignore such relationships instead, for clients that send every
+   * `belongsTo` back on save (ember-data):
+   *
+   * ```javascript
+   * class ApplicationController extends Controller {
+   *   rejectUnlistedRelationships = false;
+   * }
+   * ```
+   *
+   * @property rejectUnlistedRelationships
+   * @type {Boolean}
+   * @default true
+   * @public
+   */
+  rejectUnlistedRelationships: boolean = true;
 
   /**
    * How many relationships deep an `?include` path may go on this
