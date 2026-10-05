@@ -416,6 +416,11 @@ around this by writing join rows itself can drop the workaround.
 - **`OPTIONS` responses list the path's methods in `Allow`.**
 - **A created resource's `links.self` equals its `Location`** (`/tags/101`).
   It used to be the collection's URL (`/tags`).
+- **A route whose path contains the letters `id` outside its `:id` segment
+  matches.** It used to be registered under a mangled path
+  (`/videos/:id` as `/vdynamiceos/:dynamic`) and answer `404` to every
+  request, so a `videos` or `guides` resource, or a custom route like
+  `/posts/:id/provider`, could never be reached.
 
 ## 18. Error responses — every problem, richer error objects
 

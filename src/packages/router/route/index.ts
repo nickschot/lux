@@ -52,7 +52,7 @@ class Route extends FreezeableSet<Action<unknown>> {
           dynamicSegments
         });
 
-        const staticPath = getStaticPath(path, dynamicSegments);
+        const staticPath = getStaticPath(path);
 
         const defaultParams = defaultParamsFor({
           type,
