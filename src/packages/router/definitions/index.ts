@@ -5,7 +5,6 @@ import { dasherize, underscore } from 'inflection';
 import Route from '../route';
 import Resource from '../resource';
 import { normalizePath } from '../namespace';
-import closestAncestor from '../../loader/resolver/utils/closest-ancestor';
 import type Router from '../index';
 import type Controller from '../../controller';
 import type { Router$Namespace } from '../index';
@@ -32,10 +31,12 @@ function relationshipsFor(controller: Controller): Array<string> {
 }
 
 /**
- * The controller of the type `controller`'s relationship `name` points to,
- * resolved in `controller`'s namespace the way Serializers are: its own
- * (`admin/users`), else the closest ancestor namespace's, down to the root.
- * Only one with a model and a Serializer can serve related resources.
+ * The controller of the type `controller`'s relationship `name` points to, in
+ * `controller`'s own namespace (`admin/users` for `admin/posts`). Only one
+ * there can serve related resources: an ancestor namespace's would serialize
+ * them with its own Serializers and accept its own `fields` and `include`,
+ * which `?include=` in this namespace does not use. It needs a model and a
+ * Serializer.
  *
  * @private
  */
@@ -50,8 +51,9 @@ function relatedControllerFor(
     return undefined;
   }
 
-  const key = posix.join(controller.namespace || '.', opts.model.resourceName);
-  const related = controllers.get(key) || closestAncestor(controllers, key);
+  const related = controllers.get(
+    posix.join(controller.namespace || '.', opts.model.resourceName)
+  );
 
   return related?.hasModel && related.hasSerializer ? related : undefined;
 }

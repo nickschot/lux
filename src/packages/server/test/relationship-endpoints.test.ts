@@ -410,13 +410,39 @@ describe('relationship endpoints over HTTP', () => {
         const included = body.included.find(({ type }) => type === 'images');
 
         expect(status).to.equal(200);
-        // The related endpoint uses the root `images` controller.
-        expect(body.data.relationships.image.links).to.deep.equal(
-          linksFor(`/members/posts/${idOf(fixtures.post)}`, 'image')
-        );
+        // Nor a related endpoint for the post's image (see below).
+        expect(body.data.relationships.image.links).to.deep.equal({
+          self: `${DOMAIN}/members/posts/${idOf(fixtures.post)}/relationships/image`
+        });
         expect(included.relationships.post).to.deep.equal({
           data: ref('posts', fixtures.post)
         });
+      } finally {
+        await image.destroy();
+      }
+    });
+  });
+
+  // `members` has a serializer for images that hides their `url`, but no
+  // images controller. A related endpoint served by an ancestor namespace's
+  // controller would format images with its serializer, URL and all.
+  describe('a type without a controller in the namespace', () => {
+    it('has no related endpoint, so its serializer cannot be bypassed', async () => {
+      const Image = models.get('image') as ModelClass;
+      const image = await Image.create({
+        url: 'http://example.com/members-only.png',
+        postId: fixtures.post.getPrimaryKey()
+      });
+
+      try {
+        const path = `/members/posts/${idOf(fixtures.post)}`;
+        const included = await request('GET', `${path}?include=image`);
+        const related = await request('GET', `${path}/image`);
+        const fields = await request('GET', `${path}/image?fields[images]=url`);
+
+        expect(included.body.included[0].attributes).to.deep.equal({});
+        expect(related.status).to.equal(404);
+        expect(fields.status).to.equal(404);
       } finally {
         await image.destroy();
       }
@@ -433,6 +459,7 @@ describe('relationship endpoints over HTTP', () => {
       expect(body.data).to.deep.include(ref('users', author));
       expect(body.data.attributes).to.have.all.keys(['name', 'email']);
       expect(body.links).to.deep.equal({ self: DOMAIN + path });
+      expect(body).not.to.have.property('meta');
     });
 
     it('serves an empty to-one relationship as `null`', async () => {
@@ -498,6 +525,7 @@ describe('relationship endpoints over HTTP', () => {
       ]);
       expect(paged.body.links.next).to.contain('page%5Bnumber%5D=2');
       expect(paged.body.links.last).to.contain('page%5Bnumber%5D=2');
+      expect(paged.body.meta).to.deep.equal({ total: 2 });
 
       const filtered = await request('GET', `${path}?filter[message]=First.`);
 

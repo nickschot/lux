@@ -47,6 +47,52 @@ describe('module "router/route/action"', () => {
     });
   });
 
+  describe('#createAction() for a related route', () => {
+    // Plain stand-ins: only their hooks matter here.
+    const hook = (name: string) => {
+      const fn = (req: { calls: Array<string> }) => {
+        req.calls.push(name);
+      };
+
+      Reflect.defineProperty(fn, 'name', { value: name });
+      return fn;
+    };
+    const shared = hook('shared');
+    const owner = {
+      beforeAction: [shared, hook('owner')],
+      afterAction: [],
+      hasModel: false
+    } as unknown as Controller;
+    const related = {
+      beforeAction: [shared, hook('related')],
+      afterAction: []
+    } as unknown as Controller;
+    const run = async (handlers: Array<Action<unknown>>) => {
+      const req = {
+        calls: [] as Array<string>,
+        route: { controller: owner, action: 'showRelated' }
+      };
+
+      for (const handler of handlers.slice(0, -1)) {
+        await handler(req as unknown as Request, { stats: [] } as Response);
+      }
+
+      return req.calls;
+    };
+
+    it("runs the related controller's hooks after the owner's, once each", async () => {
+      expect(
+        await run(createAction('related', () => 204, owner, related))
+      ).to.deep.equal(['shared', 'owner', 'related']);
+    });
+
+    it("runs only the owner's hooks for other routes", async () => {
+      expect(
+        await run(createAction('member', () => 204, owner, related))
+      ).to.deep.equal(['shared', 'owner']);
+    });
+  });
+
   describe('#createPageLinks()', () => {
     // `search` is the request's raw query string, `params` its validated
     // params (only `page` is read from them).

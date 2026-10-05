@@ -116,6 +116,53 @@ describe('module "router"', () => {
       });
     });
 
+    describe('- related endpoints', () => {
+      it('serve a type only where it routes `index` or `show`', () => {
+        const subject = new Router({
+          controller,
+          controllers,
+
+          routes() {
+            this.resource('posts');
+            this.resource('comments', { only: ['create'] });
+            this.resource('users', { only: ['index'] });
+            this.resource('tags', { only: ['index'] });
+          }
+        });
+
+        // A relationship endpoint needs no route of the related type.
+        expect(subject.has('GET:/posts/:dynamic/relationships/comments')).to.be
+          .true;
+        // `comments` is not listed (create only), `user` needs `show`.
+        expect(subject.has('GET:/posts/:dynamic/comments')).to.be.false;
+        expect(subject.has('HEAD:/posts/:dynamic/comments')).to.be.false;
+        expect(subject.has('OPTIONS:/posts/:dynamic/comments')).to.be.false;
+        expect(subject.has('GET:/posts/:dynamic/user')).to.be.false;
+        // `tags` routes `index`, enough for a to-many.
+        expect(subject.has('GET:/posts/:dynamic/tags')).to.be.true;
+        expect(subject.has('HEAD:/posts/:dynamic/tags')).to.be.true;
+      });
+
+      it('serve a type only with a controller in the same namespace', () => {
+        const subject = new Router({
+          controller,
+          controllers,
+
+          routes() {
+            this.resource('images');
+            this.namespace('members', function () {
+              this.resource('posts');
+            });
+          }
+        });
+
+        // `members` has no images controller; the root one does not count.
+        expect(subject.has('GET:/members/posts/:dynamic/image')).to.be.false;
+        expect(subject.has('GET:/members/posts/:dynamic/relationships/image'))
+          .to.be.true;
+      });
+    });
+
     describe('#match()', () => {
       let subject: Router;
 

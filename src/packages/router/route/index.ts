@@ -89,7 +89,7 @@ class Route extends FreezeableSet<Action<unknown>> {
 
         const defaultParams = defaultParamsFor(query);
 
-        super(createAction(type, handler, controller));
+        super(createAction(type, handler, controller, related));
 
         Object.assign(this, {
           type,

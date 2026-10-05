@@ -527,21 +527,34 @@ GET /posts/1/user       → { "data": { "id": "2", "type": "users", … } }   (o
 GET /posts/1/comments   → { "data": [{ "id": "7", "type": "comments", … }], "links": { "first": …, "next": … } }
 ```
 
-- It is served by the **related type's controller**, found in the request's
-  namespace or the closest ancestor (`admin/users`, else `users`), the way
-  Serializers are. A to-many related endpoint pages, sorts and filters like
-  that controller's `index` (`?page[size]`, `?sort`, `?filter`, its
-  `maxPerPage`), a to-one like its `show`; both take its `include` and
-  `fields`, and the resources are formatted by its Serializer. A relationship
-  whose type has no controller (with a model and a Serializer) gets no related
-  endpoint and no `related` link.
+- It is served by the **related type's controller in the same namespace**
+  (`admin/users` for `/admin/posts/1/user`). A to-many related endpoint pages,
+  sorts and filters like that controller's `index` (`?page[size]`, `?sort`,
+  `?filter`, its `maxPerPage`, and `meta.total`), a to-one like its `show`;
+  both take its `include` and `fields`, and the resources are formatted by its
+  Serializer — the same one `?include=` uses in that namespace.
+- **It exists only where the related type is listed**: the namespace needs a
+  controller for the type (with a model and a Serializer), and its resource
+  must route `index` (to-many) or `show` (to-one). Otherwise the relationship
+  gets no related endpoint and no `related` link — so a namespace never serves
+  a type it does not list itself, nor through an ancestor namespace's
+  controller and Serializer.
 - The relationship is a condition on the related table, so a large to-many
   relationship never loads its ids into memory, and paging counts only what
   the request may see.
 - Visibility rules apply to the related resources; a resource the request may
   not see is a `404`. `HEAD` and `OPTIONS` work; a write is a `405`.
-- Override `showRelated(request)` on a controller to change the query. The
-  owning resource is resolved with `showRelationship(request)` first.
+- **Hooks:** the owning controller's `beforeAction` hooks run, then the
+  related controller's (each hook once, when both inherit it as the same
+  function), then the owner's `afterAction` hooks. The action is
+  `showRelated` (`request.route.type` is `related`): a hook that authorizes by
+  action name must allow it.
+- **Controller code:** the owning resource is resolved through
+  `showRelationship(request)`, and so through the owner's `show` (§20). The
+  related controller's `index` and `show` are *not* called: a check written
+  in an override of those does not apply here — move it into a visibility rule
+  or a `beforeAction` hook, or override `showRelated(request)` on the owning
+  controller.
 
 **Relationship objects now carry `links.related`** as well, under the same
 rule as `self`: only when the endpoint is served. Unlike the link removed in
