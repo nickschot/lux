@@ -47,13 +47,14 @@ const sorted = (list: Array<Identifier>) =>
 describe('relationship endpoints over HTTP', () => {
   let server;
   let models: Map<string, ModelClass>;
+  let store;
   const created: Array<Model> = [];
   const fixtures: Record<string, Model> = {};
 
   beforeAll(async () => {
     const app = await getTestApp();
 
-    ({ models } = app);
+    ({ models, store } = app);
 
     server = new Server({
       logger: app.logger,
@@ -632,6 +633,128 @@ describe('relationship endpoints over HTTP', () => {
           identifiers(data)
         );
       }
+    });
+  });
+
+  // `members/posts` serializes `comments` and `reactions` as links only.
+  describe('`linksOnly` relationships', () => {
+    it('are serialized without resource linkage', async () => {
+      const { post, author } = fixtures;
+      const path = `/members/posts/${idOf(post)}`;
+      const { status, body } = await request('GET', path);
+      const { relationships } = body.data;
+
+      expect(status).to.equal(200);
+      expect(relationships.comments).to.deep.equal({
+        links: linksFor(path, 'comments')
+      });
+      expect(relationships.reactions).to.deep.equal({
+        links: linksFor(path, 'reactions')
+      });
+      expect(relationships.user).to.deep.equal({
+        data: ref('users', author),
+        links: linksFor(path, 'user')
+      });
+      expect(relationships.tags.data).to.have.length(2);
+    });
+
+    it('skip loading their linkage', async () => {
+      const countQueries = async (path: string) => {
+        let count = 0;
+        const onQuery = () => {
+          count += 1;
+        };
+
+        store.connection.on('query', onQuery);
+
+        try {
+          expect((await request('GET', path)).status).to.equal(200);
+        } finally {
+          store.connection.removeListener('query', onQuery);
+        }
+
+        return count;
+      };
+      const id = idOf(fixtures.post);
+
+      // One linkage query fewer for each of `comments` and `reactions`.
+      expect(await countQueries(`/members/posts/${id}`)).to.equal(
+        (await countQueries(`/posts/${id}`)) - 2
+      );
+    });
+
+    it('can be loaded from their `related` link', async () => {
+      const { post, commentA, commentB } = fixtures;
+      const { body } = await request('GET', `/members/posts/${idOf(post)}`);
+      const related = await request(
+        'GET',
+        body.data.relationships.comments.links.related
+      );
+
+      expect(related.status).to.equal(200);
+      expect(
+        sorted(related.body.data.map(({ id, type }) => ({ id, type })))
+      ).to.deep.equal(
+        sorted([ref('comments', commentA), ref('comments', commentB)])
+      );
+    });
+
+    it('keep their linkage when included', async () => {
+      const { post, commentA, commentB } = fixtures;
+      const { body } = await request(
+        'GET',
+        `/members/posts/${idOf(post)}?include=comments`
+      );
+      const { relationships } = body.data;
+
+      expect(sorted(relationships.comments.data)).to.deep.equal(
+        sorted([ref('comments', commentA), ref('comments', commentB)])
+      );
+      expect(relationships.reactions).not.to.have.property('data');
+      expect(body.included).to.have.length(2);
+    });
+
+    it('apply to included resources of the namespace', async () => {
+      const { post, commentA } = fixtures;
+      const { body } = await request(
+        'GET',
+        `/members/comments/${idOf(commentA)}?include=post`
+      );
+      const included = body.included.find(
+        ({ type, id }) => type === 'posts' && id === idOf(post)
+      );
+
+      expect(included.relationships.comments).to.deep.equal({
+        links: linksFor(`/members/posts/${idOf(post)}`, 'comments')
+      });
+    });
+
+    it('apply to every resource of a collection', async () => {
+      const { body } = await request('GET', '/members/posts?page[size]=5');
+
+      body.data.forEach(({ relationships }) => {
+        expect(relationships.comments).not.to.have.property('data');
+        expect(relationships.reactions).not.to.have.property('data');
+      });
+    });
+
+    it('keep their linkage where they have no related endpoint', () => {
+      // Serializers are frozen, so `linksOnly` is shadowed, not assigned.
+      const serializer = Object.create(models.get('post')!.serializer, {
+        linksOnly: { value: ['comments'] }
+      });
+      const paths: Array<string> = [];
+      const linksOnlyFor = (served: boolean) =>
+        Array.from(
+          serializer.linksOnlyFor(new Map(), 'members', (path: string) => {
+            paths.push(path);
+            return served;
+          })
+        );
+
+      expect(linksOnlyFor(true)).to.deep.equal(['comments']);
+      expect(linksOnlyFor(false)).to.deep.equal([]);
+      expect(paths[0]).to.equal('/members/posts/:dynamic/comments');
     });
   });
 });

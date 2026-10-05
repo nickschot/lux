@@ -574,6 +574,48 @@ A custom member route on a resource (`this.get('comments')` in its `member`
 block) takes precedence over the related endpoint of the same name, and the
 `related` link then points at it — rename one of them.
 
+## 22. `linksOnly` — to-many relationships as links, without their ids
+
+A Serializer can now list `hasMany` relationships to serialize **without
+resource linkage**, only their links (§20, §21). A resource with many related
+records then stays small, and their ids are not loaded at all (one query
+fewer per relationship):
+
+```javascript
+class PostsSerializer extends Serializer {
+  hasMany = ['comments', 'tags'];
+
+  linksOnly = ['comments'];
+}
+```
+
+```json
+"comments": {
+  "links": {
+    "self": "https://api.example.com/posts/1/relationships/comments",
+    "related": "https://api.example.com/posts/1/comments"
+  }
+}
+```
+
+- Clients load the records from the `related` link when they need them,
+  paged like an index. ember-data does this by itself for an async `hasMany`
+  whose payload has a `related` link and no `data`.
+- **A relationship the request includes keeps its `data`** (`?include=comments`):
+  JSON:API requires every included resource to be linked from the document.
+- **So does one without a related endpoint where it is serialized** — e.g. an
+  included type in a namespace that has no resource for it — since it would be
+  left with nothing to load it from.
+- It applies wherever the Serializer is used: primary data and included
+  resources alike. The relationship endpoint (§20) still returns the full
+  linkage.
+- **Boot check:** each name must be in the Serializer's `hasMany`, and its
+  type must have a controller (in the namespace or an ancestor) to serve the
+  related endpoint; otherwise the application refuses to boot, listing each
+  problem.
+
+Nothing changes unless a Serializer sets `linksOnly`.
+
 ## The short version
 
 Bump `pg`/`mysql2` and run Node 20 (required); delete `.babelrc` and the
