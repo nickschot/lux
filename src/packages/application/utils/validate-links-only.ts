@@ -1,7 +1,6 @@
 import { posix } from 'path';
 
 import LinksOnlyError from '../../../errors/links-only-error';
-import closestAncestor from '../../loader/resolver/utils/closest-ancestor';
 import type Controller from '../../controller';
 import type Serializer from '../../serializer';
 import type { Model } from '../../database';
@@ -10,8 +9,8 @@ import type { Bundle$Namespace } from '../../loader';
 /**
  * Check every Serializer's `linksOnly`: each relationship must be one of its
  * `hasMany`, and its type must have a controller (with a model and a
- * Serializer) in the Serializer's namespace or an ancestor, the one that
- * serves the related endpoint. Otherwise the relationship could never be
+ * Serializer) in the Serializer's own namespace, the one that serves the
+ * related endpoint there. Otherwise the relationship could never be
  * left without its linkage. Throws listing every problem.
  *
  * @private
@@ -35,10 +34,7 @@ export default function validateLinksOnly(
       }
 
       const type = opts.model.resourceName;
-      const controllerKey = posix.join(namespace || '.', type);
-      const controller =
-        controllers.get(controllerKey) ||
-        closestAncestor(controllers, controllerKey);
+      const controller = controllers.get(posix.join(namespace || '.', type));
 
       if (!controller?.hasModel || !controller.hasSerializer) {
         problems.push(`${key}: \`${name}\` has no \`${type}\` controller`);

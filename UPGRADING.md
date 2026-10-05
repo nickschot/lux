@@ -610,7 +610,7 @@ class PostsSerializer extends Serializer {
   resources alike. The relationship endpoint (§20) still returns the full
   linkage.
 - **Boot check:** each name must be in the Serializer's `hasMany`, and its
-  type must have a controller (in the namespace or an ancestor) to serve the
+  type must have a controller in the Serializer's namespace to serve the
   related endpoint; otherwise the application refuses to boot, listing each
   problem.
 
