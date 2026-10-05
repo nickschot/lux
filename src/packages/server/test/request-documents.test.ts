@@ -307,26 +307,31 @@ describe('request documents over HTTP', () => {
     });
   });
 
-  // Read-only members are dropped, not rejected, so clients that send whole
-  // resources back (ember-data) keep working; see nickschot/lux#47.
+  // Members the model has but `params` does not list. By default attributes
+  // are dropped (ember-data sends read-only ones back) and relationships are
+  // a 403; `/admin/posts` flips both. See nickschot/lux#47.
   describe('members the controller does not accept', () => {
-    it('ignores an attribute the model has', async () => {
-      const { otherPost } = fixtures;
-      const before = await models.get('post').find(idOf(otherPost));
-      const { status, body } = await request(
-        'PATCH',
-        `/posts/${idOf(otherPost)}`,
-        {
-          data: {
-            id: idOf(otherPost),
-            type: 'posts',
-            attributes: {
-              title: 'Renamed',
-              'created-at': '2000-01-01T00:00:00.000Z'
-            }
+    const commentsOf = async post =>
+      (await models.get('comment').where({ postId: post.getPrimaryKey() }))
+        .map(comment => idOf(comment))
+        .sort();
+
+    const patchCreatedAt = (path: string, id: string) =>
+      request('PATCH', `${path}/${id}`, {
+        data: {
+          id,
+          type: 'posts',
+          attributes: {
+            title: 'Renamed',
+            'created-at': '2000-01-01T00:00:00.000Z'
           }
         }
-      );
+      });
+
+    it('ignores an attribute the model has by default', async () => {
+      const { otherPost } = fixtures;
+      const before = await models.get('post').find(idOf(otherPost));
+      const { status, body } = await patchCreatedAt('/posts', idOf(otherPost));
       const after = await models.get('post').find(idOf(otherPost));
 
       expect(status).to.equal(200);
@@ -334,16 +339,29 @@ describe('request documents over HTTP', () => {
       expect(after.createdAt.valueOf()).to.equal(before.createdAt.valueOf());
     });
 
-    it('ignores a relationship the model has', async () => {
+    it('rejects it with 403 under `rejectUnlistedAttributes`', async () => {
+      const { otherPost } = fixtures;
+      const before = await models.get('post').find(idOf(otherPost));
+      const { status, body } = await patchCreatedAt(
+        '/admin/posts',
+        idOf(otherPost)
+      );
+      const after = await models.get('post').find(idOf(otherPost));
+
+      expect(status).to.equal(403);
+      expect(body.errors?.[0].source).to.deep.equal({
+        pointer: '/data/attributes/created-at'
+      });
+      expect(after.title).to.equal(before.title);
+      expect(after.createdAt.valueOf()).to.equal(before.createdAt.valueOf());
+    });
+
+    it('rejects a relationship the model has with 403 by default', async () => {
       const { post } = fixtures;
-      const commentsOf = async () =>
-        (await models.get('comment').where({ postId: post.getPrimaryKey() }))
-          .map(comment => idOf(comment))
-          .sort();
-      const before = await commentsOf();
+      const before = await commentsOf(post);
 
       // `/posts` does not accept `comments` (only `/admin/posts` does).
-      const { status } = await request('PATCH', `/posts/${idOf(post)}`, {
+      const { status, body } = await request('PATCH', `/posts/${idOf(post)}`, {
         data: {
           id: idOf(post),
           type: 'posts',
@@ -351,24 +369,77 @@ describe('request documents over HTTP', () => {
         }
       });
 
+      expect(status).to.equal(403);
+      expect(body.errors?.[0].source).to.deep.equal({
+        pointer: '/data/relationships/comments'
+      });
+      expect(await commentsOf(post)).to.deep.equal(before);
+    });
+
+    it('ignores it when `rejectUnlistedRelationships` is off', async () => {
+      const { post } = fixtures;
+      const reactionsOf = async () =>
+        (await models.get('reaction').where({ postId: post.getPrimaryKey() }))
+          .map(reaction => idOf(reaction))
+          .sort();
+      const before = await reactionsOf();
+
+      // `/admin/posts` does not accept `reactions`.
+      const { status } = await request('PATCH', `/admin/posts/${idOf(post)}`, {
+        data: {
+          id: idOf(post),
+          type: 'posts',
+          relationships: { reactions: { data: [] } }
+        }
+      });
+
       expect(status).to.be.oneOf([200, 204]);
-      expect(await commentsOf()).to.deep.equal(before);
+      expect(await reactionsOf()).to.deep.equal(before);
     });
 
     it('still rejects a member the model does not have with 400', async () => {
       const { post } = fixtures;
+
+      for (const path of ['/posts', '/admin/posts']) {
+        const { status, body } = await request(
+          'PATCH',
+          `${path}/${idOf(post)}`,
+          {
+            data: {
+              id: idOf(post),
+              type: 'posts',
+              attributes: { nope: true }
+            }
+          }
+        );
+
+        expect(status, path).to.equal(400);
+        expect(body.errors?.[0].source, path).to.deep.equal({
+          pointer: '/data/attributes/nope'
+        });
+      }
+    });
+
+    it('reports a 403 alongside a 400, answering 400', async () => {
+      const { post } = fixtures;
+      const before = await commentsOf(post);
       const { status, body } = await request('PATCH', `/posts/${idOf(post)}`, {
         data: {
           id: idOf(post),
           type: 'posts',
-          attributes: { nope: true }
+          attributes: { nope: true },
+          relationships: { comments: { data: [] } }
         }
       });
 
       expect(status).to.equal(400);
-      expect(body.errors?.[0].source).to.deep.equal({
-        pointer: '/data/attributes/nope'
-      });
+      expect(
+        body.errors?.map(({ status, source }) => [status, source.pointer])
+      ).to.have.deep.members([
+        ['400', '/data/attributes/nope'],
+        ['403', '/data/relationships/comments']
+      ]);
+      expect(await commentsOf(post)).to.deep.equal(before);
     });
   });
 

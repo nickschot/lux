@@ -1,4 +1,5 @@
 import Parameter from '../parameter';
+import ForbiddenParameter from '../parameter/forbidden-parameter';
 import IgnoredParameter from '../parameter/ignored-parameter';
 import ParameterGroup from '../parameter-group';
 import isNull from '../../../../../utils/is-null';
@@ -61,20 +62,41 @@ function getTypeParam({ model }: Controller): [string, ParameterLike] {
 }
 
 /**
+ * Members the model has (`names`) but the controller's `params` do not list:
+ * ignored, or answered with 403 when `reject` is set. A name the model does
+ * not have at all gets neither and is a 400. See nickschot/lux#47.
+ *
  * @private
  */
-function getAttributesParam(
-  { model, params }: Controller,
-  method: 'PATCH' | 'POST'
-): [string, ParameterLike] {
-  // Attributes the model has but the controller does not accept are
-  // dropped; a name the model does not have at all is a 400.
-  const ignored = model.attributeNames
+function getUnlistedParams(
+  names: Array<string>,
+  params: Array<string>,
+  path: string,
+  reject: boolean
+): Array<[string, ParameterLike]> {
+  return names
     .filter(name => !params.includes(name))
     .map((name): [string, ParameterLike] => [
       name,
-      new IgnoredParameter(`data.attributes.${name}`)
+      reject
+        ? new ForbiddenParameter(`${path}.${name}`)
+        : new IgnoredParameter(`${path}.${name}`)
     ]);
+}
+
+/**
+ * @private
+ */
+function getAttributesParam(
+  { model, params, rejectUnlistedAttributes }: Controller,
+  method: 'PATCH' | 'POST'
+): [string, ParameterLike] {
+  const unlisted = getUnlistedParams(
+    model.attributeNames,
+    params,
+    'data.attributes',
+    rejectUnlistedAttributes
+  );
 
   return [
     'attributes',
@@ -100,7 +122,7 @@ function getAttributesParam(
 
           return group;
         }, []),
-        ...ignored
+        ...unlisted
       ],
       {
         path: 'data.attributes'
@@ -153,16 +175,15 @@ function getIdentifierParam(path: string, model: ModelClass): ParameterGroup {
  */
 function getRelationshipsParam({
   model,
-  params
+  params,
+  rejectUnlistedRelationships
 }: Controller): [string, ParameterLike] {
-  // Relationships the model has but the controller does not accept are
-  // dropped, like attributes; a name the model does not have is a 400.
-  const ignored = Object.keys(model.relationships)
-    .filter(key => !params.includes(key))
-    .map((key): [string, ParameterLike] => [
-      key,
-      new IgnoredParameter(`data.relationships.${key}`)
-    ]);
+  const unlisted = getUnlistedParams(
+    Object.keys(model.relationships),
+    params,
+    'data.relationships',
+    rejectUnlistedRelationships
+  );
 
   return [
     'relationships',
@@ -205,7 +226,7 @@ function getRelationshipsParam({
             ]
           ];
         }, []),
-        ...ignored
+        ...unlisted
       ],
       {
         path: 'data.relationships'

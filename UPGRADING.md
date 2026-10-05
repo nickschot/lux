@@ -153,7 +153,7 @@ JSON:API 1.0 (or plain HTTP) calls for, and error objects say *what* was wrong:
 | Situation | Was | Now |
 |---|---|---|
 | `POST` with `data.id` (client-generated IDs are unsupported) | `400` | `403` |
-| `data.relationships.<name>` for a relationship the model has but the controller's `params` does not list | `400` | ignored (see §15) |
+| `data.relationships.<name>` for a relationship the model has but the controller's `params` does not list | `400` | `403` (see §15) |
 | A relationship referencing a resource that does not exist (`POST`/`PATCH`) | `201`/`200`, dangling linkage saved | `404` |
 | A model validator (`static validates`) fails | `500` | `422` |
 | A unique constraint is violated on create/update | `500` (SQL in `detail` in development) | `409` |
@@ -352,22 +352,41 @@ relationship links at all. Clients that read `relationships.*.links` must use
 the linkage (`data`) instead — e.g. ember-data loads `data` and does not need
 the link. The links come back, with proper URLs, once those endpoints exist.
 
-## 15. Members the controller does not accept — ignored; unknown ones — `400`
+## 15. Members the controller does not accept — configurable; unknown ones — `400`
 
 A `POST`/`PATCH` body is checked against the model and the controller's
-`params`, the same way for attributes and relationships:
+`params`:
 
-- **A member the model has but `params` does not list is ignored** — dropped
-  before the action runs, and the request succeeds. This lets clients that
-  send whole resources back keep working: ember-data serializes every
-  attribute (read-only ones such as `created-at` included) and every
-  `belongsTo`. Attributes were already ignored; **relationships used to be a
-  `403`** (§8) and are now ignored too.
+- **An attribute the model has but `params` does not list is ignored**, as
+  before — dropped before the action runs, and the request succeeds. Clients
+  that send whole resources back keep working (ember-data serializes every
+  attribute, read-only ones such as `created-at` included).
+- **A relationship the model has but `params` does not list is a
+  `403 Forbidden`** (JSON:API's answer to an unsupported update) with a
+  pointer (`/data/relationships/comments`). It used to be a `400` (§8).
 - **A member the model does not have is a `400 Bad Request`** with a pointer
   (`/data/attributes/nope`). Attributes like that used to be silently dropped.
 
-Rejecting read-only members with a `403` instead is a defensible reading of
-JSON:API too; the trade-offs (and a strict variant) are discussed in
+Two new controller properties change the first two; set them on
+`ApplicationController` for the whole app, or on a single controller:
+
+| Property | Default | Effect |
+|---|---|---|
+| `rejectUnlistedAttributes` | `false` | `true`: unlisted attributes are a `403` too |
+| `rejectUnlistedRelationships` | `true` | `false`: unlisted relationships are ignored |
+
+**ember-data:** it sends every `belongsTo` back on save, so a controller
+that does not accept one of them now answers `403`. Either mark it
+`serialize: false` in the ember-data serializer
+(`attrs = { user: { serialize: false } }`), or turn the check off:
+
+```javascript
+class ApplicationController extends Controller {
+  rejectUnlistedRelationships = false;
+}
+```
+
+The trade-offs between ignoring and rejecting are discussed in
 nickschot/lux#47.
 
 ## 16. Has-many-through writes — fixed
