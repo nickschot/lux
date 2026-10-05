@@ -127,6 +127,12 @@ describe('module "router/route/action"', () => {
             .and.be.an('object')
             .with.property('self', `http://${DOMAIN}${path}`);
         });
+
+        it('adds no `meta`', async () => {
+          const result = await subject(createRequest(), createResponse());
+
+          expect(result).not.to.have.property('meta');
+        });
       });
 
       describe('- with "admin" namespace', () => {

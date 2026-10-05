@@ -163,6 +163,49 @@ describe('routing over HTTP', () => {
     });
   });
 
+  describe('a collection', () => {
+    const ids = ['meta-a', 'meta-b'];
+
+    beforeAll(async () => {
+      await models
+        .get('language')
+        .table()
+        .insert(ids.map(id => ({ id, name: `Meta ${id}` })));
+    });
+
+    afterAll(async () => {
+      await models.get('language').table().whereIn('id', ids).del();
+    });
+
+    it('carries the total across every page in `meta`', async () => {
+      const total = await models.get('language').count();
+      const res = await request('GET', '/languages?page[size]=1');
+      const { data, meta } = await res.json();
+
+      expect(total).to.be.above(1);
+      expect(data).to.have.lengthOf(1);
+      expect(meta).to.deep.equal({ total });
+    });
+
+    it('counts only the resources that match the filter', async () => {
+      const res = await request(
+        'GET',
+        '/languages?filter[name]=Meta meta-a,Meta meta-b&page[size]=1'
+      );
+      const { data, meta } = await res.json();
+
+      expect(data).to.have.lengthOf(1);
+      expect(meta).to.deep.equal({ total: 2 });
+    });
+
+    it('carries no `meta` for a single resource', async () => {
+      const res = await request('GET', '/languages/meta-a');
+
+      expect(res.status).to.equal(200);
+      expect(await res.json()).not.to.have.property('meta');
+    });
+  });
+
   describe('a created resource', () => {
     it('links to itself where `Location` points', async () => {
       const res = await request('POST', '/tags', {

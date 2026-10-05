@@ -501,6 +501,9 @@ class Serializer<T extends Model> {
    * related record loaded for the document — its linkage and `included` — is
    * narrowed by them; primary data was already loaded through them.
    *
+   * @param {Object} options.meta - Top level meta information of the returned
+   * document (`{ total }` for a page of a collection), if any.
+   *
    * @param {String} options.namespace - The namespace of the request, i.e. of
    * the Controller handling it. Every link in the document is built in it, and
    * included resources are serialized by their Serializer in it (falling back
@@ -515,6 +518,7 @@ class Serializer<T extends Model> {
    */
   async format({
     data,
+    meta,
     links,
     domain,
     include,
@@ -523,6 +527,7 @@ class Serializer<T extends Model> {
     namespace = this.namespace
   }: {
     data: T | Array<T>;
+    meta?: JSONAPI$Document['meta'];
     links: JSONAPI$DocumentLinks;
     domain: string;
     include: Array<string>;
@@ -588,6 +593,7 @@ class Serializer<T extends Model> {
     // structurally above, so assert the fully-built JSON:API shape here.
     return {
       ...serialized,
+      ...(meta && { meta }),
       links,
 
       jsonapi: {

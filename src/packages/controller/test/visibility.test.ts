@@ -200,6 +200,7 @@ describe('visibility rules', () => {
       const last = new URL(String(body?.links?.last)).searchParams;
 
       expect(Number(last.get('page[number]'))).to.equal(visible);
+      expect(body?.meta).to.deep.equal({ total: visible });
     });
 
     it('responds 404 for a hidden record, as for a missing one', async () => {
