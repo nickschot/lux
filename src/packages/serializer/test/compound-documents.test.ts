@@ -95,11 +95,14 @@ describe('compound documents over HTTP', () => {
     type
   });
 
-  // A relationship object: its linkage, and a `self` link to the
-  // relationship endpoint of the resource at `path` (`/posts/1`).
+  // A relationship object: its linkage, and links to the relationship and
+  // related endpoints of the resource at `path` (`/posts/1`).
   const relationship = (path: string, name: string, data: unknown) => ({
     data,
-    links: { self: `${DOMAIN}${path}/relationships/${name}` }
+    links: {
+      self: `${DOMAIN}${path}/relationships/${name}`,
+      related: `${DOMAIN}${path}/${name}`
+    }
   });
 
   const modelFor = (type: string): ModelClass => {

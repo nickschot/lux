@@ -1,4 +1,8 @@
+import { camelize } from 'inflection';
+import type { Knex } from 'knex';
+
 import { getDomain } from '../server';
+import merge from '../../utils/merge';
 import { freezeProps } from '../freezeable';
 import type Serializer from '../serializer';
 import type { Model, ModelClass, Query } from '../database';
@@ -6,6 +10,7 @@ import type { Request, Response } from '../server';
 
 import findOne from './utils/find-one';
 import findMany from './utils/find-many';
+import paramsToQuery from './utils/params-to-query';
 import resolveRelationships from './utils/resolve-relationships';
 import validateRelationships from './utils/validate-relationships';
 import { scopeFor } from './visibility';
@@ -876,6 +881,80 @@ class Controller {
         params: { value: { id: req.params.id, fields } },
         defaultParams: { value: { fields } }
       })
+    );
+  }
+
+  /**
+   * Serve a related endpoint (`GET /posts/1/comments`): the resources the
+   * relationship `request.route.relationship` of the resource with the id
+   * url parameter points to. For more information, see the [fetching
+   * resources](https://jsonapi.org/format/1.0/#fetching-resources) section of
+   * the JSON API specification.
+   *
+   * The query parameters are those of the related type's controller: for a
+   * to-many relationship they page, sort and filter like its `index`, for a
+   * to-one one they include and select like its `show`. Visibility rules apply
+   * to the related resources; the owning resource is resolved with
+   * `showRelationship()` first, so one the request may not see is
+   * `404 Not Found`.
+   *
+   * @method showRelated
+   * @param {Request} request - The request object.
+   * @param {Response} response - The response object.
+   * @return {Query} The related Model instances (to-many) or instance (to-one,
+   * resolving to `undefined` when there is none).
+   * @public
+   */
+  showRelated(req: Request): Query<Array<Model>> | Query<Model> {
+    const { model } = this;
+    const {
+      params: { id },
+      route: { relationship = '' }
+    } = req;
+    const opts = model.relationshipFor(relationship);
+
+    if (!opts) {
+      throw new TypeError(`${model.name} has no relationship ${relationship}`);
+    }
+
+    const { type, through, model: related } = opts;
+    let condition: Record<string, unknown>;
+
+    // Each kind of relationship as a condition on the related table, so the
+    // related ids are never loaded into memory (a to-many can be large).
+    if (type === 'belongsTo') {
+      condition = {
+        [related.primaryKey]: (model.table() as Knex.QueryBuilder)
+          .select(opts.foreignKey)
+          .where(model.columnNameFor(model.primaryKey) as string, id)
+      };
+    } else if (through) {
+      const inverse = related.relationshipFor(opts.inverse);
+
+      condition = {
+        [related.primaryKey]: (through.table() as Knex.QueryBuilder)
+          .select(inverse?.foreignKey as string)
+          .where(opts.foreignKey, id)
+      };
+    } else {
+      condition = { [camelize(opts.foreignKey, true)]: id };
+    }
+
+    if (type === 'hasMany') {
+      return this.visible(findMany(related, req).where(condition), req);
+    }
+
+    const { select } = paramsToQuery(
+      related,
+      merge(req.defaultParams, req.params)
+    );
+
+    return this.visible(
+      related
+        .select(...select)
+        .where(condition)
+        .first() as unknown as Query<Model>,
+      req
     );
   }
 

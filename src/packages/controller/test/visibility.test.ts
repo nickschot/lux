@@ -400,6 +400,45 @@ describe('visibility rules', () => {
     });
   });
 
+  describe('related endpoints', () => {
+    it('responds 404 for a hidden resource', async () => {
+      const { status } = await request(
+        `/members/posts/${idOf(fixtures.privatePost)}/comments`
+      );
+
+      expect(status).to.equal(404);
+    });
+
+    it('serves a to-one pointing at a hidden record as `null`', async () => {
+      const { status, body } = await request(
+        `/members/reactions/${idOf(fixtures.reaction)}/post`
+      );
+
+      expect(status).to.equal(200);
+      expect(body?.data).to.equal(null);
+    });
+
+    it('leaves hidden records out of a to-many, and its count', async () => {
+      const { tag, publicPost } = fixtures;
+      const { status, body } = await request(
+        `/members/tags/${idOf(tag)}/posts?page[size]=1`
+      );
+
+      expect(status).to.equal(200);
+      expect(keysOf(body?.data as unknown as Array<Identifier>)).to.deep.equal([
+        keyOf(ref('posts', publicPost))
+      ]);
+      expect(body?.links?.next).to.equal(null);
+    });
+
+    it('applies the rules of the request namespace', async () => {
+      const { tag } = fixtures;
+      const { body } = await request(`/admin/tags/${idOf(tag)}/posts`);
+
+      expect(body?.data).to.have.length(2);
+    });
+  });
+
   describe('class Scope', () => {
     let Post: ModelClass;
     let Comment: ModelClass;

@@ -19,6 +19,16 @@ import type { Route$opts } from './interfaces';
 /**
  * @private
  */
+function isToMany(controller: Controller, relationship?: string): boolean {
+  return (
+    Boolean(relationship) &&
+    controller.model.relationshipFor(relationship as string)?.type === 'hasMany'
+  );
+}
+
+/**
+ * @private
+ */
 class Route extends FreezeableSet<Action<unknown>> {
   declare type: string;
 
@@ -34,6 +44,8 @@ class Route extends FreezeableSet<Action<unknown>> {
 
   declare relationship: string | undefined;
 
+  declare related: Controller | undefined;
+
   declare staticPath: string;
 
   declare defaultParams: Record<string, unknown>;
@@ -46,7 +58,8 @@ class Route extends FreezeableSet<Action<unknown>> {
     action,
     method,
     controller,
-    relationship
+    relationship,
+    related
   }: Route$opts) {
     const dynamicSegments = getDynamicSegments(path);
 
@@ -54,19 +67,27 @@ class Route extends FreezeableSet<Action<unknown>> {
       const handler = Reflect.get(controller, action);
 
       if (typeof handler === 'function') {
+        // A related route takes the query parameters of the related type, as
+        // its `show` (to-one) or `index` (to-many) would.
+        const query =
+          type === 'related' && related
+            ? {
+                controller: related,
+                type: isToMany(controller, relationship)
+                  ? ('collection' as const)
+                  : ('member' as const)
+              }
+            : { controller, type };
+
         const params = paramsFor({
-          type,
+          ...query,
           method,
-          controller,
           dynamicSegments
         });
 
         const staticPath = getStaticPath(path);
 
-        const defaultParams = defaultParamsFor({
-          type,
-          controller
-        });
+        const defaultParams = defaultParamsFor(query);
 
         super(createAction(type, handler, controller));
 
@@ -79,6 +100,7 @@ class Route extends FreezeableSet<Action<unknown>> {
           controller,
           staticPath,
           relationship,
+          related,
           defaultParams,
           dynamicSegments
         });
@@ -93,7 +115,8 @@ class Route extends FreezeableSet<Action<unknown>> {
           'method',
           'controller',
           'staticPath',
-          'relationship'
+          'relationship',
+          'related'
         );
 
         deepFreezeProps(this, false, 'defaultParams', 'dynamicSegments');

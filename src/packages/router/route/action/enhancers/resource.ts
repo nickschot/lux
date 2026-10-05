@@ -1,4 +1,5 @@
 import { Query } from '../../../../database';
+import { VERSION } from '../../../../jsonapi';
 import { getDomain } from '../../../../server';
 import type { Request, Response } from '../../../../server';
 import { scopeFor } from '../../../../controller/visibility';
@@ -12,33 +13,56 @@ import type { Action } from '../interfaces';
 export default function resource(action: Action<unknown>): Action<unknown> {
   const resourceAction = async function (req: Request, res: Response) {
     const {
-      route: { action: actionName }
+      route: { action: actionName, type, controller, relationship, related }
     } = req;
+    // A related route serves resources of the related type: they are
+    // serialized and paged by its controller.
+    const target = (type === 'related' && related) || controller;
+    const paged =
+      actionName === 'index' ||
+      (type === 'related' &&
+        controller.model.relationshipFor(relationship || '')?.type ===
+          'hasMany');
+
+    if (type === 'related') {
+      // The owning resource must exist and be visible (else a 404).
+      await controller.showRelationship(req);
+    }
+
     const result = action(req, res);
     let links = {};
     let data;
     let total;
 
-    if (actionName === 'index' && result instanceof Query) {
+    if (paged && result instanceof Query) {
       [data, total] = await Promise.all([result, Query.from(result).count()]);
     } else {
       data = await result;
     }
 
-    if (Array.isArray(data) || (data && data.isModelInstance)) {
-      const domain = getDomain(req);
+    const domain = getDomain(req);
+    const {
+      params,
+      router,
+      url: { path, pathname, search }
+    } = req;
 
-      const {
-        params,
-        router,
-        url: { path, pathname, search },
-        route: { controller, relationship }
-      } = req;
-      const { namespace, serializer, defaultPerPage } = controller;
+    // An empty to-one relationship.
+    if (type === 'related' && data == null) {
+      return {
+        data: null,
+        links: { self: domain + path },
+        jsonapi: { version: VERSION }
+      };
+    }
+
+    if (Array.isArray(data) || (data && data.isModelInstance)) {
+      const { namespace } = controller;
+      const { serializer, defaultPerPage } = target;
       const scope = scopeFor(controller.visibility, req);
       const routed = (key: string) => router.has(`GET:${key}`);
 
-      if (relationship && !Array.isArray(data)) {
+      if (type === 'relationship' && relationship && !Array.isArray(data)) {
         return serializer.formatRelationship({
           scope,
           domain,
@@ -51,7 +75,7 @@ export default function resource(action: Action<unknown>): Action<unknown> {
 
       const include = params.include || [];
 
-      if (actionName === 'index') {
+      if (paged) {
         links = createPageLinks({
           params,
           domain,
@@ -65,11 +89,7 @@ export default function resource(action: Action<unknown>): Action<unknown> {
         links = {
           self: res.getHeader('Location')
         };
-      } else if (actionName !== 'index' && namespace) {
-        links = {
-          self: domain.replace(`/${namespace}`, '') + path
-        };
-      } else if (actionName !== 'index' && !namespace) {
+      } else {
         links = {
           self: domain + path
         };

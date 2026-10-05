@@ -1,9 +1,11 @@
 import { posix } from 'path';
 
-import type { Bundle$Namespace } from '../../index';
-
+/**
+ * The value at `key`'s name in the closest ancestor namespace of `key`
+ * (`admin/users` → `users`).
+ */
 export default function closestAncestor<T>(
-  source: Bundle$Namespace<T>,
+  source: { get(key: string): T | undefined },
   key: string
 ): T | undefined {
   const name = posix.basename(key);

@@ -331,7 +331,7 @@ value.
   was accepted and passed to the ORM. A request body must be a JSON object;
   a top-level array is now a `400` like other malformed bodies.
 
-## 14. Relationship links — removed, then back as relationship endpoints (§20)
+## 14. Relationship links — removed, then back with their endpoints (§20, §21)
 
 To-one relationships no longer carry a `links` member; like to-many ones, they
 are just their linkage:
@@ -358,7 +358,7 @@ the linkage (`data`) instead — e.g. ember-data loads `data` and does not need
 the link. The links come back, with proper URLs, once those endpoints exist.
 
 Relationship endpoints now exist (§20), and every relationship links to its
-own as `links.self`. A `related` link comes with related endpoints.
+own as `links.self`, and to its related endpoint (§21) as `links.related`.
 
 ## 15. Members the controller does not accept — configurable; unknown ones — `400`
 
@@ -515,6 +515,51 @@ type without a resource in the namespace has no links):
 
 Clients that compare relationship objects as a whole must allow the extra
 member; ember-data keeps reading `data`.
+
+## 21. Related endpoints — `GET /posts/1/comments`
+
+Next to each relationship endpoint, a resource now serves a **related
+endpoint**: the related resources themselves, as JSON:API's `related` links
+describe.
+
+```
+GET /posts/1/user       → { "data": { "id": "2", "type": "users", … } }   (or null)
+GET /posts/1/comments   → { "data": [{ "id": "7", "type": "comments", … }], "links": { "first": …, "next": … } }
+```
+
+- It is served by the **related type's controller**, found in the request's
+  namespace or the closest ancestor (`admin/users`, else `users`), the way
+  Serializers are. A to-many related endpoint pages, sorts and filters like
+  that controller's `index` (`?page[size]`, `?sort`, `?filter`, its
+  `maxPerPage`), a to-one like its `show`; both take its `include` and
+  `fields`, and the resources are formatted by its Serializer. A relationship
+  whose type has no controller (with a model and a Serializer) gets no related
+  endpoint and no `related` link.
+- The relationship is a condition on the related table, so a large to-many
+  relationship never loads its ids into memory, and paging counts only what
+  the request may see.
+- Visibility rules apply to the related resources; a resource the request may
+  not see is a `404`. `HEAD` and `OPTIONS` work; a write is a `405`.
+- Override `showRelated(request)` on a controller to change the query. The
+  owning resource is resolved with `showRelationship(request)` first.
+
+**Relationship objects now carry `links.related`** as well, under the same
+rule as `self`: only when the endpoint is served. Unlike the link removed in
+§14, it does not change when the relationship's content does.
+
+```json
+"user": {
+  "data": { "id": "2", "type": "users" },
+  "links": {
+    "self": "https://api.example.com/posts/1/relationships/user",
+    "related": "https://api.example.com/posts/1/user"
+  }
+}
+```
+
+A custom member route on a resource (`this.get('comments')` in its `member`
+block) takes precedence over the related endpoint of the same name, and the
+`related` link then points at it — rename one of them.
 
 ## The short version
 

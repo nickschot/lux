@@ -36,6 +36,11 @@ const ref = (type: string, record: Model): Identifier => ({
   id: idOf(record),
   type
 });
+// The links of the relationship `name` of the resource at `path` (`/posts/1`).
+const linksFor = (path: string, name: string) => ({
+  self: `${DOMAIN}${path}/relationships/${name}`,
+  related: `${DOMAIN}${path}/${name}`
+});
 const sorted = (list: Array<Identifier>) =>
   [...list].sort((a, b) => Number(a.id) - Number(b.id));
 
@@ -154,25 +159,30 @@ describe('relationship endpoints over HTTP', () => {
   describe('GET', () => {
     it('serves a to-one relationship', async () => {
       const { post, author } = fixtures;
-      const path = `/posts/${idOf(post)}/relationships/user`;
-      const { status, res, body } = await request('GET', path);
+      const { status, res, body } = await request(
+        'GET',
+        `/posts/${idOf(post)}/relationships/user`
+      );
 
       expect(status).to.equal(200);
       expect(res.headers.get('content-type')).to.equal(JSONAPI);
       expect(body).to.deep.equal({
         data: ref('users', author),
-        links: { self: DOMAIN + path },
+        links: linksFor(`/posts/${idOf(post)}`, 'user'),
         jsonapi: { version: '1.0' }
       });
     });
 
     it('serves an empty to-one relationship as `null`', async () => {
-      const path = `/posts/${idOf(fixtures.emptyPost)}/relationships/user`;
-      const { status, body } = await request('GET', path);
+      const path = `/posts/${idOf(fixtures.emptyPost)}`;
+      const { status, body } = await request(
+        'GET',
+        `${path}/relationships/user`
+      );
 
       expect(status).to.equal(200);
       expect(body.data).to.equal(null);
-      expect(body.links).to.deep.equal({ self: DOMAIN + path });
+      expect(body.links).to.deep.equal(linksFor(path, 'user'));
     });
 
     it('serves a to-many relationship', async () => {
@@ -238,21 +248,25 @@ describe('relationship endpoints over HTTP', () => {
       });
 
       expect(paths).to.deep.equal([
-        '/posts/:dynamic/relationships/friend-requests'
+        '/posts/:dynamic/relationships/friend-requests',
+        '/posts/:dynamic/friend-requests'
       ]);
       expect(links).to.deep.equal({
-        links: { self: `${DOMAIN}/posts/1/relationships/friend-requests` }
+        links: linksFor('/posts/1', 'friend-requests')
       });
     });
 
     it('builds links in the request namespace', async () => {
       const { post, author } = fixtures;
-      const path = `/admin/posts/${idOf(post)}/relationships/user`;
-      const { status, body } = await request('GET', path);
+      const path = `/admin/posts/${idOf(post)}`;
+      const { status, body } = await request(
+        'GET',
+        `${path}/relationships/user`
+      );
 
       expect(status).to.equal(200);
       expect(body.data).to.deep.equal(ref('users', author));
-      expect(body.links).to.deep.equal({ self: DOMAIN + path });
+      expect(body.links).to.deep.equal(linksFor(path, 'user'));
     });
 
     it('responds 404 to a resource that does not exist', async () => {
@@ -374,9 +388,9 @@ describe('relationship endpoints over HTTP', () => {
         ({ id, type }) => type === 'comments' && id === idOf(commentA)
       );
 
-      expect(comment.relationships.post.links).to.deep.equal({
-        self: `${DOMAIN}/comments/${idOf(commentA)}/relationships/post`
-      });
+      expect(comment.relationships.post.links).to.deep.equal(
+        linksFor(`/comments/${idOf(commentA)}`, 'post')
+      );
     });
 
     it('leaves out links to endpoints the namespace does not serve', async () => {
@@ -396,14 +410,199 @@ describe('relationship endpoints over HTTP', () => {
         const included = body.included.find(({ type }) => type === 'images');
 
         expect(status).to.equal(200);
-        expect(body.data.relationships.image.links).to.deep.equal({
-          self: `${DOMAIN}/members/posts/${idOf(fixtures.post)}/relationships/image`
-        });
+        // The related endpoint uses the root `images` controller.
+        expect(body.data.relationships.image.links).to.deep.equal(
+          linksFor(`/members/posts/${idOf(fixtures.post)}`, 'image')
+        );
         expect(included.relationships.post).to.deep.equal({
           data: ref('posts', fixtures.post)
         });
       } finally {
         await image.destroy();
+      }
+    });
+  });
+
+  describe('related endpoints', () => {
+    it('serves a to-one related resource', async () => {
+      const { post, author } = fixtures;
+      const path = `/posts/${idOf(post)}/user`;
+      const { status, body } = await request('GET', path);
+
+      expect(status).to.equal(200);
+      expect(body.data).to.deep.include(ref('users', author));
+      expect(body.data.attributes).to.have.all.keys(['name', 'email']);
+      expect(body.links).to.deep.equal({ self: DOMAIN + path });
+    });
+
+    it('serves an empty to-one relationship as `null`', async () => {
+      const path = `/posts/${idOf(fixtures.emptyPost)}/image`;
+      const { status, body } = await request('GET', path);
+
+      expect(status).to.equal(200);
+      expect(body).to.deep.equal({
+        data: null,
+        links: { self: DOMAIN + path },
+        jsonapi: { version: '1.0' }
+      });
+    });
+
+    it('serves a to-many relationship as a collection', async () => {
+      const { post, commentA, commentB } = fixtures;
+      const { status, body } = await request(
+        'GET',
+        `/posts/${idOf(post)}/comments`
+      );
+
+      expect(status).to.equal(200);
+      expect(
+        sorted(body.data.map(({ id, type }) => ({ id, type })))
+      ).to.deep.equal(
+        sorted([ref('comments', commentA), ref('comments', commentB)])
+      );
+      expect(body.links).to.include.keys(['self', 'first', 'last']);
+    });
+
+    it('serves a to-many relationship through a join model', async () => {
+      const { post, tagA, tagB } = fixtures;
+      const { status, body } = await request(
+        'GET',
+        `/posts/${idOf(post)}/tags`
+      );
+
+      expect(status).to.equal(200);
+      expect(
+        sorted(body.data.map(({ id, type }) => ({ id, type })))
+      ).to.deep.equal(sorted([ref('tags', tagA), ref('tags', tagB)]));
+    });
+
+    it('serves an empty to-many relationship as `[]`', async () => {
+      const { status, body } = await request(
+        'GET',
+        `/posts/${idOf(fixtures.emptyPost)}/comments`
+      );
+
+      expect(status).to.equal(200);
+      expect(body.data).to.deep.equal([]);
+    });
+
+    it("pages, sorts and filters like the related type's index", async () => {
+      const { post, commentA, commentB } = fixtures;
+      const path = `/posts/${idOf(post)}/comments`;
+      const paged = await request('GET', `${path}?page[size]=1&sort=-message`);
+
+      expect(paged.status).to.equal(200);
+      // `Second.` sorts before `First.` descending.
+      expect(paged.body.data.map(({ id }) => id)).to.deep.equal([
+        idOf(commentB)
+      ]);
+      expect(paged.body.links.next).to.contain('page%5Bnumber%5D=2');
+      expect(paged.body.links.last).to.contain('page%5Bnumber%5D=2');
+
+      const filtered = await request('GET', `${path}?filter[message]=First.`);
+
+      expect(filtered.body.data.map(({ id }) => id)).to.deep.equal([
+        idOf(commentA)
+      ]);
+    });
+
+    it("takes the related type's `include` and `fields`", async () => {
+      const { post, author } = fixtures;
+      const { status, body } = await request(
+        'GET',
+        `/posts/${idOf(post)}/comments?include=user&fields[comments]=message`
+      );
+
+      expect(status).to.equal(200);
+      body.data.forEach(({ attributes }) => {
+        expect(attributes).to.have.all.keys(['message']);
+      });
+      expect(body.included.map(({ id, type }) => ({ id, type }))).to.deep.equal(
+        [ref('users', author)]
+      );
+    });
+
+    it("validates query parameters against the related type's controller", async () => {
+      const { post } = fixtures;
+      const cases: Array<[string, string]> = [
+        [`/posts/${idOf(post)}/comments?page[size]=101`, 'page[size]'],
+        [`/posts/${idOf(post)}/comments?sort=nope`, 'sort'],
+        // A to-one related resource takes no paging.
+        [`/posts/${idOf(post)}/user?page[size]=1`, 'page']
+      ];
+
+      for (const [path, parameter] of cases) {
+        const { status, body } = await request('GET', path);
+
+        expect(status, path).to.equal(400);
+        expect(body.errors[0].source, path).to.deep.equal({ parameter });
+      }
+    });
+
+    it("serializes with the namespace's serializer", async () => {
+      const { post } = fixtures;
+      const path = `/admin/posts/${idOf(post)}/user`;
+      const { status, body } = await request('GET', path);
+
+      expect(status).to.equal(200);
+      expect(body.data.attributes).to.have.all.keys([
+        'name',
+        'email',
+        'created-at'
+      ]);
+      expect(body.links).to.deep.equal({ self: DOMAIN + path });
+    });
+
+    it('responds 404 to a resource that does not exist', async () => {
+      const { status } = await request('GET', '/posts/99999999/comments');
+
+      expect(status).to.equal(404);
+    });
+
+    it('answers HEAD like GET, without a body', async () => {
+      const { status, body } = await request(
+        'HEAD',
+        `/posts/${idOf(fixtures.post)}/comments`
+      );
+
+      expect(status).to.equal(200);
+      expect(body).to.equal(undefined);
+    });
+
+    it('responds 405 with `Allow` to a write', async () => {
+      const { status, res } = await request(
+        'POST',
+        `/posts/${idOf(fixtures.post)}/comments`,
+        { data: [] }
+      );
+
+      expect(status).to.equal(405);
+      expect(res.headers.get('allow')).to.equal('GET, HEAD, OPTIONS');
+    });
+
+    it('serves every `related` link of a resource', async () => {
+      const { post } = fixtures;
+      const { body } = await request('GET', `/posts/${idOf(post)}`);
+
+      for (const [name, { data, links }] of Object.entries<{
+        data: Identifier | Array<Identifier> | null;
+        links: { related: string };
+      }>(body.data.relationships)) {
+        const served = await request('GET', links.related);
+        const identifiers = (value: unknown) =>
+          sorted(
+            (Array.isArray(value) ? value : value ? [value] : []).map(
+              ({ id, type }) => ({ id, type })
+            )
+          );
+
+        expect(links.related, name).to.equal(
+          `${DOMAIN}/posts/${idOf(post)}/${name}`
+        );
+        expect(served.status, name).to.equal(200);
+        expect(identifiers(served.body.data), name).to.deep.equal(
+          identifiers(data)
+        );
       }
     });
   });

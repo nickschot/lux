@@ -1,11 +1,17 @@
+import { posix } from 'path';
+
+import { dasherize, underscore } from 'inflection';
+
 import Route from '../route';
 import Resource from '../resource';
+import { normalizePath } from '../namespace';
+import closestAncestor from '../../loader/resolver/utils/closest-ancestor';
 import type Router from '../index';
 import type Controller from '../../controller';
 import type { Router$Namespace } from '../index';
 
 import { contextFor } from './context';
-import createDefinitionGroup from './context/utils/create-definition-group';
+import { addRoute } from './context/utils/create-definition';
 import type { DefinitionContext } from './context';
 
 /**
@@ -23,6 +29,69 @@ function relationshipsFor(controller: Controller): Array<string> {
   return [...serializer.hasOne, ...serializer.hasMany].filter(name =>
     Boolean(model.relationshipFor(name))
   );
+}
+
+/**
+ * The controller of the type `controller`'s relationship `name` points to,
+ * resolved in `controller`'s namespace the way Serializers are: its own
+ * (`admin/users`), else the closest ancestor namespace's, down to the root.
+ * Only one with a model and a Serializer can serve related resources.
+ *
+ * @private
+ */
+function relatedControllerFor(
+  controller: Controller,
+  controllers: Map<string, Controller>,
+  name: string
+): Controller | undefined {
+  const opts = controller.model.relationshipFor(name);
+
+  if (!opts) {
+    return undefined;
+  }
+
+  const key = posix.join(controller.namespace || '.', opts.model.resourceName);
+  const related = controllers.get(key) || closestAncestor(controllers, key);
+
+  return related?.hasModel && related.hasSerializer ? related : undefined;
+}
+
+/**
+ * For each relationship the resource's Serializer exposes, a relationship
+ * endpoint (`/posts/1/relationships/comments`) and, when the related type has
+ * a controller, a related endpoint (`/posts/1/comments`). Anything they serve
+ * can already be read through `?include=`.
+ *
+ * @private
+ */
+function defineRelationships(namespace: Resource): void {
+  const { controller, controllers, path } = namespace;
+
+  relationshipsFor(controller).forEach(name => {
+    const segment = dasherize(underscore(name));
+    const related = relatedControllerFor(controller, controllers, name);
+
+    addRoute(namespace, {
+      controller,
+      type: 'relationship',
+      path: normalizePath(`${path}/:id/relationships/${segment}`),
+      action: 'showRelationship',
+      method: 'GET',
+      relationship: name
+    });
+
+    if (related) {
+      addRoute(namespace, {
+        controller,
+        related,
+        type: 'related',
+        path: normalizePath(`${path}/:id/${segment}`),
+        action: 'showRelated',
+        method: 'GET',
+        relationship: name
+      });
+    }
+  });
 }
 
 /**
@@ -51,16 +120,9 @@ export function build<T extends Router$Namespace>(
       }
     });
 
-    // A relationship endpoint (`/posts/1/relationships/comments`) for each
-    // relationship the resource's Serializer exposes, wherever it is shown.
-    // Anything it serves can already be read through `?include=`.
+    // Relationships are served wherever the resource is shown.
     if (only.has('show')) {
-      const { controller } = namespace;
-      const relationships = createDefinitionGroup('relationship', namespace);
-
-      relationshipsFor(controller).forEach(name => {
-        relationships.get(name, 'showRelationship');
-      });
+      defineRelationships(namespace);
     }
 
     context.collection(function collection(this: DefinitionContext) {

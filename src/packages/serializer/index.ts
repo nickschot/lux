@@ -778,9 +778,11 @@ class Serializer<T extends Model> {
 
   /**
    * The `links` of the relationship `name` of the resource `type`/`id`: a
-   * `self` link to its relationship endpoint, when the application serves
-   * one in `namespace` (JSON:API requires every relationship `self` link to
-   * be served). Without one the relationship has no links.
+   * `self` link to its relationship endpoint (`/posts/1/relationships/user`)
+   * and a `related` link to its related endpoint (`/posts/1/user`), each when
+   * the application serves it in `namespace` (JSON:API requires every
+   * relationship `self` link to be served). Without either the relationship
+   * has no links.
    *
    * A related resource's own URL (`/users/2`) is never a relationship's
    * `related` link: that link must not change when the relationship's content
@@ -804,17 +806,20 @@ class Serializer<T extends Model> {
     routed: Serializer$routed;
     namespace: string;
   }): Pick<JSONAPI$RelationshipObject, 'links'> {
-    const path = `/relationships/${dasherize(underscore(name))}`;
+    const segment = dasherize(underscore(name));
+    const route = this.pathFor(type, ':dynamic', namespace);
+    const base = domain + this.pathFor(type, id, namespace);
+    const links: NonNullable<JSONAPI$RelationshipObject['links']> = {};
 
-    if (!routed(this.pathFor(type, ':dynamic', namespace) + path)) {
-      return {};
+    if (routed(`${route}/relationships/${segment}`)) {
+      links.self = `${base}/relationships/${segment}`;
     }
 
-    return {
-      links: {
-        self: domain + this.pathFor(type, id, namespace) + path
-      }
-    };
+    if (routed(`${route}/${segment}`)) {
+      links.related = `${base}/${segment}`;
+    }
+
+    return Object.keys(links).length ? { links } : {};
   }
 
   /**
