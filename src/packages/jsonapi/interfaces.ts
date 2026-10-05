@@ -78,6 +78,7 @@ export interface JSONAPI$ErrorObject {
 
 export interface JSONAPI$Document {
   data?: Array<JSONAPI$ResourceObject> | JSONAPI$ResourceObject;
+  meta?: JSONAPI$BaseObject;
   links?: JSONAPI$DocumentLinks;
   errors?: Array<JSONAPI$ErrorObject>;
   included?: Array<JSONAPI$ResourceObject>;

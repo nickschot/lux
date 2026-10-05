@@ -64,6 +64,9 @@ export default function resource(action: Action<unknown>): Action<unknown> {
       return serializer.format({
         data,
         links,
+        // How many resources match across every page: the count the page
+        // links are built from, so it costs no query of its own.
+        ...(actionName === 'index' && { meta: { total: total || 0 } }),
         domain,
         include,
         fields: params.fields as Serializer$fields,

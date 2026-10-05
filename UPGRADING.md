@@ -293,6 +293,11 @@ custom action, `await post.comments`); narrow those with
   page with a `last` link to `page[number]=Infinity`, and any size was served.
   Set `maxPerPage` on a controller (or `ApplicationController`) if clients
   need larger pages.
+- **Index responses carry the total in `meta`**: `"meta": { "total": 52 }`,
+  the number of resources matching the request's filters and visibility rules
+  across every page. It is the count the page links were already built from,
+  so it costs no extra query. ember-data exposes it as the loaded
+  collection's `meta.total`.
 
 ## 13. Request parsing — values arrive as sent
 
