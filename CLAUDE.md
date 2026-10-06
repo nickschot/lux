@@ -250,8 +250,9 @@ pnpm run clean        # remove build/dist/coverage artifacts
 `pnpm build` matters more than it looks: the app compiler consumes `dist/index.mjs`, so
 the suite runs against the *last build*, not the working tree. Always build before test.
 
-Tests need a database; the test-app defaults to **`sqlite3`** (bumped to `^5.1.7`, a
-prebuilt N-API binary — no native compile, no Python). CI additionally runs `pg` /
+Tests need a database; the test-app defaults to **`sqlite3`** (`^6.0.1`, a prebuilt
+N-API binary — no native compile, no Python). Upstream marked node-sqlite3 **unmaintained**
+alongside v6.0.0, so it is a dead end; knex's `better-sqlite3` client is the likely successor. CI additionally runs `pg` /
 `mysql2` via `DATABASE_DRIVER`.
 
 **Current baseline (Node 22 / pnpm 10):** `850 passing` across 103 files, all on **Vitest**
@@ -273,8 +274,8 @@ Things worth knowing before editing it:
   a healthy driver gives `ECONNREFUSED` immediately; the broken one exits 0 in silence.
   `mysql2` was bumped 1.7 -> 3.x for the same reason, which let the workflow drop a
   `mysql:8.0` pin and a `mysql_native_password` switch; both services now run current
-  releases (postgres:16, mysql:8.4) with ordinary password auth. `sqlite3` is already
-  modern (5.1.7). **If a driver is ever pinned back, expect the server-side workarounds
+  releases (postgres:16, mysql:8.4) with ordinary password auth. `sqlite3` is current
+  (6.0.1). **If a driver is ever pinned back, expect the server-side workarounds
   to come back with it.**
 - **`lumen db:reset` cannot provision pg/mysql.** `dbdrop` connects *to* `lumen_test` and then
   drops it (Postgres refuses); `dbcreate` connects to a database it is about to create. So

@@ -26,7 +26,7 @@ pool bug but is a dead driver. Match the reference app:
 // package.json "dependencies"
 "pg": "^8.23.1",      // was ^7.x — REQUIRED on modern Node
 "mysql2": "^3.24.5",  // was ^1.x
-"sqlite3": "^5.1.7",  // already modern
+"sqlite3": "^6.0.1",  // was ^5.x
 "knex": "^3.3.0"      // was ^0.x
 ```
 
