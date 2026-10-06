@@ -1,4 +1,4 @@
-import faker from 'faker';
+import { faker } from '@faker-js/faker';
 import { it, describe, beforeAll, beforeEach, afterEach, expect } from 'vitest';
 
 import Controller from '../index';
@@ -400,9 +400,9 @@ describe('module "controller"', () => {
         expect(comments).to.deep.equal([]);
 
         const newUser = await User.create({
-          name: `${faker.name.firstName()} ${faker.name.lastName()}`,
+          name: `${faker.person.firstName()} ${faker.person.lastName()}`,
           email: faker.internet.email(),
-          password: faker.internet.password(8)
+          password: faker.internet.password({ length: 8 })
         }).then(res => res.unwrap());
 
         const request = createRequest({

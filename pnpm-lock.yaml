@@ -33,6 +33,9 @@ importers:
       '@eslint/js':
         specifier: ^9.39.5
         version: 9.39.5
+      '@faker-js/faker':
+        specifier: ^10.6.0
+        version: 10.6.0
       '@types/node':
         specifier: ^22.20.5
         version: 22.20.5
@@ -45,9 +48,6 @@ importers:
       eslint-config-prettier:
         specifier: ^10.1.8
         version: 10.1.8(eslint@9.39.5)
-      faker:
-        specifier: 4.1.0
-        version: 4.1.0
       globals:
         specifier: ^17.13.0
         version: 17.13.0
@@ -301,6 +301,10 @@ packages:
   '@eslint/plugin-kit@0.4.1':
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@faker-js/faker@10.6.0':
+    resolution: {integrity: sha512-3RQHgEtvL1Frl/d1cSreo7qhJ3Gk1OdNUai/CtZ8G+wYeRQnJih3s9xJ9/kgYekPQRdwgh0HXRPqMlzWGwivIQ==}
+    engines: {node: ^20.19.0 || ^22.13.0 || ^23.5.0 || >=24.0.0, npm: '>=10'}
 
   '@gar/promise-retry@1.0.3':
     resolution: {integrity: sha512-GmzA9ckNokPypTg10pgpeHNQe7ph+iIKKmhKu3Ob9ANkswreCx7R3cKmY781K8QK3AqVL3xVh9A42JvIAbkkSA==}
@@ -994,9 +998,6 @@ packages:
   expect-type@1.4.0:
     resolution: {integrity: sha512-KfYbmpRm0VbLjEvVa9yGwCi9GI34xvi7A/HXYWQO65CSD2u3MczUJSuwXKFIxlGsgBQizV9q5J9NHj4VG0n+pA==}
     engines: {node: '>=12.0.0'}
-
-  faker@4.1.0:
-    resolution: {integrity: sha512-ILKg69P6y/D8/wSmDXw35Ly0re8QzQ8pMfBCflsGiZG2ZjMUNLYNexA6lz5pkmJlepVdsiDFUxYAzPQ9/+iGLA==}
 
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
@@ -2303,6 +2304,8 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
+  '@faker-js/faker@10.6.0': {}
+
   '@gar/promise-retry@1.0.3': {}
 
   '@humanfs/core@0.19.2':
@@ -3061,8 +3064,6 @@ snapshots:
       yoctocolors: 2.1.2
 
   expect-type@1.4.0: {}
-
-  faker@4.1.0: {}
 
   fast-deep-equal@3.1.3: {}
 

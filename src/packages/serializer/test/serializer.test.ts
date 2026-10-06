@@ -1,4 +1,4 @@
-import faker from 'faker';
+import { faker } from '@faker-js/faker';
 import { it, describe, beforeAll, beforeEach, afterEach, expect } from 'vitest';
 
 import Serializer from '../index';
@@ -74,16 +74,16 @@ describe('module "serializer"', () => {
           const post = await Post.transacting(trx).create({
             body: faker.lorem.paragraphs(),
             title: faker.lorem.sentence(),
-            isPublic: faker.random.boolean()
+            isPublic: faker.datatype.boolean()
           });
 
           const postId = post.getPrimaryKey();
 
           if (includeUser) {
             const user = await User.transacting(trx).create({
-              name: `${faker.name.firstName()} ${faker.name.lastName()}`,
+              name: `${faker.person.firstName()} ${faker.person.lastName()}`,
               email: faker.internet.email(),
-              password: faker.internet.password(8)
+              password: faker.internet.password({ length: 8 })
             });
 
             instances.add(user);
@@ -95,7 +95,7 @@ describe('module "serializer"', () => {
           if (includeImage) {
             const image = await Image.transacting(trx).create({
               postId,
-              url: faker.image.imageUrl()
+              url: faker.image.url()
             });
 
             instances.add(image);
