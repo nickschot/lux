@@ -7,12 +7,12 @@
 // the required app bundle and the cluster workers (which inherit execArgv) both
 // map stack traces back to source.
 
-const { EOL } = require('os');
 const path = require('path');
 const { existsSync } = require('fs');
 
-const cli = require('commander');
-const { red, green } = require('chalk');
+// commander is ESM-only from v15 on; `require()` of it relies on Node >= 22.12
+// (unflagged require(esm)), the engines floor and commander's own.
+const { program: cli, Option } = require('commander');
 
 const { version: VERSION } = require('../package.json');
 
@@ -40,13 +40,6 @@ function inLumenProject() {
   return (
     existsSync(path.join(cwd, 'app', 'index.js'))
     && existsSync(path.join(cwd, 'config', 'database.js'))
-  );
-}
-
-function commandNotFound(cmd) {
-  console.log(
-    `${EOL}  ${red(cmd)} is not a valid command.${EOL.repeat(2)}`,
-    ` Use ${green('lumen --help')} for a full list of commands.${EOL}`
   );
 }
 
@@ -88,11 +81,10 @@ cli
   .command('n <name>')
   .alias('new')
   .description('Create a new application')
-  .option(
-    '--database [database]',
-    'Database driver',
-    /^(postgres|sqlite|mysql)$/i,
-    'sqlite'
+  .addOption(
+    new Option('--database <database>', 'Database driver')
+      .choices(['postgres', 'sqlite', 'mysql'])
+      .default('sqlite')
   )
   .action((name, { database }) => {
     exec('create', name, database).then(exit).catch(rescue);
@@ -119,7 +111,7 @@ cli
   .command('c')
   .alias('console')
   .description('Load your application into a repl')
-  .option('-e, --environment [env]', '(Default: development)')
+  .option('-e, --environment <env>', '(Default: development)')
   .option('-w, --use-weak', 'Use weak mode')
   .action(({ environment, useWeak }) => {
     setEnvVar('NODE_ENV', environment, 'development');
@@ -136,8 +128,8 @@ cli
   .alias('serve')
   .description('Serve your application')
   .option('-c, --cluster', 'Run in cluster mode')
-  .option('-e, --environment [env]', '(Default: development)')
-  .option('-p, --port [port]', '(Default: 4000)', port =>
+  .option('-e, --environment <env>', '(Default: development)')
+  .option('-p, --port <port>', '(Default: 4000)', port =>
     Number.parseInt(port, 10)
   )
   .option('-H, --hot', 'Reload when a file change is detected')
@@ -164,8 +156,8 @@ cli
   });
 
 cli
-  .command('d')
-  .alias('destroy <type> <name>')
+  .command('d <type> <name>')
+  .alias('destroy')
   .description('Example: lumen destroy model user')
   .action((type, name) => {
     exec('destroy', { type, name }).then(exit).catch(rescue);
@@ -174,7 +166,7 @@ cli
 cli
   .command('db:create')
   .description('Create your database schema')
-  .option('-e, --environment [env]', '(Default: development)')
+  .option('-e, --environment <env>', '(Default: development)')
   .option('-w, --use-weak', 'Use weak mode')
   .action(({ environment, useWeak }) => {
     const useStrict = !useWeak;
@@ -190,7 +182,7 @@ cli
 cli
   .command('db:drop')
   .description('Drop your database schema')
-  .option('-e, --environment [env]', '(Default: development)')
+  .option('-e, --environment <env>', '(Default: development)')
   .option('-w, --use-weak', 'Use weak mode')
   .action(({ environment, useWeak }) => {
     const useStrict = !useWeak;
@@ -206,7 +198,7 @@ cli
 cli
   .command('db:reset')
   .description('Drop your database schema and create a new schema')
-  .option('-e, --environment [env]', '(Default: development)')
+  .option('-e, --environment <env>', '(Default: development)')
   .option('-w, --use-weak', 'Use weak mode')
   .action(({ environment, useWeak }) => {
     const useStrict = !useWeak;
@@ -223,7 +215,7 @@ cli
 cli
   .command('db:migrate')
   .description('Run database migrations')
-  .option('-e, --environment [env]', '(Default: development)')
+  .option('-e, --environment <env>', '(Default: development)')
   .option('-w, --use-weak', 'Use weak mode')
   .action(({ environment, useWeak }) => {
     const useStrict = !useWeak;
@@ -239,7 +231,7 @@ cli
 cli
   .command('db:rollback')
   .description('Rollback the last database migration')
-  .option('-e, --environment [env]', '(Default: development)')
+  .option('-e, --environment <env>', '(Default: development)')
   .option('-w, --use-weak', 'Use weak mode')
   .action(({ environment, useWeak }) => {
     const useStrict = !useWeak;
@@ -255,7 +247,7 @@ cli
 cli
   .command('db:seed')
   .description('Add fixtures to your db from the seed function')
-  .option('-e, --environment [env]', '(Default: development)')
+  .option('-e, --environment <env>', '(Default: development)')
   .option('-w, --use-weak', 'Use weak mode')
   .action(({ environment, useWeak }) => {
     const useStrict = !useWeak;
@@ -268,8 +260,6 @@ cli
       .catch(rescue);
   });
 
-cli.on('*', commandNotFound).parse(process.argv);
-
-if (!cli.args.length) {
-  cli.help();
-}
+// An unknown command errors (with a "did you mean" suggestion) and no command
+// prints the help — both built into commander, exiting 1.
+cli.parse(process.argv);

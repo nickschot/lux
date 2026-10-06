@@ -652,6 +652,22 @@ exactly one result changed — v1 got it wrong:
 Nothing changes unless a model, table or relationship is named after "focus";
 if one is, its derived table name or `type` changes with it.
 
+## 24. The `lumen` CLI — mistakes are errors now
+
+The CLI moved from commander 2 to 15. Every command, alias and flag is the
+same; what changed is that mistakes it used to swallow now fail with a message
+and exit code `1` — worth knowing if a script depends on the old exit codes.
+
+| Invocation | Before | Now |
+|---|---|---|
+| `lumen destroy model user` | did nothing, exit 0 (only `lumen d` worked) | destroys, like `lumen d` |
+| `lumen bogus` | no output, exit 0 | `error: unknown command 'bogus'`, with a "did you mean" suggestion |
+| `lumen` (no command) | help, exit 0 | help, exit 1 |
+| `lumen new app --database oracle` | silently created a sqlite app | error: allowed choices are `postgres`, `sqlite`, `mysql` |
+| `lumen new app --database Postgres` | silently created a sqlite app | the same error — values are lowercase |
+| `-e`/`-p`/`--database` with no value | set the value to `true` (e.g. `NODE_ENV=true`) | error: argument missing |
+| extra arguments (`lumen build now`) | ignored | error: too many arguments |
+
 ## The short version
 
 Bump `pg`/`mysql2` and run Node 22.12+ (required); delete `.babelrc` and the
