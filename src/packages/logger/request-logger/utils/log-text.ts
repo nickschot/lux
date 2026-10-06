@@ -1,5 +1,4 @@
-import chalk from 'chalk';
-
+import chalk from '../../../../utils/chalk';
 import { DEBUG } from '../../constants';
 import { infoTemplate, debugTemplate } from '../templates';
 import type Logger from '../../index';

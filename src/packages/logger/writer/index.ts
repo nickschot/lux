@@ -1,7 +1,6 @@
 import { WriteStream } from 'tty';
 
-import { dim, red, yellow } from 'chalk';
-
+import chalk from '../../../utils/chalk';
 import { WARN, ERROR } from '../constants';
 import omit from '../../../utils/omit';
 import type { Logger$format } from '../interfaces';
@@ -61,19 +60,19 @@ export function createWriter(format: Logger$format): Logger$Writer {
 
       switch (level) {
         case WARN:
-          timestamp = yellow(`[${timestamp}]`);
+          timestamp = chalk.yellow(`[${timestamp}]`);
           break;
 
         case ERROR:
-          timestamp = red(`[${timestamp}]`);
+          timestamp = chalk.red(`[${timestamp}]`);
           break;
 
         default:
-          timestamp = dim(`[${timestamp}]`);
+          timestamp = chalk.dim(`[${timestamp}]`);
           break;
       }
 
-      output = `${timestamp} ${message}\n\n${dim('-').repeat(columns)}\n`;
+      output = `${timestamp} ${message}\n\n${chalk.dim('-').repeat(columns)}\n`;
     }
 
     if (STDOUT.test(level)) {

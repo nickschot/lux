@@ -1,5 +1,4 @@
-import { cyan } from 'chalk';
-
+import chalk from '../../../utils/chalk';
 import { CWD, PORT, NODE_ENV } from '../../../constants';
 import Logger from '../../logger';
 import { createLoader } from '../../loader';
@@ -39,6 +38,6 @@ export async function serve({
     port: PORT,
     maxWorkers: cluster ? undefined : 1
   }).once('ready', () => {
-    logger.info(`Lumen Server listening on port: ${cyan(`${PORT}`)}`);
+    logger.info(`Lumen Server listening on port: ${chalk.cyan(`${PORT}`)}`);
   });
 }

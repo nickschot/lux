@@ -1,5 +1,4 @@
-import { green, yellow } from 'chalk';
-
+import chalk from '../../../utils/chalk';
 import { line } from '../../logger';
 
 /**
@@ -8,12 +7,12 @@ import { line } from '../../logger';
 class MigrationsPendingError extends Error {
   constructor(migrations: Array<string> = []) {
     const pending = migrations
-      .map(str => yellow(str.substr(0, str.length - 3)))
+      .map(str => chalk.yellow(str.substr(0, str.length - 3)))
       .join(', ');
 
     super(line`
       The following migrations are pending ${pending}.
-      Please run ${green('lumen db:migrate')} before starting your application.
+      Please run ${chalk.green('lumen db:migrate')} before starting your application.
     `);
   }
 }

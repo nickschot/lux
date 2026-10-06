@@ -1,8 +1,8 @@
 import { posix, join as joinPath } from 'path';
 
-import { green } from 'chalk';
 import { pluralize, singularize } from 'inflection';
 
+import chalk from '../../../../utils/chalk';
 import { NAMESPACED_RESOURCE_MESSAGE } from '../constants';
 import { generateTimestamp } from '../../../database';
 import { exists, readFile, writeFile } from '../../../fs';
@@ -259,5 +259,5 @@ export async function resource(opts: Generator$opts) {
     .value();
 
   await writeFile(path, routes);
-  log(`${green('update')} app/routes.js`);
+  log(`${chalk.green('update')} app/routes.js`);
 }

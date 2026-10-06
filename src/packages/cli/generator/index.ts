@@ -1,5 +1,4 @@
-import { red, green } from 'chalk';
-
+import chalk from '../../../utils/chalk';
 import createPrompt from '../utils/create-prompt';
 
 import generatorFor from './utils/generator-for';
@@ -28,7 +27,9 @@ export async function runGenerator({
     name,
     attrs,
     onConflict: path =>
-      prompt.question(`${green('?')} ${red('Overwrite')} ${path}? (Y/n)\r`)
+      prompt.question(
+        `${chalk.green('?')} ${chalk.red('Overwrite')} ${path}? (Y/n)\r`
+      )
   });
 
   prompt.close();

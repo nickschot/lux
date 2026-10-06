@@ -1,8 +1,8 @@
 import { EOL } from 'os';
 
 import Ora from 'ora';
-import { green } from 'chalk';
 
+import chalk from '../../../utils/chalk';
 import { CWD } from '../../../constants';
 import { mkdir, writeFile } from '../../fs';
 import template from '../../template';
@@ -82,20 +82,20 @@ export async function create(name: string, database: string) {
   ]);
 
   const logOutput = template`
-    ${green('create')} app/index.js
-    ${green('create')} app/routes.js
-    ${green('create')} bin/app.js
-    ${green('create')} config/environments/development.js
-    ${green('create')} config/environments/test.js
-    ${green('create')} config/environments/production.js
-    ${green('create')} config/database.js
-    ${green('create')} db/migrate
-    ${green('create')} db/seed.js
-    ${green('create')} README.md
-    ${green('create')} LICENSE
-    ${green('create')} package.json
-    ${green('create')} eslint.config.mjs
-    ${green('create')} .gitignore
+    ${chalk.green('create')} app/index.js
+    ${chalk.green('create')} app/routes.js
+    ${chalk.green('create')} bin/app.js
+    ${chalk.green('create')} config/environments/development.js
+    ${chalk.green('create')} config/environments/test.js
+    ${chalk.green('create')} config/environments/production.js
+    ${chalk.green('create')} config/database.js
+    ${chalk.green('create')} db/migrate
+    ${chalk.green('create')} db/seed.js
+    ${chalk.green('create')} README.md
+    ${chalk.green('create')} LICENSE
+    ${chalk.green('create')} package.json
+    ${chalk.green('create')} eslint.config.mjs
+    ${chalk.green('create')} .gitignore
   `;
 
   process.stdout.write(logOutput.substr(0, logOutput.length - 1));
@@ -119,7 +119,7 @@ export async function create(name: string, database: string) {
     cwd: project
   });
 
-  process.stdout.write(`${green('initialize')} git`);
+  process.stdout.write(`${chalk.green('initialize')} git`);
   process.stdout.write(EOL);
 
   const spinner = new Ora({
