@@ -64,7 +64,7 @@ describe('module "fs"', () => {
     if (tmpDirPath) {
       await fs.rmrf(tmpDirPath);
       spiedMethods.forEach(methodName => {
-        spies[methodName].reset();
+        spies[methodName].resetHistory();
       });
     }
   });

@@ -876,7 +876,7 @@ describe('module "database/model"', () => {
       };
 
       const assertSaveHook = async (instance: Model, hookSpy) => {
-        hookSpy.reset();
+        hookSpy.resetHistory();
 
         Reflect.set(instance, 'isPublic', true);
         await instance.save();
@@ -885,7 +885,7 @@ describe('module "database/model"', () => {
       };
 
       const assertUpdateHook = async (instance: Model, hookSpy) => {
-        hookSpy.reset();
+        hookSpy.resetHistory();
 
         await instance.update({
           isPublic: true
@@ -928,7 +928,7 @@ describe('module "database/model"', () => {
 
         afterAll(async () => {
           await instance.destroy();
-          hookSpy.reset();
+          hookSpy.resetHistory();
         });
 
         it('runs when .create() is called', () => {
@@ -997,7 +997,7 @@ describe('module "database/model"', () => {
 
         afterEach(async () => {
           await instance.destroy();
-          hookSpy.reset();
+          hookSpy.resetHistory();
         });
 
         it('runs when .create() is called', () => {
@@ -1044,7 +1044,7 @@ describe('module "database/model"', () => {
 
         afterEach(async () => {
           await instance.destroy();
-          hookSpy.reset();
+          hookSpy.resetHistory();
         });
 
         it('runs when #save() is called', async () => {
@@ -1087,7 +1087,7 @@ describe('module "database/model"', () => {
 
         afterEach(async () => {
           await instance.destroy();
-          hookSpy.reset();
+          hookSpy.resetHistory();
         });
 
         it('runs when .create() is called', () => {
@@ -1206,7 +1206,7 @@ describe('module "database/model"', () => {
 
         afterEach(async () => {
           await instance.destroy();
-          hookSpy.reset();
+          hookSpy.resetHistory();
         });
 
         it('runs when .create() is called', () => {
@@ -1255,7 +1255,7 @@ describe('module "database/model"', () => {
 
         afterEach(async () => {
           await instance.destroy();
-          hookSpy.reset();
+          hookSpy.resetHistory();
         });
 
         it('runs when #save() is called', async () => {
@@ -1298,7 +1298,7 @@ describe('module "database/model"', () => {
 
         afterEach(async () => {
           await instance.destroy();
-          hookSpy.reset();
+          hookSpy.resetHistory();
         });
 
         it('runs when .create() is called', () => {
