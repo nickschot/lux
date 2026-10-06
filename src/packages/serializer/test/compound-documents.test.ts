@@ -2,6 +2,7 @@ import { dasherize } from 'inflection';
 import { it, describe, beforeAll, afterAll, expect } from 'vitest';
 
 import Server from '../../server';
+import { readAttribute } from '../../database';
 import type { Model, ModelClass } from '../../database';
 import underscore from '../../../utils/underscore';
 import { getTestApp } from '../../../../test/utils/get-test-app';
@@ -121,7 +122,8 @@ describe('compound documents over HTTP', () => {
    * implementation: private posts are hidden outside `admin`.
    */
   const isVisible = (record: Model) =>
-    record.resourceName !== 'posts' || Reflect.get(record, 'isPublic') === true;
+    record.resourceName !== 'posts' ||
+    readAttribute(record, 'isPublic') === true;
 
   /**
    * The oracle: every relationship of every resource — primary data and

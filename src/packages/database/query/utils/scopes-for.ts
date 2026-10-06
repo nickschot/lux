@@ -12,7 +12,13 @@ export default function scopesFor<T>(target: Query<T>): PropertyDescriptorMap {
       [name]: {
         get() {
           const scope = function (...args: Array<any>) {
-            const fn = Reflect.get(target.model, name);
+            // Scopes are installed as statics on the model under their names.
+            const fn = (
+              target.model as unknown as Record<
+                string,
+                (...a: any[]) => unknown
+              >
+            )[name];
             const { snapshots } = fn.apply(target.model, args) as {
               snapshots: Array<Array<unknown>>;
             };

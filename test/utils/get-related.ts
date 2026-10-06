@@ -1,3 +1,4 @@
+import { readAttribute } from '../../src/packages/database';
 import type { Model } from '../../src/packages/database';
 
 /**
@@ -12,7 +13,7 @@ export async function getRelated(
   name: string
 ): Promise<Model | Array<Model> | null> {
   try {
-    return ((await Reflect.get(record, name)) ?? null) as
+    return ((await readAttribute(record, name)) ?? null) as
       Model | Array<Model> | null;
   } catch (err) {
     if ((err as { statusCode?: number }).statusCode === 404) {

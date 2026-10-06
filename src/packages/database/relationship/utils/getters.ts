@@ -2,6 +2,7 @@ import { camelize } from 'inflection';
 
 import type Model from '../../model';
 import type { Relationship$opts } from '../index';
+import { readAttribute } from '../../model/utils/attribute';
 
 /**
  * @private
@@ -22,7 +23,7 @@ async function getHasManyThrough(
     if (records.length) {
       value = await model.where({
         [model.primaryKey]: records
-          .map(record => Reflect.get(record, foreignKey))
+          .map(record => readAttribute(record, foreignKey))
           .filter(Boolean)
       });
     }
@@ -63,7 +64,7 @@ export function getBelongsTo(
   owner: Model,
   { model, foreignKey }: Relationship$opts
 ) {
-  const foreignValue = Reflect.get(owner, foreignKey);
+  const foreignValue = readAttribute(owner, foreignKey);
 
   return foreignValue ? model.find(foreignValue) : Promise.resolve(null);
 }

@@ -1,4 +1,5 @@
 import type Model from '../../model';
+import { writeAttribute } from '../../model/utils/attribute';
 
 /**
  * @private
@@ -8,7 +9,7 @@ function unassociateOne<T extends Model | null | undefined>(
   foreignKey: string
 ): T {
   if (value) {
-    Reflect.set(value, foreignKey, null);
+    writeAttribute(value, foreignKey, null);
   }
 
   return value;

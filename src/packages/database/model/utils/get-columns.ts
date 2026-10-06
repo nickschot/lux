@@ -1,6 +1,7 @@
 import pick from '../../../../utils/pick';
 import entries from '../../../../utils/entries';
 import type Model from '../index';
+import { readAttribute } from './attribute';
 
 /**
  * @private
@@ -15,7 +16,7 @@ export default function getColumns(record: Model, only?: Array<string>) {
   return entries(columns).reduce<Record<string, unknown>>(
     (obj, [key, col]) => ({
       ...obj,
-      [(col as { columnName: string }).columnName]: Reflect.get(record, key)
+      [(col as { columnName: string }).columnName]: readAttribute(record, key)
     }),
     {}
   );

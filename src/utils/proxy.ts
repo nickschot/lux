@@ -25,6 +25,7 @@ export function trapGet<T extends object>(
       return value;
     }
 
+    // eslint-disable-next-line no-restricted-properties -- proxy forwarding
     return Reflect.get(target, key);
   };
 }

@@ -69,9 +69,9 @@ export default [
       ],
       // A leftover of upstream's `prefer-reflect` rule. These have plain
       // equivalents that keep type checking on (`Reflect.*` returns `any`)
-      // and, for `defineProperty`, throw instead of returning `false`.
-      // `Reflect.get`/`set` stay allowed: they are the honest tool for
-      // proxy traps and dynamic attribute access on `Model` instances.
+      // and, for `defineProperty`/`set`, throw instead of returning `false`.
+      // Model attributes go through `readAttribute`/`writeAttribute`; proxy
+      // traps forwarding to their target disable this inline.
       'no-restricted-properties': [
         'error',
         ...[
@@ -79,7 +79,9 @@ export default [
           ['construct', 'Use `new`.'],
           ['defineProperty', 'Use `Object.defineProperty`, which throws.'],
           ['has', 'Use the `in` operator, or `Object.hasOwn`.'],
-          ['deleteProperty', 'Use the `delete` operator.']
+          ['deleteProperty', 'Use the `delete` operator.'],
+          ['get', 'Use property access, or `readAttribute` for a Model.'],
+          ['set', 'Use assignment, or `writeAttribute` for a Model.']
         ].map(([property, message]) => ({
           object: 'Reflect',
           property,

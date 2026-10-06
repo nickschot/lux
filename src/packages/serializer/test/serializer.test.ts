@@ -5,6 +5,7 @@ import Serializer from '../index';
 import { VERSION as JSONAPI_VERSION } from '../../jsonapi';
 
 import range from '../../../utils/range';
+import { readAttribute, writeAttribute } from '../../database';
 import { getTestApp } from '../../../../test/utils/get-test-app';
 
 const DOMAIN = 'http://localhost:4000';
@@ -89,7 +90,7 @@ describe('module "serializer"', () => {
             instances.add(user);
             include = [...include, 'user'];
 
-            Reflect.set(post, 'user', user);
+            writeAttribute(post, 'user', user);
           }
 
           if (includeImage) {
@@ -198,10 +199,10 @@ describe('module "serializer"', () => {
           );
 
         const [user, tags, image, comments] = await Promise.all([
-          Reflect.get(post, 'user'),
-          Reflect.get(post, 'tags'),
-          Reflect.get(post, 'image'),
-          Reflect.get(post, 'comments')
+          readAttribute(post, 'user'),
+          readAttribute(post, 'tags'),
+          readAttribute(post, 'image'),
+          readAttribute(post, 'comments')
         ]);
 
         const postId = post.getPrimaryKey();
@@ -389,7 +390,7 @@ describe('module "serializer"', () => {
 
       it('supports including a has-one relationship', async () => {
         const post = await createPost();
-        const image = await Reflect.get(post, 'image');
+        const image = await readAttribute(post, 'image');
         const result = await subject.format({
           data: post,
           domain: DOMAIN,
@@ -422,7 +423,7 @@ describe('module "serializer"', () => {
 
       it('supports including belongs-to relationships', async () => {
         const post = await createPost();
-        const user = await Reflect.get(post, 'user');
+        const user = await readAttribute(post, 'user');
         const result = await subject.format({
           data: post,
           domain: DOMAIN,
@@ -456,7 +457,7 @@ describe('module "serializer"', () => {
 
       it('supports including a one-to-many relationship', async () => {
         const post = await createPost();
-        const comments = await Reflect.get(post, 'comments');
+        const comments = await readAttribute(post, 'comments');
         const result = await subject.format({
           data: post,
           domain: DOMAIN,
@@ -508,7 +509,7 @@ describe('module "serializer"', () => {
 
       it('supports including a many-to-many relationship', async () => {
         const post = await createPost();
-        const tags = await Reflect.get(post, 'tags');
+        const tags = await readAttribute(post, 'tags');
         const result = await subject.format({
           data: post,
           domain: DOMAIN,

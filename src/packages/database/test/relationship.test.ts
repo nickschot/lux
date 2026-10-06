@@ -5,6 +5,7 @@ import { get, set } from '../relationship';
 import range from '../../../utils/range';
 import { getTestApp } from '../../../../test/utils/get-test-app';
 
+import { readAttribute } from '../index';
 import type { ModelClass } from '../index';
 
 describe('module "database/relationship"', () => {
@@ -220,7 +221,7 @@ describe('module "database/relationship"', () => {
 
       it('can add a record to the relationship', async () => {
         expect(image).to.have.property('postId', subjectId);
-        expect(await Reflect.get(image, 'post')).be.an.instanceof(Post);
+        expect(await readAttribute(image, 'post')).be.an.instanceof(Post);
       });
     });
 
@@ -246,14 +247,14 @@ describe('module "database/relationship"', () => {
 
       it('can add a record to the relationship', async () => {
         expect(subject).to.have.property('userId', user.getPrimaryKey());
-        expect(await Reflect.get(subject, 'user')).to.be.an.instanceof(User);
+        expect(await readAttribute(subject, 'user')).to.be.an.instanceof(User);
       });
 
       it('can remove a record from the relationship', async () => {
         set(subject, 'user', null);
 
         expect(subject).to.have.property('userId', null);
-        expect(await Reflect.get(subject, 'user')).to.be.null;
+        expect(await readAttribute(subject, 'user')).to.be.null;
       });
     });
 

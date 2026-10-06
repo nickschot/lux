@@ -11,6 +11,7 @@ import {
 
 import Model from '../model';
 
+import { writeAttribute } from '../index';
 import type { ModelClass } from '../index';
 import Query, { RecordNotFoundError } from '../query';
 import { ValidationError } from '../validation';
@@ -278,7 +279,8 @@ describe('module "database/model"', () => {
         expect(Subject.scopes).to.have.all.keys(['isDraft', 'isPublic']);
 
         Object.keys(Subject.scopes).forEach(key => {
-          const value = Reflect.get(Subject, key);
+          // Scopes are installed as statics on the model under their names.
+          const value = (Subject as unknown as Record<string, unknown>)[key];
 
           expect(value).to.be.a('function');
         });
@@ -878,7 +880,7 @@ describe('module "database/model"', () => {
       const assertSaveHook = async (instance: Model, hookSpy) => {
         hookSpy.resetHistory();
 
-        Reflect.set(instance, 'isPublic', true);
+        writeAttribute(instance, 'isPublic', true);
         await instance.save();
 
         expect(hookSpy.calledWith(instance)).to.be.true;
