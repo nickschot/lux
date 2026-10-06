@@ -470,6 +470,8 @@ describe('module "database/query"', () => {
     });
 
     describe('#whereRaw()', () => {
+      // `??` lets knex quote the identifier per dialect. A literal `"title"`
+      // is a *string* on mysql2, so the query matched nothing there.
       let subject;
 
       beforeEach(() => {
@@ -477,21 +479,21 @@ describe('module "database/query"', () => {
       });
 
       it('returns `this`', () => {
-        const result = subject.whereRaw(`"title" LIKE ?`, [`%Test%`]);
+        const result = subject.whereRaw('?? LIKE ?', ['title', '%Test%']);
 
         expect(result).to.equal(subject);
       });
 
       it('properly modifies #snapshots', () => {
-        const result = subject.whereRaw(`"title" LIKE ?`, [`%Test%`]);
+        const result = subject.whereRaw('?? LIKE ?', ['title', '%Test%']);
 
         expect(result.snapshots).to.deep.equal([
-          ['whereRaw', [`"title" LIKE ?`, [`%Test%`]]]
+          ['whereRaw', ['?? LIKE ?', ['title', '%Test%']]]
         ]);
       });
 
       it('resolves with the correct array of `Model` instances', async () => {
-        const result = await subject.whereRaw(`"title" LIKE ?`, [`%Test%`]);
+        const result = await subject.whereRaw('?? LIKE ?', ['title', '%Test%']);
 
         expect(result).to.be.an('array');
         // The seed titles the first post "Test …", so this is never vacuous.
