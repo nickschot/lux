@@ -1,13 +1,12 @@
 import { EOL } from 'os';
 
-import Ora from 'ora';
-
 import chalk from '../../../utils/chalk';
 import { CWD } from '../../../constants';
 import { mkdir, writeFile } from '../../fs';
 import template from '../../template';
 import exec from '../../../utils/exec';
 import driverFor from '../utils/driver-for';
+import createSpinner from '../utils/create-spinner';
 import appTemplate from '../templates/application';
 import configTemplate from '../templates/config';
 import routesTemplate from '../templates/routes';
@@ -122,10 +121,7 @@ export async function create(name: string, database: string) {
   process.stdout.write(`${chalk.green('initialize')} git`);
   process.stdout.write(EOL);
 
-  const spinner = new Ora({
-    text: 'Installing dependencies from npm...',
-    spinner: 'dots'
-  });
+  const spinner = createSpinner('Installing dependencies from npm...');
 
   spinner.start();
 
