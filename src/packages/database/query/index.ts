@@ -35,6 +35,20 @@ const CONDITIONS = new Set([
 ]);
 
 /**
+ * A knex query builder (e.g. `Model.table().select('user_id')`), used as a
+ * subquery.
+ *
+ * @private
+ */
+function isSubquery(value: unknown): boolean {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof Reflect.get(value, 'toSQL') === 'function'
+  );
+}
+
+/**
  * @class Query
  * @extends Promise
  * @private
@@ -201,7 +215,10 @@ class Query<T = any> extends Promise<T> {
             value = null;
           }
 
-          if (Array.isArray(value)) {
+          if (isSubquery(value)) {
+            // `model.table().select(...)`: the column is one of its values.
+            this.snapshots.push([not ? 'whereNotIn' : 'whereIn', [key, value]]);
+          } else if (Array.isArray(value)) {
             if (value.length === 1) {
               return {
                 ...obj,

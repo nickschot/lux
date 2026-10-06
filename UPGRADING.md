@@ -331,7 +331,7 @@ value.
   was accepted and passed to the ORM. A request body must be a JSON object;
   a top-level array is now a `400` like other malformed bodies.
 
-## 14. Relationship links — removed until relationship endpoints exist
+## 14. Relationship links — removed, then back with their endpoints (§20, §21)
 
 To-one relationships no longer carry a `links` member; like to-many ones, they
 are just their linkage:
@@ -356,6 +356,9 @@ Lumen does not serve relationship or related endpoints yet, so it sends no
 relationship links at all. Clients that read `relationships.*.links` must use
 the linkage (`data`) instead — e.g. ember-data loads `data` and does not need
 the link. The links come back, with proper URLs, once those endpoints exist.
+
+Relationship endpoints now exist (§20), and every relationship links to its
+own as `links.self`, and to its related endpoint (§21) as `links.related`.
 
 ## 15. Members the controller does not accept — configurable; unknown ones — `400`
 
@@ -466,6 +469,154 @@ around this by writing join rows itself can drop the workaround.
   in an app with a strict config. Strict mode is now the CLI default, and
   `--use-weak` really turns it off. No action needed unless you relied on that
   override.
+
+## 20. Relationship endpoints — `GET /posts/1/relationships/user`
+
+Every resource with a `show` route now also serves a **relationship endpoint**
+for each relationship its Serializer exposes, as JSON:API describes under
+"Fetching Relationships":
+
+```
+GET /posts/1/relationships/user       → { "data": { "id": "2", "type": "users" }, … }
+GET /posts/1/relationships/comments   → { "data": [{ "id": "7", "type": "comments" }], … }
+```
+
+- The response is the relationship's resource linkage (`null` or `[]` when
+  empty) with `links.self`. To-many linkage is not paginated, like the linkage
+  already embedded in resources.
+- The path dasherizes the relationship name (`friendRequests` →
+  `/relationships/friend-requests`), like the document's member names.
+- Visibility rules apply as for `show` and `include`: a resource the request
+  may not see is a `404`, and hidden related records are left out of the
+  linkage. An unknown relationship is a `404`; `HEAD` and `OPTIONS` work; a
+  write is a `405` (relationship writes come later). Query parameters are a
+  `400`.
+- **The owning resource is resolved through the controller's `show`** (with
+  a request for its primary key only), so a check in an overridden `show` —
+  narrowing its query, or rejecting the request — applies here too. Override
+  `showRelationship(request)` to resolve it differently; the relationship is
+  `request.route.relationship`.
+- **Hooks see the action `showRelationship`**, not `show`. A `beforeAction`
+  that authorizes by action name (`request.route.action === 'show'`) must
+  allow it too, or test `request.route.type === 'relationship'`.
+- The linkage it serves was already readable through `?include=` under the
+  same visibility rules.
+
+**Relationship objects now carry `links.self`** pointing at that endpoint —
+in the request's namespace, and only when the endpoint is served (an included
+type without a resource in the namespace has no links):
+
+```json
+"user": {
+  "data": { "id": "2", "type": "users" },
+  "links": { "self": "https://api.example.com/posts/1/relationships/user" }
+}
+```
+
+Clients that compare relationship objects as a whole must allow the extra
+member; ember-data keeps reading `data`.
+
+## 21. Related endpoints — `GET /posts/1/comments`
+
+Next to each relationship endpoint, a resource now serves a **related
+endpoint**: the related resources themselves, as JSON:API's `related` links
+describe.
+
+```
+GET /posts/1/user       → { "data": { "id": "2", "type": "users", … } }   (or null)
+GET /posts/1/comments   → { "data": [{ "id": "7", "type": "comments", … }], "links": { "first": …, "next": … } }
+```
+
+- It is served by the **related type's controller in the same namespace**
+  (`admin/users` for `/admin/posts/1/user`). A to-many related endpoint pages,
+  sorts and filters like that controller's `index` (`?page[size]`, `?sort`,
+  `?filter`, its `maxPerPage`, and `meta.total`), a to-one like its `show`;
+  both take its `include` and `fields`, and the resources are formatted by its
+  Serializer — the same one `?include=` uses in that namespace.
+- **It exists only where the related type is listed**: the namespace needs a
+  controller for the type (with a model and a Serializer), and its resource
+  must route `index` (to-many) or `show` (to-one). Otherwise the relationship
+  gets no related endpoint and no `related` link — so a namespace never serves
+  a type it does not list itself, nor through an ancestor namespace's
+  controller and Serializer.
+- The relationship is a condition on the related table, so a large to-many
+  relationship never loads its ids into memory, and paging counts only what
+  the request may see.
+- Visibility rules apply to the related resources; a resource the request may
+  not see is a `404`. `HEAD` and `OPTIONS` work; a write is a `405`.
+- **Hooks:** the owning controller's `beforeAction` hooks run, then the
+  related controller's (each hook once, when both inherit it as the same
+  function), then the owner's `afterAction` hooks. The action is
+  `showRelated` (`request.route.type` is `related`): a hook that authorizes by
+  action name must allow it.
+- **Controller code:** the owning resource is resolved through
+  `showRelationship(request)`, and so through the owner's `show` (§20). The
+  related controller's `index` and `show` are *not* called: a check written
+  in an override of those does not apply here — move it into a visibility rule
+  or a `beforeAction` hook, or override `showRelated(request)` on the owning
+  controller.
+
+**Relationship objects now carry `links.related`** as well, under the same
+rule as `self`: only when the endpoint is served. Unlike the link removed in
+§14, it does not change when the relationship's content does.
+
+```json
+"user": {
+  "data": { "id": "2", "type": "users" },
+  "links": {
+    "self": "https://api.example.com/posts/1/relationships/user",
+    "related": "https://api.example.com/posts/1/user"
+  }
+}
+```
+
+A custom member route on a resource (`this.get('comments')` in its `member`
+block) takes precedence over the related endpoint of the same name, and the
+`related` link then points at it — rename one of them.
+
+## 22. `linksOnly` — to-many relationships as links, without their ids
+
+A Serializer can now list `hasMany` relationships to serialize **without
+resource linkage**, only their links (§20, §21). A resource with many related
+records then stays small, and their ids are not loaded at all (one query
+fewer per relationship):
+
+```javascript
+class PostsSerializer extends Serializer {
+  hasMany = ['comments', 'tags'];
+
+  linksOnly = ['comments'];
+}
+```
+
+```json
+"comments": {
+  "links": {
+    "self": "https://api.example.com/posts/1/relationships/comments",
+    "related": "https://api.example.com/posts/1/comments"
+  }
+}
+```
+
+- Clients load the records from the `related` link when they need them,
+  paged like an index. ember-data does this by itself for an async `hasMany`
+  whose payload has a `related` link and no `data`.
+- **A relationship the request includes keeps its `data`** (`?include=comments`):
+  JSON:API requires every included resource to be linked from the document.
+- **So does one without a related endpoint where it is serialized** — e.g. an
+  included type in a namespace that has no resource for it — since it would be
+  left with nothing to load it from.
+- It applies wherever the Serializer is used: primary data and included
+  resources alike. The relationship endpoint (§20) still returns the full
+  linkage.
+- **Boot check:** each name must be in the Serializer's `hasMany`, and have a
+  related endpoint in at least one namespace that uses the Serializer for its
+  type — there, the related type's resource must route `index` and this
+  type's must route `show`. Otherwise the application refuses to boot,
+  listing each problem. (In a namespace without that endpoint the
+  relationship keeps its `data`, as above.)
+
+Nothing changes unless a Serializer sets `linksOnly`.
 
 ## The short version
 

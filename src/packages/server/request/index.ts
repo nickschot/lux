@@ -22,6 +22,7 @@ export function createRequest(
   Object.assign(req, {
     url,
     logger,
+    router,
     headers,
     params: {},
     method: headers.get('x-http-method-override') || req.method

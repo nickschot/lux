@@ -57,6 +57,7 @@ export interface Request extends Readable {
   trailers: Record<string, unknown>;
   socket: Socket;
   logger: Logger;
+  router: Router;
   params: Request$params;
   defaultParams: Request$params;
   route: Route;

@@ -19,6 +19,16 @@ import type { Route$opts } from './interfaces';
 /**
  * @private
  */
+function isToMany(controller: Controller, relationship?: string): boolean {
+  return (
+    Boolean(relationship) &&
+    controller.model.relationshipFor(relationship as string)?.type === 'hasMany'
+  );
+}
+
+/**
+ * @private
+ */
 class Route extends FreezeableSet<Action<unknown>> {
   declare type: string;
 
@@ -32,34 +42,54 @@ class Route extends FreezeableSet<Action<unknown>> {
 
   declare controller: Controller;
 
+  declare relationship: string | undefined;
+
+  declare related: Controller | undefined;
+
   declare staticPath: string;
 
   declare defaultParams: Record<string, unknown>;
 
   declare dynamicSegments: Array<string>;
 
-  constructor({ type, path, action, method, controller }: Route$opts) {
+  constructor({
+    type,
+    path,
+    action,
+    method,
+    controller,
+    relationship,
+    related
+  }: Route$opts) {
     const dynamicSegments = getDynamicSegments(path);
 
     if (action && controller) {
       const handler = Reflect.get(controller, action);
 
       if (typeof handler === 'function') {
+        // A related route takes the query parameters of the related type, as
+        // its `show` (to-one) or `index` (to-many) would.
+        const query =
+          type === 'related' && related
+            ? {
+                controller: related,
+                type: isToMany(controller, relationship)
+                  ? ('collection' as const)
+                  : ('member' as const)
+              }
+            : { controller, type };
+
         const params = paramsFor({
-          type,
+          ...query,
           method,
-          controller,
           dynamicSegments
         });
 
         const staticPath = getStaticPath(path);
 
-        const defaultParams = defaultParamsFor({
-          type,
-          controller
-        });
+        const defaultParams = defaultParamsFor(query);
 
-        super(createAction(type, handler, controller));
+        super(createAction(type, handler, controller, related));
 
         Object.assign(this, {
           type,
@@ -69,6 +99,8 @@ class Route extends FreezeableSet<Action<unknown>> {
           method,
           controller,
           staticPath,
+          relationship,
+          related,
           defaultParams,
           dynamicSegments
         });
@@ -82,7 +114,9 @@ class Route extends FreezeableSet<Action<unknown>> {
           'params',
           'method',
           'controller',
-          'staticPath'
+          'staticPath',
+          'relationship',
+          'related'
         );
 
         deepFreezeProps(this, false, 'defaultParams', 'dynamicSegments');

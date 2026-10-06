@@ -10,6 +10,35 @@ import type { Replacer } from './utils/create-replacer';
 import type { Router$opts } from './interfaces';
 
 /**
+ * Remove each related route (`/posts/:dynamic/comments`) whose type is not
+ * served the way it would serve it: its resource in the same namespace must
+ * route `index` for a to-many relationship and `show` for a to-one. A type a
+ * namespace does not list (or only lets clients `create`) stays unlisted.
+ *
+ * @private
+ */
+function dropUnservedRelated(router: Router): void {
+  router.forEach((route, key) => {
+    const { type, controller, related, relationship = '', staticPath } = route;
+
+    if (type !== 'related' || !related || !key.startsWith('GET:')) {
+      return;
+    }
+
+    const toMany =
+      controller.model.relationshipFor(relationship)?.type === 'hasMany';
+    const base = related.namespace ? `/${related.namespace}` : '';
+    const path = `${base}/${related.model.resourceName}`;
+
+    if (!router.has(`GET:${toMany ? path : `${path}/:dynamic`}`)) {
+      ['GET', 'HEAD', 'OPTIONS'].forEach(method => {
+        router.delete(`${method}:${staticPath}`);
+      });
+    }
+  });
+}
+
+/**
  * @private
  */
 class Router extends FreezeableMap<string, Route> {
@@ -28,6 +57,7 @@ class Router extends FreezeableMap<string, Route> {
 
     super();
     define(this, definitions);
+    dropUnservedRelated(this);
 
     Reflect.defineProperty(this, 'replacer', {
       value: createReplacer(controllers),

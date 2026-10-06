@@ -11,6 +11,7 @@ import normalizePort from './utils/normalize-port';
 import createController from './utils/create-controller';
 import createSerializer from './utils/create-serializer';
 import validateNamespacedSerializers from './utils/validate-namespaced-serializers';
+import validateLinksOnly from './utils/validate-links-only';
 import resolveVisibility from './utils/resolve-visibility';
 import warnQueryParamNames from './utils/warn-query-param-names';
 
@@ -106,6 +107,10 @@ export default async function initialize<T extends Application>(
     controllers,
     controller: ApplicationController
   });
+
+  // Against the routes as built: only a served related endpoint lets a
+  // relationship be left without its linkage.
+  validateLinksOnly(router, serializers);
 
   const server = new Server({
     router,
