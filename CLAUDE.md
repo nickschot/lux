@@ -19,7 +19,7 @@ point there on purpose; `rollup-plugin-lux` and `babel-preset-lux` are unrelated
 npm packages and must never be renamed.
 
 **Status: the modernization is complete and released.** v3.x is published to npm as
-`lumen-framework`; the toolchain is TypeScript + esbuild + Vitest on Node 20 (details in
+`lumen-framework`; the toolchain is TypeScript + esbuild + Vitest on Node 22 (details in
 "Toolchain" below). The plan, the phase-by-phase log, and the reasoning behind the
 choices are archived in [docs/MIGRATION-NOTES.md](docs/MIGRATION-NOTES.md) — read that
 before revisiting a decision, not to learn the current state.
@@ -102,7 +102,7 @@ spec `await`s the real call; and `logger.test`'s "writes with a recent timestamp
 - **Build:** [build.mjs](build.mjs) is **pure esbuild** — it strips TS *and* bundles
   `src/` straight to `dist/` in one pass (`index.js` CJS, `index.mjs` ESM, `cli.cjs`). No
   Babel: **Babel is fully retired** (no `.babelrc`, no `babel-config.build.cjs`, no
-  `@babel/*` or Babel-6 deps). `pnpm build`. **esbuild targets `node20`** — nothing
+  `@babel/*` or Babel-6 deps). `pnpm build`. **esbuild targets `node22`** — nothing
   re-parses the output with an older parser (the app compiler bundles `dist/index.mjs` with
   esbuild; `dist/cli.cjs` is loaded straight by Node via `bin/lumen`). esbuild reads
   `tsconfig.json` for `useDefineForClassFields` (true at ES2022), so **uninitialized class
@@ -127,7 +127,9 @@ spec `await`s the real call; and `logger.test`'s "writes with a recent timestamp
   once no suite referenced it.
 - **Package manager:** **pnpm 10** (migrated from yarn; `pnpm-lock.yaml`, `packageManager`
   field). The old `yarn.lock` is retained untracked for reference only.
-- **Node:** pinned to **20** via **Volta** (`volta` field in `package.json`; `.nvmrc` = 20).
+- **Node:** pinned to **22** via **Volta** (`volta` field in `package.json`; `.nvmrc` = 22);
+  `engines` is `>= 22.12` (first 22.x with unflagged `require()` of ESM), and CI runs a
+  leg on exactly 22.12.0 so the floor is proven. Node 20 is EOL (April 2026) and dropped.
 
 ## Devcontainer (preferred environment)
 
@@ -142,7 +144,7 @@ local-only commits. `postCreateCommand` then runs
 builds `dist/`. **Verified end-to-end in clone mode: `552 passing`** with
 typecheck/lint/format green, watchman tests included.
 
-Ships Node **20.20.2** (same as the host's Volta pin), pnpm **10.34.5** via corepack,
+Ships the latest Node **22.x** (the same line as the Volta pin), pnpm **10.34.5** via corepack,
 watchman, the `gh` CLI (devcontainer feature), and Claude Code. First run: `claude`
 prompts for login and `gh auth login` (or export `GH_TOKEN` on the host — `remoteEnv`
 forwards it, along with `GIT_AUTHOR_NAME`/`GIT_AUTHOR_EMAIL`).
@@ -171,8 +173,8 @@ Things about the setup that are load-bearing, all learned by breaking them:
 - **Base is `trixie`, not `bookworm`.** Meta's prebuilt watchman links against GLIBC 2.38;
   bookworm ships 2.36 and the binary simply refuses to run, which costs 3 tests.
 - **The base image's preinstalled pnpm is removed** (`npm uninstall -g pnpm`). It is newer
-  than this project's pin, requires Node >= 22.13 (it imports `node:sqlite`), and would
-  shadow corepack's shim — it hard-crashes on Node 20.
+  than this project's pin and would shadow corepack's shim (on the old Node 20 image it also
+  hard-crashed: it imports `node:sqlite`, which needs Node >= 22.13).
 - **`workspaceMount`/`workspaceFolder` are intentionally unset**, so the IDE controls where
   the clone lands: IntelliJ uses `/IdeaProjects/<repo>`, the devcontainer CLI and VS Code
   use `/workspaces/<repo>`. The Dockerfile pre-creates those two **parents** as `node`, with
@@ -204,7 +206,7 @@ This machine uses **Volta**, not nvm. Two gotchas when running the suite locally
 - **`VOLTA_FEATURE_PNPM=1` must be set** in your interactive shell's config (fish:
   `set -gx VOLTA_FEATURE_PNPM 1` in `~/.config/fish/config.fish`; zsh/bash: export it in
   `~/.zshrc`/`~/.bashrc`). Without it, Volta's pnpm shim runs children on the *default*
-  Node (18) instead of the project's pinned Node 20.
+  Node (18) instead of the project's pinned Node 22.
   Inside `test/test-app/` Volta also falls back to Node 18 because that nested
   `package.json` has no `volta` field — harmless (the legacy stack runs on 18).
 - **The `lumen` CLI is resolved via `node_modules/.bin`.** The test bootstrap
@@ -240,7 +242,7 @@ Tests need a database; the test-app defaults to **`sqlite3`** (bumped to `^5.1.7
 prebuilt N-API binary — no native compile, no Python). CI additionally runs `pg` /
 `mysql2` via `DATABASE_DRIVER`.
 
-**Current baseline (Node 20 / pnpm 10):** `552 passing` across 83 files, all on **Vitest**
+**Current baseline (Node 22 / pnpm 10):** `850 passing` across 103 files, all on **Vitest**
 (`pnpm test` = `vitest run`, ~30 s). Coverage sits at ~70% of statements.
 
 ### CI — GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml))

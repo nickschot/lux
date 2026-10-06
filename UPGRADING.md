@@ -1,7 +1,7 @@
 # Upgrading a Lumen app to the modernized framework
 
 This branch replaces the framework's 2017-era toolchain (Node 6, Flow, Babel 6,
-Rollup 0.43) with a modern one (Node 20, TypeScript, esbuild). The app-facing
+Rollup 0.43) with a modern one (Node 22, TypeScript, esbuild). The app-facing
 **runtime API is unchanged** — the work below is about the build and the
 runtime environment, not your application code's logic.
 
@@ -10,17 +10,20 @@ framework and is the canonical example app.
 
 ## 1. Hard requirements — these break if you skip them
 
-**Node 20.** The toolchain targets it (`engines: ">=20"`, esbuild target
-`node20`). Pin your app to it (`.nvmrc` / `volta` → `20`).
+**Node 22.12 or newer.** The toolchain targets it (`engines: ">= 22.12"`,
+esbuild target `node22`). Pin your app to it (`.nvmrc` → `22`, `volta` → a
+22.x release). Node 20 reached end-of-life in April 2026 and is no longer
+supported; 22.12 is the first 22.x where `require()` of an ES module works
+without a flag, which the CLI's ESM-only dependencies will rely on.
 
 **Bump your database driver.** This is the one that breaks *silently*: `pg@7`
-never settles a connection on Node 20 — knex reports it as
+never settles a connection on modern Node — knex reports it as
 `Timeout acquiring a connection. The pool is probably full`, which looks like a
 pool bug but is a dead driver. Match the reference app:
 
 ```jsonc
 // package.json "dependencies"
-"pg": "^8.16.3",      // was ^7.x — REQUIRED on Node 20
+"pg": "^8.16.3",      // was ^7.x — REQUIRED on modern Node
 "mysql2": "^3.15.3",  // was ^1.x
 "sqlite3": "^5.1.7",  // already modern
 "knex": "^0.16.3"     // unchanged
@@ -635,7 +638,7 @@ Nothing changes unless a Serializer sets `linksOnly`.
 
 ## The short version
 
-Bump `pg`/`mysql2` and run Node 20 (required); delete `.babelrc` and the
+Bump `pg`/`mysql2` and run Node 22.12+ (required); delete `.babelrc` and the
 babel / `source-map-support` deps (dead); make sure app source is plain JS with
 no Flow (build constraint). Imports, runtime API, and app layout are all the
 same.

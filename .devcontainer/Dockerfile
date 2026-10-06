@@ -1,8 +1,8 @@
 # trixie, not bookworm: Meta's prebuilt watchman links against GLIBC 2.38 /
 # GLIBCXX 3.4.32, and bookworm only ships glibc 2.36 — the binary refuses to run
-# there. trixie has glibc 2.41. Its node is 20.20.2, matching the version Volta
-# pins on the host.
-FROM mcr.microsoft.com/devcontainers/typescript-node:20-trixie
+# there. trixie has glibc 2.41. Its node tracks the latest 22.x, the same line
+# as the `volta` pin in package.json.
+FROM mcr.microsoft.com/devcontainers/typescript-node:22-trixie
 
 # unzip is for the watchman release below; python3/make/g++ are a fallback for
 # native modules — sqlite3 normally fetches a prebuilt N-API binary, but the
@@ -44,8 +44,9 @@ RUN curl -fsSL -o /tmp/watchman.zip \
 # entirely: node here is simply the image's node.
 #
 # The base image ships its own globally npm-installed pnpm which is newer than
-# this project's pin and requires Node >= 22.13 (it imports `node:sqlite`), so it
-# hard-crashes on Node 20 and would shadow corepack's shim. Remove it first.
+# this project's pin and would shadow corepack's shim. (On the old Node 20 image
+# it also hard-crashed: it imports `node:sqlite`, which needs Node >= 22.13.)
+# Remove it first.
 RUN npm uninstall -g pnpm || true \
     && corepack enable
 

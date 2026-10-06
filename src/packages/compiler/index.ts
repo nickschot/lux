@@ -72,7 +72,7 @@ export async function compile(
     bundle: true,
     platform: 'node',
     format: 'cjs',
-    target: 'node20',
+    target: 'node22',
     sourcemap: true,
     // Reproduces `rollup-plugin-lumen`: preserves each class's `.name` (Lumen keys
     // models/controllers/serializers off it) against esbuild's own renaming.

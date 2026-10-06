@@ -56,22 +56,24 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Full driver coverage on the dev baseline (Node 20, the .nvmrc pin).
-          - node: 20
+          # Full driver coverage on the dev baseline (Node 22, the .nvmrc pin).
+          - node: 22
             driver: sqlite3
-          - node: 20
+          - node: 22
             driver: pg
             username: postgres
             password: postgres
-          - node: 20
+          - node: 22
             driver: mysql2
             username: root
             password: root
-          # Forward-compat across Node versions (22 & 24 LTS, 26 current), run
-          # via sqlite3 — the one native (N-API) dependency and the ABI-sensitive
-          # surface. The pure-JS pg/mysql2 drivers aren't Node-version-sensitive.
-          - node: 22
+          # The engines floor (>= 22.12, the first 22.x where require() of an ES
+          # module is unflagged), so it cannot drift from what CI proves.
+          - node: 22.12.0
             driver: sqlite3
+          # Forward-compat across Node versions (24 LTS, 26 current), run via
+          # sqlite3 — the one native (N-API) dependency and the ABI-sensitive
+          # surface. The pure-JS pg/mysql2 drivers aren't Node-version-sensitive.
           - node: 24
             driver: sqlite3
           - node: 26

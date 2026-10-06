@@ -39,7 +39,7 @@ export default (name: string, driver: string): string => {
       globals: '^17.7.0'
     },
     engines: {
-      node: '>= 20'
+      node: '>= 22.12'
     }
   };
 
