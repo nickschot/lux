@@ -139,8 +139,9 @@ spec `await`s the real call; and `logger.test`'s "writes with a recent timestamp
 - **Package manager:** **pnpm 10** (migrated from yarn; `pnpm-lock.yaml`, `packageManager`
   field). The old `yarn.lock` is retained untracked for reference only.
 - **Node:** pinned to **22** via **Volta** (`volta` field in `package.json`; `.nvmrc` = 22);
-  `engines` is `>= 22.12` (first 22.x with unflagged `require()` of ESM), and CI runs a
-  leg on exactly 22.12.0 so the floor is proven. Node 20 is EOL (April 2026) and dropped.
+  `engines` is `>= 22.13` (first 22.x where `require()` of ESM is stable — 22.12 unflagged
+  it but still warns — and the floor faker 10 and ESLint 10 declare), and CI runs a leg
+  on exactly 22.13.0 so the floor is proven. Node 20 is EOL (April 2026) and dropped.
 
 ## Devcontainer (preferred environment)
 

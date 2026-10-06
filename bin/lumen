@@ -10,8 +10,8 @@
 const path = require('path');
 const { existsSync } = require('fs');
 
-// commander is ESM-only from v15 on; `require()` of it relies on Node >= 22.12
-// (unflagged require(esm)), the engines floor and commander's own.
+// commander is ESM-only from v15 on; `require()` of it needs Node >= 22.12
+// (unflagged require(esm)), within the engines floor.
 const { program: cli, Option } = require('commander');
 
 const { version: VERSION } = require('../package.json');
