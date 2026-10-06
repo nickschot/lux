@@ -36,7 +36,7 @@ export default (name: string, driver: string): string => {
     devDependencies: {
       '@eslint/js': '^9.39.5',
       eslint: '^9.39.5',
-      globals: '^17.7.0'
+      globals: '^17.13.0'
     },
     engines: {
       node: '>= 22.12'
