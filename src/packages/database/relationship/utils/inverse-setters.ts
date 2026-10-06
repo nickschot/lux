@@ -16,7 +16,7 @@ export function setHasManyInverse(
     inverseModel: ModelClass;
   }
 ) {
-  const primaryKey = Reflect.get(owner, owner.constructor.primaryKey);
+  const primaryKey = owner.getPrimaryKey();
   const { type: inverseType } = inverseModel.relationshipFor(inverse)!;
 
   for (const record of value) {

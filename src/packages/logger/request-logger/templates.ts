@@ -39,8 +39,8 @@ export const debugTemplate = ({
 }: RequestLogger$templateData) => `\
 ${line`
   Processed ${chalk.cyan(`${method}`)} "${path}" from ${remoteAddress}
-  with ${Reflect.apply(colorStr, null, [`${statusCode}`])}
-  ${Reflect.apply(colorStr, null, [`${statusMessage}`])} by ${
+  with ${colorStr(`${statusCode}`)}
+  ${colorStr(`${statusMessage}`)} by ${
     route
       ? `${chalk.yellow(route.controller.constructor.name)}#${chalk.blue(route.action)}`
       : null
@@ -92,11 +92,7 @@ export const infoTemplate = ({
 }: RequestLogger$templateData) => line`
 Processed ${chalk.cyan(`${method}`)} "${path}" ${chalk.magenta('Params')} ${JSON.stringify(
   params
-)} from ${remoteAddress} in ${(endTime - startTime).toString()} ms with ${Reflect.apply(
-  colorStr,
-  null,
-  [`${statusCode}`]
-)} ${Reflect.apply(colorStr, null, [`${statusMessage}`])} by ${
+)} from ${remoteAddress} in ${(endTime - startTime).toString()} ms with ${colorStr(`${statusCode}`)} ${colorStr(`${statusMessage}`)} by ${
   route
     ? `${chalk.yellow(route.controller.constructor.name)}#${chalk.blue(route.action)}`
     : null

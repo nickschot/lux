@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any --
  * The query runner assembles results from raw Knex rows and dynamically-built
- * related sub-queries (Reflect.construct/get/set over untyped column data), so
+ * related sub-queries (dynamic key access over untyped column data), so
  * records, relationship descriptors and the constructed instances are genuinely
  * untyped at this layer.
  */
@@ -94,16 +94,12 @@ export default async function buildResults<T extends Model>({
 
             foreignKey = camelize(foreignKey, true);
 
-            Reflect.set(
-              record,
-              name,
-              relatedResults.filter(({ rawColumnData }) => {
-                const fk = Reflect.get(rawColumnData, foreignKey);
-                const pk = Reflect.get(record, model.primaryKey);
+            record[name] = relatedResults.filter(({ rawColumnData }) => {
+              const fk = rawColumnData[foreignKey];
+              const pk = record[model.primaryKey];
 
-                return fk === pk;
-              })
-            );
+              return fk === pk;
+            });
           }
         }
       );
@@ -126,7 +122,7 @@ export default async function buildResults<T extends Model>({
       name => model.relationshipFor(name)?.type === 'hasOne'
     );
 
-    const instance = Reflect.construct(model, [
+    const instance = new model(
       entries(record).reduce<Record<string, any>>((r, entry) => {
         let [key, value] = entry;
 
@@ -152,7 +148,7 @@ export default async function buildResults<T extends Model>({
           [key]: value
         };
       }, {})
-    ]);
+    );
 
     absent.forEach(name => instance.absentRelationships.add(name));
     instance.currentChangeSet.persist();

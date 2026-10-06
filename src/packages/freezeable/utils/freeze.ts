@@ -59,7 +59,7 @@ export function freezeProps<T extends object>(
       (obj, key) => ({
         ...obj,
         [key]: {
-          value: Reflect.get(target, key),
+          value: (target as Record<string, unknown>)[key],
           writable: false,
           enumerable: makePublic,
           configurable: false
@@ -83,7 +83,7 @@ export function deepFreezeProps<T extends object>(
   Object.defineProperties(
     target,
     props.reduce<PropertyDescriptorMap>((obj, key) => {
-      let value: unknown = Reflect.get(target, key);
+      let value = (target as Record<string, unknown>)[key];
 
       if (Array.isArray(value)) {
         value = freezeArray(value);

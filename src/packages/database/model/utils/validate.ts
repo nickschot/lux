@@ -13,7 +13,7 @@ export default function validate(instance: Model): true {
     .map(([key, value]) => ({
       key,
       value,
-      validator: Reflect.get(instance.constructor.validates, key) as (
+      validator: instance.constructor.validates[key] as (
         value?: unknown
       ) => boolean
     }))

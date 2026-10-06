@@ -4,6 +4,13 @@ import lumenify from '../index';
 
 import K from '../../../utils/k';
 import setType from '../../../utils/set-type';
+import type { Response } from '../../server';
+
+// The Express-style methods the response proxy adds on top of `Response`.
+type ProxiedResponse = Response & {
+  send(body: unknown): void;
+  json(body: unknown): void;
+};
 
 describe('module "lumenify"', () => {
   describe('#lumenify()', () => {
@@ -36,7 +43,7 @@ describe('module "lumenify"', () => {
 
     it('resolves when Response#send is called', () => {
       const subject = lumenify((req, res) => {
-        Reflect.apply(Reflect.get(res, 'send'), res, ['Hello world!']);
+        (res as ProxiedResponse).send('Hello world!');
       });
 
       return subject(request, response).then(data => {
@@ -46,11 +53,9 @@ describe('module "lumenify"', () => {
 
     it('resolves when Response#json is called', () => {
       const subject = lumenify((req, res) => {
-        Reflect.apply(Reflect.get(res, 'json'), res, [
-          {
-            data: 'Hello world!'
-          }
-        ]);
+        (res as ProxiedResponse).json({
+          data: 'Hello world!'
+        });
       });
 
       return subject(request, response).then(data => {

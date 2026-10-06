@@ -16,21 +16,17 @@ export default function lumenify(
 ): Action<unknown> {
   const result = function (req: Request, res: Response) {
     return new Promise<unknown>((resolve, reject) => {
-      Reflect.apply(middleware, null, [
-        req,
-        createResponseProxy(res, resolve),
-        (err?: Error) => {
-          if (err && err instanceof Error) {
-            reject(err);
-          } else {
-            resolve(undefined);
-          }
+      middleware(req, createResponseProxy(res, resolve), (err?: Error) => {
+        if (err && err instanceof Error) {
+          reject(err);
+        } else {
+          resolve(undefined);
         }
-      ]);
+      });
     });
   };
 
-  Reflect.defineProperty(result, 'name', {
+  Object.defineProperty(result, 'name', {
     value: middleware.name
   });
 

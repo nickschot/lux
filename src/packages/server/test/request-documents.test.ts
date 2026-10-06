@@ -449,7 +449,7 @@ describe('request documents over HTTP', () => {
         .select('tagId')
         .where({ postId: post.getPrimaryKey() });
 
-      return rows.map(row => String(Reflect.get(row, 'tagId'))).sort();
+      return rows.map(row => String(row.tagId)).sort();
     };
 
     const patchTags = (data: unknown) => {

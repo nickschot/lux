@@ -26,9 +26,7 @@ export default async function validateRelationships<T extends Model>(
 
       const { model: related } = opts;
       const isMany = Array.isArray(data);
-      const ids = (isMany ? data : [data]).map(item =>
-        Reflect.get(Object(item), 'id')
-      );
+      const ids = (isMany ? data : [data]).map(item => Object(item).id);
 
       if (!ids.length) {
         return;

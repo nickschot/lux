@@ -27,8 +27,8 @@ export default function paramsToQuery(
     // A fieldset may also name relationships, which are not columns.
     select: [
       model.primaryKey,
-      ...(Reflect.get(fields, model.resourceName) as Array<string>).filter(
-        name => model.attributeNames.includes(name)
+      ...(fields[model.resourceName] as Array<string>).filter(name =>
+        model.attributeNames.includes(name)
       )
     ]
   };

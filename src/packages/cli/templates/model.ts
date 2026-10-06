@@ -26,14 +26,14 @@ export default (name: string, attrs: Array<string>) => {
         .filter(attr => VALID_ATTR.test(attr))
         .map(attr => attr.split(':'))
         .filter(([, type]) => RELATIONSHIP.test(type))
-        .reduce(
+        .reduce<Record<string, Array<string>>>(
           (types, [related, type]) => {
             const key = chain(type)
               .pipe(underscore)
               .pipe(str => camelize(str, true))
               .value();
 
-            const value = Reflect.get(types, key);
+            const value = types[key];
 
             if (value) {
               const inverse = camelize(normalized, true);

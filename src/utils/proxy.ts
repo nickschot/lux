@@ -1,5 +1,3 @@
-import hasOwnProperty from './has-own-property';
-
 type ProxyGet<T extends object> = (
   target: T,
   key: string,
@@ -17,8 +15,8 @@ export function trapGet<T extends object>(
       return () => target;
     }
 
-    if (hasOwnProperty(traps, key)) {
-      const value = Reflect.get(traps, key);
+    if (Object.hasOwn(traps, key)) {
+      const value = traps[key];
 
       if (typeof value === 'function') {
         return value.bind(receiver, target);

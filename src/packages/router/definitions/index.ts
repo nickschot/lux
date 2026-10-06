@@ -160,7 +160,7 @@ export function build<T extends Router$Namespace>(
   }
 
   if (builder) {
-    Reflect.apply(builder, context, []);
+    builder.call(context);
   }
 
   return namespace;

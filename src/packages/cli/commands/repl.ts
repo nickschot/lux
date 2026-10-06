@@ -10,9 +10,9 @@ export function repl(): Promise<void> {
   // behaviour-neutral — worth fixing when this file is converted to TypeScript.
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async resolve => {
-    const app: Application = await Reflect.apply(require, null, [
-      path.join(CWD, 'dist', 'boot')
-    ]);
+    // The app's compiled boot script, resolved at runtime.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const app: Application = await require(path.join(CWD, 'dist', 'boot'));
 
     const instance = startRepl({
       prompt: '> '

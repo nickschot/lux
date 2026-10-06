@@ -94,7 +94,7 @@ export default function resolveVisibility(
   controllers.forEach((controller, key) => {
     const application = applicationFor(controllers, key);
 
-    Reflect.defineProperty(controller, 'visibility', {
+    Object.defineProperty(controller, 'visibility', {
       value: Object.freeze({
         ...((application && rulesOf(application)) ?? {})
       }),

@@ -59,7 +59,7 @@ class Router extends FreezeableMap<string, Route> {
     define(this, definitions);
     dropUnservedRelated(this);
 
-    Reflect.defineProperty(this, 'replacer', {
+    Object.defineProperty(this, 'replacer', {
       value: createReplacer(controllers),
       writable: false,
       enumerable: false,
@@ -84,7 +84,7 @@ class Router extends FreezeableMap<string, Route> {
   match({ method, url }: Request): void | Route {
     const { staticPath, params } = this.resolve(url.pathname);
 
-    Reflect.set(url, 'params', params);
+    url.params = params;
 
     return this.get(`${method}:${staticPath}`);
   }

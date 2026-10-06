@@ -44,7 +44,7 @@ function isSubquery(value: unknown): boolean {
   return (
     typeof value === 'object' &&
     value !== null &&
-    typeof Reflect.get(value, 'toSQL') === 'function'
+    typeof (value as { toSQL?: unknown }).toSQL === 'function'
   );
 }
 
@@ -497,7 +497,7 @@ class Query<T = any> extends Promise<T> {
   static from(src: any): Query<unknown> {
     const { model, snapshots, collection, shouldCount, relationships } = src;
 
-    const dest = Reflect.construct(this, [model]) as Query<unknown>;
+    const dest = new this(model) as Query<unknown>;
 
     Object.assign(dest, {
       snapshots,

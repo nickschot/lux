@@ -25,14 +25,12 @@ describe('module "loader/builder"', () => {
           parent: null
         });
 
-        return Reflect.construct(target, [
-          {
-            parent,
-            namespace,
-            serializer,
-            model: null
-          }
-        ]);
+        return new target({
+          parent,
+          namespace,
+          serializer,
+          model: null
+        });
       });
     });
 

@@ -135,7 +135,7 @@ describe('module "database/model"', () => {
           ]);
 
         Object.keys(Subject.attributes).forEach(key => {
-          const value = Reflect.get(Subject.attributes, key);
+          const value = Subject.attributes[key];
 
           expect(value).to.have.all.keys([
             'type',
@@ -183,7 +183,7 @@ describe('module "database/model"', () => {
         ]);
 
         Object.keys(Subject.hasMany).forEach(key => {
-          const value = Reflect.get(Subject.hasMany, key);
+          const value = Subject.hasMany[key];
 
           expect(value).to.be.an('object');
           expect(value).to.have.property('type').and.equal('hasMany');
@@ -201,7 +201,7 @@ describe('module "database/model"', () => {
         expect(Subject.belongsTo).to.have.all.keys(['user']);
 
         Object.keys(Subject.belongsTo).forEach(key => {
-          const value = Reflect.get(Subject.belongsTo, key);
+          const value = Subject.belongsTo[key];
 
           expect(value).to.be.an('object');
           expect(value).to.have.property('type').and.equal('belongsTo');
@@ -223,7 +223,7 @@ describe('module "database/model"', () => {
         ]);
 
         Object.keys(Subject.relationships).forEach(key => {
-          const value = Reflect.get(Subject.relationships, key);
+          const value = Subject.relationships[key];
 
           expect(value).to.have.property('type');
 

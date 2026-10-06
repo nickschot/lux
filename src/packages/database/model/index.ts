@@ -718,7 +718,7 @@ class Model {
     Object.assign(this, props);
 
     if (initialize) {
-      Reflect.defineProperty(this, 'initialized', {
+      Object.defineProperty(this, 'initialized', {
         value: true,
         writable: false,
         enumerable: false,
@@ -1196,7 +1196,7 @@ class Model {
   ): Promise<Transaction$ResultProxy<Model, true>> {
     const run = async (trx: unknown) => {
       const { hooks, logger, primaryKey } = this;
-      const instance = Reflect.construct(this, [props, false]);
+      const instance = new this(props, false);
 
       await runHooks(instance, trx, hooks.beforeValidation);
 
@@ -1218,11 +1218,11 @@ class Model {
       // Normalize both so the primary key stays a scalar.
       const primaryKeyValue =
         firstRow !== null && typeof firstRow === 'object'
-          ? Reflect.get(firstRow, primaryKey)
+          ? (firstRow as Record<string, unknown>)[primaryKey]
           : firstRow;
 
       Reflect.set(instance, primaryKey, primaryKeyValue);
-      Reflect.set(instance.rawColumnData, primaryKey, primaryKeyValue);
+      instance.rawColumnData[primaryKey] = primaryKeyValue;
 
       let statements: Array<unknown> = [];
       const associations = Object.keys(props).filter(key =>
@@ -1238,7 +1238,7 @@ class Model {
 
       await Promise.all(statements);
 
-      Reflect.defineProperty(instance, 'initialized', {
+      Object.defineProperty(instance, 'initialized', {
         value: true,
         writable: false,
         enumerable: false,
@@ -1437,7 +1437,7 @@ class Model {
    * @public
    */
   static hasScope(name: string): boolean {
-    return Boolean(Reflect.get(this.scopes, name));
+    return Boolean(this.scopes[name]);
   }
 
   /**
@@ -1478,14 +1478,14 @@ class Model {
       const getTableName = compose(pluralize, underscore);
       const tableName = getTableName(this.name);
 
-      Reflect.defineProperty(this, 'tableName', {
+      Object.defineProperty(this, 'tableName', {
         value: tableName,
         writable: false,
         enumerable: true,
         configurable: false
       });
 
-      Reflect.defineProperty(this.prototype, 'tableName', {
+      Object.defineProperty(this.prototype, 'tableName', {
         value: tableName,
         writable: false,
         enumerable: false,
@@ -1509,7 +1509,7 @@ class Model {
    * @private
    */
   static columnFor(key: string): Database$column | undefined {
-    return Reflect.get(this.attributes, key) as Database$column | undefined;
+    return this.attributes[key] as Database$column | undefined;
   }
 
   /**
@@ -1535,7 +1535,7 @@ class Model {
    * @private
    */
   static relationshipFor(key: string): Relationship$opts | undefined {
-    return Reflect.get(this.relationships, key);
+    return this.relationships[key];
   }
 }
 

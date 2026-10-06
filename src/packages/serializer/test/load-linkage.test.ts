@@ -35,7 +35,7 @@ describe('module "serializer/utils/load-linkage"', () => {
   it('defaults to-many linkage to [] and to-one linkage to null', async () => {
     const Post = models.get('post') as ModelClass;
     // A record that does not exist in the database has no related records.
-    const ghost = Reflect.construct(Post, [{ id: -1 }]) as Model;
+    const ghost = new Post({ id: -1 });
     const linkage = await loadLinkage(
       Post,
       [ghost],

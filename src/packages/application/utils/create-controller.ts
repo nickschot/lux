@@ -39,13 +39,11 @@ export default function createController<T extends Controller>(
     serializer = closestAncestor(serializers, key);
   }
 
-  const instance: T = Reflect.construct(constructor, [
-    {
-      model,
-      namespace,
-      serializer
-    }
-  ]);
+  const instance: T = new constructor({
+    model,
+    namespace,
+    serializer
+  });
 
   if (serializer) {
     if (!instance.filter.length) {
@@ -69,7 +67,7 @@ export default function createController<T extends Controller>(
     ];
   }
 
-  Reflect.defineProperty(instance, 'parent', {
+  Object.defineProperty(instance, 'parent', {
     value: parent,
     writable: false,
     enumerable: true,
