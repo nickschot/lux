@@ -636,6 +636,22 @@ class PostsSerializer extends Serializer {
 
 Nothing changes unless a Serializer sets `linksOnly`.
 
+## 23. inflection 3 — one word inflects differently
+
+Lumen derives table names, resource `type`s and relationship keys from model
+names with [inflection](https://github.com/dreamerslab/node.inflection), now
+on v3 (was v1). Across every word in v1's rule tables, plus common model names,
+exactly one result changed — v1 got it wrong:
+
+| Call | v1 | v3 |
+|---|---|---|
+| `pluralize('focus')` | `focus` | `focuses` |
+| `singularize('focus')` | `focu` | `focus` |
+| `classify('focus')` | `Focu` | `Focus` |
+
+Nothing changes unless a model, table or relationship is named after "focus";
+if one is, its derived table name or `type` changes with it.
+
 ## The short version
 
 Bump `pg`/`mysql2` and run Node 22.12+ (required); delete `.babelrc` and the

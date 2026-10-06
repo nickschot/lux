@@ -55,13 +55,12 @@
     "commander": "^2.20.3",
     "esbuild": "^0.28.1",
     "fb-watchman": "^2.0.2",
-    "inflection": "^1.13.4",
+    "inflection": "^3.0.2",
     "knex": "^3.3.0",
     "ora": "^5.4.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
-    "@types/inflection": "1.13.2",
     "@types/node": "^22.20.5",
     "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^9.39.5",
