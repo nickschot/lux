@@ -10,11 +10,12 @@ framework and is the canonical example app.
 
 ## 1. Hard requirements — these break if you skip them
 
-**Node 22.12 or newer.** The toolchain targets it (`engines: ">= 22.12"`,
+**Node 22.13 or newer.** The toolchain targets it (`engines: ">= 22.13"`,
 esbuild target `node22`). Pin your app to it (`.nvmrc` → `22`, `volta` → a
 22.x release). Node 20 reached end-of-life in April 2026 and is no longer
-supported; 22.12 is the first 22.x where `require()` of an ES module works
-without a flag, which the CLI's ESM-only dependencies will rely on.
+supported. 22.13 is the first 22.x where `require()` of an ES module is
+stable (22.12 allows it but prints an `ExperimentalWarning`), which the
+framework's ESM-only dependencies rely on.
 
 **Bump your database driver.** This is the one that breaks *silently*: `pg@7`
 never settles a connection on modern Node — knex reports it as
@@ -670,7 +671,7 @@ and exit code `1` — worth knowing if a script depends on the old exit codes.
 
 ## The short version
 
-Bump `pg`/`mysql2` and run Node 22.12+ (required); delete `.babelrc` and the
+Bump `pg`/`mysql2` and run Node 22.13+ (required); delete `.babelrc` and the
 babel / `source-map-support` deps (dead); make sure app source is plain JS with
 no Flow (build constraint). Imports, runtime API, and app layout are all the
 same.
