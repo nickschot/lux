@@ -3,7 +3,7 @@ import { FreezeableSet } from '../../freezeable';
 import type { Controller$builtIn } from '../../controller';
 
 import normalizeOnly from './utils/normalize-only';
-import type { Resource$opts } from './interfaces';
+import type { Resource$opts, Resource$relationships } from './interfaces';
 
 /**
  * @private
@@ -11,8 +11,19 @@ import type { Resource$opts } from './interfaces';
 class Resource extends Namespace {
   declare only: FreezeableSet<Controller$builtIn>;
 
-  constructor({ only, ...opts }: Resource$opts) {
+  declare relationships: Resource$relationships;
+
+  constructor({ only, relationships = true, ...opts }: Resource$opts) {
     super(opts);
+
+    Reflect.defineProperty(this, 'relationships', {
+      value: Array.isArray(relationships)
+        ? Object.freeze([...relationships])
+        : relationships,
+      writable: false,
+      enumerable: false,
+      configurable: false
+    });
 
     Reflect.defineProperty(this, 'only', {
       value: new FreezeableSet(normalizeOnly(only)),
@@ -27,4 +38,4 @@ class Resource extends Namespace {
 
 export default Resource;
 
-export type { Resource$opts } from './interfaces';
+export type { Resource$opts, Resource$relationships } from './interfaces';
