@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import { it, beforeAll, afterAll, describe, expect } from 'vitest';
 
 import Server from '../index';

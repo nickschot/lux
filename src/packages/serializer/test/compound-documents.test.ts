@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import { dasherize } from 'inflection';
 import { it, describe, beforeAll, afterAll, expect } from 'vitest';
 
