@@ -17,7 +17,7 @@ export default async function initialize<T extends Database>(
   opts: Database$opts
 ): Promise<T> {
   const { path, models, logger, checkMigrations } = opts;
-  const config = Reflect.get(opts.config, NODE_ENV);
+  const config = opts.config[NODE_ENV];
 
   if (!config) {
     throw new ConfigMissingError(NODE_ENV);

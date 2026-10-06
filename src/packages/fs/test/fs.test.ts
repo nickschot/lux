@@ -50,7 +50,7 @@ describe('module "fs"', () => {
     // unwrap spies of node fs methods
     spies = spiedMethods.reduce((memo, methodName) => {
       memo[methodName].restore();
-      Reflect.deleteProperty(memo, methodName);
+      delete memo[methodName];
       return memo;
     }, spies);
   });
@@ -224,7 +224,7 @@ function returnsPromiseSpec(
   getArgs: () => Array<unknown>
 ): () => Promise<void> {
   return async function () {
-    const res = Reflect.apply(fs[method], fs, getArgs());
+    const res = fs[method](...getArgs());
     expect(res).to.be.an.instanceOf(Promise);
     await res;
   };

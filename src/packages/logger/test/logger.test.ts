@@ -130,7 +130,7 @@ function hookWrite(cb: (line: string) => void) {
 
   const cbWrapper = (...args: [string]) => {
     if (isLoggerData(...args)) {
-      Reflect.apply(cb, null, args);
+      cb(...args);
     }
   };
 

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any --
  * `scopesFor` builds the dynamic scope-method machinery: each scope is a
- * variadic function forwarded to the model's scope statics via Reflect.apply,
+ * variadic function forwarded to the model's scope statics via `apply`,
  * so the argument list is genuinely untyped at this layer.
  */
 import type Query from '../index';
@@ -13,7 +13,7 @@ export default function scopesFor<T>(target: Query<T>): PropertyDescriptorMap {
         get() {
           const scope = function (...args: Array<any>) {
             const fn = Reflect.get(target.model, name);
-            const { snapshots } = Reflect.apply(fn, target.model, args) as {
+            const { snapshots } = fn.apply(target.model, args) as {
               snapshots: Array<Array<unknown>>;
             };
 

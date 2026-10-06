@@ -19,9 +19,9 @@ export default function resolveRelationships<T extends Model>(
           const Related = opts.model as new (attrs: unknown) => Model;
 
           if (Array.isArray(data)) {
-            data = data.map(item => Reflect.construct(Related, [item]));
+            data = data.map(item => new Related(item));
           } else {
-            data = Reflect.construct(Related, [data]);
+            data = new Related(data);
           }
         }
       }

@@ -64,13 +64,13 @@ export function createRunner(
           name = 'select';
         }
 
-        const method = Reflect.get(query, name);
+        const method = query[name];
 
         if (!Array.isArray(params)) {
           params = [params];
         }
 
-        return Reflect.apply(method, query, params);
+        return method.apply(query, params);
       }, model.table() as any);
 
       if (model.store.debug) {

@@ -10,7 +10,7 @@ import { ClientGeneratedIdError } from '../errors';
 export default function validateClientId(params: Record<string, unknown>) {
   const { data } = params;
 
-  if (data && typeof data === 'object' && Reflect.has(data, 'id')) {
+  if (data && typeof data === 'object' && 'id' in data) {
     throw new ClientGeneratedIdError();
   }
 

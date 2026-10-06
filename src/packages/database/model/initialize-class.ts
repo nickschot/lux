@@ -99,7 +99,7 @@ function initializeHooks({
       return {
         ...obj,
         [key]: async (instance: Model, transaction: unknown) => {
-          await Reflect.apply(value, model, [instance, transaction]);
+          await value.call(model, instance, transaction);
         }
       };
     }, {})

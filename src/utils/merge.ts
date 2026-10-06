@@ -1,10 +1,6 @@
 import entries from './entries';
 import isObject from './is-object';
 
-function hasOwnProperty(target: object, key: string): boolean {
-  return Reflect.apply(Object.prototype.hasOwnProperty, target, [key]);
-}
-
 /**
  * @private
  */
@@ -16,8 +12,8 @@ export default function merge<T extends object, U extends object>(
     Record<string, unknown>
   >(
     (result, [key, value]) => {
-      if (hasOwnProperty(result, key) && isObject(value)) {
-        const currentValue = Reflect.get(result, key);
+      if (Object.hasOwn(result, key) && isObject(value)) {
+        const currentValue = result[key];
 
         if (isObject(currentValue)) {
           return {

@@ -37,7 +37,7 @@ export default function logText(
     const params = filterParams(req.params, ...logger.filter.params);
     const statusColor = statusCode >= 200 && statusCode < 400 ? 'green' : 'red';
 
-    let colorStr: (source: string) => string = Reflect.get(chalk, statusColor);
+    let colorStr: (source: string) => string = chalk[statusColor];
 
     if (typeof colorStr === 'undefined') {
       colorStr = (str: string) => str;

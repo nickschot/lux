@@ -103,11 +103,10 @@ export default async function createManifest(
 
   await Promise.all(
     Array.from(assets).map(([key, value]) => {
-      const write = Reflect.get(writer, key);
-
-      if (write) {
-        return write(value);
-      } else if (!write && typeof value === 'string') {
+      if (Object.hasOwn(writer, key)) {
+        // Every writer key is a directory listing, so `value` is an array.
+        return writer[key as keyof typeof writer](value as Array<string>);
+      } else if (typeof value === 'string') {
         return appendFile(file, createExportStatement(key, value));
       }
 

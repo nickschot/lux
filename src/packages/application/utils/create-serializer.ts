@@ -25,13 +25,11 @@ export default function createSerializer<T extends Serializer<Model>>(
     parent = null;
   }
 
-  const instance: T = Reflect.construct(constructor, [
-    {
-      model,
-      parent,
-      namespace
-    }
-  ]);
+  const instance: T = new constructor({
+    model,
+    parent,
+    namespace
+  });
 
   Reflect.defineProperty(instance, 'parent', {
     value: parent,

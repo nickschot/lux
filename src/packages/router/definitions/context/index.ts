@@ -41,13 +41,13 @@ export function contextFor(build: Router$DefinitionBuilder<Router$Namespace>) {
           member(builder: () => void) {
             const childCtx = createDefinitionGroup('member', namespace);
 
-            Reflect.apply(builder, childCtx, []);
+            builder.call(childCtx);
           },
 
           collection(builder: () => void) {
             const childCtx = createDefinitionGroup('collection', namespace);
 
-            Reflect.apply(builder, childCtx, []);
+            builder.call(childCtx);
           }
         };
       } else {

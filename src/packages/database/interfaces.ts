@@ -38,6 +38,7 @@ export type Database$config = {
   development: Database$environment;
   test: Database$environment;
   production: Database$environment;
+  [environment: string]: Database$environment | undefined;
 };
 
 export type Database$opts = {

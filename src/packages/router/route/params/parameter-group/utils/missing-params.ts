@@ -12,6 +12,6 @@ export default function missingParams(
   params: Record<string, unknown>
 ): Array<Server$Error> {
   return Array.from(group)
-    .filter(([key, { required }]) => required && !Reflect.has(params, key))
+    .filter(([key, { required }]) => required && !(key in params))
     .map(([, { path }]) => new ParameterRequiredError(path));
 }

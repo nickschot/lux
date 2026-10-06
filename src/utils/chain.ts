@@ -14,7 +14,7 @@ export default function chain<T>(source: T): Chain<T> {
     },
 
     construct<U>(constructor: new (value: T) => U): Chain<U> {
-      return chain(Reflect.construct(constructor, [source]) as U);
+      return chain(new constructor(source));
     }
   };
 }

@@ -45,10 +45,7 @@ function normalize(manifest: Record<string, any>): Bundle {
 
           case 'Up':
           case 'Down':
-            obj.migrations.set(
-              formatKey(key),
-              Reflect.construct(Migration, [value])
-            );
+            obj.migrations.set(formatKey(key), new Migration(value));
             break;
 
           default:
@@ -100,9 +97,11 @@ function normalize(manifest: Record<string, any>): Bundle {
  * @private
  */
 export default function bundleFor(path: string): FreezeableMap<string, any> {
-  const manifest: Record<string, any> = Reflect.apply(require, null, [
+  // The app's compiled bundle, resolved at runtime — not a module import.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const manifest: Record<string, any> = require(
     joinPath(path, 'dist', 'bundle')
-  ]);
+  );
 
   return chain(manifest)
     .pipe(normalize)

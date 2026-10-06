@@ -59,8 +59,9 @@ export function setHasOne(
 ) {
   let valueToSet = value;
 
+  // Despite its type, `value` may be a plain attributes object here.
   if (value && typeof value === 'object' && !model.isInstance(value)) {
-    valueToSet = Reflect.construct(model, [valueToSet]);
+    valueToSet = new model(value as unknown as Record<string, unknown>);
   }
 
   let { currentChangeSet: changeSet } = owner;
@@ -107,6 +108,7 @@ export function setBelongsTo(
   });
 
   if (value) {
+    // Not `getPrimaryKey()`: `value` may still be a plain attributes object.
     Reflect.set(owner, foreignKey, Reflect.get(value, model.primaryKey));
   } else {
     Reflect.set(owner, foreignKey, null);
