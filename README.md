@@ -155,7 +155,7 @@ serialization, the ORM built on Knex — is their work.
 Upstream development stopped after `v1.2.3` (2018). This fork picks it up from there: it
 was renamed to Lumen to avoid confusion with the original, since it is no longer a
 drop-in continuation of it — the toolchain has been modernized (TypeScript, esbuild,
-Vitest, Node 20+) and the public API has been allowed to change. Lumen is **not** an
+Vitest, Node 22+) and the public API has been allowed to change. Lumen is **not** an
 official Postlight project, and the Postlight team provides no support for it.
 
 The original is MIT licensed, and Lumen remains MIT licensed under the same terms. The

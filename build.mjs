@@ -28,10 +28,10 @@ import esbuild from 'esbuild';
 const shared = {
   bundle: true,
   platform: 'node',
-  // Node 20 is the floor everywhere (engines, .nvmrc, CI). dist/cli.cjs is
+  // Node 22 is the floor everywhere (engines, .nvmrc, CI). dist/cli.cjs is
   // loaded straight by Node via bin/lumen and dist/index.mjs is re-bundled by the
   // esbuild app compiler, so native `??`/`?.` are fine.
-  target: 'node20',
+  target: 'node22',
   packages: 'external', // deps come from node_modules, don't inline them
   sourcemap: true,
   logLevel: 'info',
