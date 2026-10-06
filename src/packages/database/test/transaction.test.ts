@@ -33,7 +33,6 @@ describe('module "database/transaction"', () => {
 
   describe('.createStaticTransactionProxy()', () => {
     describe(`#create()`, () => {
-      let instance: Subject;
       let createSpy;
 
       beforeAll(async () => {
@@ -42,10 +41,6 @@ describe('module "database/transaction"', () => {
 
       afterAll(async () => {
         createSpy.restore();
-
-        if (instance) {
-          await instance.destroy();
-        }
       });
 
       it('calls create on the model with the trx object', async () => {

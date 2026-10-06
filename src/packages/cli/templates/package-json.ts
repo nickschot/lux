@@ -34,8 +34,8 @@ export default (name: string, driver: string): string => {
       [dbDriver.name]: dbDriver.version
     },
     devDependencies: {
-      '@eslint/js': '^9.39.5',
-      eslint: '^9.39.5',
+      '@eslint/js': '^10.0.1',
+      eslint: '^10.12.0',
       globals: '^17.13.0'
     },
     engines: {
