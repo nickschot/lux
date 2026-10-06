@@ -93,7 +93,6 @@ export default async function initialize<T extends Application>(
   });
 
   validateNamespacedSerializers(controllers, serializers);
-  validateLinksOnly(controllers, serializers);
   resolveVisibility(controllers, store.models.values());
   warnQueryParamNames(controllers, logger);
 
@@ -108,6 +107,10 @@ export default async function initialize<T extends Application>(
     controllers,
     controller: ApplicationController
   });
+
+  // Against the routes as built: only a served related endpoint lets a
+  // relationship be left without its linkage.
+  validateLinksOnly(router, serializers);
 
   const server = new Server({
     router,

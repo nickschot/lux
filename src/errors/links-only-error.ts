@@ -12,8 +12,8 @@ class LinksOnlyError extends TypeError {
     super(
       [
         'Invalid `linksOnly` relationships. Each must be in the ' +
-          "serializer's `hasMany`, and its type must have a controller to " +
-          'serve the related endpoint clients load it from:',
+          "serializer's `hasMany`, and have a related endpoint for clients " +
+          'to load it from wherever the serializer is used:',
         ...problems.sort().map(problem => `  - ${problem}`)
       ].join('\n')
     );

@@ -609,10 +609,12 @@ class PostsSerializer extends Serializer {
 - It applies wherever the Serializer is used: primary data and included
   resources alike. The relationship endpoint (§20) still returns the full
   linkage.
-- **Boot check:** each name must be in the Serializer's `hasMany`, and its
-  type must have a controller in the Serializer's namespace to serve the
-  related endpoint; otherwise the application refuses to boot, listing each
-  problem.
+- **Boot check:** each name must be in the Serializer's `hasMany`, and have a
+  related endpoint in at least one namespace that uses the Serializer for its
+  type — there, the related type's resource must route `index` and this
+  type's must route `show`. Otherwise the application refuses to boot,
+  listing each problem. (In a namespace without that endpoint the
+  relationship keeps its `data`, as above.)
 
 Nothing changes unless a Serializer sets `linksOnly`.
 

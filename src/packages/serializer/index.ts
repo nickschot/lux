@@ -451,9 +451,10 @@ class Serializer<T extends Model> {
    * (a namespace without a resource for the type), which would otherwise be
    * left with nothing to load it from.
    *
-   * Each name must be in `hasMany`, and its related type must have a
-   * controller in this Serializer's namespace to serve the related endpoint,
-   * or the application refuses to boot.
+   * Each name must be in `hasMany`, and have a related endpoint in at least
+   * one namespace that formats this type with this Serializer (the related
+   * type's resource routing `index`, this type's routing `show`), or the
+   * application refuses to boot.
    *
    * @property linksOnly
    * @type {Array}
