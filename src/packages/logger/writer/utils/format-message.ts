@@ -1,4 +1,5 @@
-import { ANSI } from '../constants';
+import { stripVTControlCharacters } from 'util';
+
 import stringify from '../../../../utils/stringify';
 import type { Logger$format } from '../../interfaces';
 
@@ -16,7 +17,7 @@ export default function formatMessage(
   if (data instanceof Error) {
     return data.stack;
   } else if (format === 'json') {
-    return stringify(data).replace(ANSI, '');
+    return stripVTControlCharacters(stringify(data));
   }
 
   return stringify(data, 2);
