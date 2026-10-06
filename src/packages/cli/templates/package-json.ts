@@ -6,7 +6,7 @@ const LUMEN_VERSION: string = version;
 // a generated app needs installed to actually connect. Pinned to the versions
 // CI validates (see test/test-app).
 const DRIVER_DEPS: Record<string, { name: string; version: string }> = {
-  sqlite3: { name: 'sqlite3', version: '^5.1.7' },
+  sqlite3: { name: 'sqlite3', version: '^6.0.1' },
   pg: { name: 'pg', version: '^8.23.1' },
   mysql2: { name: 'mysql2', version: '^3.24.5' }
 };
