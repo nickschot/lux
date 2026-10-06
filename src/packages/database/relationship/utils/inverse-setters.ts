@@ -1,6 +1,7 @@
 import type Model from '../../model';
 import type { ModelClass } from '../../interfaces';
 import type { Relationship$opts } from '../index';
+import { writeAttribute } from '../../model/utils/attribute';
 
 /**
  * @private
@@ -30,7 +31,7 @@ export function setHasManyInverse(
       changeSet.set(inverse, owner);
 
       if (inverseType === 'belongsTo') {
-        Reflect.set(record, foreignKey, primaryKey);
+        writeAttribute(record, foreignKey, primaryKey);
       }
     }
   }
@@ -66,7 +67,7 @@ export function setHasOneInverse(
       inverseValue = owner;
 
       if (inverseType === 'belongsTo') {
-        Reflect.set(value, foreignKey, inverseValue.getPrimaryKey());
+        writeAttribute(value, foreignKey, inverseValue.getPrimaryKey());
       }
     }
 

@@ -6,6 +6,7 @@ import Serializer from '../../serializer';
 
 import { getTestApp } from '../../../../test/utils/get-test-app';
 
+import { readAttribute } from '../../database';
 import type { Model, ModelClass } from '../../database';
 import type { Request, Response } from '../../server';
 
@@ -108,7 +109,7 @@ describe('module "controller"', () => {
 
         result.forEach(item => {
           assertRecord(item);
-          expect(Reflect.get(item, 'isPublic')).to.be.false;
+          expect(readAttribute(item, 'isPublic')).to.be.false;
         });
       });
 
@@ -283,9 +284,9 @@ describe('module "controller"', () => {
           'updatedAt'
         ]);
 
-        const user = await Reflect.get(result, 'user');
-        const title = Reflect.get(result, 'title');
-        const isPublic = Reflect.get(result, 'isPublic');
+        const user = await readAttribute(result, 'user');
+        const title = readAttribute(result, 'title');
+        const isPublic = readAttribute(result, 'isPublic');
 
         expect(user.id).to.equal(1);
         expect(title).to.equal('#create() Test');
@@ -323,7 +324,7 @@ describe('module "controller"', () => {
 
         result = await subject.create(request, response);
 
-        const id = Reflect.get(result, 'id');
+        const id = readAttribute(result, 'id');
         const location = response.getHeader('Location');
 
         expect(location).to.equal(`http://${HOST}/posts/${id}`);
@@ -372,7 +373,7 @@ describe('module "controller"', () => {
 
       it('returns a record if attribute(s) change', async () => {
         const item = record;
-        const id = Reflect.get(item, 'id');
+        const id = readAttribute(item, 'id');
 
         expect(item).to.have.property('isPublic', false);
 
@@ -392,8 +393,8 @@ describe('module "controller"', () => {
 
       it('returns a record if relationships(s) change', async () => {
         let item = record;
-        let user = await Reflect.get(item, 'user');
-        let comments = await Reflect.get(item, 'comments');
+        let user = await readAttribute(item, 'user');
+        let comments = await readAttribute(item, 'comments');
         const id = item.getPrimaryKey();
 
         expect(user).to.be.null;
@@ -447,7 +448,7 @@ describe('module "controller"', () => {
         // reachable through the record.
         assertRecord(result);
         expect(
-          ((await Reflect.get(result, 'user')) as Model).getPrimaryKey()
+          ((await readAttribute(result, 'user')) as Model).getPrimaryKey()
         ).to.equal(newUser.getPrimaryKey());
 
         item = await item.reload().include('user', 'comments');
@@ -538,7 +539,7 @@ describe('module "controller"', () => {
       });
 
       it('returns the number `204` if the record is destroyed', async () => {
-        const id = Reflect.get(record, 'id');
+        const id = readAttribute(record, 'id');
         const result = await subject.destroy(createRequest({ id }));
 
         expect(result).to.equal(204);

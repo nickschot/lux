@@ -47,6 +47,7 @@ class Database {
 export default Database;
 export { default as Model } from './model';
 export { default as Query } from './query';
+export { readAttribute, writeAttribute } from './model/utils/attribute';
 export { default as Migration, generateTimestamp } from './migration';
 export { default as connect } from './utils/connect';
 export { default as typeForColumn } from './utils/type-for-column';

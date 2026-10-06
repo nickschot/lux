@@ -1,5 +1,6 @@
 import type Model from '../../model';
 import type { Relationship$opts } from '../index';
+import { readAttribute, writeAttribute } from '../../model/utils/attribute';
 
 import unassociate from './unassociate';
 import validateType from './validate-type';
@@ -109,8 +110,8 @@ export function setBelongsTo(
 
   if (value) {
     // Not `getPrimaryKey()`: `value` may still be a plain attributes object.
-    Reflect.set(owner, foreignKey, Reflect.get(value, model.primaryKey));
+    writeAttribute(owner, foreignKey, readAttribute(value, model.primaryKey));
   } else {
-    Reflect.set(owner, foreignKey, null);
+    writeAttribute(owner, foreignKey, null);
   }
 }

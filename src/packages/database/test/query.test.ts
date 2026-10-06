@@ -3,6 +3,7 @@ import { it, describe, beforeAll, beforeEach, expect } from 'vitest';
 import Query from '../query';
 import Model from '../model';
 
+import { readAttribute } from '../index';
 import type { ModelClass } from '../index';
 
 import { getTestApp } from '../../../../test/utils/get-test-app';
@@ -976,7 +977,7 @@ describe('module "database/query"', () => {
             .find(post.getPrimaryKey())
             .include({ user: ['id', 'name', 'email'] });
 
-          expect(await Reflect.get(result, 'user')).to.equal(null);
+          expect(await readAttribute(result, 'user')).to.equal(null);
         } finally {
           await Action.table()
             .where({

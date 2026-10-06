@@ -19,6 +19,7 @@ export default function createResponseProxy(
           return resolve;
 
         default:
+          // eslint-disable-next-line no-restricted-properties -- proxy forwarding
           return Reflect.get(target, key);
       }
     }

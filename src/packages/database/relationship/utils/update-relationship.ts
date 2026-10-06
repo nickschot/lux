@@ -2,6 +2,7 @@ import { camelize } from 'inflection';
 
 import type Model from '../../model';
 import type { Relationship$opts } from '../interfaces';
+import { writeAttribute } from '../../model/utils/attribute';
 
 type Params = {
   record: Model;
@@ -149,7 +150,7 @@ function updateBelongsTo({ record, value, opts, trx }: Params): Array<unknown> {
     const inverseOpts = opts.model.relationshipFor(opts.inverse);
     const foreignKeyValue = value.getPrimaryKey();
 
-    Reflect.set(record, opts.foreignKey, foreignKeyValue);
+    writeAttribute(record, opts.foreignKey, foreignKeyValue);
 
     if (inverseOpts && inverseOpts.type === 'hasOne') {
       return [

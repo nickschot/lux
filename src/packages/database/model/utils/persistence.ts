@@ -9,6 +9,7 @@ import type Logger from '../../../logger';
 import type Model from '../index';
 
 import getColumns from './get-columns';
+import { writeAttribute } from './attribute';
 
 /**
  * @private
@@ -48,7 +49,7 @@ export function create(record: Model, trx: unknown): Array<any> {
  * @private
  */
 export function update(record: Model, trx: unknown): Array<any> {
-  Reflect.set(record, 'updatedAt', new Date());
+  writeAttribute(record, 'updatedAt', new Date());
 
   return [
     record.constructor

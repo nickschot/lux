@@ -1,6 +1,7 @@
 import { camelize } from 'inflection';
 
 import { Scope } from '../../controller/visibility';
+import { readAttribute } from '../../database';
 import type { Model, ModelClass } from '../../database';
 
 /**
@@ -11,9 +12,6 @@ import type { Model, ModelClass } from '../../database';
  * @private
  */
 export type Linkage = Record<string, Array<string> | string | null>;
-
-const valueOf = (record: Model, key: string): unknown =>
-  Reflect.get(record, key);
 
 const toId = (value: unknown): string | null =>
   value == null ? null : String(value);
@@ -127,7 +125,11 @@ export default async function loadLinkage(
             .where({ [foreignKey]: ids });
 
           rows.forEach(row => {
-            link(valueOf(row, foreignKey), name, valueOf(row, relatedKey));
+            link(
+              readAttribute(row, foreignKey),
+              name,
+              readAttribute(row, relatedKey)
+            );
           });
         })()
       );
@@ -143,7 +145,7 @@ export default async function loadLinkage(
           );
 
           rows.forEach(row => {
-            link(valueOf(row, foreignKey), name, row.getPrimaryKey());
+            link(readAttribute(row, foreignKey), name, row.getPrimaryKey());
           });
         })()
       );
@@ -159,7 +161,7 @@ export default async function loadLinkage(
 
         rows.forEach(row => {
           belongsTo.forEach(([name, key]) => {
-            link(row.getPrimaryKey(), name, valueOf(row, key));
+            link(row.getPrimaryKey(), name, readAttribute(row, key));
           });
         });
       })()

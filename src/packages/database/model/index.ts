@@ -26,6 +26,7 @@ import initializeClass from './initialize-class';
 import validate from './utils/validate';
 import { rethrowWriteError } from './utils/process-write-error';
 import runHooks from './utils/run-hooks';
+import { readAttribute, writeAttribute } from './utils/attribute';
 import type { Model$Hooks } from './interfaces';
 
 /**
@@ -1177,7 +1178,7 @@ class Model {
    * @private
    */
   getPrimaryKey(): number {
-    return Reflect.get(this, this.constructor.primaryKey) as number;
+    return readAttribute(this, this.constructor.primaryKey) as number;
   }
 
   /**
@@ -1221,7 +1222,7 @@ class Model {
           ? (firstRow as Record<string, unknown>)[primaryKey]
           : firstRow;
 
-      Reflect.set(instance, primaryKey, primaryKeyValue);
+      writeAttribute(instance, primaryKey, primaryKeyValue);
       instance.rawColumnData[primaryKey] = primaryKeyValue;
 
       let statements: Array<unknown> = [];

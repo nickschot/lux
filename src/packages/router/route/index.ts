@@ -64,7 +64,10 @@ class Route extends FreezeableSet<Action<unknown>> {
     const dynamicSegments = getDynamicSegments(path);
 
     if (action && controller) {
-      const handler = Reflect.get(controller, action);
+      // The action is a controller method named by the route definition.
+      const handler = (
+        controller as unknown as Record<string, Action<unknown> | undefined>
+      )[action];
 
       if (typeof handler === 'function') {
         // A related route takes the query parameters of the related type, as
