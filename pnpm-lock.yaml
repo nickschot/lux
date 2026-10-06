@@ -24,8 +24,8 @@ importers:
         specifier: ^2.0.2
         version: 2.0.2
       inflection:
-        specifier: ^1.13.4
-        version: 1.13.4
+        specifier: ^3.0.2
+        version: 3.0.2
       knex:
         specifier: ^3.3.0
         version: 3.3.0
@@ -36,9 +36,6 @@ importers:
       '@eslint/js':
         specifier: ^9.39.5
         version: 9.39.5
-      '@types/inflection':
-        specifier: 1.13.2
-        version: 1.13.2
       '@types/node':
         specifier: ^22.20.5
         version: 22.20.5
@@ -598,9 +595,6 @@ packages:
 
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
-
-  '@types/inflection@1.13.2':
-    resolution: {integrity: sha512-VxXY8dNLrxn7nDvsud77K60uD3a9RSmKfa0k/N/zvP2G55R5/8DSO5Ferz3mQdlAo8jPnpQLilCx9rABdPHSVg==}
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
@@ -1231,9 +1225,9 @@ packages:
   infer-owner@1.0.4:
     resolution: {integrity: sha512-IClj+Xz94+d7irH5qRyfJonOdfTzuDaifE6ZPWfx0N0+/ATZCbuTPq2prFl526urkQd90WyUKIh1DfBQ2hMz9A==}
 
-  inflection@1.13.4:
-    resolution: {integrity: sha512-6I/HUDeYFfuNCVS3td055BaXBwKYuzw7K3ExVMStBowKo9oOAMJIXIHvdyR3iboTCp1b+1i5DSkIZTcwIktuDw==}
-    engines: {'0': node >= 0.4.0}
+  inflection@3.0.2:
+    resolution: {integrity: sha512-+Bg3+kg+J6JUWn8J6bzFmOWkTQ6L/NHfDRSYU+EVvuKHDxUDHAXgqixHfVlzuBQaPOTac8hn43aPhMNk6rMe3g==}
+    engines: {node: '>=18.0.0'}
 
   inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
@@ -2688,8 +2682,6 @@ snapshots:
 
   '@types/estree@1.0.9': {}
 
-  '@types/inflection@1.13.2': {}
-
   '@types/json-schema@7.0.15': {}
 
   '@types/node@22.20.5':
@@ -3410,7 +3402,7 @@ snapshots:
 
   infer-owner@1.0.4: {}
 
-  inflection@1.13.4: {}
+  inflection@3.0.2: {}
 
   inflight@1.0.6:
     dependencies:
