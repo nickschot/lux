@@ -3,9 +3,9 @@ import { it, beforeAll, describe, expect } from 'vitest';
 import Database from '../index';
 import { getTestApp } from '../../../../test/utils/get-test-app';
 
-const DATABASE_DRIVER: string = Reflect.get(process.env, 'DATABASE_DRIVER');
-const DATABASE_USERNAME: string = Reflect.get(process.env, 'DATABASE_USERNAME');
-const DATABASE_PASSWORD: string = Reflect.get(process.env, 'DATABASE_PASSWORD');
+const DATABASE_DRIVER = process.env.DATABASE_DRIVER as string;
+const DATABASE_USERNAME = process.env.DATABASE_USERNAME as string;
+const DATABASE_PASSWORD = process.env.DATABASE_PASSWORD as string;
 
 const DEFAULT_CONFIG = {
   development: {

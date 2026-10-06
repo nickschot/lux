@@ -94,16 +94,12 @@ export default async function buildResults<T extends Model>({
 
             foreignKey = camelize(foreignKey, true);
 
-            Reflect.set(
-              record,
-              name,
-              relatedResults.filter(({ rawColumnData }) => {
-                const fk = rawColumnData[foreignKey];
-                const pk = Reflect.get(record, model.primaryKey);
+            record[name] = relatedResults.filter(({ rawColumnData }) => {
+              const fk = rawColumnData[foreignKey];
+              const pk = record[model.primaryKey];
 
-                return fk === pk;
-              })
-            );
+              return fk === pk;
+            });
           }
         }
       );
