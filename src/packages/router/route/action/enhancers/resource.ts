@@ -30,7 +30,7 @@ export default function resource(action: Action<unknown>): Action<unknown> {
     }
 
     const result = action(req, res);
-    let links = {};
+    let links;
     let data;
     let total;
 
@@ -74,6 +74,9 @@ export default function resource(action: Action<unknown>): Action<unknown> {
       }
 
       const include = params.include || [];
+      // Read once so TypeScript can narrow it (`getHeader` is `string | void`).
+      const location =
+        actionName === 'create' ? res.getHeader('Location') : undefined;
 
       if (paged) {
         links = createPageLinks({
@@ -84,10 +87,10 @@ export default function resource(action: Action<unknown>): Action<unknown> {
           defaultPerPage,
           total: total || 0
         });
-      } else if (actionName === 'create' && res.getHeader('Location')) {
+      } else if (location) {
         // The created resource, as `Location` says (JSON:API: they match).
         links = {
-          self: res.getHeader('Location')
+          self: location
         };
       } else {
         links = {

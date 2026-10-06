@@ -38,7 +38,7 @@ export default function validateType(
   }
 
   const valueType = typeof value;
-  let isValid = true;
+  let isValid: boolean;
 
   switch (type) {
     case 'array':

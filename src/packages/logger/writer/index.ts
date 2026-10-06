@@ -27,8 +27,6 @@ export function createWriter(format: Logger$format): Logger$Writer {
     let output: unknown;
 
     if (format === 'json') {
-      output = {};
-
       if (isMessageObject(message) && message.message) {
         output = {
           timestamp,
