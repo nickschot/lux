@@ -15,8 +15,8 @@ describe('module "logger/writer"', () => {
     });
 
     beforeEach(() => {
-      stdoutSpy.reset();
-      stderrSpy.reset();
+      stdoutSpy.resetHistory();
+      stderrSpy.resetHistory();
     });
 
     afterAll(() => {
