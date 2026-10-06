@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import { createServer } from 'http';
 import { it, describe, beforeAll, expect } from 'vitest';
 

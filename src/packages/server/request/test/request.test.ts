@@ -1,5 +1,4 @@
-import fetch from 'node-fetch';
-import { createServer } from 'http';
+import { createServer, request as httpRequest } from 'http';
 import { parse as parseURL } from 'url';
 import { it, describe, beforeAll, afterAll, expect } from 'vitest';
 
@@ -10,6 +9,20 @@ import { MalformedRequestError } from '../parser/errors';
 import { getTestApp } from '../../../../../test/utils/get-test-app';
 
 const DOMAIN = 'http://localhost:4100';
+
+// Plain `http.request`, not the global `fetch`: #getDomain() sends its own
+// `Host` header, which the Fetch spec forbids and undici silently drops.
+function send(url, { method = 'GET', headers = {}, body = undefined } = {}) {
+  return new Promise((resolve, reject) => {
+    const req = httpRequest(url, { method, headers }, res => {
+      res.resume();
+      res.on('end', resolve);
+    });
+
+    req.on('error', reject);
+    req.end(body);
+  });
+}
 
 describe('module "server/request"', () => {
   let test;
@@ -53,7 +66,7 @@ describe('module "server/request"', () => {
         });
       };
 
-      await fetch(DOMAIN + path, opts);
+      await send(DOMAIN + path, opts);
 
       expect(outcome, 'request handler was never invoked').to.be.ok;
 

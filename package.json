@@ -67,7 +67,6 @@
     "faker": "4.1.0",
     "globals": "^17.13.0",
     "lumen-framework": "link:.",
-    "node-fetch": "^2.7.0",
     "prettier": "^3.9.9",
     "release-plan": "^0.20.1",
     "shx": "^0.4.0",
