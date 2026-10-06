@@ -494,11 +494,15 @@ describe('module "database/query"', () => {
         const result = await subject.whereRaw(`"title" LIKE ?`, [`%Test%`]);
 
         expect(result).to.be.an('array');
+        // The seed titles the first post "Test …", so this is never vacuous.
+        expect(result).to.have.length.above(0);
 
         if (Array.isArray(result)) {
           result.forEach(item => {
             assertItem(item);
-            expect(item.title).to.match(/Test/);
+            // LIKE is case-insensitive on sqlite3 and mysql2 (not on pg), so
+            // a lorem word such as "testimonium" matches it too.
+            expect(item.title).to.match(/test/i);
           });
         }
       });
