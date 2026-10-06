@@ -1,5 +1,4 @@
-import { blue, cyan, magenta, yellow } from 'chalk';
-
+import chalk from '../../../utils/chalk';
 import line from '../utils/line';
 
 import type { RequestLogger$templateData } from './interfaces';
@@ -39,30 +38,30 @@ export const debugTemplate = ({
   remoteAddress
 }: RequestLogger$templateData) => `\
 ${line`
-  Processed ${cyan(`${method}`)} "${path}" from ${remoteAddress}
+  Processed ${chalk.cyan(`${method}`)} "${path}" from ${remoteAddress}
   with ${Reflect.apply(colorStr, null, [`${statusCode}`])}
   ${Reflect.apply(colorStr, null, [`${statusMessage}`])} by ${
     route
-      ? `${yellow(route.controller.constructor.name)}#${blue(route.action)}`
+      ? `${chalk.yellow(route.controller.constructor.name)}#${chalk.blue(route.action)}`
       : null
   }
 `}
 
-${magenta('Params')}
+${chalk.magenta('Params')}
 
 ${JSON.stringify(params, null, 2)}
 
-${magenta('Stats')}
+${chalk.magenta('Stats')}
 
 ${stats
   .map(stat => {
     const { type, duration, controller } = stat;
     let { name } = stat;
 
-    name = blue(name);
+    name = chalk.blue(name);
 
     if (type === 'action') {
-      name = `${yellow(controller)}#${name}`;
+      name = `${chalk.yellow(controller)}#${name}`;
     }
 
     return `${pad(startTime, endTime, duration)} ms ${name}`;
@@ -91,7 +90,7 @@ export const infoTemplate = ({
   statusMessage,
   remoteAddress
 }: RequestLogger$templateData) => line`
-Processed ${cyan(`${method}`)} "${path}" ${magenta('Params')} ${JSON.stringify(
+Processed ${chalk.cyan(`${method}`)} "${path}" ${chalk.magenta('Params')} ${JSON.stringify(
   params
 )} from ${remoteAddress} in ${(endTime - startTime).toString()} ms with ${Reflect.apply(
   colorStr,
@@ -99,7 +98,7 @@ Processed ${cyan(`${method}`)} "${path}" ${magenta('Params')} ${JSON.stringify(
   [`${statusCode}`]
 )} ${Reflect.apply(colorStr, null, [`${statusMessage}`])} by ${
   route
-    ? `${yellow(route.controller.constructor.name)}#${blue(route.action)}`
+    ? `${chalk.yellow(route.controller.constructor.name)}#${chalk.blue(route.action)}`
     : null
 }
 `;

@@ -1,7 +1,6 @@
 import { join as joinPath } from 'path';
 
-import { red, green, yellow } from 'chalk';
-
+import chalk from '../../../../utils/chalk';
 import { rmrf, exists, mkdirRec, writeFile, parsePath } from '../../../fs';
 import type { Generator, Generator$template } from '../index';
 
@@ -24,7 +23,7 @@ export default function createGenerator({
   return async ({ cwd, attrs, onConflict, ...opts }) => {
     const path = parsePath(cwd, dir, `${opts.name}.js`);
     const name = opts.name.replace(FORWARD_SLASH, '-');
-    let action = green('create');
+    let action = chalk.green('create');
 
     await mkdirRec(path.dir);
 
@@ -33,12 +32,12 @@ export default function createGenerator({
 
       if (shouldContinue && typeof shouldContinue === 'string') {
         await rmrf(joinPath(path.dir, shouldContinue));
-        log(`${red('remove')} ${joinPath(dir, shouldContinue)}`);
+        log(`${chalk.red('remove')} ${joinPath(dir, shouldContinue)}`);
       } else if (shouldContinue && typeof shouldContinue === 'boolean') {
-        action = yellow('overwrite');
+        action = chalk.yellow('overwrite');
         await rmrf(path.absolute);
       } else {
-        log(`${yellow('skip')} ${path.relative}`);
+        log(`${chalk.yellow('skip')} ${path.relative}`);
         return;
       }
     }

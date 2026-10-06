@@ -49,6 +49,17 @@ result over backward compatibility, and record anything app-visible in
   (Why the suite stayed green before: `Model`'s constructor re-defines its instance fields
   via `Object.defineProperties`, so an own `undefined` gets overwritten — whereas the
   attribute accessors that broke `model.test` live on the *prototype* and stay shadowed.)
+- **Never default-import an ESM-only package in framework code.** The app compiler
+  re-bundles `dist/index.mjs` to CJS with packages external; importing from an `.mjs`,
+  esbuild gives a default import Node's CommonJS semantics (the whole `require()`
+  result), and `require()` of an ES module returns its *namespace* — so the default
+  resolves to `{ default, … }`. The suite stays green (test env disables logging) while
+  apps crash: chalk 6 shipped `chalk_default.yellow is not a function` until caught by
+  hand. `dist/cli.cjs` is unaffected (bundled from TS, which honours `__esModule`).
+  Use a **named** export — chalk goes through `src/utils/chalk.ts` (`new Chalk()`), and
+  an ESLint `no-restricted-imports` rule bans `chalk`'s default.
+  `compiler/test/framework-bundle.test.ts` re-bundles `dist/` like the compiler and
+  logs through `Logger` to catch a regression.
 - **Cross-suite DB pollution.** Mocha's alphabetical file order was load-bearing:
   `serializer.test` leaked 32 `posts` rows (its `createPost` registered every *related*
   record for teardown but not the post), which broke `query.test`'s absolute counts against

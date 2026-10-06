@@ -1,5 +1,4 @@
-import { dim } from 'chalk';
-
+import chalk from '../../../utils/chalk';
 import template from '../../template';
 
 /**
@@ -19,11 +18,11 @@ export const NAMESPACED_RESOURCE_MESSAGE = template`
     Example:
 
     export default function routes() {
-      ${dim('// this resource will be accessible at /users')}
+      ${chalk.dim('// this resource will be accessible at /users')}
       this.resource('users');
 
       this.namespace('admin', function () {
-        ${dim('// this resource will be accessible at /admin/users')}
+        ${chalk.dim('// this resource will be accessible at /admin/users')}
         this.resource('users');
       });
     }

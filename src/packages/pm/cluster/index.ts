@@ -9,8 +9,7 @@ import os from 'os';
 import cluster, { type Worker } from 'cluster';
 import { join as joinPath } from 'path';
 
-import { red, green } from 'chalk';
-
+import chalk from '../../../utils/chalk';
 import { NODE_ENV } from '../../../constants';
 import { line } from '../../logger';
 import omit from '../../../utils/omit';
@@ -80,7 +79,7 @@ class Cluster extends EventEmitter {
 
     process.on('update', (changed: Array<{ name: string }>) => {
       changed.forEach(({ name: filename }) => {
-        logger.info(`${green('update')} ${filename}`);
+        logger.info(`${chalk.green('update')} ${filename}`);
       });
 
       this.reload();
@@ -99,7 +98,7 @@ class Cluster extends EventEmitter {
 
         const timeout = setTimeout(() => {
           this.logger.info(line`
-            Removing worker process: ${red(`${worker.process.pid}`)}
+            Removing worker process: ${chalk.red(`${worker.process.pid}`)}
           `);
 
           clearTimeout(timeout);
@@ -122,7 +121,7 @@ class Cluster extends EventEmitter {
           }
 
           this.logger.info(line`
-            Removing worker process: ${red(`${worker.process.pid}`)}
+            Removing worker process: ${chalk.red(`${worker.process.pid}`)}
           `);
 
           clearTimeout(timeout);
@@ -147,7 +146,7 @@ class Cluster extends EventEmitter {
           switch (message) {
             case 'ready':
               this.logger.info(line`
-                Adding worker process: ${green(`${worker.process.pid}`)}
+                Adding worker process: ${chalk.green(`${worker.process.pid}`)}
               `);
 
               this.workers.add(worker);
@@ -175,11 +174,11 @@ class Cluster extends EventEmitter {
 
           if (typeof code === 'number') {
             this.logger.info(line`
-              Worker process: ${red(`${pid}`)} exited with code ${code}
+              Worker process: ${chalk.red(`${pid}`)} exited with code ${code}
             `);
           }
 
-          this.logger.info(`Removing worker process: ${red(`${pid}`)}`);
+          this.logger.info(`Removing worker process: ${chalk.red(`${pid}`)}`);
 
           clearTimeout(timeout);
 

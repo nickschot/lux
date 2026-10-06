@@ -51,6 +51,22 @@ export default [
       globals: {
         ...globals.node
       }
+    },
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'chalk',
+              importNames: ['default'],
+              message:
+                "Use src/utils/chalk: chalk's default export breaks once " +
+                'the app compiler re-bundles dist/index.mjs to CommonJS.'
+            }
+          ]
+        }
+      ]
     }
   },
 

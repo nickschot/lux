@@ -1,8 +1,8 @@
 import { EOL } from 'os';
 
-import { red, green } from 'chalk';
 import { pluralize, singularize } from 'inflection';
 
+import chalk from '../../../utils/chalk';
 import { CWD } from '../../../constants';
 import { rmrf, exists, readdir, readFile, writeFile } from '../../fs';
 
@@ -55,7 +55,7 @@ export async function destroyType(type: string, name: string) {
   if (await exists(`${CWD}/${path}`)) {
     await rmrf(`${CWD}/${path}`);
 
-    process.stdout.write(`${red('remove')} ${path}`);
+    process.stdout.write(`${chalk.red('remove')} ${path}`);
     process.stdout.write(EOL);
   }
 }
@@ -86,7 +86,7 @@ export async function destroy({ type, name }: { type: string; name: string }) {
 
     await writeFile(`${CWD}/app/routes.js`, routes);
 
-    process.stdout.write(`${green('update')} app/routes.js`);
+    process.stdout.write(`${chalk.green('update')} app/routes.js`);
     process.stdout.write(EOL);
   } else if (type === 'model') {
     await Promise.all([
