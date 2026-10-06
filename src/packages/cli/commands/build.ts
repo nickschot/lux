@@ -1,13 +1,9 @@
-import Ora from 'ora';
-
+import createSpinner from '../utils/create-spinner';
 import { CWD, NODE_ENV } from '../../../constants';
 import { compile } from '../../compiler';
 
 export async function build(useStrict: boolean = false): Promise<void> {
-  const spinner = new Ora({
-    text: 'Building your application...',
-    spinner: 'dots'
-  });
+  const spinner = createSpinner('Building your application...');
 
   spinner.start();
 
