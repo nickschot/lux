@@ -54,7 +54,7 @@ describe('module "router/route/action"', () => {
         req.calls.push(name);
       };
 
-      Reflect.defineProperty(fn, 'name', { value: name });
+      Object.defineProperty(fn, 'name', { value: name });
       return fn;
     };
     const shared = hook('shared');

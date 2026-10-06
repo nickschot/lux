@@ -55,7 +55,7 @@ export default async function initialize<T extends Application>(
   // Lets a Serializer resolve related resources' Serializers in its own
   // namespace (`Serializer#serializerFor()`), as Controllers do.
   serializers.forEach((serializer: Serializer<Model>) => {
-    Reflect.defineProperty(serializer, 'serializers', {
+    Object.defineProperty(serializer, 'serializers', {
       value: serializers,
       writable: false,
       enumerable: false,
@@ -64,7 +64,7 @@ export default async function initialize<T extends Application>(
   });
 
   models.forEach((model: ModelClass) => {
-    Reflect.defineProperty(model, 'serializer', {
+    Object.defineProperty(model, 'serializer', {
       value: closestChild(serializers, model.resourceName),
       writable: false,
       enumerable: false,
@@ -84,7 +84,7 @@ export default async function initialize<T extends Application>(
   );
 
   controllers.forEach((controller: Controller) => {
-    Reflect.defineProperty(controller, 'controllers', {
+    Object.defineProperty(controller, 'controllers', {
       value: controllers,
       writable: true,
       enumerable: false,

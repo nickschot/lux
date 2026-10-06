@@ -718,7 +718,7 @@ class Model {
     Object.assign(this, props);
 
     if (initialize) {
-      Reflect.defineProperty(this, 'initialized', {
+      Object.defineProperty(this, 'initialized', {
         value: true,
         writable: false,
         enumerable: false,
@@ -1222,7 +1222,7 @@ class Model {
           : firstRow;
 
       Reflect.set(instance, primaryKey, primaryKeyValue);
-      Reflect.set(instance.rawColumnData, primaryKey, primaryKeyValue);
+      instance.rawColumnData[primaryKey] = primaryKeyValue;
 
       let statements: Array<unknown> = [];
       const associations = Object.keys(props).filter(key =>
@@ -1238,7 +1238,7 @@ class Model {
 
       await Promise.all(statements);
 
-      Reflect.defineProperty(instance, 'initialized', {
+      Object.defineProperty(instance, 'initialized', {
         value: true,
         writable: false,
         enumerable: false,
@@ -1478,14 +1478,14 @@ class Model {
       const getTableName = compose(pluralize, underscore);
       const tableName = getTableName(this.name);
 
-      Reflect.defineProperty(this, 'tableName', {
+      Object.defineProperty(this, 'tableName', {
         value: tableName,
         writable: false,
         enumerable: true,
         configurable: false
       });
 
-      Reflect.defineProperty(this.prototype, 'tableName', {
+      Object.defineProperty(this.prototype, 'tableName', {
         value: tableName,
         writable: false,
         enumerable: false,

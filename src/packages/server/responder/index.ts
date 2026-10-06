@@ -12,7 +12,7 @@ export function createResponder(req: Request, res: Response) {
     const normalized = normalize(data);
 
     if (normalized.statusCode) {
-      Reflect.set(res, 'statusCode', normalized.statusCode);
+      res.statusCode = normalized.statusCode;
     }
 
     if (res.statusCode !== 204 && !hasContentType(res)) {

@@ -38,7 +38,7 @@ class ParameterGroup extends FreezeableMap<string, ParameterLike> {
   }
 
   validate<V>(params: V): V {
-    const validated = {};
+    const validated: Record<string, unknown> = {};
 
     if (isNull(params)) {
       return params;
@@ -61,7 +61,7 @@ class ParameterGroup extends FreezeableMap<string, ParameterLike> {
         if (match instanceof IgnoredParameter) {
           return;
         } else if (match) {
-          Reflect.set(validated, key, match.validate(value));
+          validated[key] = match.validate(value);
         } else if (!sanitize) {
           throw new InvalidParameterError(`${path}${key}`);
         }

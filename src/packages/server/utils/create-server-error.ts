@@ -23,7 +23,7 @@ export default function createServerError<T extends object>(
     }
   };
 
-  Reflect.defineProperty(ServerError, 'name', {
+  Object.defineProperty(ServerError, 'name', {
     value: Target.name
   });
 

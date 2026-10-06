@@ -17,6 +17,9 @@ import formatKey from './format-key';
 const SUFFIX_PATTERN = /^.+(Controller|Down|Serializer|Up)/;
 
 type Bundle = {
+  application?: any;
+  routes?: any;
+  seed?: any;
   config: Record<string, any>;
   controllers: FreezeableMap<string, any>;
   migrations: FreezeableMap<string, any>;
@@ -56,23 +59,24 @@ function normalize(manifest: Record<string, any>): Bundle {
           case 'Application':
           case 'routes':
           case 'seed':
-            Reflect.set(obj, formatKey(key), value);
+            // `formatKey` maps these to `application`, `routes` and `seed`.
+            obj[formatKey(key) as 'application' | 'routes' | 'seed'] = value;
             break;
 
           case 'config':
-            Reflect.set(obj, 'config', {
+            obj.config = {
               ...merge(createDefaultConfig(), {
                 ...obj.config,
                 ...value
               })
-            });
+            };
             break;
 
           case 'database':
-            Reflect.set(obj, 'config', {
+            obj.config = {
               ...obj.config,
               database: value
-            });
+            };
             break;
 
           default:

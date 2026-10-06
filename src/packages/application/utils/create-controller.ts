@@ -67,7 +67,7 @@ export default function createController<T extends Controller>(
     ];
   }
 
-  Reflect.defineProperty(instance, 'parent', {
+  Object.defineProperty(instance, 'parent', {
     value: parent,
     writable: false,
     enumerable: true,

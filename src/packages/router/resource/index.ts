@@ -16,7 +16,7 @@ class Resource extends Namespace {
   constructor({ only, relationships = true, ...opts }: Resource$opts) {
     super(opts);
 
-    Reflect.defineProperty(this, 'relationships', {
+    Object.defineProperty(this, 'relationships', {
       value: Array.isArray(relationships)
         ? Object.freeze([...relationships])
         : relationships,
@@ -25,7 +25,7 @@ class Resource extends Namespace {
       configurable: false
     });
 
-    Reflect.defineProperty(this, 'only', {
+    Object.defineProperty(this, 'only', {
       value: new FreezeableSet(normalizeOnly(only)),
       writable: false,
       enumerable: false,

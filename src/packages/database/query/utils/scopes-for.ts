@@ -27,7 +27,7 @@ export default function scopesFor<T>(target: Query<T>): PropertyDescriptorMap {
             return target;
           };
 
-          Reflect.defineProperty(scope, 'name', {
+          Object.defineProperty(scope, 'name', {
             value: name,
             writable: false,
             enumerable: false,

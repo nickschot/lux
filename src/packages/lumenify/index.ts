@@ -26,7 +26,7 @@ export default function lumenify(
     });
   };
 
-  Reflect.defineProperty(result, 'name', {
+  Object.defineProperty(result, 'name', {
     value: middleware.name
   });
 
