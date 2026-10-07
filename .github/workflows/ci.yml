@@ -43,6 +43,36 @@ jobs:
       # (e.g. TS2742 "cannot be named") that `tsc --noEmit` doesn't.
       - run: pnpm build:types
 
+  # The API reference (TypeDoc, configured in typedoc.json) must build without
+  # warnings: broken {@link}s, public signatures that reference unexported
+  # types, unknown tags. Plus a link check over the hand-written Markdown.
+  docs:
+    name: docs (API reference / links)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm docs:api
+
+      # Offline: relative links and anchors only. External URLs go stale for
+      # reasons outside this repo and would make the job flaky.
+      - name: Check Markdown links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --offline --no-progress --include-fragments
+            README.md UPGRADING.md CHANGELOG.md RELEASE.md
+            'docs/**/*.md' examples/social-network/README.md
+          fail: true
+
   test:
     name: test (node ${{ matrix.node }} / ${{ matrix.driver }})
     runs-on: ubuntu-latest

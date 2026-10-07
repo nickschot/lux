@@ -11,6 +11,7 @@ export default [
     ignores: [
       'build/',
       'dist/',
+      'docs/api/',
       'coverage/',
       'examples/',
       'test/test-app/dist/',

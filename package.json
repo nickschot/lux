@@ -40,8 +40,9 @@
     "build": "node build.mjs",
     "build:debugger": "node test/utils/debugger/build.mjs",
     "build:types": "tsc -p tsconfig.build.json",
-    "clean": "shx rm -rf coverage dist test/test-app/dist",
+    "clean": "shx rm -rf coverage dist docs/api test/test-app/dist",
     "debugger": "node --enable-source-maps test/utils/debugger/dist/debug.js",
+    "docs:api": "typedoc",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
@@ -71,6 +72,7 @@
     "release-plan": "^0.20.1",
     "shx": "^0.4.0",
     "sinon": "22.1.0",
+    "typedoc": "^0.28.20",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.1",
     "vitest": "^5.0.3"

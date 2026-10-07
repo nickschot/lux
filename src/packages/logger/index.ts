@@ -154,7 +154,6 @@ class Logger {
    * // => [6/4/16 5:46:53 PM] Hello World!
    * ```
    *
-   * @method debug
    * @param {any} data - The data you wish to log.
    * @return {void}
    * @public
@@ -169,7 +168,6 @@ class Logger {
    * // => [6/4/16 5:46:53 PM] Hello World!
    * ```
    *
-   * @method info
    * @param {any} data - The data you wish to log.
    * @return {void}
    * @public
@@ -184,7 +182,6 @@ class Logger {
    * // => [6/4/16 5:46:53 PM] Good Bye World!
    * ```
    *
-   * @method warn
    * @param {any} data - The data you wish to log.
    * @return {void}
    * @public
@@ -199,7 +196,6 @@ class Logger {
    * // => [6/4/16 5:46:53 PM] HELP!
    * ```
    *
-   * @method error
    * @param {any} data - The data you wish to log.
    * @return {void}
    * @public
@@ -209,7 +205,6 @@ class Logger {
   /**
    * Internal method used for logging requests.
    *
-   * @method request
    * @param {Request} request
    * @param {Response} response
    * @param {Object} opts - An options object.
@@ -324,7 +319,6 @@ class Logger {
   }
 
   /**
-   * @method getTimestamp
    * @return {String} The current time as an ISO8601 string.
    * @private
    */

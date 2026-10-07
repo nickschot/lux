@@ -10,7 +10,7 @@ import type { Model$Hooks } from './model/interfaces';
 import type { Relationship$opts } from './relationship/interfaces';
 import type { Transaction$ResultProxy } from './transaction/interfaces';
 
-type Database$pool =
+export type Database$pool =
   | number
   | {
       min: number;

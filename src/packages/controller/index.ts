@@ -667,7 +667,6 @@ class Controller {
    * @property visibility
    * @type {Object}
    * @default {}
-   * @static
    * @public
    */
   static visibility: Visibility = {};
@@ -684,7 +683,6 @@ class Controller {
    * }
    * ```
    *
-   * @method visible
    * @param {Query} query - A query of any type.
    * @param {Request} request - The request object.
    * @return {Query} The same query, narrowed.
@@ -702,7 +700,6 @@ class Controller {
    * Always this Controller's namespace — not its Serializer's, which is the
    * root one when the namespace has no Serializer for this resource.
    *
-   * @method serializerFor
    * @private
    */
   serializerFor(model: ModelClass): Serializer<Model> {
@@ -824,9 +821,7 @@ class Controller {
    * information, see the [fetching resources](https://goo.gl/q7FVgZ) section of
    * the JSON API specification.
    *
-   * @method index
-   * @param {Request} request - The request object.
-   * @param {Response} response - The response object.
+   * @param {Request} req - The request object.
    * @return {Promise} Resolves with an array of Model instances.
    * @public
    */
@@ -839,9 +834,7 @@ class Controller {
    * query parameters. For more information, see the [fetching resources](
    * https://goo.gl/q7FVgZ) section of the JSON API specification.
    *
-   * @method show
-   * @param {Request} request - The request object.
-   * @param {Response} response - The response object.
+   * @param {Request} req - The request object.
    * @return {Promise} Resolves with a Model instance with the id equal to the
    * id url parameter.
    * @public
@@ -864,9 +857,7 @@ class Controller {
    * and a resource the request may not see is `404 Not Found`. Hooks see the
    * action `showRelationship` (`request.route.type` is `relationship`).
    *
-   * @method showRelationship
-   * @param {Request} request - The request object.
-   * @param {Response} response - The response object.
+   * @param {Request} req - The request object.
    * @return {Promise} Resolves with the Model instance with the id equal to
    * the id url parameter.
    * @public
@@ -898,9 +889,7 @@ class Controller {
    * `showRelationship()` first, so one the request may not see is
    * `404 Not Found`.
    *
-   * @method showRelated
-   * @param {Request} request - The request object.
-   * @param {Response} response - The response object.
+   * @param {Request} req - The request object.
    * @return {Query} The related Model instances (to-many) or instance (to-one,
    * resolving to `undefined` when there is none).
    * @public
@@ -963,9 +952,8 @@ class Controller {
    * represents. For more information, see the [creating resources](
    * https://goo.gl/4Obc9t) section of the JSON API specification.
    *
-   * @method create
-   * @param {Request} request - The request object.
-   * @param {Response} response - The response object.
+   * @param {Request} req - The request object.
+   * @param {Response} res - The response object.
    * @return {Promise} Resolves with the newly created Model instance.
    * @public
    */
@@ -1005,9 +993,7 @@ class Controller {
    * represents. For more information, see the [updating resources](
    * https://goo.gl/o2ZdOR)section of the JSON API specification.
    *
-   * @method update
-   * @param {Request} request - The request object.
-   * @param {Response} response - The response object.
+   * @param {Request} req - The request object.
    * @return {Promise} Resolves with the updated Model if changes occur.
    * Resolves with the number `204` if no changes occur.
    * @public
@@ -1048,9 +1034,7 @@ class Controller {
    * For more information, see the [deleting resources](https://goo.gl/nUZn8t)
    * section of the JSON API specification.
    *
-   * @method destroy
-   * @param {Request} request - The request object.
-   * @param {Response} response - The response object.
+   * @param {Request} req - The request object.
    * @return {Promise} Resolves with the number `204`.
    * @public
    */
@@ -1063,9 +1047,6 @@ class Controller {
   /**
    * Respond to HEAD or OPTIONS requests.
    *
-   * @method preflight
-   * @param {Request} request - The request object.
-   * @param {Response} response - The response object.
    * @return {Promise} Resolves with the number `204`.
    * @public
    */

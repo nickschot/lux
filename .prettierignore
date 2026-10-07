@@ -1,6 +1,7 @@
 # generated / vendored
 build/
 dist/
+docs/api/
 coverage/
 .nyc_output/
 node_modules/

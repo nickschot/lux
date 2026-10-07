@@ -179,7 +179,6 @@ class Model {
    * @property hasOne
    * @type {Object}
    * @default {}
-   * @static
    * @public
    */
   declare static hasOne: Record<string, unknown>;
@@ -269,7 +268,6 @@ class Model {
    * @property hasMany
    * @type {Object}
    * @default {}
-   * @static
    * @public
    */
   declare static hasMany: Record<string, unknown>;
@@ -336,7 +334,6 @@ class Model {
    * @property belongsTo
    * @type {Object}
    * @default {}
-   * @static
    * @public
    */
   declare static belongsTo: Record<string, unknown>;
@@ -377,7 +374,6 @@ class Model {
    * @property validates
    * @type {Object}
    * @default {}
-   * @static
    * @public
    */
   declare static validates: Record<string, unknown>;
@@ -465,7 +461,6 @@ class Model {
    * @property scopes
    * @type {Object}
    * @default {}
-   * @static
    * @public
    */
   declare static scopes: Record<string, unknown>;
@@ -563,7 +558,6 @@ class Model {
    * @property hooks
    * @type {Object}
    * @default {}
-   * @static
    * @public
    */
   declare static hooks: Model$Hooks;
@@ -573,7 +567,6 @@ class Model {
    *
    * @property logger
    * @type {Logger}
-   * @static
    * @public
    */
   declare static logger: Logger;
@@ -583,7 +576,6 @@ class Model {
    *
    * @property tableName
    * @type {String}
-   * @static
    * @public
    */
   declare static tableName: string;
@@ -593,7 +585,6 @@ class Model {
    *
    * @property modelName
    * @type {String}
-   * @static
    * @public
    */
   declare static modelName: string;
@@ -603,7 +594,6 @@ class Model {
    *
    * @property resourceName
    * @type {String}
-   * @static
    * @public
    */
   declare static resourceName: string;
@@ -614,7 +604,6 @@ class Model {
    * @property primaryKey
    * @type {String}
    * @default 'id'
-   * @static
    * @public
    */
   static primaryKey: string = 'id';
@@ -622,7 +611,6 @@ class Model {
   /**
    * @property table
    * @type {Function}
-   * @static
    * @private
    */
   declare static table: () => unknown;
@@ -630,7 +618,6 @@ class Model {
   /**
    * @property store
    * @type {Database}
-   * @static
    * @private
    */
   declare static store: Database;
@@ -638,7 +625,6 @@ class Model {
   /**
    * @property initialized
    * @type {Boolean}
-   * @static
    * @private
    */
   declare static initialized: boolean;
@@ -646,7 +632,6 @@ class Model {
   /**
    * @property serializer
    * @type {Serializer}
-   * @static
    * @private
    */
   declare static serializer: Serializer<Model>;
@@ -654,7 +639,6 @@ class Model {
   /**
    * @property attributes
    * @type {Object}
-   * @static
    * @private
    */
   declare static attributes: Record<string, unknown>;
@@ -662,7 +646,6 @@ class Model {
   /**
    * @property attributeNames
    * @type {Array}
-   * @static
    * @private
    */
   declare static attributeNames: Array<string>;
@@ -670,7 +653,6 @@ class Model {
   /**
    * @property relationships
    * @type {Object}
-   * @static
    * @private
    */
   declare static relationships: Record<string, Relationship$opts>;
@@ -678,7 +660,6 @@ class Model {
   /**
    * @property relationshipNames
    * @type {Array}
-   * @static
    * @private
    */
   declare static relationshipNames: Array<string>;
@@ -935,8 +916,7 @@ class Model {
    * });
    * ```
    *
-   * @method transacting
-   * @param {Transaction} transaction - A transaction object to forward to save,
+   * @param {Transaction} trx - A transaction object to forward to save,
    * update, or destroy method calls.
    * @return {Model} - Returns a proxied version of `this` that delagates the
    * transaction param to subsquent save, update, or destroy method calls.
@@ -969,7 +949,6 @@ class Model {
    * });
    * ```
    *
-   * @method transaction
    * @param {Function} fn - The function used for executing the tranasction.
    * This function is called with a new transaction object as it's only argument
    * and is expected to return a promise.
@@ -1000,7 +979,6 @@ class Model {
    * // => 'How to Save a Lumen Model' false
    * ```
    *
-   * @method save
    * @return {Promise} Resolves with `this`.
    * @public
    */
@@ -1026,8 +1004,7 @@ class Model {
    * // => 'How to Update a Lumen Model' true false
    * ```
    *
-   * @method update
-   * @param {Object} properties - An object containing key, value pairs of the
+   * @param {Object} props - An object containing key, value pairs of the
    * attributes and/or relationships you would like to assign to the instance.
    * @return {Promise} Resolves with `this`.
    * @public
@@ -1104,7 +1081,6 @@ class Model {
   /**
    * Permanently delete the instance from the database.
    *
-   * @method destroy
    * @return {Promise} Resolves with `this`.
    * @public
    */
@@ -1131,7 +1107,6 @@ class Model {
   /**
    * Reload the record from the database.
    *
-   * @method reload
    * @return {Promise} Resolves with `this`.
    * @public
    */
@@ -1147,7 +1122,6 @@ class Model {
    * Rollback attributes and relationships to the last known persisted set of
    * values.
    *
-   * @method rollback
    * @return {Model} Returns `this`.
    * @public
    */
@@ -1162,7 +1136,6 @@ class Model {
   }
 
   /**
-   * @method getAttributes
    * @param {String} [...keys] - The keys of the properties to return.
    * @return {Object} An object containing keys that were passed in as agruments
    * and their associated values.
@@ -1173,7 +1146,6 @@ class Model {
   }
 
   /**
-   * @method getPrimaryKey
    * @return {Number} The value of the primary key for the instance.
    * @private
    */
@@ -1184,11 +1156,9 @@ class Model {
   /**
    * Create and persist a new instance of the model.
    *
-   * @method create
-   * @param {Object} properties - An object containing key, value pairs of the
+   * @param {Object} props - An object containing key, value pairs of the
    * attributes and/or relationships you would like to assign to the instance.
    * @return {Promise} Resolves with the newly created model.
-   * @static
    * @public
    */
   static create(
@@ -1286,12 +1256,10 @@ class Model {
    * });
    * ```
    *
-   * @method transacting
-   * @param {Transaction} transaction - A transaction object to forward to
+   * @param {Transaction} trx - A transaction object to forward to
    * create method calls.
    * @return {Model} - Returns a proxied version of `this` that delagates the
    * transaction param to subsquent create method calls.
-   * @static
    * @public
    */
   static transacting(trx: unknown): ModelClass {
@@ -1318,12 +1286,10 @@ class Model {
    * });
    * ```
    *
-   * @method transaction
    * @param {Function} fn - The function used for executing the tranasction.
    * This function is called with a new transaction object as it's only argument
    * and is expected to return a promise.
    * @return {Promise} Resolves with the resolved value of the fn param.
-   * @static
    * @public
    */
   static transaction<T>(
@@ -1431,10 +1397,8 @@ class Model {
   /**
    * Check if a model has a scope.
    *
-   * @method hasScope
    * @param {String} name - The name of the scope to look for.
    * @return {Boolean}
-   * @static
    * @public
    */
   static hasScope(name: string): boolean {
@@ -1444,10 +1408,8 @@ class Model {
   /**
    * Check if a value is an instance of a model.
    *
-   * @method isInstance
    * @param {any} value - The value in question.
    * @return {Boolean}
-   * @static
    * @public
    */
   static isInstance(value: unknown): boolean {
@@ -1458,13 +1420,11 @@ class Model {
    * Bind the model's connection to the database and get inferred data from the
    * schema upon application boot.
    *
-   * @method initialize
    * @param {Database} store - A reference of the applications database
    * instance.
    * @param {Table} table - A function that returns a knex query builder bound
    * to the model's table name.
    * @return {Promise} Resolves with the model class.
-   * @static
    * @private
    */
   static initialize(
@@ -1502,11 +1462,9 @@ class Model {
   }
 
   /**
-   * @method columnFor
    * @param {String} key - The respective attribute name of the column.
    * @return {void | Object} An object containing metadata about the column if a
    * match is found.
-   * @static
    * @private
    */
   static columnFor(key: string): Database$column | undefined {
@@ -1514,11 +1472,9 @@ class Model {
   }
 
   /**
-   * @method columnNameFor
    * @param {String} key - The respective attribute name of the column.
    * @return {void | String} The name of the column in the database if a match
    * is found.
-   * @static
    * @private
    */
   static columnNameFor(key: string): string | undefined {
@@ -1528,11 +1484,9 @@ class Model {
   }
 
   /**
-   * @method relationshipFor
    * @param {String} key - The name of the relationship to match against.
    * @return {void | Object} An object containing relationship metadata if a
    * match is found.
-   * @static
    * @private
    */
   static relationshipFor(key: string): Relationship$opts | undefined {
