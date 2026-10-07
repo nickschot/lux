@@ -77,10 +77,14 @@ curl -X POST localhost:4000/posts -H 'Content-Type: application/vnd.api+json' -d
 
 `lumen new --database postgres` (or `mysql`) starts a project on another
 database; `lumen --help` and `lumen <command> --help` list every command and
-option.
+option. The [getting-started guide](docs/guides/getting-started.md) walks
+through this step by step, with related resources and the requests the API
+answers.
 
 ## Documentation
 
+- [Guides](docs/guides/) — start with
+  [Getting started](docs/guides/getting-started.md).
 - [UPGRADING.md](UPGRADING.md) — what changes for apps moving to Lumen 4.0,
   and how to adapt. Until the guides land, it is also the most complete
   description of routing, visibility rules, compound documents, relationship
@@ -88,8 +92,11 @@ option.
 - [CHANGELOG.md](CHANGELOG.md) — release notes.
 - [examples/social-network](examples/social-network/) — an example app that
   uses most of the framework, with a map of where each feature lives.
+- API reference — every exported class and type, generated from the source:
+  `pnpm docs:api` in a checkout of this repository, then open
+  `docs/api/index.html`.
 
-User guides and a generated API reference are in progress.
+More guides are in progress.
 
 ## Contributing
 
