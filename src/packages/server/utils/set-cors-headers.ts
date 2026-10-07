@@ -1,9 +1,9 @@
 import type { Response } from '../index';
-import type { Server$cors } from '../interfaces';
+import type { CorsConfig } from '../interfaces';
 
 export default function setCORSHeaders(
   res: Response,
-  { origin, methods, headers, enabled }: Server$cors
+  { origin, methods, headers, enabled }: CorsConfig
 ) {
   if (!enabled) {
     return;

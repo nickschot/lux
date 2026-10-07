@@ -19,7 +19,7 @@ import type {
 
 import type {
   Serializer$fields,
-  Serializer$opts,
+  SerializerOptions,
   Serializer$routed
 } from './interfaces';
 import { Scope } from '../controller/visibility';
@@ -503,7 +503,7 @@ class Serializer<T extends Model> {
    */
   declare serializers?: Bundle$Namespace<Serializer<Model>>;
 
-  constructor({ model, parent, namespace }: Serializer$opts<T>) {
+  constructor({ model, parent, namespace }: SerializerOptions<T>) {
     Object.assign(this, {
       model,
       parent,
@@ -1200,3 +1200,5 @@ function linkedNames(
 }
 
 export default Serializer;
+
+export type { SerializerOptions } from './interfaces';

@@ -1,11 +1,11 @@
 import type Controller from '../../../controller';
 import type { Route$type } from '../index';
-import type { Request$method } from '../../../server';
+import type { RequestMethod } from '../../../server';
 import type { Lumen$Collection } from '../../../../interfaces';
 
 export type Params$opts = {
   type: Route$type;
-  method: Request$method;
+  method: RequestMethod;
   controller: Controller;
   dynamicSegments: Array<string>;
 };

@@ -4,7 +4,7 @@ import chalk from '../../../utils/chalk';
 import { WARN, ERROR } from '../constants';
 import errorName from '../utils/error-name';
 import omit from '../../../utils/omit';
-import type { Logger$format } from '../interfaces';
+import type { LogFormat } from '../interfaces';
 
 import { STDOUT, STDERR } from './constants';
 import formatMessage from './utils/format-message';
@@ -33,7 +33,7 @@ function shortRequestId(context?: Record<string, unknown>): string {
  * @private
  */
 export function createWriter(
-  format: Logger$format,
+  format: LogFormat,
   { timestamps = true }: { timestamps?: boolean } = {}
 ): Logger$Writer {
   return function write(data) {

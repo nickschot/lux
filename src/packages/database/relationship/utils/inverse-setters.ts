@@ -1,6 +1,6 @@
 import type Model from '../../model';
 import type { ModelClass } from '../../interfaces';
-import type { Relationship$opts } from '../index';
+import type { RelationshipOptions } from '../index';
 import { writeAttribute } from '../../model/utils/attribute';
 
 /**
@@ -13,7 +13,7 @@ export function setHasManyInverse(
     inverse,
     foreignKey,
     inverseModel
-  }: Relationship$opts & {
+  }: RelationshipOptions & {
     inverseModel: ModelClass;
   }
 ) {
@@ -47,7 +47,7 @@ export function setHasOneInverse(
     inverse,
     foreignKey,
     inverseModel
-  }: Relationship$opts & {
+  }: RelationshipOptions & {
     inverseModel: ModelClass;
   }
 ) {

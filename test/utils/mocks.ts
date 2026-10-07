@@ -1,7 +1,7 @@
 import K from '../../src/utils/k';
 import type {
   Request,
-  Request$method,
+  RequestMethod,
   Response
 } from '../../src/packages/server';
 
@@ -48,7 +48,7 @@ type RequestBuilderOptions = {
   path: string;
   route?: unknown;
   params?: Record<string, unknown>;
-  method?: Request$method;
+  method?: RequestMethod;
 };
 
 export const createRequestBuilder =

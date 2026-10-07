@@ -19,14 +19,14 @@ import type Controller from '../controller';
 import type Serializer from '../serializer';
 import type { Model, ModelClass } from '../database';
 import type Application from './index';
-import type { Application$opts } from './index';
+import type { ApplicationOptions } from './index';
 
 /**
  * @private
  */
 export default async function initialize<T extends Application>(
   app: T,
-  { path, port, logging, database, server: serverConfig }: Application$opts
+  { path, port, logging, database, server: serverConfig }: ApplicationOptions
 ): Promise<T> {
   const load = createLoader(path);
   const routes = load('routes');

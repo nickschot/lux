@@ -2,7 +2,7 @@ import { trapGet } from '../../../utils/proxy';
 import type { Model } from '../index';
 import type { ModelClass } from '../interfaces';
 
-import type { Transaction$ResultProxy } from './interfaces';
+import type { TransactionResult } from './interfaces';
 
 /**
  * @private
@@ -50,12 +50,12 @@ export function createInstanceTransactionProxy<T extends Model>(
 export function createTransactionResultProxy<
   T extends Model,
   U extends boolean
->(record: T, didPersist: U): Transaction$ResultProxy<T, U> {
+>(record: T, didPersist: U): TransactionResult<T, U> {
   return new Proxy(record, {
     get: trapGet({
       didPersist
     })
-  }) as unknown as Transaction$ResultProxy<T, U>;
+  }) as unknown as TransactionResult<T, U>;
 }
 
-export type { Transaction$ResultProxy } from './interfaces';
+export type { TransactionResult } from './interfaces';

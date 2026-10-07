@@ -27,10 +27,10 @@ type Request$url = {
   href: string;
 };
 
-export type Request$method =
+export type RequestMethod =
   'GET' | 'HEAD' | 'OPTIONS' | 'PATCH' | 'POST' | 'DELETE';
 
-export type Request$params = {
+export type RequestParams = {
   id: number | string | Buffer;
   sort: string;
   filter: Record<string, unknown>;
@@ -64,13 +64,13 @@ export interface Request extends Readable {
   ip?: string;
   headers: Map<string, string>;
   httpVersion: string;
-  method: Request$method;
+  method: RequestMethod;
   trailers: Record<string, unknown>;
   socket: Socket;
   logger: Logger;
   router: Router;
-  params: Request$params;
-  defaultParams: Request$params;
+  params: RequestParams;
+  defaultParams: RequestParams;
   route: Route;
   action: string;
   controller: Controller;

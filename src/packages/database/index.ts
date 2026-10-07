@@ -55,4 +55,13 @@ export { default as primaryKeyType } from './utils/primary-key-type';
 export { default as createMigrations } from './utils/create-migrations';
 export { default as pendingMigrations } from './utils/pending-migrations';
 
-export type { Database$opts, Database$config, ModelClass } from './interfaces';
+export type {
+  Database$opts,
+  DatabaseConfig,
+  DatabaseEnvironmentConfig,
+  DatabasePoolConfig,
+  ModelClass
+} from './interfaces';
+export type { ModelHook, ModelHooks } from './model/interfaces';
+export type { RelationshipOptions } from './relationship/interfaces';
+export type { TransactionResult } from './transaction/interfaces';

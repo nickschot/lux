@@ -6,11 +6,11 @@ import type Logger from '../logger';
 import type Serializer from '../serializer';
 import type Database from './index';
 import type { Model, Query } from './index';
-import type { Model$Hooks } from './model/interfaces';
-import type { Relationship$opts } from './relationship/interfaces';
-import type { Transaction$ResultProxy } from './transaction/interfaces';
+import type { ModelHooks } from './model/interfaces';
+import type { RelationshipOptions } from './relationship/interfaces';
+import type { TransactionResult } from './transaction/interfaces';
 
-export type Database$pool =
+export type DatabasePoolConfig =
   | number
   | {
       min: number;
@@ -20,9 +20,9 @@ export type Database$pool =
 type Database$columnType =
   'floating' | 'enu' | 'bool' | 'varchar' | 'bigInteger';
 
-export type Database$environment = {
+export type DatabaseEnvironmentConfig = {
   host?: string;
-  pool?: Database$pool;
+  pool?: DatabasePoolConfig;
   debug?: boolean;
   driver: string;
   socket?: string;
@@ -34,17 +34,17 @@ export type Database$environment = {
   url?: string;
 };
 
-export type Database$config = {
-  development: Database$environment;
-  test: Database$environment;
-  production: Database$environment;
-  [environment: string]: Database$environment | undefined;
+export type DatabaseConfig = {
+  development: DatabaseEnvironmentConfig;
+  test: DatabaseEnvironmentConfig;
+  production: DatabaseEnvironmentConfig;
+  [environment: string]: DatabaseEnvironmentConfig | undefined;
 };
 
 export type Database$opts = {
   path: string;
   models: Map<string, ModelClass>;
-  config: Database$config;
+  config: DatabaseConfig;
   logger: Logger;
   // Optional: `dbseed` constructs a Database without it (undefined → the
   // migration check is skipped).
@@ -77,14 +77,14 @@ export interface ModelClass<T extends Model = Model> {
   serializer: Serializer<T>;
   attributes: Record<string, unknown>;
   attributeNames: Array<string>;
-  relationships: Record<string, Relationship$opts>;
+  relationships: Record<string, RelationshipOptions>;
   relationshipNames: Array<string>;
   hasOne: Record<string, unknown>;
   hasMany: Record<string, unknown>;
   belongsTo: Record<string, unknown>;
   scopes: Record<string, unknown>;
   validates: Record<string, unknown>;
-  hooks: Model$Hooks;
+  hooks: ModelHooks;
   store: Database;
   logger: Logger;
 
@@ -94,7 +94,7 @@ export interface ModelClass<T extends Model = Model> {
   transaction<R>(fn: (...args: Array<unknown>) => Promise<R>): Promise<R>;
   columnFor(key: string): Database$column | undefined;
   columnNameFor(key: string): string | undefined;
-  relationshipFor(key: string): Relationship$opts | undefined;
+  relationshipFor(key: string): RelationshipOptions | undefined;
   find(primaryKey: unknown): Query<T>;
   first(): Query<T>;
   where(conditions: Record<string, unknown>): Query<Array<T>>;
@@ -102,5 +102,5 @@ export interface ModelClass<T extends Model = Model> {
   create(
     attributes?: Record<string, unknown>,
     trx?: unknown
-  ): Promise<Transaction$ResultProxy<T, boolean>>;
+  ): Promise<TransactionResult<T, boolean>>;
 }

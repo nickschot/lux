@@ -20,7 +20,7 @@ import requestIdFor from './utils/request-id-for';
 import clientIpFor from './utils/client-ip-for';
 import type { Request } from './request/interfaces';
 import type { Response } from './response/interfaces';
-import type { Server$opts, Server$cors } from './interfaces';
+import type { Server$opts, CorsConfig } from './interfaces';
 
 /**
  * @private
@@ -30,7 +30,7 @@ class Server {
 
   declare router: Router;
 
-  declare cors: Server$cors;
+  declare cors: CorsConfig;
 
   declare trustProxy: boolean;
 
@@ -172,15 +172,16 @@ export { default as sourceFor } from './utils/source-for';
 export { default as ErrorList } from './errors/error-list';
 
 export type {
-  Server$config,
+  CorsConfig,
+  ServerConfig,
   Server$Error,
   Server$ErrorSource
 } from './interfaces';
 
 export type {
   Request,
-  Request$params,
-  Request$method
+  RequestParams,
+  RequestMethod
 } from './request/interfaces';
 
 export type { Response } from './response/interfaces';

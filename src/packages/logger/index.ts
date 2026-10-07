@@ -8,11 +8,11 @@ import { createRequestLogger } from './request-logger';
 import type { Logger$Writer } from './writer/interfaces';
 import type { Logger$RequestLogger } from './request-logger/interfaces';
 import type {
-  Logger$config,
-  Logger$format,
-  Logger$level,
-  Logger$logFn,
-  Logger$filter
+  LoggerConfig,
+  LogFormat,
+  LogLevel,
+  LogFunction,
+  LogFilter
 } from './interfaces';
 
 /**
@@ -27,7 +27,7 @@ class Logger {
    * @type {String}
    * @public
    */
-  declare level: Logger$level;
+  declare level: LogLevel;
 
   /**
    * The output format of log data (text or json).
@@ -36,7 +36,7 @@ class Logger {
    * @type {String}
    * @public
    */
-  declare format: Logger$format;
+  declare format: LogFormat;
 
   /**
    * Hackers love logs. It's easy to get sensitive user information from log
@@ -112,7 +112,7 @@ class Logger {
    * @type {Object}
    * @public
    */
-  declare filter: Logger$filter;
+  declare filter: LogFilter;
 
   /**
    * A boolean flag that determines whether or not the logger is enabled.
@@ -158,7 +158,7 @@ class Logger {
    * @return {void}
    * @public
    */
-  declare debug: Logger$logFn;
+  declare debug: LogFunction;
 
   /**
    * Log a message at the INFO level.
@@ -172,7 +172,7 @@ class Logger {
    * @return {void}
    * @public
    */
-  declare info: Logger$logFn;
+  declare info: LogFunction;
 
   /**
    * Log a message at the WARN level.
@@ -186,7 +186,7 @@ class Logger {
    * @return {void}
    * @public
    */
-  declare warn: Logger$logFn;
+  declare warn: LogFunction;
 
   /**
    * Log a message at the ERROR level.
@@ -200,7 +200,7 @@ class Logger {
    * @return {void}
    * @public
    */
-  declare error: Logger$logFn;
+  declare error: LogFunction;
 
   /**
    * Internal method used for logging requests.
@@ -222,7 +222,7 @@ class Logger {
     enabled,
     requestBody = false,
     timestamps = true
-  }: Logger$config) {
+  }: LoggerConfig) {
     let write: Logger$Writer = K;
     let request: Logger$RequestLogger = K;
 
@@ -297,7 +297,7 @@ class Logger {
 
     const levelNum = LEVELS.get(level) || 0;
 
-    LEVELS.forEach((val, key: Logger$level) => {
+    LEVELS.forEach((val, key: LogLevel) => {
       Object.defineProperty(this, key.toLowerCase(), {
         writable: false,
         enumerable: false,
@@ -331,4 +331,10 @@ export default Logger;
 export { default as line } from './utils/line';
 export { default as errorName } from './utils/error-name';
 
-export type { Logger$config } from './interfaces';
+export type {
+  LoggerConfig,
+  LogFilter,
+  LogFormat,
+  LogFunction,
+  LogLevel
+} from './interfaces';

@@ -1,13 +1,13 @@
 import { camelize } from 'inflection';
 
 import type Model from '../../model';
-import type { Relationship$opts } from '../interfaces';
+import type { RelationshipOptions } from '../interfaces';
 import { writeAttribute } from '../../model/utils/attribute';
 
 type Params = {
   record: Model;
   value: Model | null | undefined | Array<Model>;
-  opts: Relationship$opts;
+  opts: RelationshipOptions;
   trx: unknown;
 };
 

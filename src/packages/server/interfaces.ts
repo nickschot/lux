@@ -1,15 +1,15 @@
 import type Logger from '../logger';
 import type Router from '../router';
 
-export type Server$cors = {
+export type CorsConfig = {
   enabled: boolean;
   origin?: string;
   headers?: Array<string>;
   methods?: Array<string>;
 };
 
-export type Server$config = {
-  cors: Server$cors;
+export type ServerConfig = {
+  cors: CorsConfig;
   /**
    * Whether one proxy sits in front of the app (Heroku's router, a load
    * balancer) whose `X-Forwarded-For` entry is the client's address. Only
@@ -19,7 +19,7 @@ export type Server$config = {
   trustProxy?: boolean;
 };
 
-export type Server$opts = Server$config & {
+export type Server$opts = ServerConfig & {
   logger: Logger;
   router: Router;
 };

@@ -4,14 +4,14 @@
  */
 import type { Config } from '../config';
 import type Database from '../database';
-import type { Database$config, Model } from '../database';
+import type { DatabaseConfig, Model } from '../database';
 import type Controller from '../controller';
 import type Serializer from '../serializer';
 
-export type Application$opts = Config & {
+export type ApplicationOptions = Config & {
   path: string;
   port: string | number;
-  database: Database$config;
+  database: DatabaseConfig;
 };
 
 export type Application$Class<T> = new (...args: Array<any>) => T;

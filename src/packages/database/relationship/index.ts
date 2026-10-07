@@ -96,4 +96,4 @@ export async function get(
 }
 
 export { default as updateRelationship } from './utils/update-relationship';
-export type { Relationship$opts } from './interfaces';
+export type { RelationshipOptions } from './interfaces';

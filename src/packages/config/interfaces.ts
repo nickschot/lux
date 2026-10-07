@@ -1,7 +1,7 @@
-import type { Logger$config } from '../logger';
-import type { Server$config } from '../server';
+import type { LoggerConfig } from '../logger';
+import type { ServerConfig } from '../server';
 
 export type Config = {
-  logging: Logger$config;
-  server: Server$config;
+  logging: LoggerConfig;
+  server: ServerConfig;
 };

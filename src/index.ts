@@ -5,42 +5,42 @@ export { default as Serializer } from './packages/serializer';
 export { default as Application } from './packages/application';
 export { default as lumenify } from './packages/lumenify';
 
-// Types an app can name: the shapes the classes above accept and return, under
-// public names (the `Foo$bar` names are internal).
+// The types an app can name: the shapes the classes above accept and return.
+// Each is defined, and exported, by its own package; this list is the public
+// API, so add to it deliberately.
+export type { ApplicationOptions } from './packages/application';
 export type { Config } from './packages/config';
-export type { Application$opts as ApplicationOptions } from './packages/application/interfaces';
 export type {
-  Controller$opts as ControllerOptions,
-  Controller$beforeAction as BeforeAction,
-  Controller$afterAction as AfterAction
-} from './packages/controller/interfaces';
-export type { Visibility } from './packages/controller/visibility';
+  AfterAction,
+  BeforeAction,
+  ControllerOptions,
+  Visibility
+} from './packages/controller';
 export type {
-  Database$config as DatabaseConfig,
-  Database$environment as DatabaseEnvironmentConfig,
-  Database$pool as DatabasePoolConfig
-} from './packages/database/interfaces';
-export type { Relationship$opts as RelationshipOptions } from './packages/database/relationship/interfaces';
-export type { Query, ModelClass } from './packages/database';
+  DatabaseConfig,
+  DatabaseEnvironmentConfig,
+  DatabasePoolConfig,
+  ModelClass,
+  ModelHook,
+  ModelHooks,
+  Query,
+  RelationshipOptions,
+  TransactionResult
+} from './packages/database';
 export type {
-  Model$Hook as ModelHook,
-  Model$Hooks as ModelHooks
-} from './packages/database/model/interfaces';
-export type { Transaction$ResultProxy as TransactionResult } from './packages/database/transaction/interfaces';
-export type {
-  Logger$config as LoggerConfig,
-  Logger$filter as LogFilter,
-  Logger$format as LogFormat,
-  Logger$level as LogLevel,
-  Logger$logFn as LogFunction
-} from './packages/logger/interfaces';
+  LogFilter,
+  LogFormat,
+  LogFunction,
+  LoggerConfig,
+  LogLevel
+} from './packages/logger';
 export type { Action } from './packages/router';
-export type { Serializer$opts as SerializerOptions } from './packages/serializer/interfaces';
+export type { SerializerOptions } from './packages/serializer';
 export type {
+  CorsConfig,
   Request,
-  Request$method as RequestMethod,
-  Request$params as RequestParams,
+  RequestMethod,
+  RequestParams,
   Response,
-  Server$config as ServerConfig
+  ServerConfig
 } from './packages/server';
-export type { Server$cors as CorsConfig } from './packages/server/interfaces';

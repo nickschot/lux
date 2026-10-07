@@ -1,4 +1,4 @@
-import type { Request$params } from '../../../../server';
+import type { RequestParams } from '../../../../server';
 import type { JSONAPI$DocumentLinks } from '../../../../jsonapi';
 
 const PAGE_NUMBER = 'page[number]';
@@ -53,7 +53,7 @@ function createLinkTemplate({
  */
 export default function createPageLinks(opts: {
   total: number;
-  params: Request$params;
+  params: RequestParams;
   search: string;
   domain: string;
   pathname: string;

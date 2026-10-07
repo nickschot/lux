@@ -1,6 +1,6 @@
 import { FreezeableMap } from '../freezeable';
 import { REQUEST_METHODS } from '../server';
-import type { Request, Request$method } from '../server';
+import type { Request, RequestMethod } from '../server';
 
 import Namespace from './namespace';
 import Route, { DYNAMIC_PATTERN } from './route';
@@ -93,7 +93,7 @@ class Router extends FreezeableMap<string, Route> {
    * The methods some route accepts at the request's path — empty when no
    * route has the path at all.
    */
-  methodsFor({ url }: Request): Array<Request$method> {
+  methodsFor({ url }: Request): Array<RequestMethod> {
     const { staticPath } = this.resolve(url.pathname);
 
     return REQUEST_METHODS.filter(method =>

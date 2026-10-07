@@ -324,9 +324,14 @@ specs carried through the runner swap — were fixed once the migration settled.
 - **API reference: TypeDoc** ([typedoc.json](typedoc.json), `pnpm docs:api` →
   gitignored `docs/api/`), from `src/index.ts`. CI's `docs` job fails on any
   warning — a broken `{@link}`, or a public signature naming a type
-  `src/index.ts` does not export. Fix the latter by exporting the type under a
-  public name, or (for framework internals) listing it in
-  `intentionallyNotExported`. `@private` hides a member from the reference;
+  `src/index.ts` does not export. Fix the latter by exporting it — or (for
+  framework internals) listing it in `intentionallyNotExported`.
+- **Public types** have plain names at their definition (`LoggerConfig`, not
+  `Logger$config` — the `$` style is a Flow leftover, kept only for internal
+  types). Each package's `index.ts` exports its own public types, and
+  `src/index.ts` re-exports them **by name** from those package indexes: no
+  `as` aliases, no deep imports from `interfaces.ts`, no `export *` (package
+  indexes also export internals). That list is the public type API. `@private` hides a member from the reference;
   prefer `@internal` in new comments, and drop YUIDoc leftovers (`@method`,
   `@static`, `@type {X}`) when touching a comment — TypeDoc reads the types
   from TypeScript.
