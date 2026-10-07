@@ -60,6 +60,24 @@ describe('module "logger/writer"', () => {
               expect(spyForLevel.firstCall.args[0]).to.include(message);
             });
 
+            if (format === 'text') {
+              it('writes one line per entry when output is not a terminal', () => {
+                subject({
+                  level,
+                  message: 'Hello world!',
+                  timestamp: '2026-01-01T00:00:00.000Z'
+                });
+
+                const written = (
+                  level === WARN || level === ERROR ? stderrSpy : stdoutSpy
+                ).firstCall.args[0];
+
+                // Vitest's stdout is not a TTY, so there is no rule to draw.
+                expect(written.endsWith('Hello world!\n')).to.be.true;
+                expect(written).to.not.include('\n\n');
+              });
+            }
+
             it('can write nested message objects', () => {
               const message = { message: 'Hello world!' };
               const timestamp = new Date().toISOString();

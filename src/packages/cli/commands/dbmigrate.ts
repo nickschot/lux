@@ -2,7 +2,7 @@ import { EOL } from 'os';
 
 import { CWD } from '../../../constants';
 import Database, { pendingMigrations } from '../../database';
-import Logger, { sql } from '../../logger';
+import Logger from '../../logger';
 import { createLoader } from '../../loader';
 import { composeAsync } from '../../../utils/compose';
 
@@ -44,7 +44,7 @@ export async function dbmigrate() {
 
         return query
           .on('query', () => {
-            process.stdout.write(sql`${query.toString()}`);
+            process.stdout.write(query.toString());
             process.stdout.write(EOL);
           })
           .then(() =>

@@ -4,7 +4,6 @@
  * method calls are genuinely untyped here.
  */
 import { RecordNotFoundError } from '../errors';
-import { sql } from '../../../logger';
 import type Query from '../index';
 
 import { RUNNERS } from './constants';
@@ -75,7 +74,7 @@ export function createRunner(
 
       if (model.store.debug) {
         records.on('query', () => {
-          setImmediate(() => model.logger.debug(sql`${records.toString()}`));
+          setImmediate(() => model.logger.debug(records.toString()));
         });
       }
 

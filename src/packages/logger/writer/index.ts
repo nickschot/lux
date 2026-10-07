@@ -85,7 +85,12 @@ export function createWriter(format: Logger$format): Logger$Writer {
           break;
       }
 
-      output = `${timestamp} ${message}\n\n${chalk.dim('-').repeat(columns)}\n`;
+      // The rule separates multi-line entries in a terminal; piped output
+      // (Docker, an IDE console) has no width, so it gets one line per entry
+      // instead of a rule-less blank block.
+      output = columns
+        ? `${timestamp} ${message}\n\n${chalk.dim('-').repeat(columns)}\n`
+        : `${timestamp} ${message}`;
     }
 
     if (STDOUT.test(level)) {

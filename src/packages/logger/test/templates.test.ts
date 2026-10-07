@@ -1,0 +1,46 @@
+import { stripVTControlCharacters } from 'util';
+
+import { it, describe, expect } from 'vitest';
+
+import { infoTemplate, debugTemplate } from '../request-logger/templates';
+import type { RequestLogger$templateData } from '../request-logger/interfaces';
+
+function dataFor(route?: unknown): RequestLogger$templateData {
+  return {
+    path: '/nowhere',
+    stats: [],
+    route: route as RequestLogger$templateData['route'],
+    method: 'GET',
+    params: {},
+    startTime: 0,
+    endTime: 5,
+    statusCode: '404',
+    statusMessage: 'Not Found',
+    remoteAddress: '::1',
+    colorStr: (str: string) => str
+  };
+}
+
+describe('module "logger/request-logger/templates"', () => {
+  const route = {
+    action: 'index',
+    controller: new (class PostsController {})()
+  };
+
+  [infoTemplate, debugTemplate].forEach(template => {
+    describe(`#${template === infoTemplate ? 'info' : 'debug'}Template()`, () => {
+      it('names the controller action that handled the request', () => {
+        expect(stripVTControlCharacters(template(dataFor(route)))).to.include(
+          'Not Found by PostsController#index'
+        );
+      });
+
+      it('leaves the handler out when no route matched', () => {
+        const text = stripVTControlCharacters(template(dataFor()));
+
+        expect(text).to.not.include(' by ');
+        expect(text).to.not.include('null');
+      });
+    });
+  });
+});

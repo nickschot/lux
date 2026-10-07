@@ -316,7 +316,6 @@ class Logger {
 
 export default Logger;
 export { default as line } from './utils/line';
-export { default as sql } from './utils/sql';
 export { default as errorName } from './utils/error-name';
 
 export type { Logger$config } from './interfaces';

@@ -716,6 +716,17 @@ and exit code `1` — worth knowing if a script depends on the old exit codes.
 - **`logger.debug/info/warn/error` take an optional second argument**, a
   context object written as top-level fields in JSON format (ignored by the
   text format): `logger.info('Synced', { requestId: request.id })`.
+- **Logged SQL is shown as knex wrote it.** The framework uppercased every
+  word outside quotes, mangling string values with spaces
+  (`'hello world'` → `'HELLO WORLD'`), so the log showed data that was not in
+  the query. `lumen db:migrate`/`db:rollback` print SQL unchanged too.
+- **Writes honour the database `debug` flag.** Reads were only logged with
+  `debug` on (default: development only), but `INSERT`/`UPDATE`/`DELETE` were
+  logged at `DEBUG` regardless. Both follow the flag now.
+- **Text logs piped out of a terminal are one line per entry.** Each entry was
+  followed by a terminal-wide rule; with no terminal (Docker, IDE consoles)
+  that collapsed into blank lines. In a terminal nothing changes. A request
+  with no matching route no longer reads `by null`.
 
 ## The short version
 

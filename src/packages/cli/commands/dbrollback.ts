@@ -2,7 +2,7 @@ import { EOL } from 'os';
 
 import { CWD } from '../../../constants';
 import Database from '../../database';
-import Logger, { sql } from '../../logger';
+import Logger from '../../logger';
 import { readdir } from '../../fs';
 import { createLoader } from '../../loader';
 
@@ -49,7 +49,7 @@ export async function dbrollback() {
         const query = migration.run(schema());
 
         await query.on('query', () => {
-          process.stdout.write(sql`${query.toString()}`);
+          process.stdout.write(query.toString());
           process.stdout.write(EOL);
         });
 
