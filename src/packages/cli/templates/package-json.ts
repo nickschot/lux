@@ -23,7 +23,6 @@ export default (name: string, driver: string): string => {
     description: '',
     scripts: {
       start: 'lumen serve',
-      test: 'lumen test',
       lint: 'eslint .'
     },
     author: '',

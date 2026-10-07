@@ -54,7 +54,7 @@ function setEnvVar(key, val, def) {
 function exec(cmd, ...args) {
   const handler = require('../dist/cli.cjs')[cmd];
   const needsProject = new RegExp(
-    '^(?:db:.+|test|build|serve|console|generate|destroy)$'
+    '^(?:db:.+|build|serve|console|generate|destroy)$'
   );
 
   if (needsProject.test(cmd) && !inLumenProject()) {
@@ -88,14 +88,6 @@ cli
   )
   .action((name, { database }) => {
     exec('create', name, database).then(exit).catch(rescue);
-  });
-
-cli
-  .command('t')
-  .alias('test')
-  .description("Run your application's test suite")
-  .action(() => {
-    exec('test').then(exit).catch(rescue);
   });
 
 cli

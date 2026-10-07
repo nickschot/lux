@@ -9,4 +9,3 @@ export { destroy } from './destroy';
 export { generate } from './generate';
 export { repl } from './repl';
 export { serve } from './serve';
-export { test } from './test';
