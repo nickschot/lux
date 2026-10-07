@@ -1,6 +1,6 @@
 import { Model } from 'lumen-framework';
 
-import track from 'app/utils/track';
+import track from '../utils/track';
 
 class Comment extends Model {
   static belongsTo = {

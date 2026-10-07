@@ -1,22 +1,11 @@
 export default {
   server: {
+    // Lets a front-end dev server on another port call the API.
     cors: {
-      origin: '*',
       enabled: true,
-
-      headers: [
-        'Accept',
-        'Content-Type'
-      ],
-
-      methods: [
-        'GET',
-        'POST',
-        'PATCH',
-        'DELETE',
-        'HEAD',
-        'OPTIONS'
-      ]
+      origin: '*',
+      headers: ['Accept', 'Content-Type'],
+      methods: ['GET', 'POST', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']
     }
   },
 
@@ -24,12 +13,10 @@ export default {
     level: 'DEBUG',
     format: 'text',
     enabled: true,
+    requestBody: true,
 
     filter: {
-      params: [
-        'email',
-        'password'
-      ]
+      params: []
     }
   }
 };

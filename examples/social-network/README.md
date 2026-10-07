@@ -1,22 +1,62 @@
 # social-network
 
-## Installation
+A Lumen example application: users who write posts, comment, react, and follow
+each other. It is small enough to read in one sitting and covers most of what
+the framework does:
 
-*   `git clone https://github.com/<this-repository>`
-*   `cd social-network`
-*   `npm install`
+| Feature | Where to look |
+|---|---|
+| Models, relationships (including has-many-through) and hooks | `app/models/` (`post.js`, `user.js`, `action.js`) |
+| Model scopes | `Post.scopes.isPublic` in `app/models/post.js` |
+| Built-in CRUD, write allow-lists, narrowed `sort`/`filter`, `maxPerPage` | `app/controllers/posts.js` |
+| A custom action | `login` in `app/controllers/users.js`, routed in `app/routes.js` |
+| Namespaces (`/admin`, `/members`) | `app/routes.js`, `app/controllers/{admin,members}/` |
+| Visibility rules: private posts never leave `/admin` | `app/controllers/application.js`, `admin/application.js`, `members/application.js` |
+| A serializer per namespace | `app/serializers/admin/users.js`, `admin/posts.js` |
+| `linksOnly` relationships | `app/serializers/members/posts.js` |
+| Rejecting unlisted attributes | `app/controllers/admin/posts.js` |
+| CORS and per-environment logging | `config/environments/` |
+| Migrations and seed data | `db/` |
 
-## Running / Development
+Relationship endpoints (`/posts/1/relationships/user`), related endpoints
+(`/posts/1/comments`), compound documents (`?include=user,comments`) and
+sparse fieldsets (`?fields[posts]=title`) need no code: every resource serves
+them.
 
-*   `lumen db:reset`
-*   `lumen db:migrate`
-*   `lumen db:seed`
-*   `lumen serve`
+## Running it
 
-## Testing
+The example lives in the Lumen repository and depends on the framework there
+(`"lumen-framework": "link:../.."`), so build the framework first. In your own
+app, depend on a released version instead.
 
-*   `lumen test`
+```bash
+pnpm install && pnpm build
+```
 
-## Further Reading / Useful Links
-*   [Lumen](https://github.com/nickschot/lux/)
-*   [Chai](http://chaijs.com/) / [Mocha](http://mochajs.org/)
+```bash
+cd examples/social-network && pnpm install
+```
+
+```bash
+pnpm run db:setup
+```
+
+```bash
+pnpm start
+```
+
+The API is on `http://localhost:4000` — try
+`/posts?include=user&fields[posts]=title`, `/members/posts`, or
+`/admin/posts` to see the private posts the others hide.
+
+`pnpm run db:setup` resets, migrates and seeds the SQLite database with random
+data; run it again for a clean slate. `pnpm run smoke` boots the app and checks
+a set of representative requests — CI runs it on every change to the framework.
+
+## Things to know
+
+- **`pool: 5` in `config/database.js` is required.** Model hooks run inside the
+  write's transaction, but the reads in `Action#notifyOwner` cannot join it and
+  use a second connection. SQLite's default pool of one would deadlock.
+- For the same reason, those reads cannot see rows the transaction has not
+  committed yet, so notifications are not created while seeding.

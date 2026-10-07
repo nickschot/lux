@@ -249,3 +249,37 @@ jobs:
           }
           JSON
           "$GITHUB_WORKSPACE/node_modules/.bin/tsc" -p tsconfig.json
+
+  # The example app (examples/social-network) built against the working tree:
+  # migrate, seed, serve, then a handful of real requests. Keeps the example —
+  # which the docs point at — from silently rotting the way the old ones did.
+  example:
+    name: example app (social-network)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: examples/social-network
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            examples/social-network/pnpm-lock.yaml
+
+      # The example depends on the framework via `link:../..`, so it needs the
+      # framework's own dependencies and a fresh dist/.
+      - run: pnpm install --frozen-lockfile
+        working-directory: .
+      - run: pnpm build
+        working-directory: .
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm run db:setup
+      - run: pnpm run smoke

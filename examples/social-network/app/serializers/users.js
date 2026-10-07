@@ -2,8 +2,7 @@ import { Serializer } from 'lumen-framework';
 
 class UsersSerializer extends Serializer {
   attributes = [
-    'name',
-    'email'
+    'name'
   ];
 
   hasMany = [

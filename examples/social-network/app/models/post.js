@@ -1,14 +1,8 @@
 import { Model } from 'lumen-framework';
 
-import track from 'app/utils/track';
+import track from '../utils/track';
 
 class Post extends Model {
-  static belongsTo = {
-    user: {
-      inverse: 'posts'
-    }
-  };
-
   static hasMany = {
     comments: {
       inverse: 'post'
@@ -24,9 +18,23 @@ class Post extends Model {
     }
   };
 
+  static belongsTo = {
+    user: {
+      inverse: 'posts'
+    }
+  };
+
   static hooks = {
     async afterCreate(post, trx) {
       await track(post, trx);
+    }
+  };
+
+  static scopes = {
+    isPublic() {
+      return this.where({
+        isPublic: true
+      });
     }
   };
 }

@@ -1,10 +1,10 @@
 import { Model } from 'lumen-framework';
 
-import Comment from 'app/models/comment';
-import Notification from 'app/models/notification';
-import Post from 'app/models/post';
-import Reaction from 'app/models/reaction';
-import User from 'app/models/user';
+import Comment from './comment';
+import Notification from './notification';
+import Post from './post';
+import Reaction from './reaction';
+import User from './user';
 
 const createMessageTemplate = resourceType => (name, reactionType) => (
   `${name} reacted to your ${resourceType} with ${reactionType}`
@@ -20,7 +20,7 @@ class Action extends Model {
     }
   };
 
-  async notifyOwner() {
+  async notifyOwner(trx) {
     const { trackableId, trackableType } = this;
 
     if (trackableType === 'Comment') {
