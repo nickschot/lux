@@ -195,8 +195,8 @@ export default function routes() {
 ```
 
 What an action's return value becomes — a number is a status code, `true` a
-`204`, a string plain text — is covered in the controllers guide; until it
-lands, see the `Controller` page of the API reference.
+`204`, a string the body — is covered in
+[Controllers](controllers.md#what-an-actions-return-value-becomes).
 
 ## Namespaces
 
@@ -255,8 +255,7 @@ nest (`this.namespace('v2', …)` inside another), giving `/api/v2/posts`.
 declare which records each request may see, and every query in that
 namespace — lists, lookups, relationships, includes — applies them. The
 example app hides private posts everywhere except `/admin`. See
-[UPGRADING.md §10](../../UPGRADING.md#10-visibility-rules--replace-hand-rolled-scoping-opt-in)
-until the controllers guide covers them.
+[Controllers → Visibility rules](controllers.md#visibility-rules).
 
 ## A complete example
 
