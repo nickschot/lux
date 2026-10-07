@@ -121,6 +121,20 @@ describe('module "logger/writer"', () => {
               });
 
               if (format === 'json') {
+                it('writes context as top-level fields', () => {
+                  subject({
+                    level,
+                    message: new Error('Test'),
+                    context: { requestId: 'req-1' },
+                    timestamp: new Date().toISOString()
+                  });
+
+                  expect(JSON.parse(stderrSpy.firstCall.args[0])).to.include({
+                    requestId: 'req-1',
+                    message: 'Test'
+                  });
+                });
+
                 it('names errors by their class, with their own members', () => {
                   class ConflictError extends Error {
                     statusCode = 409;

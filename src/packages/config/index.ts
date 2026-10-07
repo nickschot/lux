@@ -16,6 +16,7 @@ export function createDefaultConfig(): Config {
       level: isProdENV ? 'INFO' : 'DEBUG',
       format: isProdENV ? 'json' : 'text',
       enabled: !isTestENV,
+      requestBody: !isProdENV,
 
       filter: {
         params: []

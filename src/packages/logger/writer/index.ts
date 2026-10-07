@@ -23,7 +23,7 @@ function isMessageObject(value: unknown): value is { message?: unknown } {
  */
 export function createWriter(format: Logger$format): Logger$Writer {
   return function write(data) {
-    const { level, ...etc } = data;
+    const { level, context, ...etc } = data;
     let { message, timestamp } = etc;
     let output: unknown;
 
@@ -34,6 +34,7 @@ export function createWriter(format: Logger$format): Logger$Writer {
         output = {
           timestamp,
           level,
+          ...context,
           message: message.message,
           name: errorName(message),
           ...omit(message, 'message'),
@@ -43,6 +44,7 @@ export function createWriter(format: Logger$format): Logger$Writer {
         output = {
           timestamp,
           level,
+          ...context,
           message: message.message,
           ...omit(message, 'message')
         };
@@ -54,6 +56,7 @@ export function createWriter(format: Logger$format): Logger$Writer {
         output = {
           timestamp,
           level,
+          ...context,
           message
         };
       }

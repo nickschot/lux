@@ -699,6 +699,23 @@ and exit code `1` — worth knowing if a script depends on the old exit codes.
   (`NotFoundError: Could not find…`) instead of an `ERROR` with a stack. In
   production (`INFO`) 4xx no longer produce an error line at all — adjust any
   alerting that counted them.
+- **Every request has an id.** A well-formed incoming `X-Request-Id` (up to
+  128 of `A-Z a-z 0-9 _ . : -`) is adopted — so a proxy's id carries through —
+  otherwise a UUID is generated. It is sent back as the `X-Request-Id`
+  response header, available as `request.id`, and logged as `requestId` on
+  the JSON request line *and* on the error line of the same request.
+- **The JSON request line gained `durationMs`, `controller` and `action`**,
+  which only the text format used to show. `remoteAddress` is now read from
+  `req.socket` (`req.connection` is deprecated in Node).
+- **The request body is no longer logged in production.** New option
+  `logging.requestBody` (default: on, except in production) decides whether
+  the request log's `params` include the body — the JSON:API document of a
+  `POST`/`PATCH` (`data`, `meta`, …). Query and route params are always
+  logged, filtered. Set it to `true` in `config/environments/production.js`
+  to keep the old behaviour.
+- **`logger.debug/info/warn/error` take an optional second argument**, a
+  context object written as top-level fields in JSON format (ignored by the
+  text format): `logger.info('Synced', { requestId: request.id })`.
 
 ## The short version
 

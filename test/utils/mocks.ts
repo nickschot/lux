@@ -78,5 +78,8 @@ export const createRequestBuilder =
       connection: {
         encrypted: false,
         remoteAddress: '::1'
+      },
+      socket: {
+        remoteAddress: '::1'
       }
     }) as unknown as Request;

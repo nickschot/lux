@@ -3,6 +3,7 @@ export default {
     level: 'INFO',
     format: 'json',
     enabled: true,
+    requestBody: false,
 
     filter: {
       params: []

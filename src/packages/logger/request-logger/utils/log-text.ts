@@ -4,7 +4,7 @@ import { infoTemplate, debugTemplate } from '../templates';
 import type Logger from '../../index';
 import type { Request, Response } from '../../../server';
 
-import filterParams from './filter-params';
+import paramsFor from './params-for';
 
 /**
  * @private
@@ -32,11 +32,11 @@ export default function logText(
       // query params are logged, filtered, under `params`.
       url: { pathname: path },
 
-      connection: { remoteAddress }
+      socket: { remoteAddress }
     } = req;
 
     const { stats, statusCode, statusMessage } = res;
-    const params = filterParams(req.params, ...logger.filter.params);
+    const params = paramsFor(logger, req);
     const statusColor = statusCode >= 200 && statusCode < 400 ? 'green' : 'red';
 
     let colorStr: (source: string) => string = chalk[statusColor];

@@ -16,6 +16,7 @@ import validateAccept from './utils/validate-accept';
 import validateContentType from './utils/validate-content-type';
 import setCORSHeaders from './utils/set-cors-headers';
 import statusForError from './utils/status-for-error';
+import requestIdFor from './utils/request-id-for';
 import type { Request } from './request/interfaces';
 import type { Response } from './response/interfaces';
 import type { Server$opts, Server$cors } from './interfaces';
@@ -84,6 +85,9 @@ class Server {
       router
     });
 
+    request.id = requestIdFor(request);
+    response.setHeader('X-Request-Id', request.id);
+
     return [request, response];
   }
 
@@ -135,10 +139,12 @@ class Server {
         .catch(err => {
           // A 4xx is the client's mistake, already on the request line with
           // its status; only a 5xx is the server's, worth an ERROR and a stack.
+          const context = { requestId: request.id };
+
           if (statusForError(err) >= 500) {
-            logger.error(err);
+            logger.error(err, context);
           } else {
-            logger.debug(`${errorName(err)}: ${err?.message}`);
+            logger.debug(`${errorName(err)}: ${err?.message}`, context);
           }
 
           respond(err);

@@ -46,9 +46,9 @@ describe('server error logging', () => {
     logger.debug.resetHistory();
   });
 
-  const get = () =>
+  const get = (headers: Record<string, string> = {}) =>
     fetch(`${domain}/posts`, {
-      headers: { Accept: 'application/vnd.api+json' }
+      headers: { Accept: 'application/vnd.api+json', ...headers }
     });
 
   it('logs a 5xx as an error, with the error itself', async () => {
@@ -57,6 +57,17 @@ describe('server error logging', () => {
     expect((await get()).status).to.equal(500);
     expect(logger.error.calledOnceWith(thrown)).to.be.true;
     expect(logger.debug.called).to.be.false;
+  });
+
+  it('logs errors with the request id it answers with', async () => {
+    thrown = new Error('boom');
+
+    const res = await get({ 'X-Request-Id': 'trace-42' });
+
+    expect(res.headers.get('X-Request-Id')).to.equal('trace-42');
+    expect(logger.error.firstCall.args[1]).to.deep.equal({
+      requestId: 'trace-42'
+    });
   });
 
   it('logs a 4xx at debug, as a one-line message', async () => {

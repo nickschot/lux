@@ -124,6 +124,18 @@ class Logger {
   declare enabled: boolean;
 
   /**
+   * Whether the request log includes the request body — the JSON:API document
+   * of a `POST` or `PATCH`. Off unless enabled, and off by default in
+   * production: a body is large and full of user data. Query and route params
+   * are always logged (filtered).
+   *
+   * @property requestBody
+   * @type {Boolean}
+   * @public
+   */
+  declare requestBody: boolean;
+
+  /**
    * Log a message at the DEBUG level.
    *
    * ```javascript
@@ -197,7 +209,13 @@ class Logger {
    */
   declare request: Logger$RequestLogger;
 
-  constructor({ level, format, filter, enabled }: Logger$config) {
+  constructor({
+    level,
+    format,
+    filter,
+    enabled,
+    requestBody = false
+  }: Logger$config) {
     let write: Logger$Writer = K;
     let request: Logger$RequestLogger = K;
 
@@ -248,6 +266,13 @@ class Logger {
         configurable: false
       },
 
+      requestBody: {
+        value: Boolean(requestBody),
+        writable: false,
+        enumerable: true,
+        configurable: false
+      },
+
       request: {
         value: request,
         writable: false,
@@ -266,9 +291,10 @@ class Logger {
 
         value:
           val >= levelNum
-            ? (message?: unknown) => {
+            ? (message?: unknown, context?: Record<string, unknown>) => {
                 write({
                   message,
+                  context,
                   level: key,
                   timestamp: this.getTimestamp()
                 });

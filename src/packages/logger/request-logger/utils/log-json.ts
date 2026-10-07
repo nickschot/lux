@@ -1,7 +1,7 @@
 import type Logger from '../../index';
 import type { Request, Response } from '../../../server';
 
-import filterParams from './filter-params';
+import paramsFor from './params-for';
 
 const MESSAGE = 'Processed Request';
 
@@ -11,6 +11,7 @@ const MESSAGE = 'Processed Request';
 export default function logJSON(
   logger: Logger,
   {
+    startTime,
     request: req,
     response: res
   }: {
@@ -21,6 +22,8 @@ export default function logJSON(
 ): void {
   res.once('finish', () => {
     const {
+      id: requestId,
+      route,
       method,
       headers,
       httpVersion,
@@ -29,24 +32,29 @@ export default function logJSON(
       // query params are logged, filtered, under `params`.
       url: { pathname: path },
 
-      connection: { remoteAddress }
+      socket: { remoteAddress }
     } = req;
 
     const { statusCode: status } = res;
     const userAgent = headers.get('user-agent');
     const protocol = `HTTP/${httpVersion}`;
-    const params = filterParams(req.params, ...logger.filter.params);
 
-    logger.info({
-      message: MESSAGE,
+    logger.info(
+      {
+        message: MESSAGE,
 
-      method,
-      path,
-      params,
-      status,
-      protocol,
-      userAgent,
-      remoteAddress
-    });
+        method,
+        path,
+        status,
+        durationMs: Date.now() - startTime,
+        controller: route?.controller.constructor.name,
+        action: route?.action,
+        params: paramsFor(logger, req),
+        protocol,
+        userAgent,
+        remoteAddress
+      },
+      { requestId }
+    );
   });
 }
