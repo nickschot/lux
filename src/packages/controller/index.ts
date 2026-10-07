@@ -16,9 +16,9 @@ import validateRelationships from './utils/validate-relationships';
 import { scopeFor } from './visibility';
 import type { Visibility } from './visibility';
 import type {
-  Controller$opts,
-  Controller$beforeAction,
-  Controller$afterAction
+  ControllerOptions,
+  BeforeAction,
+  AfterAction
 } from './interfaces';
 
 /**
@@ -415,7 +415,7 @@ class Controller {
    * @default []
    * @public
    */
-  beforeAction: Array<Controller$beforeAction> = [];
+  beforeAction: Array<BeforeAction> = [];
 
   /**
    * Functions to execute on each request handled by a `Controller` after the
@@ -467,7 +467,7 @@ class Controller {
    * @default []
    * @public
    */
-  afterAction: Array<Controller$afterAction> = [];
+  afterAction: Array<AfterAction> = [];
 
   /**
    * The default amount of items to include per each response of the index
@@ -798,7 +798,7 @@ class Controller {
    */
   declare hasSerializer: boolean;
 
-  constructor({ model, namespace, serializer }: Controller$opts) {
+  constructor({ model, namespace, serializer }: ControllerOptions) {
     Object.assign(this, {
       model,
       namespace,
@@ -1086,8 +1086,8 @@ export { BUILT_IN_ACTIONS } from './constants';
 export { Scope } from './visibility';
 export type { Visibility } from './visibility';
 export type {
-  Controller$opts,
+  ControllerOptions,
   Controller$builtIn,
-  Controller$beforeAction,
-  Controller$afterAction
+  BeforeAction,
+  AfterAction
 } from './interfaces';

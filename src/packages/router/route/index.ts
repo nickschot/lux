@@ -1,7 +1,7 @@
 import { FreezeableSet, freezeProps, deepFreezeProps } from '../../freezeable';
 import { primaryKeyType } from '../../database';
 import type Controller from '../../controller';
-import type { Request, Response, Request$method } from '../../server';
+import type { Request, Response, RequestMethod } from '../../server';
 
 import { FINAL_HANDLER, createAction } from './action';
 import {
@@ -38,7 +38,7 @@ class Route extends FreezeableSet<Action<unknown>> {
 
   declare params: ParameterGroup;
 
-  declare method: Request$method;
+  declare method: RequestMethod;
 
   declare controller: Controller;
 

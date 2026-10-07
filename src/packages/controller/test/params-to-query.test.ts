@@ -1,7 +1,7 @@
 import { describe, it, beforeAll, expect } from 'vitest';
 
 import type { ModelClass } from '../../database';
-import type { Request$params } from '../../server';
+import type { RequestParams } from '../../server';
 import merge from '../../../utils/merge';
 import paramsToQuery from '../utils/params-to-query';
 import { getTestApp } from '../../../../test/utils/get-test-app';
@@ -9,10 +9,10 @@ import { getTestApp } from '../../../../test/utils/get-test-app';
 describe('module "controller"', () => {
   describe('util paramsToQuery()', () => {
     let Post: ModelClass;
-    // The test cases only ever supply the subset of `Request$params` that the
+    // The test cases only ever supply the subset of `RequestParams` that the
     // assertion under test cares about, so the merged object is cast rather
     // than filled out.
-    const createParams = (obj: Record<string, unknown>): Request$params =>
+    const createParams = (obj: Record<string, unknown>): RequestParams =>
       merge(
         {
           sort: 'createdAt',
@@ -22,7 +22,7 @@ describe('module "controller"', () => {
           }
         },
         obj
-      ) as unknown as Request$params;
+      ) as unknown as RequestParams;
 
     beforeAll(async () => {
       const { models } = await getTestApp();

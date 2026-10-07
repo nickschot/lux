@@ -1,6 +1,6 @@
 import { Route } from '../../../index';
 import { normalizeName, normalizePath } from '../../../namespace';
-import type { Request$method } from '../../../../server';
+import type { RequestMethod } from '../../../../server';
 import type { Router$Namespace, Route$opts, Route$type } from '../../../index';
 
 /**
@@ -36,7 +36,7 @@ export default function createDefinition({
   namespace
 }: {
   type: Route$type;
-  method: Request$method;
+  method: RequestMethod;
   namespace: Router$Namespace;
 }) {
   return function define(name: string, action: string = normalizeName(name)) {

@@ -1,6 +1,6 @@
-import type { Request$method } from './interfaces';
+import type { RequestMethod } from './interfaces';
 
-export const REQUEST_METHODS: Array<Request$method> = [
+export const REQUEST_METHODS: Array<RequestMethod> = [
   'GET',
   'HEAD',
   'POST',

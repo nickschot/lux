@@ -10,7 +10,7 @@ import type { Model, ModelClass } from '../database';
 import type { FreezeableMap } from '../freezeable';
 
 import initialize from './initialize';
-import type { Application$opts } from './interfaces';
+import type { ApplicationOptions } from './interfaces';
 
 /**
  * @class Application
@@ -104,7 +104,7 @@ class Application {
    * @return {Promise}
    * @public
    */
-  constructor(opts: Application$opts) {
+  constructor(opts: ApplicationOptions) {
     // Applications construct asynchronously (see Database/Watcher); `new
     // Application()` resolves to the ready instance, and TS cannot type a
     // Promise-returning constructor.
@@ -117,7 +117,7 @@ class Application {
 
 export default Application;
 export type {
-  Application$opts,
+  ApplicationOptions,
   Application$Class,
   Application$factoryOpts
 } from './interfaces';

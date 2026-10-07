@@ -5,7 +5,7 @@ type Relationship$ref = Model | Array<Model>;
 
 export type Relationship$refs = WeakMap<Model, Map<string, Relationship$ref>>;
 
-export type Relationship$opts = {
+export type RelationshipOptions = {
   type: 'hasOne' | 'hasMany' | 'belongsTo';
   model: ModelClass;
   inverse: string;

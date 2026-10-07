@@ -1,7 +1,7 @@
 import { stripVTControlCharacters } from 'util';
 
 import stringify from '../../../../utils/stringify';
-import type { Logger$format } from '../../interfaces';
+import type { LogFormat } from '../../interfaces';
 
 /**
  * Returns `string | undefined` because `Error#stack` is optional — the Flow
@@ -12,7 +12,7 @@ import type { Logger$format } from '../../interfaces';
  */
 export default function formatMessage(
   data: unknown,
-  format: Logger$format
+  format: LogFormat
 ): string | undefined {
   if (data instanceof Error) {
     return data.stack;

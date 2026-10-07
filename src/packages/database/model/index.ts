@@ -17,9 +17,9 @@ import type Logger from '../../logger';
 import type Database from '../../database';
 import type Serializer from '../../serializer';
 
-import type { Relationship$opts } from '../relationship';
+import type { RelationshipOptions } from '../relationship';
 import type { ModelClass, Database$column } from '../interfaces';
-import type { Transaction$ResultProxy } from '../transaction';
+import type { TransactionResult } from '../transaction';
 
 import { create, update, destroy, createRunner } from './utils/persistence';
 import initializeClass from './initialize-class';
@@ -27,7 +27,7 @@ import validate from './utils/validate';
 import { rethrowWriteError } from './utils/process-write-error';
 import runHooks from './utils/run-hooks';
 import { readAttribute, writeAttribute } from './utils/attribute';
-import type { Model$Hooks } from './interfaces';
+import type { ModelHooks } from './interfaces';
 
 /**
  * @class Model
@@ -560,7 +560,7 @@ class Model {
    * @default {}
    * @public
    */
-  declare static hooks: Model$Hooks;
+  declare static hooks: ModelHooks;
 
   /**
    * A reference to the application's logger.
@@ -655,7 +655,7 @@ class Model {
    * @type {Object}
    * @private
    */
-  declare static relationships: Record<string, Relationship$opts>;
+  declare static relationships: Record<string, RelationshipOptions>;
 
   /**
    * @property relationshipNames
@@ -982,7 +982,7 @@ class Model {
    * @return {Promise} Resolves with `this`.
    * @public
    */
-  save(transaction?: unknown): Promise<Transaction$ResultProxy<this, boolean>> {
+  save(transaction?: unknown): Promise<TransactionResult<this, boolean>> {
     return this.update(mapToObject(this.dirtyProperties), transaction);
   }
 
@@ -1012,7 +1012,7 @@ class Model {
   update(
     props: Record<string, unknown> = {},
     transaction?: unknown
-  ): Promise<Transaction$ResultProxy<this, boolean>> {
+  ): Promise<TransactionResult<this, boolean>> {
     const run = async (trx: unknown) => {
       const {
         constructor: { hooks }
@@ -1084,7 +1084,7 @@ class Model {
    * @return {Promise} Resolves with `this`.
    * @public
    */
-  destroy(transaction?: unknown): Promise<Transaction$ResultProxy<this, true>> {
+  destroy(transaction?: unknown): Promise<TransactionResult<this, true>> {
     const run = async (trx: unknown) => {
       const {
         constructor: { hooks }
@@ -1164,7 +1164,7 @@ class Model {
   static create(
     props: Record<string, unknown> = {},
     transaction?: unknown
-  ): Promise<Transaction$ResultProxy<Model, true>> {
+  ): Promise<TransactionResult<Model, true>> {
     const run = async (trx: unknown) => {
       const { hooks, primaryKey } = this;
       const instance = new this(props, false);
@@ -1489,10 +1489,10 @@ class Model {
    * match is found.
    * @private
    */
-  static relationshipFor(key: string): Relationship$opts | undefined {
+  static relationshipFor(key: string): RelationshipOptions | undefined {
     return this.relationships[key];
   }
 }
 
 export default Model;
-export type { Model$Hook, Model$Hooks } from './interfaces';
+export type { ModelHook, ModelHooks } from './interfaces';

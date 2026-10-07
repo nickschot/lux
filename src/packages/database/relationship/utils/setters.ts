@@ -1,5 +1,5 @@
 import type Model from '../../model';
-import type { Relationship$opts } from '../index';
+import type { RelationshipOptions } from '../index';
 import { readAttribute, writeAttribute } from '../../model/utils/attribute';
 
 import unassociate from './unassociate';
@@ -13,7 +13,7 @@ export function setHasMany(
   owner: Model,
   key: string,
   value: Array<Model>,
-  { type, model, inverse, foreignKey }: Relationship$opts
+  { type, model, inverse, foreignKey }: RelationshipOptions
 ) {
   let { currentChangeSet: changeSet } = owner;
 
@@ -56,7 +56,7 @@ export function setHasOne(
   owner: Model,
   key: string,
   value: Model | null | undefined,
-  { type, model, inverse, foreignKey }: Relationship$opts
+  { type, model, inverse, foreignKey }: RelationshipOptions
 ) {
   let valueToSet = value;
 
@@ -99,7 +99,7 @@ export function setBelongsTo(
   owner: Model,
   key: string,
   value: Model | null | undefined,
-  { type, model, inverse, foreignKey }: Relationship$opts
+  { type, model, inverse, foreignKey }: RelationshipOptions
 ) {
   setHasOne(owner, key, value, {
     type,

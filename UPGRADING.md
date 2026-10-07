@@ -786,9 +786,8 @@ import type {
 } from 'lumen-framework';
 ```
 
-They are the framework's own types under public names — the internal
-`Foo$bar` names (`Logger$config`, `Controller$beforeAction`, …) are not part
-of the API. The full list is in the API reference (`pnpm docs:api`).
+These are the framework's own types, exported from the package root; the full
+list is in the API reference (`pnpm docs:api`).
 
 The built-in actions (`index`, `show`, `update`, `destroy`, …) now declare
 the optional `response` every action has always been called with, so a

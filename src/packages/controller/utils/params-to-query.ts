@@ -1,5 +1,5 @@
 import type { ModelClass } from '../../database';
-import type { Request$params } from '../../server';
+import type { RequestParams } from '../../server';
 
 type Controller$query = {
   id?: number | string | Buffer;
@@ -19,7 +19,7 @@ type Controller$query = {
  */
 export default function paramsToQuery(
   model: ModelClass,
-  { id, page, sort, filter, fields }: Request$params
+  { id, page, sort, filter, fields }: RequestParams
 ): Controller$query {
   let query: Controller$query = {
     id,

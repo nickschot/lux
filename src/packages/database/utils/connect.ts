@@ -5,14 +5,14 @@ import type { Knex } from 'knex';
 import { NODE_ENV, DATABASE_URL } from '../../../constants';
 import { VALID_DRIVERS } from '../constants';
 import { InvalidDriverError } from '../errors';
-import type { Database$environment } from '../interfaces';
+import type { DatabaseEnvironmentConfig } from '../interfaces';
 
 /**
  * @private
  */
 export default function connect(
   path: string,
-  config: Database$environment
+  config: DatabaseEnvironmentConfig
 ): Knex {
   let { pool } = config;
 

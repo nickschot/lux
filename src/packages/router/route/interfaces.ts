@@ -1,5 +1,5 @@
 import type Controller from '../../controller';
-import type { Request$method } from '../../server';
+import type { RequestMethod } from '../../server';
 
 export type Route$type =
   'custom' | 'member' | 'collection' | 'relationship' | 'related';
@@ -8,7 +8,7 @@ export type Route$opts = {
   type: Route$type;
   path: string;
   action: string;
-  method: Request$method;
+  method: RequestMethod;
   controller: Controller;
 
   // The relationship a `relationship` or `related` route serves
