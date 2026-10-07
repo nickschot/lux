@@ -17,9 +17,12 @@ Guides to building a JSON:API server with Lumen, written for Lumen 4.0.
    Lumen reports, and reporting errors from your own code.
 7. **[Migrations and seeds](migrations.md)** — writing and running
    migrations, seeding, and creating and resetting databases.
+8. **[Logging](logging.md)** — configuration, what is logged at each level,
+   request ids, filtering credentials, and logging from your code.
 
-More guides are on the way: logging, the CLI, and deployment. Until they land, [UPGRADING.md](../../UPGRADING.md) is the
-most complete description of those topics.
+More guides are on the way: the CLI and deployment. Until they land,
+[UPGRADING.md](../../UPGRADING.md) is the most complete description of those
+topics.
 
 Also useful:
 
