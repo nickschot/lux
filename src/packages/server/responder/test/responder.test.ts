@@ -298,7 +298,7 @@ describe('module "server/responder"', () => {
           const result = await test((req, res) => {
             const respond = createResponder(req, res);
 
-            respond(new Error('[public]visible'));
+            respond(new Error('[public] visible'));
           });
 
           expect(result.status).to.equal(500);

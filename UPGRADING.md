@@ -457,7 +457,9 @@ around this by writing join rows itself can drop the workaround.
   ```
 
   `detail` (the message) is still only exposed in development or with a
-  `[public]` prefix.
+  `[public]` prefix. The prefix and any whitespace after it are stripped, so
+  the example's `detail` is `That title is taken.` (it used to keep the
+  leading space).
 - **Type errors name arrays and dates** ("got 'array'") instead of the
   confusing "Expected type 'object' … but got 'object'".
 - **A boot warning for custom `query` parameters named only with a-z**
