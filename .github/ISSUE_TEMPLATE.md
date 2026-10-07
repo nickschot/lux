@@ -1,8 +1,7 @@
 <!--
 Thanks for reporting an issue!
 
-This issue tracker is for bugs and issues found within Lumen core. If you require
-more general support please ask in the Gitter room http://bit.ly/2k4qS1k.
+This issue tracker is for bugs and issues found within Lumen core.
 
 Please fill in as much of the template below as you're able.
 

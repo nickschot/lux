@@ -21,7 +21,7 @@ npm packages and must never be renamed.
 **Status: the modernization is complete and released.** v3.x is published to npm as
 `lumen-framework`; the toolchain is TypeScript + esbuild + Vitest on Node 22 (details in
 "Toolchain" below). The plan, the phase-by-phase log, and the reasoning behind the
-choices are archived in [docs/MIGRATION-NOTES.md](docs/MIGRATION-NOTES.md) — read that
+choices are archived in [docs/internal/MIGRATION-NOTES.md](docs/internal/MIGRATION-NOTES.md) — read that
 before revisiting a decision, not to learn the current state.
 
 **Compatibility scope — still load-bearing:** this package is consumed **only by the
@@ -315,6 +315,12 @@ specs carried through the runner swap — were fixed once the migration settled.
 
 ## Working notes
 
+- **Where docs live.** User guides go in `docs/guides/` as plain Markdown with
+  relative links and no site-specific syntax, so they read on GitHub today and
+  can be fed to a static site (e.g. VitePress) later without rewriting.
+  Contributor-only notes go in `docs/internal/`. An app-visible change updates
+  the matching guide *and* gets an [UPGRADING.md](UPGRADING.md) entry — don't
+  let UPGRADING become the only description of a feature again.
 - Follow existing conventions: respect the 80-col limit, match the import ordering the
   airbnb config enforces. Prettier owns formatting for `.ts` — run it, don't
   hand-format.

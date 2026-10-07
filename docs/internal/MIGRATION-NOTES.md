@@ -5,11 +5,11 @@ CLAUDE.md once the work finished (0 Flow files remain; all roadmap phases comple
 Kept for the rationale behind decisions that are still visible in the codebase.
 
 Live gotchas and conventions that came out of this work stayed in
-[CLAUDE.md](../CLAUDE.md) -- see "Traps this migration hit" and "Conventions".
+[CLAUDE.md](../../CLAUDE.md) -- see "Traps this migration hit" and "Conventions".
 
 ## Phase 5 status — app compiler on esbuild
 
-**DONE.** [compiler/index.ts](src/packages/compiler/index.ts) is now a single
+**DONE.** [compiler/index.ts](../../src/packages/compiler/index.ts) is now a single
 `esbuild.build` (was Rollup 0.43 + Babel 6 + six plugins incl. `rollup-plugin-lux`). Suite
 **542 passing** (552 − 10 removed tests: 8 `is-external`, 2 `onwarn`). How it maps:
 
@@ -31,7 +31,7 @@ Live gotchas and conventions that came out of this work stayed in
   bundle and cluster workers (inherit `execArgv`) both map traces.
 - Removed: the 7 `rollup*` deps, `source-map-support`, `compiler/utils/{is-external,
   handle-warning}.ts` + `legacy-rollup.d.ts`. The standalone debugger tool
-  ([test/utils/debugger](test/utils/debugger)) was converted to esbuild too.
+  ([test/utils/debugger](../../test/utils/debugger)) was converted to esbuild too.
 
 **✅ Generated-app scaffolding (`cli/templates/*`) modernized — Babel 6 fully retired.**
 `lumen new` now emits a modern app: no `.babelrc`, `node >= 20`, a flat `eslint.config.mjs`
@@ -42,7 +42,7 @@ dead `mariadb→mariasql` / `oracle→oracledb` mappings are gone (an unsupporte
 falls back to sqlite via commander, rather than generating a broken app). With no template
 emitting Babel 6, the framework's last Babel-6 deps (`babel-core`, `babel-preset-lumen`,
 `babel-eslint`) and root `.babelrc` were removed. **Only `@babel/*` v8 remains** — the
-framework's own TS-strip build ([build.mjs](build.mjs)). Templates have no test coverage;
+framework's own TS-strip build ([build.mjs](../../build.mjs)). Templates have no test coverage;
 verify by running `lumen new` and inspecting the output against `test/test-app`.
 
 
@@ -74,7 +74,7 @@ init metaprogramming, ChangeSet's value store). Landed as **one atomic commit** 
 query` is a runtime value cycle so it couldn't checkpoint. Key decisions worth keeping:
 
 - **`ModelClass<T>` is the whole downstream bridge.** Flow used anonymous `Class<Model>`;
-  TS needs a named exported type. It lives in [database/interfaces.ts](src/packages/database/interfaces.ts)
+  TS needs a named exported type. It lives in [database/interfaces.ts](../../src/packages/database/interfaces.ts)
   and had to accumulate every static that *any* code touches off a model class (statics like
   `find/select/create/where/first/isInstance/columnFor/relationshipFor/initialize/transaction`,
   config `hasOne/hasMany/belongsTo/scopes/validates/hooks`, `store/logger/table/prototype`).
@@ -126,7 +126,7 @@ packages convert.
 
 ⚠ **Build caveat (load-bearing):** Babel's `--extensions .js,.ts` also matches `.d.ts` and
 dies parsing ambient syntax (`export const X: T;` with no initializer), aborting before
-`dist/` is written. [build.mjs](build.mjs) now passes `--ignore src/**/*.d.ts` to the
+`dist/` is written. [build.mjs](../../build.mjs) now passes `--ignore src/**/*.d.ts` to the
 type-strip stage so stubs are safe. (Verified end-to-end.)
 
 **Split (agreed):**
@@ -216,26 +216,26 @@ while replacing legacy tooling.
 0. ✅ Safety net — suite green on Node 20 / pnpm (552 passing).
 1. ✅ Runtime & dependency hygiene — safe dep bumps, Node-6 shims dropped.
 2. ✅ **Decouple + unify the transpiler (the real unlock).** New two-stage build
-   ([build.mjs](build.mjs)): **Babel 8** strips Flow (`.js`) + TS (`.ts`) → plain-JS ESM
+   ([build.mjs](../../build.mjs)): **Babel 8** strips Flow (`.js`) + TS (`.ts`) → plain-JS ESM
    in `build/`; **esbuild** bundles → `dist/` (`index.js` CJS `main`, `index.mjs` ESM,
    `cli.cjs` for `bin/lumen`). App compiler's `LUMEN_LOCAL` now points at `dist/index.mjs`, so
    it bundles built JS (decoupled from source language). TS foundation in place: strict
-   [tsconfig.json](tsconfig.json), `pnpm typecheck` (`tsc --noEmit`), and
+   [tsconfig.json](../../tsconfig.json), `pnpm typecheck` (`tsc --noEmit`), and
    `lib/ts-hook.js` (esbuild-register ran `.ts` in Mocha, loaded via `babel-hook.js`
    before babel-register). Proven end-to-end on `src/utils/uniq.ts`. *(Both hooks and
    `lib/` itself were removed in Phase 4 Step 3.)*
 3. ✅ **Flow → TypeScript, bottom-up per `src/packages/*`** — all *source* converted
    (295 `.ts`). Test suites/fixtures were deferred to Phase 4 and are now done too. See
-   "Phase 3 status" in [docs/MIGRATION-NOTES.md](docs/MIGRATION-NOTES.md).
+   "Phase 3 status" in [MIGRATION-NOTES.md](MIGRATION-NOTES.md).
 4. **Runner swap.** ✅ Steps 1–3: Vitest replaced Mocha, all 89 Flow test files converted,
    the Mocha stack retired (`test` = `vitest run`). ✅ Step 4 (build target): the framework
    esbuild build now targets **node20** — the `es2017` pin is gone, since nothing re-parses
    `dist/` with an older parser anymore. (A full tsup migration was never needed — the
-   framework already bundles with esbuild via [build.mjs](build.mjs).)
+   framework already bundles with esbuild via [build.mjs](../../build.mjs).)
 5. ✅ **App compiler reworked to esbuild** (phase 5). Rollup 0.43 + Babel 6 +
-   `rollup-plugin-lux` are gone; [compiler/index.ts](src/packages/compiler/index.ts) is a
+   `rollup-plugin-lux` are gone; [compiler/index.ts](../../src/packages/compiler/index.ts) is a
    single `esbuild.build`. See "Phase 5 status" in
-   [docs/MIGRATION-NOTES.md](docs/MIGRATION-NOTES.md).
+   [MIGRATION-NOTES.md](MIGRATION-NOTES.md).
 6. ✅ ESLint 9 flat + typescript-eslint + Prettier. ✅ CI is **GitHub Actions**
-   ([.github/workflows/ci.yml](.github/workflows/ci.yml)); CircleCI, AppVeyor and Codecov
+   ([.github/workflows/ci.yml](../../.github/workflows/ci.yml)); CircleCI, AppVeyor and Codecov
    are gone.
