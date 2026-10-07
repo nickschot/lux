@@ -4,7 +4,7 @@ import * as env from '../../../../utils/env';
 import type { JSONAPI$Document, JSONAPI$ErrorObject } from '../../../jsonapi';
 import type { Server$Error } from '../../interfaces';
 
-const PUBLIC = /^\[public\]/i;
+const PUBLIC = /^\[public\]\s*/i;
 
 /**
  * The error object for `err`, answered with `status`.

@@ -268,6 +268,53 @@ describe('module "server/responder"', () => {
             }
           });
         });
+
+        it('omits details outside of development environments', async () => {
+          setEnv('production');
+
+          const result = await test((req, res) => {
+            const respond = createResponder(req, res);
+
+            respond(new Error('test'));
+          });
+
+          expect(result.status).to.equal(500);
+          expect(await result.json()).to.deep.equal({
+            errors: [
+              {
+                status: '500',
+                title: 'Internal Server Error'
+              }
+            ],
+            jsonapi: {
+              version: VERSION
+            }
+          });
+        });
+
+        it('keeps `[public]` details outside of development environments', async () => {
+          setEnv('production');
+
+          const result = await test((req, res) => {
+            const respond = createResponder(req, res);
+
+            respond(new Error('[public] visible'));
+          });
+
+          expect(result.status).to.equal(500);
+          expect(await result.json()).to.deep.equal({
+            errors: [
+              {
+                status: '500',
+                title: 'Internal Server Error',
+                detail: 'visible'
+              }
+            ],
+            jsonapi: {
+              version: VERSION
+            }
+          });
+        });
       });
 
       describe('- responding with errors carrying error object members', () => {
