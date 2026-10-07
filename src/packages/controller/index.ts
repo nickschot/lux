@@ -822,10 +822,12 @@ class Controller {
    * the JSON API specification.
    *
    * @param {Request} req - The request object.
+   * @param {Response} [_res] - The response. Unused by the built-in action,
+   *   but every action is called with it, so an override can take it.
    * @return {Promise} Resolves with an array of Model instances.
    * @public
    */
-  index(req: Request): Query<Array<Model>> {
+  index(req: Request, _res?: Response): Query<Array<Model>> {
     return this.visible(findMany(this.model, req), req);
   }
 
@@ -835,11 +837,13 @@ class Controller {
    * https://goo.gl/q7FVgZ) section of the JSON API specification.
    *
    * @param {Request} req - The request object.
+   * @param {Response} [_res] - The response. Unused by the built-in action,
+   *   but every action is called with it, so an override can take it.
    * @return {Promise} Resolves with a Model instance with the id equal to the
    * id url parameter.
    * @public
    */
-  show(req: Request): Query<Model> {
+  show(req: Request, _res?: Response): Query<Model> {
     return this.visible(findOne(this.model, req), req);
   }
 
@@ -858,11 +862,13 @@ class Controller {
    * action `showRelationship` (`request.route.type` is `relationship`).
    *
    * @param {Request} req - The request object.
+   * @param {Response} [_res] - The response. Unused by the built-in action,
+   *   but every action is called with it, so an override can take it.
    * @return {Promise} Resolves with the Model instance with the id equal to
    * the id url parameter.
    * @public
    */
-  showRelationship(req: Request): Query<Model> {
+  showRelationship(req: Request, _res?: Response): Query<Model> {
     const fields = { [this.model.resourceName]: [] };
 
     // The request as `show` would get it for this resource, selecting no
@@ -890,11 +896,16 @@ class Controller {
    * `404 Not Found`.
    *
    * @param {Request} req - The request object.
+   * @param {Response} [_res] - The response. Unused by the built-in action,
+   *   but every action is called with it, so an override can take it.
    * @return {Query} The related Model instances (to-many) or instance (to-one,
    * resolving to `undefined` when there is none).
    * @public
    */
-  showRelated(req: Request): Query<Array<Model>> | Query<Model> {
+  showRelated(
+    req: Request,
+    _res?: Response
+  ): Query<Array<Model>> | Query<Model> {
     const { model } = this;
     const {
       params: { id },
@@ -994,11 +1005,13 @@ class Controller {
    * https://goo.gl/o2ZdOR)section of the JSON API specification.
    *
    * @param {Request} req - The request object.
+   * @param {Response} [_res] - The response. Unused by the built-in action,
+   *   but every action is called with it, so an override can take it.
    * @return {Promise} Resolves with the updated Model if changes occur.
    * Resolves with the number `204` if no changes occur.
    * @public
    */
-  update(req: Request): Promise<number | Model> {
+  update(req: Request, _res?: Response): Promise<number | Model> {
     const { model } = this;
 
     return this.visible(findOne(model, req), req)
@@ -1035,10 +1048,12 @@ class Controller {
    * section of the JSON API specification.
    *
    * @param {Request} req - The request object.
+   * @param {Response} [_res] - The response. Unused by the built-in action,
+   *   but every action is called with it, so an override can take it.
    * @return {Promise} Resolves with the number `204`.
    * @public
    */
-  destroy(req: Request): Promise<number> {
+  destroy(req: Request, _res?: Response): Promise<number> {
     return this.visible(findOne(this.model, req), req)
       .then(record => record.destroy())
       .then(() => 204);
@@ -1047,10 +1062,13 @@ class Controller {
   /**
    * Respond to HEAD or OPTIONS requests.
    *
+   * @param {Request} [_req] - The request. Unused.
+   * @param {Response} [_res] - The response. Unused by the built-in action,
+   *   but every action is called with it, so an override can take it.
    * @return {Promise} Resolves with the number `204`.
    * @public
    */
-  preflight(): Promise<number> {
+  preflight(_req?: Request, _res?: Response): Promise<number> {
     return Promise.resolve(204);
   }
 }
