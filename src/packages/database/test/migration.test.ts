@@ -56,6 +56,31 @@ describe('module "database/migration/utils/generate-timestamp"', () => {
         .to.be.a('string')
         .and.match(/^\d{16}$/g);
     });
+
+    it('is the UTC time, zero-padded to 16 digits', () => {
+      const at = (iso: string) => generateTimestamp(new Date(iso));
+
+      expect(at('2026-10-07T20:50:00.000Z')).to.equal('2026100720500000');
+      expect(at('2026-01-02T03:04:05.067Z')).to.equal('2026010203040506');
+      expect(at('2026-10-07T00:00:00.990Z')).to.equal('2026100700000099');
+    });
+
+    it('sorts in the order the timestamps were generated', () => {
+      const times = [
+        '2026-10-07T08:59:59.990Z',
+        '2026-10-07T09:00:00.000Z',
+        '2026-10-07T09:09:09.100Z',
+        '2026-10-07T10:00:00.000Z',
+        '2026-10-07T19:59:00.000Z',
+        '2026-10-07T20:00:00.000Z',
+        '2026-10-07T23:59:59.999Z',
+        '2026-10-08T00:00:00.000Z'
+      ];
+      const versions = times.map(iso => generateTimestamp(new Date(iso)));
+
+      expect([...versions].sort()).to.deep.equal(versions);
+      expect(versions.every(version => /^\d{16}$/.test(version))).to.be.true;
+    });
   });
 
   describe('.padding()', () => {

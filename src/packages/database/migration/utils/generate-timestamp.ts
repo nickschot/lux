@@ -1,6 +1,4 @@
-function formatInt(int: number): string {
-  return (int / 10).toString().replace('.', '').substr(0, 2);
-}
+const pad = (int: number): string => String(int).padStart(2, '0');
 
 export function* padding(
   char: string,
@@ -11,14 +9,22 @@ export function* padding(
   }
 }
 
-export default function generateTimestamp(): string {
-  const now = new Date();
-  const timestamp =
-    now.toISOString().substr(0, 10).split('-').join('') +
-    formatInt(now.getHours()) +
-    formatInt(now.getMinutes()) +
-    formatInt(now.getSeconds()) +
-    formatInt(now.getMilliseconds());
-
-  return timestamp + Array.from(padding('0', 16 - timestamp.length)).join('');
+/**
+ * A migration's version: `YYYYMMDDHHmmssCC` in UTC (`CC` are hundredths of a
+ * second), 16 digits. Fixed-width and zero-padded, so versions sort in the
+ * order they were generated — `lumen db:migrate` runs migrations in that
+ * order.
+ *
+ * @private
+ */
+export default function generateTimestamp(now: Date = new Date()): string {
+  return (
+    String(now.getUTCFullYear()) +
+    pad(now.getUTCMonth() + 1) +
+    pad(now.getUTCDate()) +
+    pad(now.getUTCHours()) +
+    pad(now.getUTCMinutes()) +
+    pad(now.getUTCSeconds()) +
+    pad(Math.floor(now.getUTCMilliseconds() / 10))
+  );
 }
