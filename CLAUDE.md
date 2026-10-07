@@ -321,6 +321,15 @@ specs carried through the runner swap — were fixed once the migration settled.
   Contributor-only notes go in `docs/internal/`. An app-visible change updates
   the matching guide *and* gets an [UPGRADING.md](UPGRADING.md) entry — don't
   let UPGRADING become the only description of a feature again.
+- **API reference: TypeDoc** ([typedoc.json](typedoc.json), `pnpm docs:api` →
+  gitignored `docs/api/`), from `src/index.ts`. CI's `docs` job fails on any
+  warning — a broken `{@link}`, or a public signature naming a type
+  `src/index.ts` does not export. Fix the latter by exporting the type under a
+  public name, or (for framework internals) listing it in
+  `intentionallyNotExported`. `@private` hides a member from the reference;
+  prefer `@internal` in new comments, and drop YUIDoc leftovers (`@method`,
+  `@static`, `@type {X}`) when touching a comment — TypeDoc reads the types
+  from TypeScript.
 - Follow existing conventions: respect the 80-col limit, match the import ordering the
   airbnb config enforces. Prettier owns formatting for `.ts` — run it, don't
   hand-format.

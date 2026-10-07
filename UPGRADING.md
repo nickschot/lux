@@ -773,6 +773,28 @@ runner. `lumen test` now fails with `error: unknown command 'test'`.
   };
   ```
 
+## 26. Types — the shapes apps write are exported
+
+Additive; nothing to change. Besides the classes, `lumen-framework` now
+exports the types an app (or a JS app's JSDoc / `// @ts-check`) can name:
+
+```typescript
+import type {
+  Config, DatabaseConfig, LoggerConfig, ServerConfig, CorsConfig,
+  RelationshipOptions, ModelHooks, Visibility,
+  BeforeAction, AfterAction, Request, Response, Query
+} from 'lumen-framework';
+```
+
+They are the framework's own types under public names — the internal
+`Foo$bar` names (`Logger$config`, `Controller$beforeAction`, …) are not part
+of the API. The full list is in the API reference (`pnpm docs:api`).
+
+The built-in actions (`index`, `show`, `update`, `destroy`, …) now declare
+the optional `response` every action has always been called with, so a
+TypeScript override can take it — `index(request: Request, response?:
+Response)` — and pass it to `super`.
+
 ## The short version
 
 Bump `pg`/`mysql2` and run Node 22.13+ (required); delete `.babelrc` and the

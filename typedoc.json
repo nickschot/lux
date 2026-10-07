@@ -1,0 +1,42 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "tsconfig": "tsconfig.build.json",
+  "out": "docs/api",
+  "name": "Lumen API reference",
+  "readme": "none",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeInternal": true,
+  "highlightLanguages": [
+    "bash",
+    "http",
+    "javascript",
+    "js",
+    "json",
+    "typescript"
+  ],
+  "externalSymbolLinkMappings": {
+    "@types/node": {
+      "EventEmitter.defaultMaxListeners": "https://nodejs.org/api/events.html#eventsdefaultmaxlisteners",
+      "Stream.Writable.end": "https://nodejs.org/api/stream.html#writableendchunk-encoding-callback",
+      "Stream.Writable.write": "https://nodejs.org/api/stream.html#writablewritechunk-encoding-callback"
+    }
+  },
+  "intentionallyNotExported": [
+    "Database",
+    "Database$column",
+    "Request$url",
+    "Response$stat",
+    "Route",
+    "Router"
+  ],
+  "validation": {
+    "notExported": true,
+    "invalidLink": true,
+    "invalidPath": true,
+    "rewrittenLink": true,
+    "notDocumented": false
+  },
+  "treatWarningsAsErrors": true
+}

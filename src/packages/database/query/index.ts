@@ -49,9 +49,16 @@ function isSubquery(value: unknown): boolean {
 }
 
 /**
- * @class Query
- * @extends Promise
- * @private
+ * A lazily built database query. `Model.all()`, `Model.where()`,
+ * `Model.find()` and friends return one; chain more conditions onto it and
+ * `await` it (it is a `Promise`) to run it.
+ *
+ * ```javascript
+ * const posts = await Post.where({ isPublic: true }).order('createdAt', 'DESC').page(1);
+ * ```
+ *
+ * Controller actions may return a `Query` unresolved; the framework runs it
+ * and serializes the result.
  */
 class Query<T = any> extends Promise<T> {
   declare model: ModelClass;

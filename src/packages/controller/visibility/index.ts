@@ -8,8 +8,6 @@ import { VisibilityRuleError } from './errors';
 /**
  * A namespace's visibility rules: per resource type, a function that narrows
  * a `Query` of that type to the rows the request may see.
- *
- * @private
  */
 export type Visibility = Record<
   string,

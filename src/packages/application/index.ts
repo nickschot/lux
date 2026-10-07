@@ -100,8 +100,7 @@ class Application {
   declare serializers: FreezeableMap<string, Serializer<Model>>;
 
   /**
-   * @method constructor
-   * @param {Object} config
+   * @param {Object} opts
    * @return {Promise}
    * @public
    */

@@ -5,6 +5,8 @@
 coverage/
 build/
 dist/
+# generated API reference (`pnpm docs:api`)
+docs/api/
 *test-results.xml
 
 # dependencies

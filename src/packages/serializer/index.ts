@@ -387,7 +387,7 @@ class Serializer<T extends Model> {
    * An Array of the `hasMany` relationships on a Serializer instance's Model to
    * include in the `relationships` resource object of a serialized payload.
    *
-   * ```javscript
+   * ```javascript
    * class PostsSerializer extends Serializer {
    *   hasMany = [
    *     'comments'
@@ -406,7 +406,7 @@ class Serializer<T extends Model> {
    * An array of the `attributes` on a Serializer instance's Model to include in
    * the `attributes` resource object of a serialized payload.
    *
-   * ```javscript
+   * ```javascript
    * class PostsSerializer extends Serializer {
    *   attributes = [
    *     'body',
@@ -517,7 +517,6 @@ class Serializer<T extends Model> {
    * Transform an array of Model instances or a single Model instance into a
    * [JSON API](http://jsonapi.org) document object.
    *
-   * @method format
    *
    * @param {Object} options - An options object used for building the
    * returned [JSON API](http://jsonapi.org) document object.
@@ -668,7 +667,6 @@ class Serializer<T extends Model> {
    * relationships, those declared and kept, are built from `linkage`,
    * batch-loaded by `loadLinkage()`, without touching the database.
    *
-   * @method formatOne
    *
    * @param {Object} options - An options object used for building the returned
    * [JSON API](http://jsonapi.org) resource object.
@@ -786,7 +784,6 @@ class Serializer<T extends Model> {
    * responds with: the relationship of `item` named `name` as resource
    * linkage, narrowed by `scope` like any other linkage, and its links.
    *
-   * @method formatRelationship
    * @private
    */
   async formatRelationship({
@@ -833,7 +830,6 @@ class Serializer<T extends Model> {
    * there (an included resource must be linked from the document) and with a
    * related endpoint in `namespace` to load them from.
    *
-   * @method linksOnlyFor
    * @private
    */
   linksOnlyFor(
@@ -863,7 +859,6 @@ class Serializer<T extends Model> {
    * `related` link: that link must not change when the relationship's content
    * does.
    *
-   * @method relationshipLinksFor
    * @private
    */
   relationshipLinksFor({
@@ -903,7 +898,6 @@ class Serializer<T extends Model> {
    * to-one relationship and an array of them for a to-many one. Its links
    * come from `relationshipLinksFor()`.
    *
-   * @method formatLinkage
    * @private
    */
   formatLinkage(
@@ -938,7 +932,6 @@ class Serializer<T extends Model> {
    * is one and `CommentsSerializer` otherwise. The relationships of every level
    * are batch-loaded with one query per relationship, not one per record.
    *
-   * @method addIncluded
    * @private
    */
   async addIncluded({
@@ -1028,7 +1021,6 @@ class Serializer<T extends Model> {
    * `names`, those the parent's Serializer exposes, are followed. The tree is
    * walked in request order, so `included` is deterministic.
    *
-   * @method includeRelated
    * @private
    */
   async includeRelated({
@@ -1104,7 +1096,6 @@ class Serializer<T extends Model> {
    * Serializer in `namespace` declares, narrowed to the request's
    * `fields[type]` when there is one — possibly to none.
    *
-   * @method attributesFor
    * @private
    */
   attributesFor(
@@ -1134,7 +1125,6 @@ class Serializer<T extends Model> {
    * namespace is the root one whenever it is a namespaced Controller's
    * fallback.
    *
-   * @method serializerFor
    * @private
    */
   serializerFor(
