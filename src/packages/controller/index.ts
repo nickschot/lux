@@ -213,7 +213,13 @@ import type {
  * Middleware is scoped by Controller and includes a parent Controller's
  * middleware recursively until the parent Controller is the root
  * `ApplicationController`. This allows you to implement custom logic that can
- * be executed for resources, namespaces, or an entire Application.
+ * be executed for resources, namespaces, or an entire Application. The parent
+ * is the namespace's `ApplicationController`, whatever class a controller
+ * extends. A namespace's `ApplicationController` that extends its parent
+ * namespace's (`AdminApplicationController extends ApplicationController`)
+ * already has the parent's hooks as inherited class fields, so they are not
+ * added again: its `beforeAction`/`afterAction` arrays are the namespace's,
+ * extended or replaced like any subclass's.
  *
  * Let's say we want to require authentication for every route in our
  * Application. All we have to do is move our authentication middleware function
@@ -498,21 +504,24 @@ class Controller {
    * it. Off by default: clients like ember-data send every attribute back on
    * save, read-only ones (`createdAt`) included.
    *
-   * Set it on `ApplicationController` to change it for the whole app, or on a
-   * single controller to override it there.
+   * Set on a namespace's `ApplicationController`, it applies to every
+   * controller in the namespace (and in namespaces nested in it) that does not
+   * set it itself — whatever class those controllers extend.
    *
    * @property rejectUnlistedAttributes
    * @type {Boolean}
    * @default false
    * @public
    */
-  rejectUnlistedAttributes: boolean = false;
+  declare rejectUnlistedAttributes: boolean;
 
   /**
    * Answer a relationship the model has but `params` does not list with
    * `403 Forbidden` (an unsupported update, per JSON:API). Turn it off to
    * ignore such relationships instead, for clients that send every
-   * `belongsTo` back on save (ember-data):
+   * `belongsTo` back on save (ember-data). Like `rejectUnlistedAttributes`,
+   * setting it on a namespace's `ApplicationController` sets it for the whole
+   * namespace:
    *
    * ```javascript
    * class ApplicationController extends Controller {
@@ -525,7 +534,7 @@ class Controller {
    * @default true
    * @public
    */
-  rejectUnlistedRelationships: boolean = true;
+  declare rejectUnlistedRelationships: boolean;
 
   /**
    * How many relationships deep an `?include` path may go on this
@@ -533,8 +542,9 @@ class Controller {
    * only direct relationships (`comments`) can be included. Paths deeper than
    * this are rejected with `400 Bad Request`.
    *
-   * Set it on `ApplicationController` to change it for the whole app, or on a
-   * single controller to override it there.
+   * Set on a namespace's `ApplicationController`, it applies to every
+   * controller in the namespace (and in namespaces nested in it) that does not
+   * set it itself — whatever class those controllers extend.
    *
    * ```javascript
    * class ApplicationController extends Controller {
@@ -551,7 +561,7 @@ class Controller {
    * @default 3
    * @public
    */
-  maxIncludeDepth: number = 3;
+  declare maxIncludeDepth: number;
 
   /**
    * Whether a namespace may fall back to the root Serializer of a type it has
@@ -1080,8 +1090,21 @@ class Controller {
   }
 }
 
+/**
+ * The defaults of the settings a controller inherits from its namespace's
+ * `ApplicationController` (`NAMESPACE_SETTINGS`). They live on the prototype,
+ * not in field initializers, so that only a controller that sets one has it
+ * as an own property — which is how `createController` tells "set here" from
+ * "take the namespace's".
+ */
+Object.defineProperties(Controller.prototype, {
+  rejectUnlistedAttributes: { value: false, writable: true },
+  rejectUnlistedRelationships: { value: true, writable: true },
+  maxIncludeDepth: { value: 3, writable: true }
+});
+
 export default Controller;
-export { BUILT_IN_ACTIONS } from './constants';
+export { BUILT_IN_ACTIONS, NAMESPACE_SETTINGS } from './constants';
 
 export { Scope } from './visibility';
 export type { Visibility } from './visibility';

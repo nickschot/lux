@@ -1,0 +1,231 @@
+import { it, describe, expect } from 'vitest';
+
+import Controller from '../../controller';
+import createController from '../utils/create-controller';
+import type Database from '../../database';
+import type { BeforeAction, AfterAction } from '../../controller';
+import type { Bundle$Namespace } from '../../loader';
+import type { Model } from '../../database';
+import type Serializer from '../../serializer';
+
+describe('module "application" #createController()', () => {
+  // No models or serializers: these tests are about what a controller takes
+  // from its namespace's ApplicationController.
+  const store = {
+    modelFor() {
+      throw new Error('no models');
+    }
+  } as unknown as Database;
+  const serializers = new Map() as unknown as Bundle$Namespace<
+    Serializer<Model>
+  >;
+
+  const create = <T extends Controller>(
+    key: string,
+    constructor: new (...args: Array<never>) => T,
+    parent: Controller | null = null
+  ) => createController(constructor, { key, store, parent, serializers });
+
+  const calls: Array<string> = [];
+
+  // Hooks are written inline in class fields, as apps do: each instance gets
+  // its own function objects, so nothing may rely on their identity.
+  class ApplicationController extends Controller {
+    override beforeAction: Array<BeforeAction> = [
+      async function authenticate() {
+        calls.push('authenticate');
+      }
+    ];
+
+    override afterAction: Array<AfterAction> = [
+      async function stamp(req, res, data) {
+        calls.push('stamp');
+        return data;
+      }
+    ];
+
+    override rejectUnlistedRelationships = false;
+
+    override maxIncludeDepth = 2;
+  }
+
+  const runHooks = async (controller: Controller) => {
+    calls.length = 0;
+
+    for (const hook of controller.beforeAction) {
+      await hook({} as never, {} as never);
+    }
+
+    for (const hook of controller.afterAction) {
+      await hook({} as never, {} as never, undefined);
+    }
+
+    return [...calls];
+  };
+
+  describe('hooks', () => {
+    it("runs the namespace's hooks around a controller's own", async () => {
+      class PostsController extends Controller {
+        override beforeAction: Array<BeforeAction> = [
+          async function own() {
+            calls.push('own');
+          }
+        ];
+      }
+
+      const application = create('application', ApplicationController);
+      const posts = create('posts', PostsController, application);
+
+      expect(await runHooks(posts)).to.deep.equal([
+        'authenticate',
+        'own',
+        'stamp'
+      ]);
+    });
+
+    it('runs them once in a namespace whose ApplicationController extends the root one', async () => {
+      class AdminApplicationController extends ApplicationController {}
+      class AdminPostsController extends Controller {}
+
+      const application = create('application', ApplicationController);
+      const admin = create(
+        'admin/application',
+        AdminApplicationController,
+        application
+      );
+      const posts = create('admin/posts', AdminPostsController, admin);
+
+      expect(await runHooks(admin)).to.deep.equal(['authenticate', 'stamp']);
+      expect(await runHooks(posts)).to.deep.equal(['authenticate', 'stamp']);
+    });
+
+    it('lets such an ApplicationController extend the inherited hooks', async () => {
+      class AdminApplicationController extends ApplicationController {
+        override beforeAction: Array<BeforeAction> = [
+          ...this.beforeAction,
+          async function requireAdmin() {
+            calls.push('requireAdmin');
+          }
+        ];
+      }
+      class AdminPostsController extends Controller {}
+
+      const application = create('application', ApplicationController);
+      const admin = create(
+        'admin/application',
+        AdminApplicationController,
+        application
+      );
+      const posts = create('admin/posts', AdminPostsController, admin);
+
+      expect(await runHooks(posts)).to.deep.equal([
+        'authenticate',
+        'requireAdmin',
+        'stamp'
+      ]);
+    });
+
+    it("adds the parent namespace's hooks to an ApplicationController that does not extend it", async () => {
+      class AdminApplicationController extends Controller {
+        override beforeAction: Array<BeforeAction> = [
+          async function requireAdmin() {
+            calls.push('requireAdmin');
+          }
+        ];
+      }
+      class AdminPostsController extends Controller {}
+
+      const application = create('application', ApplicationController);
+      const admin = create(
+        'admin/application',
+        AdminApplicationController,
+        application
+      );
+      const posts = create('admin/posts', AdminPostsController, admin);
+
+      expect(await runHooks(posts)).to.deep.equal([
+        'authenticate',
+        'requireAdmin',
+        'stamp'
+      ]);
+    });
+
+    it('binds hooks to the controller that declares them', async () => {
+      const seen: Array<unknown> = [];
+
+      class Root extends Controller {
+        override beforeAction: Array<BeforeAction> = [
+          async function capture(this: unknown) {
+            seen.push(this);
+          }
+        ];
+      }
+      class PostsController extends Controller {}
+
+      const application = create('application', Root);
+      const posts = create('posts', PostsController, application);
+
+      await application.beforeAction[0]({} as never, {} as never);
+      await posts.beforeAction[0]({} as never, {} as never);
+
+      expect(seen).to.deep.equal([application, application]);
+    });
+  });
+
+  describe('namespace settings', () => {
+    it("takes the namespace's settings when it sets none", () => {
+      class PostsController extends Controller {}
+
+      const application = create('application', ApplicationController);
+      const posts = create('posts', PostsController, application);
+
+      expect(posts.rejectUnlistedRelationships).to.equal(false);
+      expect(posts.maxIncludeDepth).to.equal(2);
+      expect(posts.rejectUnlistedAttributes).to.equal(false);
+    });
+
+    it('keeps the ones it sets itself', () => {
+      class PostsController extends Controller {
+        override rejectUnlistedRelationships = true;
+
+        override rejectUnlistedAttributes = true;
+      }
+
+      const application = create('application', ApplicationController);
+      const posts = create('posts', PostsController, application);
+
+      expect(posts.rejectUnlistedRelationships).to.equal(true);
+      expect(posts.rejectUnlistedAttributes).to.equal(true);
+      expect(posts.maxIncludeDepth).to.equal(2);
+    });
+
+    it('passes them down through a nested namespace', () => {
+      class AdminApplicationController extends Controller {
+        override rejectUnlistedAttributes = true;
+      }
+      class AdminPostsController extends Controller {}
+
+      const application = create('application', ApplicationController);
+      const admin = create(
+        'admin/application',
+        AdminApplicationController,
+        application
+      );
+      const posts = create('admin/posts', AdminPostsController, admin);
+
+      expect(posts.rejectUnlistedAttributes).to.equal(true);
+      expect(posts.rejectUnlistedRelationships).to.equal(false);
+      expect(posts.maxIncludeDepth).to.equal(2);
+    });
+
+    it('falls back to the built-in defaults', () => {
+      class PostsController extends Controller {}
+
+      const posts = create('posts', PostsController);
+
+      expect(posts.rejectUnlistedAttributes).to.equal(false);
+      expect(posts.rejectUnlistedRelationships).to.equal(true);
+      expect(posts.maxIncludeDepth).to.equal(3);
+    });
+  });
+});

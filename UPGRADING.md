@@ -803,6 +803,30 @@ the optional `response` every action has always been called with, so a
 TypeScript override can take it — `index(request: Request, response?:
 Response)` — and pass it to `super`.
 
+## 27. Controllers — namespace settings and hooks
+
+- **`rejectUnlistedAttributes`, `rejectUnlistedRelationships` and
+  `maxIncludeDepth` set on a namespace's `ApplicationController` apply to every
+  controller in the namespace** (and nested namespaces) that does not set its
+  own. They used to be ordinary class fields, so only a controller that
+  *extended* `ApplicationController` saw them — and generated controllers
+  extend `Controller`, so an app-wide `rejectUnlistedRelationships = false`
+  was silently ignored. **Check:** a controller in a namespace whose
+  `ApplicationController` sets one of these now follows it.
+- **A namespace `ApplicationController` that extends its parent namespace's
+  no longer runs the parent's hooks twice.** `AdminApplicationController
+  extends ApplicationController` (the pattern for building on
+  `super.visibility`) inherited the root's `beforeAction`/`afterAction` as
+  class fields *and* received them from the root namespace, so with any root
+  hook every `/admin` request ran it twice. Such a class's arrays are now
+  taken as the namespace's hooks, like any subclass: keep the root's with
+  `beforeAction = [...this.beforeAction, requireAdmin]`; assigning
+  `beforeAction = [requireAdmin]` replaces them. An `ApplicationController`
+  that extends `Controller` still gets its parent namespace's hooks added.
+- **Hooks are bound to the controller that declares them** — the root
+  `ApplicationController`'s included, which used to run with `this`
+  undefined on its own routes (`this.get('health')`).
+
 ## 29. Generated migrations are named in order
 
 `lumen generate migration|model|resource` names migrations
