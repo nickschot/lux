@@ -657,9 +657,10 @@ if one is, its derived table name or `type` changes with it.
 
 ## 24. The `lumen` CLI — mistakes are errors now
 
-The CLI moved from commander 2 to 15. Every command, alias and flag is the
-same; what changed is that mistakes it used to swallow now fail with a message
-and exit code `1` — worth knowing if a script depends on the old exit codes.
+The CLI moved from commander 2 to 15. Every command, alias and flag but one
+(`lumen test`, below) is the same; what changed is that mistakes it used to
+swallow now fail with a message and exit code `1` — worth knowing if a script
+depends on the old exit codes.
 
 | Invocation | Before | Now |
 |---|---|---|
@@ -670,6 +671,12 @@ and exit code `1` — worth knowing if a script depends on the old exit codes.
 | `lumen new app --database Postgres` | silently created a sqlite app | the same error — values are lowercase |
 | `-e`/`-p`/`--database` with no value | set the value to `true` (e.g. `NODE_ENV=true`) | error: argument missing |
 | extra arguments (`lumen build now`) | ignored | error: too many arguments |
+
+**`lumen test` / `lumen t` is gone.** It never ran anything — it printed
+"Coming Soon!" and exited `0`, so a CI step calling it passed without testing.
+`lumen new` no longer writes a `test` script into `package.json`; drop the
+`"test": "lumen test"` line from an existing app and point it at your own
+runner. `lumen test` now fails with `error: unknown command 'test'`.
 
 ## 25. Logging — safer in production, quieter and more useful
 

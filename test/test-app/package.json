@@ -4,8 +4,7 @@
   "description": "",
   "main": "app/index.js",
   "scripts": {
-    "start": "lumen serve",
-    "test": "lumen test"
+    "start": "lumen serve"
   },
   "author": "",
   "license": "MIT",
