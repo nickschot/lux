@@ -1,6 +1,6 @@
 import { EOL } from 'os';
 
-import { classify, camelize } from 'inflection';
+import { classify, camelize, pluralize } from 'inflection';
 
 import template from '../../template';
 import indent from '../utils/indent';
@@ -36,7 +36,13 @@ export default (name: string, attrs: Array<string>) => {
             const value = types[key];
 
             if (value) {
-              const inverse = camelize(normalized, true);
+              // The name of this model on the other side: a `belongs-to` is
+              // usually the inverse of a `has-many` (`post` belongs to `user`,
+              // `user` has many `posts`), while a `has-one`/`has-many` points
+              // back at a single owner.
+              const singular = camelize(normalized, true);
+              const inverse =
+                key === 'belongsTo' ? pluralize(singular) : singular;
               const relatedKey = chain(related)
                 .pipe(underscore)
                 .pipe(str => camelize(str, true))
