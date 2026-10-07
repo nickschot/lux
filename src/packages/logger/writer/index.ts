@@ -2,6 +2,7 @@ import { WriteStream } from 'tty';
 
 import chalk from '../../../utils/chalk';
 import { WARN, ERROR } from '../constants';
+import errorName from '../utils/error-name';
 import omit from '../../../utils/omit';
 import type { Logger$format } from '../interfaces';
 
@@ -27,7 +28,18 @@ export function createWriter(format: Logger$format): Logger$Writer {
     let output: unknown;
 
     if (format === 'json') {
-      if (isMessageObject(message) && message.message) {
+      if (message instanceof Error) {
+        // `stack` and `name` are not own enumerable properties, so spreading
+        // the error alone would drop them — and with them where it came from.
+        output = {
+          timestamp,
+          level,
+          message: message.message,
+          name: errorName(message),
+          ...omit(message, 'message'),
+          stack: message.stack
+        };
+      } else if (isMessageObject(message) && message.message) {
         output = {
           timestamp,
           level,

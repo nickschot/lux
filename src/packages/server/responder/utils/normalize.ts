@@ -1,5 +1,6 @@
 import { STATUS_CODES } from '../../constants';
 import stringify from '../../../../utils/stringify';
+import statusForError from '../../utils/status-for-error';
 
 import dataFor from './data-for';
 
@@ -34,9 +35,7 @@ export default function normalize(data?: unknown) {
         statusCode = 404;
         normalized = dataFor(statusCode);
       } else if (data instanceof Error) {
-        statusCode =
-          parseInt(String((data as { statusCode?: unknown }).statusCode), 10) ||
-          500;
+        statusCode = statusForError(data);
         normalized = dataFor(statusCode, data);
       } else {
         normalized = data;

@@ -3,6 +3,7 @@ import type { Writable } from 'stream';
 import type { IncomingMessage, Server as HTTPServer } from 'http';
 
 import { tryCatchSync } from '../../utils/try-catch';
+import { errorName } from '../logger';
 import type Logger from '../logger';
 import type Router from '../router';
 
@@ -14,6 +15,7 @@ import MethodNotAllowedError from './errors/method-not-allowed-error';
 import validateAccept from './utils/validate-accept';
 import validateContentType from './utils/validate-content-type';
 import setCORSHeaders from './utils/set-cors-headers';
+import statusForError from './utils/status-for-error';
 import type { Request } from './request/interfaces';
 import type { Response } from './response/interfaces';
 import type { Server$opts, Server$cors } from './interfaces';
@@ -131,7 +133,14 @@ class Server {
         })
         .then(respond)
         .catch(err => {
-          logger.error(err);
+          // A 4xx is the client's mistake, already on the request line with
+          // its status; only a 5xx is the server's, worth an ERROR and a stack.
+          if (statusForError(err) >= 500) {
+            logger.error(err);
+          } else {
+            logger.debug(`${errorName(err)}: ${err?.message}`);
+          }
+
           respond(err);
         });
     }

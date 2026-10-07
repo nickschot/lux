@@ -111,11 +111,34 @@ describe('module "logger/writer"', () => {
                 if (format === 'text') {
                   expect(stderrSpy.firstCall.args[0]).to.include(message.stack);
                 } else {
-                  expect(stderrSpy.firstCall.args[0]).to.include(
-                    message.message
-                  );
+                  expect(JSON.parse(stderrSpy.firstCall.args[0])).to.include({
+                    level,
+                    message: 'Test',
+                    name: 'Error',
+                    stack: message.stack
+                  });
                 }
               });
+
+              if (format === 'json') {
+                it('names errors by their class, with their own members', () => {
+                  class ConflictError extends Error {
+                    statusCode = 409;
+                  }
+
+                  subject({
+                    level,
+                    message: new ConflictError('Taken'),
+                    timestamp: new Date().toISOString()
+                  });
+
+                  expect(JSON.parse(stderrSpy.firstCall.args[0])).to.include({
+                    message: 'Taken',
+                    name: 'ConflictError',
+                    statusCode: 409
+                  });
+                });
+              }
             }
           });
         });

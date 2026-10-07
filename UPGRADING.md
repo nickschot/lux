@@ -688,6 +688,17 @@ and exit code `1` — worth knowing if a script depends on the old exit codes.
   enabled logger). `level: 'info'` (lowercase) used to fall back to `DEBUG`
   without a word — in production that logs every SQL statement with its
   values. Levels are `DEBUG`, `INFO`, `WARN`, `ERROR`; formats `text`, `json`.
+- **JSON error lines keep their stack.** A logged error used to be written as
+  just its message and own members (`{"message":"connect ECONNREFUSED",
+  "statusCode":500}`) — `stack` and `name` are not enumerable, so they were
+  lost. They are now included, with `name` falling back to the class name
+  (`NotFoundError`) where the error does not set one.
+- **Only 5xx errors are logged as `ERROR`.** A 4xx a request is answered with
+  (not found, validation, bad `Accept`…) is the client's, and already on the
+  request line with its status; it is now a one-line `DEBUG` message
+  (`NotFoundError: Could not find…`) instead of an `ERROR` with a stack. In
+  production (`INFO`) 4xx no longer produce an error line at all — adjust any
+  alerting that counted them.
 
 ## The short version
 
