@@ -181,10 +181,9 @@ database with the server's own tools first (`createdb blog_dev`, or
 lumen serve
 ```
 
-The API listens on `http://localhost:4000`. `lumen serve --port 8080` picks
-another port, and `lumen serve --hot` rebuilds and restarts when a file
-changes. In development every request is logged with its SQL, parameters and
-timing.
+The API listens on `http://localhost:4000`; `lumen serve --port 8080` picks
+another port. In development the server rebuilds and restarts when a file
+changes, and every request is logged with its SQL, parameters and timing.
 
 ## Make some requests
 
