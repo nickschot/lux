@@ -841,6 +841,37 @@ Response)` — and pass it to `super`.
   **Do:** to see everything in a namespace (an admin area), declare
   `static visibility = {};` on its `ApplicationController`.
 
+## 28. Model hooks can read inside their transaction
+
+`Model.transacting(trx)` used to forward only `create`; a hook that *read*
+— `Post.first().where(…)` in an `afterCreate` — ran on a second connection,
+outside the write's transaction. Two things went wrong:
+
+- **It could not see what the write had done.** A hook looking up the record
+  just created found nothing, silently.
+- **On a pool of one connection it deadlocked.** SQLite's default: the read
+  waited for the connection the transaction held, until knex gave up with
+  `Timeout acquiring a connection. The pool is probably full.` A request
+  creating a record hung for the whole acquire timeout. The usual workaround
+  was `pool: 5` in `config/database.js`.
+
+Now every query started from `Model.transacting(trx)` runs in the
+transaction — `find`, `where`, `first`, `count`, scopes — and so do the
+queries loading its `include`d relationships. A query built another way can
+join with `query.transacting(trx)`. **Do:** read through the hook's `trx`:
+
+```javascript
+static hooks = {
+  async afterCreate(comment, trx) {
+    const post = await Post.transacting(trx).find(comment.postId);
+  }
+};
+```
+
+Reads that do so can drop a `pool` raised only to avoid the deadlock.
+Reading a relationship from a model instance (`await post.comments`) is not
+bound to a transaction yet.
+
 ## 29. Generated migrations are named in order
 
 `lumen generate migration|model|resource` names migrations

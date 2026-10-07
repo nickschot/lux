@@ -18,11 +18,13 @@ import promiseHash from '../../../../../utils/promise-hash';
 export default async function buildResults<T extends Model>({
   model,
   records,
-  relationships
+  relationships,
+  trx = null
 }: {
   model: ModelClass<T>;
   records: Promise<Array<Record<string, any>>>;
   relationships: Record<string, any>;
+  trx?: unknown;
 }): Promise<Array<T>> {
   const results = await records;
   const pkPattern = new RegExp(`^.+\\.${model.primaryKey}$`);
@@ -39,7 +41,9 @@ export default async function buildResults<T extends Model>({
         let foreignKey = camelize(relationship.foreignKey, true);
 
         if (relationship.through) {
-          const query = relationship.model.select(...relationship.attrs);
+          const query = relationship.model
+            .select(...relationship.attrs)
+            .transacting(trx);
 
           const baseKey =
             `${relationship.through.tableName}.` +
@@ -72,9 +76,12 @@ export default async function buildResults<T extends Model>({
 
         return {
           ...obj,
-          [name]: relationship.model.select(...relationship.attrs).where({
-            [foreignKey]: results.map(({ id }) => id)
-          })
+          [name]: relationship.model
+            .select(...relationship.attrs)
+            .where({
+              [foreignKey]: results.map(({ id }) => id)
+            })
+            .transacting(trx)
         };
       },
       {}

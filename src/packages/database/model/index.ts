@@ -1256,10 +1256,25 @@ class Model {
    * });
    * ```
    *
-   * @param {Transaction} trx - A transaction object to forward to
-   * create method calls.
-   * @return {Model} - Returns a proxied version of `this` that delagates the
-   * transaction param to subsquent create method calls.
+   * Queries started from it run in the transaction too — `find`, `where`,
+   * `first`, `count`, scopes and the rest — and so do the queries that load
+   * their included relationships. A model hook reads through the transaction
+   * it is given, so it sees what the write has done so far and does not wait
+   * on a second connection while the transaction holds one:
+   *
+   * ```javascript
+   * static hooks = {
+   *   async afterCreate(comment, trx) {
+   *     const post = await Post.transacting(trx).find(comment.postId);
+   *     // …
+   *   }
+   * };
+   * ```
+   *
+   * @param {Transaction} trx - The transaction for the create calls and
+   * queries started from the returned model.
+   * @return {Model} - A proxied version of `this` whose `create` and
+   * query-starting methods use `trx`.
    * @public
    */
   static transacting(trx: unknown): ModelClass {
