@@ -83,7 +83,6 @@ export async function create(name: string, database: string) {
   const logOutput = template`
     ${chalk.green('create')} app/index.js
     ${chalk.green('create')} app/routes.js
-    ${chalk.green('create')} bin/app.js
     ${chalk.green('create')} config/environments/development.js
     ${chalk.green('create')} config/environments/test.js
     ${chalk.green('create')} config/environments/production.js

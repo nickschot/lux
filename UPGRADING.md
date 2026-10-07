@@ -679,6 +679,15 @@ depends on the old exit codes.
 `"test": "lumen test"` line from an existing app and point it at your own
 runner. `lumen test` now fails with `error: unknown command 'test'`.
 
+**Generated `belongs-to` relationships get the right inverse.**
+`lumen generate model post user:belongs-to` used to write
+`inverse: 'post'` — the singular model name — where the other side is
+`user`'s `hasMany` `posts`. Saving a post with a user then failed with a
+`500` (`Cannot destructure property 'type' of
+'inverseModel.relationshipFor(...)'`). It now writes `inverse: 'posts'`.
+Check the `belongsTo` inverses in models you generated earlier: each must
+name a relationship that exists on the related model.
+
 ## 25. Logging — safer in production, quieter and more useful
 
 - **Credentials are filtered without configuration.** Params whose name
