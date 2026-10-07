@@ -5,8 +5,9 @@ Rollup 0.43) with a modern one (Node 22, TypeScript, esbuild). The app-facing
 **runtime API is unchanged** — the work below is about the build and the
 runtime environment, not your application code's logic.
 
-Every point is grounded in `test/test-app`, which is co-evolved with the
-framework and is the canonical example app.
+Every point is grounded in `test/test-app`, the framework's test fixture,
+which is co-evolved with it. [examples/social-network](examples/social-network)
+shows the same features the way an app would write them.
 
 ## 1. Hard requirements — these break if you skip them
 

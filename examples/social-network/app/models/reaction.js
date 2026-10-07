@@ -1,6 +1,15 @@
 import { Model } from 'lumen-framework';
 
-import track from 'app/utils/track';
+import track from '../utils/track';
+
+export const REACTION_TYPES = [
+  ':+1:',
+  ':-1:',
+  ':heart:',
+  ':tada:',
+  ':laughing:',
+  ':disappointed:'
+];
 
 class Reaction extends Model {
   static belongsTo = {
@@ -18,12 +27,7 @@ class Reaction extends Model {
   };
 
   static hooks = {
-    beforeSave(reaction) {
-      const {
-        commentId,
-        postId
-      } = reaction;
-
+    async beforeSave({ postId, commentId }) {
       if (!commentId && !postId) {
         throw new Error('Reactions must have a reactable (Post or Comment).');
       }

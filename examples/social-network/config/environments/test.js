@@ -3,12 +3,10 @@ export default {
     level: 'WARN',
     format: 'text',
     enabled: false,
+    requestBody: true,
 
     filter: {
-      params: [
-        'email',
-        'password'
-      ]
+      params: []
     }
   }
 };

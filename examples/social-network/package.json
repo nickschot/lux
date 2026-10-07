@@ -1,23 +1,35 @@
 {
   "name": "social-network",
   "version": "0.0.1",
-  "description": "",
+  "private": true,
+  "description": "A Lumen example application: users, posts, comments, reactions and friendships.",
   "main": "app/index.js",
   "scripts": {
     "start": "lumen serve",
-    "test": "lumen test"
+    "db:setup": "lumen db:reset && lumen db:migrate && lumen db:seed",
+    "lint": "eslint .",
+    "smoke": "node smoke-test.mjs"
   },
-  "author": "",
   "license": "MIT",
   "dependencies": {
-    "babel-core": "6.24.1",
-    "babel-preset-lumen": "2.0.2",
-    "bcryptjs": "2.4.3",
-    "knex": "0.13.0",
-    "lumen-framework": "1.2.3",
-    "sqlite3": "3.1.8"
+    "@faker-js/faker": "^10.6.0",
+    "bcryptjs": "^3.0.3",
+    "knex": "^3.3.0",
+    "lumen-framework": "link:../..",
+    "sqlite3": "^6.0.1"
   },
   "devDependencies": {
-    "faker": "4.1.0"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "globals": "^17.13.0"
+  },
+  "engines": {
+    "node": ">= 22.13"
+  },
+  "packageManager": "pnpm@10.34.5",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sqlite3"
+    ]
   }
 }

@@ -1,6 +1,6 @@
 import { Controller } from 'lumen-framework';
 
-import User from 'app/models/user';
+import User from '../models/user';
 
 class UsersController extends Controller {
   params = [
