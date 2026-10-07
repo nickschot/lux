@@ -790,10 +790,10 @@ They are the framework's own types under public names — the internal
 `Foo$bar` names (`Logger$config`, `Controller$beforeAction`, …) are not part
 of the API. The full list is in the API reference (`pnpm docs:api`).
 
-The built-in actions (`index`, `show`, `update`, `destroy`, …) now declare the
-optional `res` every action has always been called with, so a TypeScript
-override can take it — `index(req: Request, res?: Response)` — and pass it to
-`super`.
+The built-in actions (`index`, `show`, `update`, `destroy`, …) now declare
+the optional `response` every action has always been called with, so a
+TypeScript override can take it — `index(request: Request, response?:
+Response)` — and pass it to `super`.
 
 ## The short version
 

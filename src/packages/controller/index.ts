@@ -821,14 +821,15 @@ class Controller {
    * information, see the [fetching resources](https://goo.gl/q7FVgZ) section of
    * the JSON API specification.
    *
-   * @param {Request} req - The request object.
-   * @param {Response} [_res] - The response. Unused by the built-in action,
+   * @param {Request} request - The request object.
+   * @param {Response} [response] - The response. Unused by the built-in action,
    *   but every action is called with it, so an override can take it.
    * @return {Promise} Resolves with an array of Model instances.
    * @public
    */
-  index(req: Request, _res?: Response): Query<Array<Model>> {
-    return this.visible(findMany(this.model, req), req);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  index(request: Request, response?: Response): Query<Array<Model>> {
+    return this.visible(findMany(this.model, request), request);
   }
 
   /**
@@ -836,15 +837,16 @@ class Controller {
    * query parameters. For more information, see the [fetching resources](
    * https://goo.gl/q7FVgZ) section of the JSON API specification.
    *
-   * @param {Request} req - The request object.
-   * @param {Response} [_res] - The response. Unused by the built-in action,
+   * @param {Request} request - The request object.
+   * @param {Response} [response] - The response. Unused by the built-in action,
    *   but every action is called with it, so an override can take it.
    * @return {Promise} Resolves with a Model instance with the id equal to the
    * id url parameter.
    * @public
    */
-  show(req: Request, _res?: Response): Query<Model> {
-    return this.visible(findOne(this.model, req), req);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  show(request: Request, response?: Response): Query<Model> {
+    return this.visible(findOne(this.model, request), request);
   }
 
   /**
@@ -861,21 +863,22 @@ class Controller {
    * and a resource the request may not see is `404 Not Found`. Hooks see the
    * action `showRelationship` (`request.route.type` is `relationship`).
    *
-   * @param {Request} req - The request object.
-   * @param {Response} [_res] - The response. Unused by the built-in action,
+   * @param {Request} request - The request object.
+   * @param {Response} [response] - The response. Unused by the built-in action,
    *   but every action is called with it, so an override can take it.
    * @return {Promise} Resolves with the Model instance with the id equal to
    * the id url parameter.
    * @public
    */
-  showRelationship(req: Request, _res?: Response): Query<Model> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  showRelationship(request: Request, response?: Response): Query<Model> {
     const fields = { [this.model.resourceName]: [] };
 
     // The request as `show` would get it for this resource, selecting no
     // attributes: the route's own params are not `show`'s.
     return this.show(
-      Object.create(req, {
-        params: { value: { id: req.params.id, fields } },
+      Object.create(request, {
+        params: { value: { id: request.params.id, fields } },
         defaultParams: { value: { fields } }
       })
     );
@@ -895,22 +898,23 @@ class Controller {
    * `showRelationship()` first, so one the request may not see is
    * `404 Not Found`.
    *
-   * @param {Request} req - The request object.
-   * @param {Response} [_res] - The response. Unused by the built-in action,
+   * @param {Request} request - The request object.
+   * @param {Response} [response] - The response. Unused by the built-in action,
    *   but every action is called with it, so an override can take it.
    * @return {Query} The related Model instances (to-many) or instance (to-one,
    * resolving to `undefined` when there is none).
    * @public
    */
   showRelated(
-    req: Request,
-    _res?: Response
+    request: Request,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    response?: Response
   ): Query<Array<Model>> | Query<Model> {
     const { model } = this;
     const {
       params: { id },
       route: { relationship = '' }
-    } = req;
+    } = request;
     const opts = model.relationshipFor(relationship);
 
     if (!opts) {
@@ -941,12 +945,12 @@ class Controller {
     }
 
     if (type === 'hasMany') {
-      return this.visible(findMany(related, req).where(condition), req);
+      return this.visible(findMany(related, request).where(condition), request);
     }
 
     const { select } = paramsToQuery(
       related,
-      merge(req.defaultParams, req.params)
+      merge(request.defaultParams, request.params)
     );
 
     return this.visible(
@@ -954,7 +958,7 @@ class Controller {
         .select(...select)
         .where(condition)
         .first() as unknown as Query<Model>,
-      req
+      request
     );
   }
 
@@ -963,12 +967,12 @@ class Controller {
    * represents. For more information, see the [creating resources](
    * https://goo.gl/4Obc9t) section of the JSON API specification.
    *
-   * @param {Request} req - The request object.
-   * @param {Response} res - The response object.
+   * @param {Request} request - The request object.
+   * @param {Response} response - The response object.
    * @return {Promise} Resolves with the newly created Model instance.
    * @public
    */
-  async create(req: Request, res: Response): Promise<Model> {
+  async create(request: Request, response: Response): Promise<Model> {
     const { model } = this;
 
     const {
@@ -976,12 +980,12 @@ class Controller {
       params: {
         data: { attributes, relationships }
       }
-    } = req;
+    } = request;
 
     await validateRelationships(
       model,
       relationships,
-      scopeFor(this.visibility, req)
+      scopeFor(this.visibility, request)
     );
 
     const record = await model.create({
@@ -989,12 +993,12 @@ class Controller {
       ...resolveRelationships(model, relationships)
     });
 
-    res.setHeader(
+    response.setHeader(
       'Location',
-      `${getDomain(req) + pathname}/${record.getPrimaryKey()}`
+      `${getDomain(request) + pathname}/${record.getPrimaryKey()}`
     );
 
-    res.statusCode = 201;
+    response.statusCode = 201;
 
     return record.unwrap();
   }
@@ -1004,28 +1008,29 @@ class Controller {
    * represents. For more information, see the [updating resources](
    * https://goo.gl/o2ZdOR)section of the JSON API specification.
    *
-   * @param {Request} req - The request object.
-   * @param {Response} [_res] - The response. Unused by the built-in action,
+   * @param {Request} request - The request object.
+   * @param {Response} [response] - The response. Unused by the built-in action,
    *   but every action is called with it, so an override can take it.
    * @return {Promise} Resolves with the updated Model if changes occur.
    * Resolves with the number `204` if no changes occur.
    * @public
    */
-  update(req: Request, _res?: Response): Promise<number | Model> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  update(request: Request, response?: Response): Promise<number | Model> {
     const { model } = this;
 
-    return this.visible(findOne(model, req), req)
+    return this.visible(findOne(model, request), request)
       .then(async record => {
         const {
           params: {
             data: { attributes, relationships }
           }
-        } = req;
+        } = request;
 
         await validateRelationships(
           model,
           relationships,
-          scopeFor(this.visibility, req)
+          scopeFor(this.visibility, request)
         );
 
         return record.update({
@@ -1047,14 +1052,15 @@ class Controller {
    * For more information, see the [deleting resources](https://goo.gl/nUZn8t)
    * section of the JSON API specification.
    *
-   * @param {Request} req - The request object.
-   * @param {Response} [_res] - The response. Unused by the built-in action,
+   * @param {Request} request - The request object.
+   * @param {Response} [response] - The response. Unused by the built-in action,
    *   but every action is called with it, so an override can take it.
    * @return {Promise} Resolves with the number `204`.
    * @public
    */
-  destroy(req: Request, _res?: Response): Promise<number> {
-    return this.visible(findOne(this.model, req), req)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  destroy(request: Request, response?: Response): Promise<number> {
+    return this.visible(findOne(this.model, request), request)
       .then(record => record.destroy())
       .then(() => 204);
   }
@@ -1062,13 +1068,14 @@ class Controller {
   /**
    * Respond to HEAD or OPTIONS requests.
    *
-   * @param {Request} [_req] - The request. Unused.
-   * @param {Response} [_res] - The response. Unused by the built-in action,
+   * @param {Request} [request] - The request. Unused.
+   * @param {Response} [response] - The response. Unused by the built-in action,
    *   but every action is called with it, so an override can take it.
    * @return {Promise} Resolves with the number `204`.
    * @public
    */
-  preflight(_req?: Request, _res?: Response): Promise<number> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  preflight(request?: Request, response?: Response): Promise<number> {
     return Promise.resolve(204);
   }
 }

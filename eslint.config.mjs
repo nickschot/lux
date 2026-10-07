@@ -68,13 +68,6 @@ export default [
           ]
         }
       ],
-      // `_`-prefixed parameters are deliberately unused: a built-in controller
-      // action declares the `res` every action is called with, so overrides
-      // that use it still type-check.
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        { argsIgnorePattern: '^_' }
-      ],
       // A leftover of upstream's `prefer-reflect` rule. These have plain
       // equivalents that keep type checking on (`Reflect.*` returns `any`)
       // and, for `defineProperty`/`set`, throw instead of returning `false`.
