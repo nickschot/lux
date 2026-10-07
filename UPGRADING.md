@@ -794,6 +794,23 @@ the optional `response` every action has always been called with, so a
 TypeScript override can take it — `index(request: Request, response?:
 Response)` — and pass it to `super`.
 
+## 29. Generated migrations are named in order
+
+`lumen generate migration|model|resource` names migrations
+`<version>-<name>.js`, and `lumen db:migrate` runs pending ones in version
+order. The version used to be built from the UTC *date* and the *local* time,
+and every hour, minute or second divisible by ten lost a digit (`20` → `2`),
+so versions did not sort by creation time: a migration altering `posts`
+could run before the one creating it (`no such table: posts`). Versions are
+now `YYYYMMDDHHmmssCC` in UTC, zero-padded.
+
+**Check** the order of the files in `db/migrate/` in an existing app: a
+migration generated before this change can carry a version that sorts after
+newer ones. Already-applied migrations are unaffected (each is recorded by
+version), but `lumen db:rollback` undoes the *highest* version, which may
+not be the most recent migration. Renaming a not-yet-applied file to a
+correct version fixes its order.
+
 ## The short version
 
 Bump `pg`/`mysql2` and run Node 22.13+ (required); delete `.babelrc` and the
