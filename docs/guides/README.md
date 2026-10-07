@@ -13,9 +13,11 @@ Guides to building a JSON:API server with Lumen, written for Lumen 4.0.
    per-namespace serializers, and what clients may send.
 5. **[Models and queries](models.md)** — relationships, validations, hooks,
    writing records, the query methods, scopes and transactions.
+6. **[Errors](errors.md)** — the error documents clients receive, every status
+   Lumen reports, and reporting errors from your own code.
 
-More guides are on the way: errors, migrations and seeds, logging, the CLI,
-and deployment. Until they land, [UPGRADING.md](../../UPGRADING.md) is the
+More guides are on the way: migrations and seeds, logging, the CLI, and
+deployment. Until they land, [UPGRADING.md](../../UPGRADING.md) is the
 most complete description of those topics.
 
 Also useful:
