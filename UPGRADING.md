@@ -684,6 +684,10 @@ and exit code `1` — worth knowing if a script depends on the old exit codes.
 - **The logged `path` no longer has the query string.** Query params are
   already logged, filtered, under `params`; the raw `?token=…` used to
   bypass the filter through `path`.
+- **An unknown `logging.level` or `logging.format` fails at boot** (for an
+  enabled logger). `level: 'info'` (lowercase) used to fall back to `DEBUG`
+  without a word — in production that logs every SQL statement with its
+  values. Levels are `DEBUG`, `INFO`, `WARN`, `ERROR`; formats `text`, `json`.
 
 ## The short version
 

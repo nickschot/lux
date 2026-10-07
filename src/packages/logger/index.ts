@@ -1,7 +1,8 @@
 import { LUMEN_CONSOLE } from '../../constants';
 import K from '../../utils/k';
 
-import { LEVELS } from './constants';
+import { FORMATS, LEVELS } from './constants';
+import InvalidConfigError from './errors/invalid-config-error';
 import { createWriter } from './writer';
 import { createRequestLogger } from './request-logger';
 import type { Logger$Writer } from './writer/interfaces';
@@ -199,6 +200,19 @@ class Logger {
   constructor({ level, format, filter, enabled }: Logger$config) {
     let write: Logger$Writer = K;
     let request: Logger$RequestLogger = K;
+
+    // A disabled logger never writes, so only an enabled one needs these —
+    // and must have them right: a typo used to fall back to DEBUG silently,
+    // which in production meant SQL with its bound values in the logs.
+    if (enabled) {
+      if (!LEVELS.has(level)) {
+        throw new InvalidConfigError('level', level, LEVELS.keys());
+      }
+
+      if (!FORMATS.has(format)) {
+        throw new InvalidConfigError('format', format, FORMATS);
+      }
+    }
 
     if (!LUMEN_CONSOLE && enabled) {
       write = createWriter(format);
