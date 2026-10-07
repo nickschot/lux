@@ -25,7 +25,9 @@ export default function logJSON(
       headers,
       httpVersion,
 
-      url: { path },
+      // `pathname`, not `path`: the query string would bypass the param filter;
+      // query params are logged, filtered, under `params`.
+      url: { pathname: path },
 
       connection: { remoteAddress }
     } = req;

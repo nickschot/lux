@@ -671,6 +671,20 @@ and exit code `1` — worth knowing if a script depends on the old exit codes.
 | `-e`/`-p`/`--database` with no value | set the value to `true` (e.g. `NODE_ENV=true`) | error: argument missing |
 | extra arguments (`lumen build now`) | ignored | error: too many arguments |
 
+## 25. Logging — safer in production, quieter and more useful
+
+- **Credentials are filtered without configuration.** Params whose name
+  contains `password`, `secret` or `token` are always logged as
+  `[FILTERED]`; `logging.filter.params` adds to that list instead of being
+  the only line of defence (it used to default to `[]`, so a fresh app logged
+  passwords). Matching is now by *containment, ignoring case* — `password`
+  also covers `passwordConfirmation` and `new-password` — and reaches into
+  arrays (`data: [{ attributes: { secret } }]`). If a name in your filter list
+  is a substring of a param you *do* want to see, rename one of them.
+- **The logged `path` no longer has the query string.** Query params are
+  already logged, filtered, under `params`; the raw `?token=…` used to
+  bypass the filter through `path`.
+
 ## The short version
 
 Bump `pg`/`mysql2` and run Node 22.13+ (required); delete `.babelrc` and the

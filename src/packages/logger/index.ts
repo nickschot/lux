@@ -43,6 +43,11 @@ class Logger {
    * information in a potential attack, blacklist certain keys that should be
    * filtered out of the logs.
    *
+   * Params whose name contains `password`, `secret` or `token` are always
+   * filtered; the names listed here are added to those. A param is filtered
+   * when its name contains a listed name, ignoring case, at any depth —
+   * including inside arrays.
+   *
    * ```javascript
    * // config/environments/development.js
    * export default {

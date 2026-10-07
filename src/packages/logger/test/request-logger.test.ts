@@ -74,5 +74,56 @@ describe('module "logger/request-logger"', () => {
         });
       });
     });
+
+    describe('- logged JSON', () => {
+      it('leaves the query string out and filters params', async () => {
+        const { router } = await getTestApp();
+        const emitter = new EventEmitter();
+        const logger = new Logger({
+          format: 'json',
+          level: 'INFO',
+          enabled: true,
+          filter: { params: [] }
+        });
+
+        const req = createRequestBuilder({
+          path: '/posts',
+          route: router.get('GET:/posts'),
+          params: { token: 'abc', page: { size: 1 } }
+        })();
+
+        Object.assign(req.url, {
+          path: '/posts?token=abc&page[size]=1',
+          search: '?token=abc&page[size]=1'
+        });
+
+        const res = Object.assign(createResponse(), {
+          once: (...args) => emitter.once(...args)
+        });
+
+        const lines: string[] = [];
+        const write = process.stdout.write;
+
+        process.stdout.write = ((chunk: string) => {
+          lines.push(chunk);
+          return true;
+        }) as typeof process.stdout.write;
+
+        try {
+          createRequestLogger(logger)(req, res, { startTime: Date.now() });
+          emitter.emit('finish');
+        } finally {
+          process.stdout.write = write;
+        }
+
+        const { path, params } = JSON.parse(lines[0]);
+
+        expect(path).to.equal('/posts');
+        expect(params).to.deep.equal({
+          token: '[FILTERED]',
+          page: { size: 1 }
+        });
+      });
+    });
   });
 });
