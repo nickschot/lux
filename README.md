@@ -81,12 +81,13 @@ option.
 
 ## Documentation
 
-- [UPGRADING.md](UPGRADING.md) — what changed for apps moving to the current
-  release, and how to adapt. Until the guides land, it is also the most
-  complete description of routing, visibility rules, compound documents,
-  relationship endpoints, error responses and logging.
+- [UPGRADING.md](UPGRADING.md) — what changes for apps moving to Lumen 4.0,
+  and how to adapt. Until the guides land, it is also the most complete
+  description of routing, visibility rules, compound documents, relationship
+  endpoints, error responses and logging.
 - [CHANGELOG.md](CHANGELOG.md) — release notes.
-- [examples/](examples/) — example applications.
+- [examples/social-network](examples/social-network/) — an example app that
+  uses most of the framework, with a map of where each feature lives.
 
 User guides and a generated API reference are in progress.
 
