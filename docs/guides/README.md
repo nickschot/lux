@@ -4,8 +4,10 @@ Guides to building a JSON:API server with Lumen, written for Lumen 4.0.
 
 1. **[Getting started](getting-started.md)** — create a project, generate two
    related resources, and make your first requests.
+2. **[Routing](routing.md)** — resources, relationship and related endpoints,
+   custom routes, and namespaces.
 
-More guides are on the way: routing, controllers, serializers and JSON:API,
+More guides are on the way: controllers, serializers and JSON:API,
 models and queries, errors, migrations and seeds, logging, the CLI, and
 deployment. Until they land, [UPGRADING.md](../../UPGRADING.md) is the most
 complete description of those topics.
