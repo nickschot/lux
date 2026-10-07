@@ -101,8 +101,16 @@ export const infoTemplate = ({
   statusCode,
   statusMessage,
   remoteAddress
-}: RequestLogger$templateData) => line`
-Processed ${chalk.cyan(`${method}`)} "${path}" ${chalk.magenta('Params')} ${JSON.stringify(
-  params
-)} from ${remoteAddress} in ${(endTime - startTime).toString()} ms with ${colorStr(`${statusCode}`)} ${colorStr(`${statusMessage}`)}${handledBy(route)}
-`;
+}: RequestLogger$templateData) =>
+  // Built directly rather than with `line`, which would also collapse runs
+  // of spaces inside param values.
+  [
+    chalk.cyan(method),
+    path,
+    colorStr(`${statusCode} ${statusMessage}`),
+    `in ${endTime - startTime} ms${handledBy(route)}`,
+    remoteAddress ? `from ${remoteAddress}` : '',
+    Object.keys(params).length ? JSON.stringify(params) : ''
+  ]
+    .filter(Boolean)
+    .join(' ');

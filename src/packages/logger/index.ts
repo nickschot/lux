@@ -136,6 +136,17 @@ class Logger {
   declare requestBody: boolean;
 
   /**
+   * Whether the text format stamps each line with the time. Turn it off where
+   * the platform already does — Heroku prefixes every line with its own — to
+   * avoid two timestamps per line. The JSON format always includes it.
+   *
+   * @property timestamps
+   * @type {Boolean}
+   * @public
+   */
+  declare timestamps: boolean;
+
+  /**
    * Log a message at the DEBUG level.
    *
    * ```javascript
@@ -214,7 +225,8 @@ class Logger {
     format,
     filter,
     enabled,
-    requestBody = false
+    requestBody = false,
+    timestamps = true
   }: Logger$config) {
     let write: Logger$Writer = K;
     let request: Logger$RequestLogger = K;
@@ -233,7 +245,7 @@ class Logger {
     }
 
     if (!LUMEN_CONSOLE && enabled) {
-      write = createWriter(format);
+      write = createWriter(format, { timestamps });
       request = createRequestLogger(this);
     }
 
@@ -268,6 +280,13 @@ class Logger {
 
       requestBody: {
         value: Boolean(requestBody),
+        writable: false,
+        enumerable: true,
+        configurable: false
+      },
+
+      timestamps: {
+        value: Boolean(timestamps),
         writable: false,
         enumerable: true,
         configurable: false

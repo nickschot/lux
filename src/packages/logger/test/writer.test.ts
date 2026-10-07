@@ -1,5 +1,15 @@
+import { stripVTControlCharacters } from 'util';
+
 import { spy } from 'sinon';
-import { it, describe, beforeAll, beforeEach, afterAll, expect } from 'vitest';
+import {
+  it,
+  describe,
+  beforeAll,
+  beforeEach,
+  afterAll,
+  afterEach,
+  expect
+} from 'vitest';
 
 import { WARN, ERROR, LEVELS, FORMATS } from '../constants';
 import { createWriter } from '../writer';
@@ -175,6 +185,54 @@ describe('module "logger/writer"', () => {
           });
         });
       });
+    });
+  });
+
+  describe('- text layout', () => {
+    let stdoutSpy;
+    let stderrSpy;
+
+    beforeEach(() => {
+      stdoutSpy = spy(process.stdout, 'write');
+      stderrSpy = spy(process.stderr, 'write');
+    });
+
+    afterEach(() => {
+      stdoutSpy.restore();
+      stderrSpy.restore();
+    });
+
+    const timestamp = '2026-01-01T00:00:00.000Z';
+    const plain = (spied): string =>
+      stripVTControlCharacters(spied.firstCall.args[0]);
+
+    it('spells out the level, padded to line up', () => {
+      createWriter('text')({ level: 'INFO', message: 'Hi', timestamp });
+      createWriter('text')({ level: 'ERROR', message: 'Oh', timestamp });
+
+      expect(plain(stdoutSpy)).to.equal(`[${timestamp}] INFO  Hi\n`);
+      expect(plain(stderrSpy)).to.equal(`[${timestamp}] ERROR Oh\n`);
+    });
+
+    it('shows the first 8 characters of a request id', () => {
+      createWriter('text')({
+        level: 'INFO',
+        message: 'Hi',
+        context: { requestId: '8f1c2b9e-4a7d-4c1e-9b2a-1d3e5f7a9c0b' },
+        timestamp
+      });
+
+      expect(plain(stdoutSpy)).to.equal(`[${timestamp}] INFO  [8f1c2b9e] Hi\n`);
+    });
+
+    it('can leave the timestamp to the platform', () => {
+      createWriter('text', { timestamps: false })({
+        level: 'WARN',
+        message: 'Careful',
+        timestamp
+      });
+
+      expect(plain(stderrSpy)).to.equal('WARN  Careful\n');
     });
   });
 });

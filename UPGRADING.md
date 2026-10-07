@@ -727,6 +727,43 @@ and exit code `1` — worth knowing if a script depends on the old exit codes.
   followed by a terminal-wide rule; with no terminal (Docker, IDE consoles)
   that collapsed into blank lines. In a terminal nothing changes. A request
   with no matching route no longer reads `by null`.
+- **The text format reads well in a plain log viewer** (Heroku's, say). Each
+  line spells out its level (`INFO `, `ERROR`) — colour alone was lost off a
+  terminal — and the first 8 characters of its request id, so an error and
+  its request line can be matched up. The request line is reordered and
+  shortened:
+
+  ```text
+  INFO  [8f1c2b9e] GET /posts 200 OK in 2 ms by PostsController#index from 203.0.113.7 {"include":["author"]}
+  ```
+
+  (was `Processed GET "/posts" Params {…} from … in 2 ms with 200 OK by …`).
+  Anything parsing the old text line needs updating — JSON is the format to
+  parse.
+- **`logging.timestamps: false`** leaves the time off text lines, for
+  platforms that stamp every line themselves (Heroku does). Default `true`.
+- **`server.trustProxy: true`** takes the client's address from the
+  `X-Forwarded-For` entry the proxy in front appended (the last one), instead
+  of the proxy's own. It is logged as `remoteAddress` and available as
+  `request.ip`. Enable it only behind exactly one proxy, such as Heroku's
+  router: without one, clients can write the header themselves.
+
+  On Heroku, without a log service:
+
+  ```js
+  // config/environments/production.js
+  export default {
+    server: { trustProxy: true },
+    logging: {
+      level: 'INFO',
+      format: 'text',
+      timestamps: false,
+      enabled: true,
+      requestBody: false,
+      filter: { params: [] }
+    }
+  };
+  ```
 
 ## The short version
 

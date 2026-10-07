@@ -17,6 +17,7 @@ import validateContentType from './utils/validate-content-type';
 import setCORSHeaders from './utils/set-cors-headers';
 import statusForError from './utils/status-for-error';
 import requestIdFor from './utils/request-id-for';
+import clientIpFor from './utils/client-ip-for';
 import type { Request } from './request/interfaces';
 import type { Response } from './response/interfaces';
 import type { Server$opts, Server$cors } from './interfaces';
@@ -31,9 +32,11 @@ class Server {
 
   declare cors: Server$cors;
 
+  declare trustProxy: boolean;
+
   declare instance: HTTPServer;
 
-  constructor({ logger, router, cors }: Server$opts) {
+  constructor({ logger, router, cors, trustProxy = false }: Server$opts) {
     Object.defineProperties(this, {
       router: {
         value: router,
@@ -51,6 +54,13 @@ class Server {
 
       cors: {
         value: cors,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      },
+
+      trustProxy: {
+        value: trustProxy,
         writable: false,
         enumerable: false,
         configurable: false
@@ -86,6 +96,7 @@ class Server {
     });
 
     request.id = requestIdFor(request);
+    request.ip = clientIpFor(request, this.trustProxy);
     response.setHeader('X-Request-Id', request.id);
 
     return [request, response];

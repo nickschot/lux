@@ -25,14 +25,14 @@ export default function logText(
     const endTime = Date.now();
 
     const {
+      id: requestId,
+      ip: remoteAddress,
       route,
       method,
 
       // `pathname`, not `path`: the query string would bypass the param filter;
       // query params are logged, filtered, under `params`.
-      url: { pathname: path },
-
-      socket: { remoteAddress }
+      url: { pathname: path }
     } = req;
 
     const { stats, statusCode, statusMessage } = res;
@@ -59,10 +59,12 @@ export default function logText(
       remoteAddress
     };
 
+    const context = { requestId };
+
     if (logger.level === DEBUG) {
-      logger.debug(debugTemplate(templateData));
+      logger.debug(debugTemplate(templateData), context);
     } else {
-      logger.info(infoTemplate(templateData));
+      logger.info(infoTemplate(templateData), context);
     }
   });
 }

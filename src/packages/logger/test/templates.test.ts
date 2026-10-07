@@ -31,7 +31,7 @@ describe('module "logger/request-logger/templates"', () => {
     describe(`#${template === infoTemplate ? 'info' : 'debug'}Template()`, () => {
       it('names the controller action that handled the request', () => {
         expect(stripVTControlCharacters(template(dataFor(route)))).to.include(
-          'Not Found by PostsController#index'
+          'by PostsController#index'
         );
       });
 
@@ -41,6 +41,30 @@ describe('module "logger/request-logger/templates"', () => {
         expect(text).to.not.include(' by ');
         expect(text).to.not.include('null');
       });
+    });
+  });
+
+  describe('#infoTemplate() layout', () => {
+    it('is one plain line: method, path, status, time, handler, client, params', () => {
+      const text = stripVTControlCharacters(
+        infoTemplate({
+          ...dataFor(route),
+          params: { page: { size: 20 }, filter: { title: 'two  spaces' } }
+        })
+      );
+
+      expect(text).to.equal(
+        'GET /nowhere 404 Not Found in 5 ms by PostsController#index ' +
+          'from ::1 {"page":{"size":20},"filter":{"title":"two  spaces"}}'
+      );
+    });
+
+    it('leaves out empty params and an unknown client', () => {
+      const text = stripVTControlCharacters(
+        infoTemplate({ ...dataFor(), remoteAddress: undefined })
+      );
+
+      expect(text).to.equal('GET /nowhere 404 Not Found in 5 ms');
     });
   });
 });

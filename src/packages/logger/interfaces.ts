@@ -27,4 +27,5 @@ export type Logger$config = {
   filter: Logger$filter;
   enabled: boolean;
   requestBody?: boolean;
+  timestamps?: boolean;
 };

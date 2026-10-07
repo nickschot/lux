@@ -23,6 +23,7 @@ export default function logJSON(
   res.once('finish', () => {
     const {
       id: requestId,
+      ip: remoteAddress,
       route,
       method,
       headers,
@@ -30,9 +31,7 @@ export default function logJSON(
 
       // `pathname`, not `path`: the query string would bypass the param filter;
       // query params are logged, filtered, under `params`.
-      url: { pathname: path },
-
-      socket: { remoteAddress }
+      url: { pathname: path }
     } = req;
 
     const { statusCode: status } = res;

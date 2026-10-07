@@ -81,5 +81,6 @@ export const createRequestBuilder =
       },
       socket: {
         remoteAddress: '::1'
-      }
+      },
+      ip: '::1'
     }) as unknown as Request;

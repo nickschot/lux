@@ -57,6 +57,11 @@ export interface Request extends Readable {
    * a fresh UUID.
    */
   id: string;
+  /**
+   * The client's address: the connection's, or — with `server.trustProxy` —
+   * the one the proxy in front added to `X-Forwarded-For`.
+   */
+  ip?: string;
   headers: Map<string, string>;
   httpVersion: string;
   method: Request$method;
