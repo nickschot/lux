@@ -1,5 +1,6 @@
 import { trapGet } from '../../../utils/proxy';
 import Query from '../query';
+import { get as getRelationship } from '../relationship';
 import type { Model } from '../index';
 import type { ModelClass } from '../interfaces';
 
@@ -52,20 +53,43 @@ export function createInstanceTransactionProxy<T extends Model>(
   target: T,
   trx: unknown
 ): T {
+  const forward = trapGet<T>({
+    save(model: T) {
+      return model.save(trx);
+    },
+
+    update(model: T, props: Record<string, unknown> = {}) {
+      return model.update(props, trx);
+    },
+
+    destroy(model: T) {
+      return model.destroy(trx);
+    },
+
+    reload(model: T) {
+      return model.isNew
+        ? Promise.resolve(model)
+        : model.constructor.find(model.getPrimaryKey()).transacting(trx);
+    }
+  });
+
   return new Proxy(target, {
-    get: trapGet({
-      save(model: T) {
-        return model.save(trx);
-      },
-
-      update(model: T, props: Record<string, unknown> = {}) {
-        return model.update(props, trx);
-      },
-
-      destroy(model: T) {
-        return model.destroy(trx);
+    get(model, key, receiver) {
+      // A relationship read (`await comment.post`) runs in `trx` too, and the
+      // records it yields are bound to it as well, so `(await comment.post)
+      // .user` stays in the transaction. The relationships are accessors on
+      // the prototype, so returning another value for them does not break a
+      // proxy invariant.
+      if (typeof key === 'string' && model.constructor.relationshipFor(key)) {
+        return getRelationship(model, key, trx).then(value =>
+          Array.isArray(value)
+            ? value.map(record => createInstanceTransactionProxy(record, trx))
+            : value && createInstanceTransactionProxy(value, trx)
+        );
       }
-    })
+
+      return forward(model, key as string, receiver);
+    }
   });
 }
 
