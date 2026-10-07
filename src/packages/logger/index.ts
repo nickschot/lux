@@ -1,7 +1,8 @@
 import { LUMEN_CONSOLE } from '../../constants';
 import K from '../../utils/k';
 
-import { LEVELS } from './constants';
+import { FORMATS, LEVELS } from './constants';
+import InvalidConfigError from './errors/invalid-config-error';
 import { createWriter } from './writer';
 import { createRequestLogger } from './request-logger';
 import type { Logger$Writer } from './writer/interfaces';
@@ -42,6 +43,11 @@ class Logger {
    * data if your server has been breached. To prevent leaking sensitive
    * information in a potential attack, blacklist certain keys that should be
    * filtered out of the logs.
+   *
+   * Params whose name contains `password`, `secret` or `token` are always
+   * filtered; the names listed here are added to those. A param is filtered
+   * when its name contains a listed name, ignoring case, at any depth —
+   * including inside arrays.
    *
    * ```javascript
    * // config/environments/development.js
@@ -118,6 +124,29 @@ class Logger {
   declare enabled: boolean;
 
   /**
+   * Whether the request log includes the request body — the JSON:API document
+   * of a `POST` or `PATCH`. Off unless enabled, and off by default in
+   * production: a body is large and full of user data. Query and route params
+   * are always logged (filtered).
+   *
+   * @property requestBody
+   * @type {Boolean}
+   * @public
+   */
+  declare requestBody: boolean;
+
+  /**
+   * Whether the text format stamps each line with the time. Turn it off where
+   * the platform already does — Heroku prefixes every line with its own — to
+   * avoid two timestamps per line. The JSON format always includes it.
+   *
+   * @property timestamps
+   * @type {Boolean}
+   * @public
+   */
+  declare timestamps: boolean;
+
+  /**
    * Log a message at the DEBUG level.
    *
    * ```javascript
@@ -191,12 +220,32 @@ class Logger {
    */
   declare request: Logger$RequestLogger;
 
-  constructor({ level, format, filter, enabled }: Logger$config) {
+  constructor({
+    level,
+    format,
+    filter,
+    enabled,
+    requestBody = false,
+    timestamps = true
+  }: Logger$config) {
     let write: Logger$Writer = K;
     let request: Logger$RequestLogger = K;
 
+    // A disabled logger never writes, so only an enabled one needs these —
+    // and must have them right: a typo used to fall back to DEBUG silently,
+    // which in production meant SQL with its bound values in the logs.
+    if (enabled) {
+      if (!LEVELS.has(level)) {
+        throw new InvalidConfigError('level', level, LEVELS.keys());
+      }
+
+      if (!FORMATS.has(format)) {
+        throw new InvalidConfigError('format', format, FORMATS);
+      }
+    }
+
     if (!LUMEN_CONSOLE && enabled) {
-      write = createWriter(format);
+      write = createWriter(format, { timestamps });
       request = createRequestLogger(this);
     }
 
@@ -229,6 +278,20 @@ class Logger {
         configurable: false
       },
 
+      requestBody: {
+        value: Boolean(requestBody),
+        writable: false,
+        enumerable: true,
+        configurable: false
+      },
+
+      timestamps: {
+        value: Boolean(timestamps),
+        writable: false,
+        enumerable: true,
+        configurable: false
+      },
+
       request: {
         value: request,
         writable: false,
@@ -247,9 +310,10 @@ class Logger {
 
         value:
           val >= levelNum
-            ? (message?: unknown) => {
+            ? (message?: unknown, context?: Record<string, unknown>) => {
                 write({
                   message,
+                  context,
                   level: key,
                   timestamp: this.getTimestamp()
                 });
@@ -271,6 +335,6 @@ class Logger {
 
 export default Logger;
 export { default as line } from './utils/line';
-export { default as sql } from './utils/sql';
+export { default as errorName } from './utils/error-name';
 
 export type { Logger$config } from './interfaces';

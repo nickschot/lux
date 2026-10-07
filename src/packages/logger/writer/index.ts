@@ -2,6 +2,7 @@ import { WriteStream } from 'tty';
 
 import chalk from '../../../utils/chalk';
 import { WARN, ERROR } from '../constants';
+import errorName from '../utils/error-name';
 import omit from '../../../utils/omit';
 import type { Logger$format } from '../interfaces';
 
@@ -18,30 +19,58 @@ function isMessageObject(value: unknown): value is { message?: unknown } {
 }
 
 /**
+ * The text format's handle on a request id: its first 8 characters, enough
+ * to find the request's other lines (a UUID's first block) without the full
+ * 36. The JSON format logs it whole.
+ */
+function shortRequestId(context?: Record<string, unknown>): string {
+  const id = context?.requestId;
+
+  return typeof id === 'string' && id ? `[${id.slice(0, 8)}]` : '';
+}
+
+/**
  * @private
  */
-export function createWriter(format: Logger$format): Logger$Writer {
+export function createWriter(
+  format: Logger$format,
+  { timestamps = true }: { timestamps?: boolean } = {}
+): Logger$Writer {
   return function write(data) {
-    const { level, ...etc } = data;
-    let { message, timestamp } = etc;
+    const { level, context, timestamp, ...etc } = data;
+    let { message } = etc;
     let output: unknown;
 
     if (format === 'json') {
-      if (isMessageObject(message) && message.message) {
+      if (message instanceof Error) {
+        // `stack` and `name` are not own enumerable properties, so spreading
+        // the error alone would drop them — and with them where it came from.
         output = {
           timestamp,
           level,
+          ...context,
+          message: message.message,
+          name: errorName(message),
+          ...omit(message, 'message'),
+          stack: message.stack
+        };
+      } else if (isMessageObject(message) && message.message) {
+        output = {
+          timestamp,
+          level,
+          ...context,
           message: message.message,
           ...omit(message, 'message')
         };
       } else {
         // The Flow original spread `...etc` here too, but `etc` is just
-        // `{ message, timestamp }` — both already listed above with the same
-        // values — so the spread only re-wrote them. Dropping it keeps the
-        // identical key order and values.
+        // `{ message }` — already listed with the same value — so the spread
+        // only re-wrote it. Dropping it keeps the identical key order and
+        // values.
         output = {
           timestamp,
           level,
+          ...context,
           message
         };
       }
@@ -56,21 +85,38 @@ export function createWriter(format: Logger$format): Logger$Writer {
 
       message = formatMessage(message, 'text');
 
+      // Colour is lost off a terminal, so the level is spelled out: an ERROR
+      // has to stand out in a plain log viewer too.
+      let label = level.padEnd(5);
+
       switch (level) {
         case WARN:
-          timestamp = chalk.yellow(`[${timestamp}]`);
+          label = chalk.yellow(label);
           break;
 
         case ERROR:
-          timestamp = chalk.red(`[${timestamp}]`);
+          label = chalk.red(label);
           break;
 
         default:
-          timestamp = chalk.dim(`[${timestamp}]`);
+          label = chalk.dim(label);
           break;
       }
 
-      output = `${timestamp} ${message}\n\n${chalk.dim('-').repeat(columns)}\n`;
+      const prefix = [
+        timestamps ? chalk.dim(`[${timestamp}]`) : '',
+        label,
+        shortRequestId(context)
+      ]
+        .filter(Boolean)
+        .join(' ');
+
+      // The rule separates multi-line entries in a terminal; piped output
+      // (Docker, an IDE console) has no width, so it gets one line per entry
+      // instead of a rule-less blank block.
+      output = columns
+        ? `${prefix} ${message}\n\n${chalk.dim('-').repeat(columns)}\n`
+        : `${prefix} ${message}`;
     }
 
     if (STDOUT.test(level)) {

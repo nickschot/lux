@@ -10,6 +10,13 @@ export type Server$cors = {
 
 export type Server$config = {
   cors: Server$cors;
+  /**
+   * Whether one proxy sits in front of the app (Heroku's router, a load
+   * balancer) whose `X-Forwarded-For` entry is the client's address. Only
+   * enable it behind such a proxy: without one, clients can set the header to
+   * anything.
+   */
+  trustProxy?: boolean;
 };
 
 export type Server$opts = Server$config & {

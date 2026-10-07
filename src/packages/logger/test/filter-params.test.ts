@@ -36,5 +36,47 @@ describe('module "logger"', () => {
         nestedParams.params.password
       );
     });
+
+    it('always filters credentials, without configuration', () => {
+      const filtered = filterParams({
+        id: 1,
+        password: 'a',
+        clientSecret: 'b',
+        'access-token': 'c'
+      });
+
+      expect(filtered).to.deep.equal({
+        id: 1,
+        password: '[FILTERED]',
+        clientSecret: '[FILTERED]',
+        'access-token': '[FILTERED]'
+      });
+    });
+
+    it('filters keys containing a filtered name, ignoring case', () => {
+      const filtered = filterParams(
+        { passwordConfirmation: 'a', SSN: 'b', ssnCount: 2, name: 'c' },
+        'ssn'
+      );
+
+      expect(filtered).to.deep.equal({
+        passwordConfirmation: '[FILTERED]',
+        SSN: '[FILTERED]',
+        ssnCount: '[FILTERED]',
+        name: 'c'
+      });
+    });
+
+    it('filters objects inside arrays', () => {
+      const filtered = filterParams({
+        data: [{ id: 1, attributes: { secret: 'a', title: 'b' } }],
+        include: ['author', 'comments']
+      });
+
+      expect(filtered).to.deep.equal({
+        data: [{ id: 1, attributes: { secret: '[FILTERED]', title: 'b' } }],
+        include: ['author', 'comments']
+      });
+    });
   });
 });

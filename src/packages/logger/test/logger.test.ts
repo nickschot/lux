@@ -18,15 +18,16 @@ describe('module "logger"', () => {
         unhookWrite = hookWrite(resolve);
       });
 
+    const baseConfig = (): ConstructorParameters<typeof Logger>[0] => ({
+      level: 'INFO',
+      format: 'json',
+      enabled: true,
+      filter: { params: [] }
+    });
+
     beforeAll(async () => {
-      const baseConfig = {
-        level: 'INFO',
-        format: 'json',
-        enabled: true,
-        filter: { params: [] }
-      };
-      jsonLogger = new Logger(baseConfig);
-      const disabledConfig = Object.assign({}, baseConfig, { enabled: false });
+      jsonLogger = new Logger(baseConfig());
+      const disabledConfig = { ...baseConfig(), enabled: false };
       disabledLogger = new Logger(disabledConfig);
     });
 
@@ -96,6 +97,29 @@ describe('module "logger"', () => {
       const output = (await written).trim();
 
       expect(JSON.stringify(JSON.parse(output))).to.equal(output);
+    });
+
+    it('rejects an unknown level', () => {
+      expect(
+        () => new Logger({ ...baseConfig(), level: 'info' as 'INFO' })
+      ).to.throw('Invalid logging.level "info"; expected one of: DEBUG,');
+    });
+
+    it('rejects an unknown format', () => {
+      expect(
+        () => new Logger({ ...baseConfig(), format: 'pretty' as 'text' })
+      ).to.throw(
+        'Invalid logging.format "pretty"; expected one of: text, json.'
+      );
+    });
+
+    it('does not validate a disabled logger', () => {
+      expect(
+        () =>
+          new Logger({ enabled: false } as ConstructorParameters<
+            typeof Logger
+          >[0])
+      ).to.not.throw();
     });
 
     it('does not write when disabled', async () => {

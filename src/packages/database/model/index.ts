@@ -1038,7 +1038,7 @@ class Model {
   ): Promise<Transaction$ResultProxy<this, boolean>> {
     const run = async (trx: unknown) => {
       const {
-        constructor: { hooks, logger }
+        constructor: { hooks }
       } = this;
       let statements: Array<unknown> = [];
       let promise: Array<unknown> | Promise<Array<unknown>> = Promise.resolve(
@@ -1082,7 +1082,7 @@ class Model {
         promise = update(this, trx);
       }
 
-      await createRunner(logger, statements)(await promise);
+      await createRunner(this.constructor, statements)(await promise);
 
       this.prevAssociations.clear();
       this.currentChangeSet.persist(this.changeSets);
@@ -1111,11 +1111,11 @@ class Model {
   destroy(transaction?: unknown): Promise<Transaction$ResultProxy<this, true>> {
     const run = async (trx: unknown) => {
       const {
-        constructor: { hooks, logger }
+        constructor: { hooks }
       } = this;
 
       await runHooks(this, trx, hooks.beforeDestroy);
-      await createRunner(logger, [])(await destroy(this, trx));
+      await createRunner(this.constructor, [])(await destroy(this, trx));
       await runHooks(this, trx, hooks.afterDestroy);
 
       return createTransactionResultProxy(this, true);
@@ -1196,7 +1196,7 @@ class Model {
     transaction?: unknown
   ): Promise<Transaction$ResultProxy<Model, true>> {
     const run = async (trx: unknown) => {
-      const { hooks, logger, primaryKey } = this;
+      const { hooks, primaryKey } = this;
       const instance = new this(props, false);
 
       await runHooks(instance, trx, hooks.beforeValidation);
@@ -1211,7 +1211,7 @@ class Model {
         hooks.beforeSave
       );
 
-      const runner = createRunner(logger, []);
+      const runner = createRunner(this, []);
       const [[firstRow]] = await runner(await create(instance, trx));
 
       // `insert().returning(pk)` yields a scalar `[1]` on knex 0.16 but an

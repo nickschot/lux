@@ -4,7 +4,7 @@ import { infoTemplate, debugTemplate } from '../templates';
 import type Logger from '../../index';
 import type { Request, Response } from '../../../server';
 
-import filterParams from './filter-params';
+import paramsFor from './params-for';
 
 /**
  * @private
@@ -25,16 +25,18 @@ export default function logText(
     const endTime = Date.now();
 
     const {
+      id: requestId,
+      ip: remoteAddress,
       route,
       method,
 
-      url: { path },
-
-      connection: { remoteAddress }
+      // `pathname`, not `path`: the query string would bypass the param filter;
+      // query params are logged, filtered, under `params`.
+      url: { pathname: path }
     } = req;
 
     const { stats, statusCode, statusMessage } = res;
-    const params = filterParams(req.params, ...logger.filter.params);
+    const params = paramsFor(logger, req);
     const statusColor = statusCode >= 200 && statusCode < 400 ? 'green' : 'red';
 
     let colorStr: (source: string) => string = chalk[statusColor];
@@ -57,10 +59,12 @@ export default function logText(
       remoteAddress
     };
 
+    const context = { requestId };
+
     if (logger.level === DEBUG) {
-      logger.debug(debugTemplate(templateData));
+      logger.debug(debugTemplate(templateData), context);
     } else {
-      logger.info(infoTemplate(templateData));
+      logger.info(infoTemplate(templateData), context);
     }
   });
 }

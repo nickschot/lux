@@ -3,9 +3,7 @@
  * and the promises they return are not modeled by Lumen (they were `Object` in
  * Flow).
  */
-import { sql } from '../../../logger';
 import omit from '../../../../utils/omit';
-import type Logger from '../../../logger';
 import type Model from '../index';
 
 import getColumns from './get-columns';
@@ -77,19 +75,23 @@ export function destroy(record: Model, trx: unknown): Array<any> {
  * @private
  */
 export function createRunner(
-  logger: Logger,
+  { logger, store }: Pick<typeof Model, 'logger' | 'store'>,
   statements: Array<any>
 ): (query: Array<any>) => Promise<Array<any>> {
   return query => {
     const promises = query.concat(statements);
 
-    promises.forEach(promise => {
-      promise.on('query', () => {
-        setImmediate(() => {
-          logger.debug(sql`${promise.toString()}`);
+    // Writes honour the database `debug` flag, as reads do: the logged SQL
+    // has its values inlined.
+    if (store.debug) {
+      promises.forEach(promise => {
+        promise.on('query', () => {
+          setImmediate(() => {
+            logger.debug(promise.toString());
+          });
         });
       });
-    });
+    }
 
     return Promise.all(promises);
   };

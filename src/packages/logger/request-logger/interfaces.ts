@@ -27,7 +27,7 @@ export type RequestLogger$templateData = {
   endTime: number;
   statusCode: string;
   statusMessage: string;
-  remoteAddress: string;
+  remoteAddress?: string;
 
   colorStr(source: string): string;
 };

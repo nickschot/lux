@@ -7,12 +7,14 @@ export const CREATE_DEFAULT_CONFIG_RESULT = {
   server: {
     cors: {
       enabled: false
-    }
+    },
+    trustProxy: false
   },
   logging: {
     level: isProdENV ? 'INFO' : 'DEBUG',
     format: isProdENV ? 'json' : 'text',
     enabled: !isTestENV,
+    requestBody: !isProdENV,
 
     filter: {
       params: []

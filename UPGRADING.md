@@ -671,6 +671,100 @@ and exit code `1` — worth knowing if a script depends on the old exit codes.
 | `-e`/`-p`/`--database` with no value | set the value to `true` (e.g. `NODE_ENV=true`) | error: argument missing |
 | extra arguments (`lumen build now`) | ignored | error: too many arguments |
 
+## 25. Logging — safer in production, quieter and more useful
+
+- **Credentials are filtered without configuration.** Params whose name
+  contains `password`, `secret` or `token` are always logged as
+  `[FILTERED]`; `logging.filter.params` adds to that list instead of being
+  the only line of defence (it used to default to `[]`, so a fresh app logged
+  passwords). Matching is now by *containment, ignoring case* — `password`
+  also covers `passwordConfirmation` and `new-password` — and reaches into
+  arrays (`data: [{ attributes: { secret } }]`). If a name in your filter list
+  is a substring of a param you *do* want to see, rename one of them.
+- **The logged `path` no longer has the query string.** Query params are
+  already logged, filtered, under `params`; the raw `?token=…` used to
+  bypass the filter through `path`.
+- **An unknown `logging.level` or `logging.format` fails at boot** (for an
+  enabled logger). `level: 'info'` (lowercase) used to fall back to `DEBUG`
+  without a word — in production that logs every SQL statement with its
+  values. Levels are `DEBUG`, `INFO`, `WARN`, `ERROR`; formats `text`, `json`.
+- **JSON error lines keep their stack.** A logged error used to be written as
+  just its message and own members (`{"message":"connect ECONNREFUSED",
+  "statusCode":500}`) — `stack` and `name` are not enumerable, so they were
+  lost. They are now included, with `name` falling back to the class name
+  (`NotFoundError`) where the error does not set one.
+- **Only 5xx errors are logged as `ERROR`.** A 4xx a request is answered with
+  (not found, validation, bad `Accept`…) is the client's, and already on the
+  request line with its status; it is now a one-line `DEBUG` message
+  (`NotFoundError: Could not find…`) instead of an `ERROR` with a stack. In
+  production (`INFO`) 4xx no longer produce an error line at all — adjust any
+  alerting that counted them.
+- **Every request has an id.** A well-formed incoming `X-Request-Id` (up to
+  128 of `A-Z a-z 0-9 _ . : -`) is adopted — so a proxy's id carries through —
+  otherwise a UUID is generated. It is sent back as the `X-Request-Id`
+  response header, available as `request.id`, and logged as `requestId` on
+  the JSON request line *and* on the error line of the same request.
+- **The JSON request line gained `durationMs`, `controller` and `action`**,
+  which only the text format used to show. `remoteAddress` is now read from
+  `req.socket` (`req.connection` is deprecated in Node).
+- **The request body is no longer logged in production.** New option
+  `logging.requestBody` (default: on, except in production) decides whether
+  the request log's `params` include the body — the JSON:API document of a
+  `POST`/`PATCH` (`data`, `meta`, …). Query and route params are always
+  logged, filtered. Set it to `true` in `config/environments/production.js`
+  to keep the old behaviour.
+- **`logger.debug/info/warn/error` take an optional second argument**, a
+  context object written as top-level fields in JSON format (ignored by the
+  text format): `logger.info('Synced', { requestId: request.id })`.
+- **Logged SQL is shown as knex wrote it.** The framework uppercased every
+  word outside quotes, mangling string values with spaces
+  (`'hello world'` → `'HELLO WORLD'`), so the log showed data that was not in
+  the query. `lumen db:migrate`/`db:rollback` print SQL unchanged too.
+- **Writes honour the database `debug` flag.** Reads were only logged with
+  `debug` on (default: development only), but `INSERT`/`UPDATE`/`DELETE` were
+  logged at `DEBUG` regardless. Both follow the flag now.
+- **Text logs piped out of a terminal are one line per entry.** Each entry was
+  followed by a terminal-wide rule; with no terminal (Docker, IDE consoles)
+  that collapsed into blank lines. In a terminal nothing changes. A request
+  with no matching route no longer reads `by null`.
+- **The text format reads well in a plain log viewer** (Heroku's, say). Each
+  line spells out its level (`INFO `, `ERROR`) — colour alone was lost off a
+  terminal — and the first 8 characters of its request id, so an error and
+  its request line can be matched up. The request line is reordered and
+  shortened:
+
+  ```text
+  INFO  [8f1c2b9e] GET /posts 200 OK in 2 ms by PostsController#index from 203.0.113.7 {"include":["author"]}
+  ```
+
+  (was `Processed GET "/posts" Params {…} from … in 2 ms with 200 OK by …`).
+  Anything parsing the old text line needs updating — JSON is the format to
+  parse.
+- **`logging.timestamps: false`** leaves the time off text lines, for
+  platforms that stamp every line themselves (Heroku does). Default `true`.
+- **`server.trustProxy: true`** takes the client's address from the
+  `X-Forwarded-For` entry the proxy in front appended (the last one), instead
+  of the proxy's own. It is logged as `remoteAddress` and available as
+  `request.ip`. Enable it only behind exactly one proxy, such as Heroku's
+  router: without one, clients can write the header themselves.
+
+  On Heroku, without a log service:
+
+  ```js
+  // config/environments/production.js
+  export default {
+    server: { trustProxy: true },
+    logging: {
+      level: 'INFO',
+      format: 'text',
+      timestamps: false,
+      enabled: true,
+      requestBody: false,
+      filter: { params: [] }
+    }
+  };
+  ```
+
 ## The short version
 
 Bump `pg`/`mysql2` and run Node 22.13+ (required); delete `.babelrc` and the

@@ -74,5 +74,106 @@ describe('module "logger/request-logger"', () => {
         });
       });
     });
+
+    describe('- logged JSON', () => {
+      // Logs one finished request and returns the parsed JSON line.
+      async function logged({
+        params = {},
+        requestBody = false,
+        startTime = Date.now()
+      }: {
+        params?: Record<string, unknown>;
+        requestBody?: boolean;
+        startTime?: number;
+      }) {
+        const { router } = await getTestApp();
+        const emitter = new EventEmitter();
+        const logger = new Logger({
+          format: 'json',
+          level: 'INFO',
+          enabled: true,
+          requestBody,
+          filter: { params: [] }
+        });
+
+        const req = Object.assign(
+          createRequestBuilder({
+            path: '/posts',
+            route: router.get('GET:/posts'),
+            params
+          })(),
+          { id: 'req-1' }
+        );
+
+        Object.assign(req.url, {
+          path: '/posts?token=abc&page[size]=1',
+          search: '?token=abc&page[size]=1'
+        });
+
+        const res = Object.assign(createResponse(), {
+          once: (...args) => emitter.once(...args)
+        });
+
+        const lines: string[] = [];
+        const write = process.stdout.write;
+
+        process.stdout.write = ((chunk: string) => {
+          lines.push(chunk);
+          return true;
+        }) as typeof process.stdout.write;
+
+        try {
+          createRequestLogger(logger)(req, res, { startTime });
+          emitter.emit('finish');
+        } finally {
+          process.stdout.write = write;
+        }
+
+        return JSON.parse(lines[0]);
+      }
+
+      it('leaves the query string out and filters params', async () => {
+        const { path, params } = await logged({
+          params: { token: 'abc', page: { size: 1 } }
+        });
+
+        expect(path).to.equal('/posts');
+        expect(params).to.deep.equal({
+          token: '[FILTERED]',
+          page: { size: 1 }
+        });
+      });
+
+      it('writes the request id, duration and route', async () => {
+        const line = await logged({ startTime: Date.now() - 25 });
+
+        expect(line).to.include({
+          requestId: 'req-1',
+          controller: 'PostsController',
+          action: 'index',
+          status: 200,
+          remoteAddress: '::1'
+        });
+        expect(line.durationMs).to.be.at.least(25);
+      });
+
+      it('leaves the request body out unless `requestBody` is on', async () => {
+        const params = {
+          id: 1,
+          include: ['author'],
+          data: { type: 'posts', attributes: { title: 'Hi' } },
+          meta: { draft: true }
+        };
+
+        expect((await logged({ params })).params).to.deep.equal({
+          id: 1,
+          include: ['author']
+        });
+
+        expect(
+          (await logged({ params, requestBody: true })).params
+        ).to.deep.equal(params);
+      });
+    });
   });
 });

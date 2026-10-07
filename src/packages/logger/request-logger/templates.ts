@@ -22,6 +22,22 @@ function pad(startTime: number, endTime: number, duration: number) {
 }
 
 /**
+ * ` by PostsController#index`, or nothing when no route matched (it used to
+ * read `by null`).
+ *
+ * @private
+ */
+function handledBy(route: RequestLogger$templateData['route']) {
+  if (!route) {
+    return '';
+  }
+
+  const { controller, action } = route;
+
+  return ` by ${chalk.yellow(controller.constructor.name)}#${chalk.blue(action)}`;
+}
+
+/**
  * @private
  */
 export const debugTemplate = ({
@@ -40,11 +56,7 @@ export const debugTemplate = ({
 ${line`
   Processed ${chalk.cyan(`${method}`)} "${path}" from ${remoteAddress}
   with ${colorStr(`${statusCode}`)}
-  ${colorStr(`${statusMessage}`)} by ${
-    route
-      ? `${chalk.yellow(route.controller.constructor.name)}#${chalk.blue(route.action)}`
-      : null
-  }
+  ${colorStr(`${statusMessage}`)}${handledBy(route)}
 `}
 
 ${chalk.magenta('Params')}
@@ -89,12 +101,16 @@ export const infoTemplate = ({
   statusCode,
   statusMessage,
   remoteAddress
-}: RequestLogger$templateData) => line`
-Processed ${chalk.cyan(`${method}`)} "${path}" ${chalk.magenta('Params')} ${JSON.stringify(
-  params
-)} from ${remoteAddress} in ${(endTime - startTime).toString()} ms with ${colorStr(`${statusCode}`)} ${colorStr(`${statusMessage}`)} by ${
-  route
-    ? `${chalk.yellow(route.controller.constructor.name)}#${chalk.blue(route.action)}`
-    : null
-}
-`;
+}: RequestLogger$templateData) =>
+  // Built directly rather than with `line`, which would also collapse runs
+  // of spaces inside param values.
+  [
+    chalk.cyan(method),
+    path,
+    colorStr(`${statusCode} ${statusMessage}`),
+    `in ${endTime - startTime} ms${handledBy(route)}`,
+    remoteAddress ? `from ${remoteAddress}` : '',
+    Object.keys(params).length ? JSON.stringify(params) : ''
+  ]
+    .filter(Boolean)
+    .join(' ');

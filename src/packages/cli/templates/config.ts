@@ -13,6 +13,7 @@ export default (name: string, env: string): string => {
         level: ${isProdENV ? "'INFO'" : "'DEBUG'"},
         format: ${isProdENV ? "'json'" : "'text'"},
         enabled: ${(!isTestENV).toString()},
+        requestBody: ${(!isProdENV).toString()},
 
         filter: {
           params: []
