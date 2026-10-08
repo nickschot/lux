@@ -826,6 +826,20 @@ Response)` — and pass it to `super`.
 - **Hooks are bound to the controller that declares them** — the root
   `ApplicationController`'s included, which used to run with `this`
   undefined on its own routes (`this.get('health')`).
+- **A namespace without an `ApplicationController` gets its ancestors'
+  hooks and settings.** A namespace with controllers but no `application.js`
+  (`app/controllers/admin/posts.js` without
+  `app/controllers/admin/application.js`) used to get none of the root
+  `ApplicationController`'s hooks — an authentication `beforeAction`
+  included — nor its settings. It now takes the closest ancestor
+  namespace's, as it already did for visibility rules. **Check:** requests
+  to such a namespace now run the root's hooks.
+- **A namespace's `ApplicationController` that declares no visibility rules
+  follows its parent namespace's.** One that extended `Controller` — to add
+  a hook, say — used to give its namespace no rules at all, so records the
+  root's rules hide were visible there. It now takes the parent namespace's.
+  **Do:** to see everything in a namespace (an admin area), declare
+  `static visibility = {};` on its `ApplicationController`.
 
 ## 29. Generated migrations are named in order
 

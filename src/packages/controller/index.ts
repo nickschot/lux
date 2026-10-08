@@ -620,20 +620,27 @@ class Controller {
    * `whereBetween`, `whereRaw`, or model scopes built from them). Load what
    * a rule needs in a `beforeAction` hook and read it from the request.
    *
-   * A namespace's `ApplicationController` inherits its parent class's rules;
-   * extend or replace them with `super`:
+   * A nested namespace follows its parent namespace's rules unless its
+   * `ApplicationController` declares its own — whether that class extends
+   * `Controller` or the parent's `ApplicationController`, and also when the
+   * namespace has no `ApplicationController`. Replace them, or build on them
+   * through `super` in a class that extends the parent's:
    *
    * ```javascript
    * // app/controllers/admin/application.js
-   * class AdminApplicationController extends ApplicationController {
+   * class AdminApplicationController extends Controller {
    *   static visibility = {}; // admins see everything
+   * }
+   *
+   * // app/controllers/members/application.js
+   * class MembersApplicationController extends ApplicationController {
+   *   static visibility = { ...super.visibility, drafts: … };
    * }
    * ```
    *
-   * A namespace without an `ApplicationController` uses the closest ancestor
-   * namespace's rules. Declaring `visibility` on any other controller is a
-   * boot error: types are included across controllers, so a rule must hold
-   * for the whole namespace.
+   * Declaring `visibility` on any other controller is a boot error: types are
+   * included across controllers, so a rule must hold for the whole
+   * namespace.
    *
    * Rules do not apply to queries an application builds itself, such as a
    * custom action's `Post.where(...)` or a relationship read from a model
@@ -769,8 +776,8 @@ class Controller {
 
   /**
    * The visibility rules of this Controller's namespace, resolved at boot
-   * from the `static visibility` of its (or the closest ancestor
-   * namespace's) `ApplicationController`.
+   * from the `static visibility` of the closest `ApplicationController`, from
+   * its own namespace's up, that declares rules.
    *
    * @property visibility
    * @type {Object}

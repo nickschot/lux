@@ -2,6 +2,7 @@ import { it, describe, expect } from 'vitest';
 
 import Controller from '../../controller';
 import createController from '../utils/create-controller';
+import { build } from '../../loader';
 import type Database from '../../database';
 import type { BeforeAction, AfterAction } from '../../controller';
 import type { Bundle$Namespace } from '../../loader';
@@ -226,6 +227,39 @@ describe('module "application" #createController()', () => {
       expect(posts.rejectUnlistedAttributes).to.equal(false);
       expect(posts.rejectUnlistedRelationships).to.equal(true);
       expect(posts.maxIncludeDepth).to.equal(3);
+    });
+  });
+
+  describe('a namespace without an ApplicationController', () => {
+    // Built the way the application builds its controllers, from the loaded
+    // modules: `admin` has controllers but no `admin/application.js`.
+    const controllers = () =>
+      build(
+        new Map<string, typeof Controller>([
+          ['application', ApplicationController],
+          ['admin/posts', class AdminPostsController extends Controller {}],
+          ['admin/reports/posts', class extends Controller {}]
+        ]) as never,
+        (key, constructor, parent) =>
+          create(key, constructor as typeof Controller, parent ?? null)
+      );
+
+    it("runs the closest ancestor namespace's hooks", async () => {
+      const built = controllers();
+
+      expect(
+        await runHooks(built.get('admin/posts') as Controller)
+      ).to.deep.equal(['authenticate', 'stamp']);
+      expect(
+        await runHooks(built.get('admin/reports/posts') as Controller)
+      ).to.deep.equal(['authenticate', 'stamp']);
+    });
+
+    it("takes the closest ancestor namespace's settings", () => {
+      const posts = controllers().get('admin/posts') as Controller;
+
+      expect(posts.rejectUnlistedRelationships).to.equal(false);
+      expect(posts.maxIncludeDepth).to.equal(2);
     });
   });
 });
