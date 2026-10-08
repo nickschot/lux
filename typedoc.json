@@ -23,10 +23,7 @@
       "Stream.Writable.write": "https://nodejs.org/api/stream.html#writablewritechunk-encoding-callback"
     }
   },
-  "intentionallyNotExported": [
-    "Request$url",
-    "Route"
-  ],
+  "intentionallyNotExported": ["Request$url", "Route"],
   "validation": {
     "notExported": true,
     "invalidLink": true,
