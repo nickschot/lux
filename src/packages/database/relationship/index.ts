@@ -5,9 +5,7 @@ import type Model from '../model';
 import { getHasOne, getHasMany, getBelongsTo } from './utils/getters';
 import { setHasOne, setHasMany, setBelongsTo } from './utils/setters';
 
-/**
- * @private
- */
+/** @internal */
 export function set(
   owner: Model,
   key: string,
@@ -46,7 +44,7 @@ export function set(
  * The value of `owner`'s relationship `key`: the loaded or assigned one, or
  * else read from the database — in `trx` when given.
  *
- * @private
+ * @internal
  */
 export async function get(
   owner: Model,

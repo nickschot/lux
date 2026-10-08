@@ -2,9 +2,7 @@ import { camelize } from 'inflection';
 
 import type { ModelClass } from '../../interfaces';
 
-/**
- * @private
- */
+/** @internal */
 export default function formatSelect(
   model: ModelClass,
   attrs: Array<string> = [],

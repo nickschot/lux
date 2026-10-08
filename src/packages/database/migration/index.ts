@@ -1,8 +1,6 @@
 import type { Migration$Fn } from './interfaces';
 
-/**
- * @private
- */
+/** @internal */
 class Migration<T extends object> {
   declare fn: Migration$Fn<T>;
 

@@ -4,9 +4,7 @@ import type Model from '../../model';
 import type { RelationshipOptions } from '../index';
 import { readAttribute } from '../../model/utils/attribute';
 
-/**
- * @private
- */
+/** @internal */
 async function getHasManyThrough(
   owner: Model,
   { model, inverse, through, foreignKey: baseKey }: RelationshipOptions,
@@ -38,9 +36,7 @@ async function getHasManyThrough(
   return value;
 }
 
-/**
- * @private
- */
+/** @internal */
 export function getHasOne(
   owner: Model,
   { model, foreignKey }: RelationshipOptions,
@@ -54,9 +50,7 @@ export function getHasOne(
     .transacting(trx);
 }
 
-/**
- * @private
- */
+/** @internal */
 export function getHasMany(
   owner: Model,
   opts: RelationshipOptions,
@@ -73,9 +67,7 @@ export function getHasMany(
         .transacting(trx);
 }
 
-/**
- * @private
- */
+/** @internal */
 export function getBelongsTo(
   owner: Model,
   { model, foreignKey }: RelationshipOptions,

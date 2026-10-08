@@ -8,7 +8,7 @@ import type { Server$ErrorSource } from '../../../server';
  * field errors. The rejected value is deliberately not in the message: it
  * ends up in logs and may be a secret (e.g. a password).
  *
- * @private
+ * @internal
  */
 class ValidationError extends Error {
   declare key: string;

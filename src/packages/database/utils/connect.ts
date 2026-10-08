@@ -7,9 +7,7 @@ import { VALID_DRIVERS } from '../constants';
 import { InvalidDriverError } from '../errors';
 import type { DatabaseEnvironmentConfig } from '../interfaces';
 
-/**
- * @private
- */
+/** @internal */
 export default function connect(
   path: string,
   config: DatabaseEnvironmentConfig

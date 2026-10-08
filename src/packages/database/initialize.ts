@@ -9,9 +9,7 @@ import pendingMigrations from './utils/pending-migrations';
 import type Database from './index';
 import type { Database$opts } from './index';
 
-/**
- * @private
- */
+/** @internal */
 export default async function initialize<T extends Database>(
   instance: T,
   opts: Database$opts

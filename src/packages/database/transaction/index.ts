@@ -10,7 +10,7 @@ import type { TransactionResult } from './interfaces';
  * `target` with `create` writing in `trx`, and every static that starts a
  * query (`find`, `where`, `first`, a scope, …) returning one that runs in it.
  *
- * @private
+ * @internal
  */
 export function createStaticTransactionProxy<T extends ModelClass>(
   target: T,
@@ -46,9 +46,7 @@ export function createStaticTransactionProxy<T extends ModelClass>(
   });
 }
 
-/**
- * @private
- */
+/** @internal */
 export function createInstanceTransactionProxy<T extends Model>(
   target: T,
   trx: unknown
@@ -93,9 +91,7 @@ export function createInstanceTransactionProxy<T extends Model>(
   });
 }
 
-/**
- * @private
- */
+/** @internal */
 export function createTransactionResultProxy<
   T extends Model,
   U extends boolean

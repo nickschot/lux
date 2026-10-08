@@ -7,7 +7,7 @@ import type { ModelHook } from '../interfaces';
  * transaction — so its relationship reads, `update`, `save` and `reload` join
  * it — and the transaction itself, for queries on other models.
  *
- * @private
+ * @internal
  */
 export default function runHooks(
   target: Model,

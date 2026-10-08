@@ -12,9 +12,7 @@ import entries from '../../../../../utils/entries';
 import underscore from '../../../../../utils/underscore';
 import promiseHash from '../../../../../utils/promise-hash';
 
-/**
- * @private
- */
+/** @internal */
 export default async function buildResults<T extends Model>({
   model,
   records,

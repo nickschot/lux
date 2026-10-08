@@ -3,9 +3,7 @@ import entries from '../../../../utils/entries';
 import type Model from '../index';
 import { readAttribute } from './attribute';
 
-/**
- * @private
- */
+/** @internal */
 export default function getColumns(record: Model, only?: Array<string>) {
   let columns: Record<string, unknown> = record.constructor.attributes;
 

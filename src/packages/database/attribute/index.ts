@@ -3,9 +3,7 @@ import createSetter from './utils/create-setter';
 import createNormalizer from './utils/create-normalizer';
 import type { Attribute$meta } from './interfaces';
 
-/**
- * @private
- */
+/** @internal */
 export function createAttribute(opts: Attribute$meta): PropertyDescriptor {
   const normalize = createNormalizer(opts.type);
   const meta = {

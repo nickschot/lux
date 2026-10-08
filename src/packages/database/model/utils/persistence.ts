@@ -9,9 +9,7 @@ import type Model from '../index';
 import getColumns from './get-columns';
 import { writeAttribute } from './attribute';
 
-/**
- * @private
- */
+/** @internal */
 export function create(record: Model, trx: unknown): Array<any> {
   const timestamp = new Date();
 
@@ -43,9 +41,7 @@ export function create(record: Model, trx: unknown): Array<any> {
   ];
 }
 
-/**
- * @private
- */
+/** @internal */
 export function update(record: Model, trx: unknown): Array<any> {
   writeAttribute(record, 'updatedAt', new Date());
 
@@ -58,9 +54,7 @@ export function update(record: Model, trx: unknown): Array<any> {
   ];
 }
 
-/**
- * @private
- */
+/** @internal */
 export function destroy(record: Model, trx: unknown): Array<any> {
   return [
     record.constructor
@@ -71,9 +65,7 @@ export function destroy(record: Model, trx: unknown): Array<any> {
   ];
 }
 
-/**
- * @private
- */
+/** @internal */
 export function createRunner(
   { logger, store }: Pick<typeof Model, 'logger' | 'store'>,
   statements: Array<any>

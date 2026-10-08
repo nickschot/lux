@@ -30,87 +30,73 @@ import { readAttribute, writeAttribute } from './utils/attribute';
 import type { ModelHooks } from './interfaces';
 
 /**
- * @class Model
- * @public
+ * The base class of an app's models. A model is one database table: its
+ * attributes are the table's columns, read when the app boots, and the class
+ * declares the rest as statics — relationships (`hasOne`, `hasMany`,
+ * `belongsTo`), `validates`, `hooks` and `scopes`.
+ *
+ * ```javascript
+ * import { Model } from 'lumen-framework';
+ *
+ * class Post extends Model {
+ *   static belongsTo = {
+ *     user: { inverse: 'posts' }
+ *   };
+ * }
+ *
+ * export default Post;
+ * ```
+ *
+ * The static query methods (`find`, `where`, `first`, …) start a
+ * {@link Query}; `create`, and `update`, `save` and `destroy` on a record,
+ * write. See the
+ * [models guide](https://github.com/nickschot/lux/blob/main/docs/guides/models.md).
  */
 class Model {
-  // The instance's static side is a `ModelClass`; declaring it lets instance
-  // code reach the model class's statics (`this.constructor.relationshipFor`,
-  // `.serializer`, `.primaryKey`, ...) with proper types.
+  /**
+   * The record's model class, typed with its statics
+   * (`this.constructor.primaryKey`, `.relationshipFor`, …).
+   */
   declare ['constructor']: ModelClass;
 
   /**
-   * The name of the corresponding database table for a `Model` instance's
-   * constructor.
-   *
-   * @property tableName
-   * @type {String}
-   * @public
+   * The model's table name; the same as the static {@link Model.tableName}.
    */
   declare tableName: string;
 
   /**
-   * The canonical name of a `Model`'s constructor.
-   *
-   * @property modelName
-   * @type {String}
-   * @public
+   * The model's name (`post`); the same as the static
+   * {@link Model.modelName}.
    */
   declare modelName: string;
 
   /**
-   * The name of the API resource a `Model` instance's constructor represents.
-   *
-   * @property resourceName
-   * @type {String}
-   * @public
+   * The resource type the model is served as (`posts`); the same as the
+   * static {@link Model.resourceName}.
    */
   declare resourceName: string;
 
   /**
-   * A timestamp representing when the Model instance was created.
-   *
-   * @property createdAt
-   * @type {Date}
-   * @public
+   * When the record was created, if the table has a `created_at` column.
    */
   declare createdAt: Date;
 
   /**
-   * A timestamp representing the last time the Model instance was updated.
-   *
-   * @property updatedAt
-   * @type {Date}
-   * @public
+   * When the record was last updated, if the table has an `updated_at`
+   * column.
    */
   declare updatedAt: Date;
 
-  /**
-   * @property initialized
-   * @type {Boolean}
-   * @private
-   */
+  /** @internal */
   declare initialized: boolean;
 
-  /**
-   * @property rawColumnData
-   * @type {Object}
-   * @private
-   */
+  /** @internal */
   declare rawColumnData: Record<string, unknown>;
 
-  /**
-   * @property isModelInstance
-   * @type {Boolean}
-   * @private
-   */
+  /** @internal */
   declare isModelInstance: boolean;
 
-  /**
-   * @property prevAssociations
-   * @type {Set}
-   * @private
-   */
+  /** @internal */
   declare prevAssociations: Set<Model>;
 
   /**
@@ -119,556 +105,266 @@ class Model {
    * without a per-record query. Kept outside of the change sets so it never
    * counts as a change to the record.
    *
-   * @property absentRelationships
-   * @type {Set}
-   * @private
+   * @internal
    */
   declare absentRelationships: Set<string>;
 
-  /**
-   * @property changeSets
-   * @type {Array}
-   * @private
-   */
+  /** @internal */
   declare changeSets: Array<ChangeSet>;
 
   /**
-   * An object where you declare `hasOne` relationships.
-   *
-   * When declaring a relationship you must specify the inverse of the
-   * relationship.
+   * The model's to-one relationships whose foreign key is on the *other*
+   * table, by name. Each names its `inverse`, the relationship on the other
+   * model that points back:
    *
    * ```javascript
    * class User extends Model {
    *   static hasOne = {
-   *     profile: {
-   *       inverse: 'user'
-   *       // The line above lets Lumen know that this relationship is accessible
-   *       // on profile instances via `profile.user`.
-   *     }
+   *     profile: { inverse: 'user' }   // profiles.user_id
    *   };
    * }
    *
    * class Profile extends Model {
    *   static belongsTo = {
-   *     user: {
-   *       inverse: 'profile'
-   *       // The line above lets Lumen know that this relationship is accessible
-   *       // on user instances via `user.profile`.
-   *     }
+   *     user: { inverse: 'profile' }
    *   };
    * }
    * ```
    *
-   * If the name of the model is different than the key of the relationship, you
-   * must specify it in the relationship object.
-   *
-   * ```javascript
-   * class Profile extends Model {
-   *   static belongsTo = {
-   *     owner: {
-   *       inverse: 'profile',
-   *       model: 'user'
-   *       // The line above lets Lumen know that this is a relationship with the
-   *       // `User` model and not a non-existent `Owner` model.
-   *     }
-   *   };
-   * }
-   * ```
-   *
-   * @property hasOne
-   * @type {Object}
-   * @default {}
-   * @public
+   * The foreign key is `<inverse>_id` on the other table. Set `model` when
+   * the related model's name differs from the relationship's
+   * (`avatar: { inverse: 'owner', model: 'image' }`).
    */
   declare static hasOne: Record<string, unknown>;
 
   /**
-   * An object where you declare `hasMany` relationships.
-   *
-   * When declaring a relationship you must specify the inverse of the
-   * relationship.
+   * The model's to-many relationships, by name. Each names its `inverse`, the
+   * relationship on the other model that points back:
    *
    * ```javascript
    * class Author extends Model {
    *   static hasMany = {
-   *     books: {
-   *       inverse: 'author'
-   *       // The line above lets Lumen know that this relationship is accessible
-   *       // on book instances via `book.author`.
-   *     }
+   *     books: { inverse: 'author' }   // books.author_id
    *   };
    * }
    *
    * class Book extends Model {
    *   static belongsTo = {
-   *     author: {
-   *       inverse: 'books'
-   *       // The line above lets Lumen know that this relationship is accessible
-   *       // on author instances via `author.books`.
-   *     }
+   *     author: { inverse: 'books' }
    *   };
    * }
    * ```
    *
-   * If the name of the model is different than the key of the relationship, you
-   * must specify it in the relationship object.
+   * The foreign key is `<inverse>_id` on the other table. Set `model` when
+   * the related model's name differs from the relationship's
+   * (`publications: { inverse: 'author', model: 'book' }`).
+   *
+   * A many-to-many relationship goes `through` a join model, which
+   * `belongsTo` both sides; each side's `inverse` names the other side's
+   * relationship:
    *
    * ```javascript
-   * class Author extends Model {
+   * class Post extends Model {
    *   static hasMany = {
-   *     publications: {
-   *       inverse: 'author',
-   *       model: 'book'
-   *       // The line above lets Lumen know that this is a relationship with the
-   *       // `Book` model and not a non-existent `Publication` model.
-   *     }
+   *     tags: { inverse: 'posts', through: 'categorization' }
    *   };
-   * }
-   * ```
-   *
-   * ##### Many to Many
-   *
-   * In the examples above there is only one owner of relationship. Sometimes we
-   * need to express a many to many relationship. Typically in relational
-   * databases, this is done with a join table. When declaring a many to many
-   * relationship that uses a join table, you must specify the join model.
-   *
-   * ```javascript
-   * class Categorization extends Model {
-   *   static belongsTo = {
-   *     tag: {
-   *       inverse: 'categorization'
-   *     },
-   *     post: {
-   *       inverse: 'categorization'
-   *     }
-   *   }
    * }
    *
    * class Tag extends Model {
    *   static hasMany = {
-   *     posts: {
-   *       inverse: 'tags',
-   *       through: 'categorizations'
-   *     }
+   *     posts: { inverse: 'tags', through: 'categorization' }
    *   };
    * }
    *
-   * class Post extends Model {
-   *   static hasMany = {
-   *     tags: {
-   *       inverse: 'posts',
-   *       through: 'categorizations'
-   *     }
+   * class Categorization extends Model {
+   *   static belongsTo = {
+   *     post: { inverse: 'tags' },
+   *     tag: { inverse: 'posts' }
    *   };
    * }
    * ```
-   *
-   * @property hasMany
-   * @type {Object}
-   * @default {}
-   * @public
    */
   declare static hasMany: Record<string, unknown>;
 
   /**
-   * An object where you declare `belongsTo` relationships.
-   *
-   * When declaring a relationship you must specify the inverse of the
-   * relationship.
+   * The model's to-one relationships whose foreign key is on *this* table,
+   * by name. Each names its `inverse`, the relationship on the other model
+   * that points back:
    *
    * ```javascript
    * class Book extends Model {
    *   static belongsTo = {
-   *     author: {
-   *       inverse: 'books'
-   *       // The line above lets Lumen know that this relationship is accessible
-   *       // on author instances via `author.books`.
-   *     }
+   *     author: { inverse: 'books' }   // books.author_id
    *   };
    * }
    *
    * class Author extends Model {
    *   static hasMany = {
-   *     books: {
-   *       inverse: 'book'
-   *       // The line above lets Lumen know that this relationship is accessible
-   *       // on book instances via `book.author`.
-   *     }
+   *     books: { inverse: 'author' }
    *   };
    * }
    * ```
    *
-   * If the name of the model is different than the key of the relationship, you
-   * must specify it in the relationship object.
-   *
-   * ```javascript
-   * class Book extends Model {
-   *   static belongsTo = {
-   *     writer: {
-   *       inverse: 'books',
-   *       model: 'author'
-   *       // The line above lets Lumen know that this is a relationship with the
-   *       // `Author` model and not a non-existent `Writer` model.
-   *     }
-   *   };
-   * }
-   * ```
-   *
-   * Sometimes our foreign keys in the database do not follow conventions (i.e
-   * `author_id`). You have the option to manually specify foreign keys when a
-   * situation like this occurs.
-   *
-   * ```javascript
-   * class Book extends Model {
-   *   static belongsTo = {
-   *     author: {
-   *       inverse: 'books',
-   *       foreignKey: 'SoMe_UnCoNvEnTiOnAl_FoReIgN_KeY'
-   *     }
-   *   };
-   * }
-   * ```
-   *
-   * @property belongsTo
-   * @type {Object}
-   * @default {}
-   * @public
+   * The foreign key is `<name>_id` on this table, and is also an attribute
+   * (`book.authorId`), so the relationship can be set by id as well as by
+   * record. Set `model` when the related model's name differs from the
+   * relationship's (`writer: { inverse: 'books', model: 'author' }`, with a
+   * `writer_id` column).
    */
   declare static belongsTo: Record<string, unknown>;
 
   /**
-   * An object where you declare validations for an instance's attributes.
-   *
-   * Before a model instance is saved, validations declared in this block are
-   * executed. To declare a validation for a model attribute, simply add the
-   * attribute name as a key to the validates object. The value for the
-   * attribute key should be a function that takes a single argument (the value
-   * to validate against) and return a boolean value represent whether or not
-   * the attribute is valid.
-   *
-   * ```javascript
-   * class User extends Model {
-   *   static validates {
-   *     username: value => /^\w{2,30}$/.test(value),
-   *     password: value => String(value).length >= 8
-   *   };
-   * }
-   * ```
-   *
-   * In the spirit of have a small api surface area, Lumen provides no validation
-   * helper functions. You can roll your own helpers with or use one of the many
-   * excellent validation libraries like [validator](https://goo.gl/LWaHBB).
+   * Validators for the model's attributes, by attribute name. Each takes the
+   * value and returns whether it is valid; they run before every create and
+   * update, after the `beforeValidation` hooks.
    *
    * ```javascript
    * import { isEmail } from 'validator';
    *
    * class User extends Model {
-   *   static validates {
-   *     email: isEmail
+   *   static validates = {
+   *     email: isEmail,
+   *     username: value => /^\w{2,30}$/.test(value)
    *   };
    * }
    * ```
    *
-   * @property validates
-   * @type {Object}
-   * @default {}
-   * @public
+   * A value that fails throws a `ValidationError`, which the API answers
+   * with `422 Unprocessable Entity` and a pointer to the attribute. Lumen
+   * ships no validators of its own; use plain functions or a package such as
+   * [validator](https://www.npmjs.com/package/validator).
    */
   declare static validates: Record<string, unknown>;
 
   /**
-   * An object where you declare custom query scopes for the model.
-   *
-   * Scopes allow you to DRY up query logic by chaining custom set's of queries
-   * with built-in query method such as `where`, `not`, `page`, etc. To declare
-   * a scope, add it as a method on the scopes object.
+   * Named, reusable query conditions. Each scope becomes a method on the
+   * model and on its queries, with `this` the query it is called on, and
+   * chains like the built-in methods:
    *
    * ```javascript
    * class Post extends Model {
-   *   static hasMany = {
-   *     tags: {
-   *       inverse: 'posts'
-   *     },
-   *     comments: {
-   *       inverse: 'post'
-   *     }
-   *   };
-   *
-   *   static belongsTo = {
-   *     user: {
-   *       inverse: 'posts'
-   *     }
-   *   };
-   *
    *   static scopes = {
    *     isPublic() {
-   *       return this.where({
-   *         isPublic: true
-   *       });
+   *       return this.where({ isPublic: true });
    *     },
    *
    *     byUser(user) {
-   *       return this.where({
-   *         userId: user.id
-   *       });
-   *     },
-   *
-   *     withEverything() {
-   *       return this.includes('tags', 'user', 'comments');
+   *       return this.where({ userId: user.id });
    *     }
    *   };
    * }
+   *
+   * const posts = await Post.byUser(user).isPublic().page(2);
    * ```
    *
-   * Given the scopes declared in the example above, here is how we could return
-   * all the public posts with relationships eager loaded for the user with the
-   * id of 1.
-   *
-   * ```javascript
-   * const user = await User.find(1);
-   *
-   * return Post
-   *   .byUser(user)
-   *   .isPublic()
-   *   .withEverything();
-   * ```
-   *
-   * Since scopes can be chained with built-in query methods, we can easily
-   * paginate this collection.
-   *
-   * ```javascript
-   * const user = await User.find(1);
-   *
-   * return Post
-   *   .byUser(user)
-   *   .isPublic()
-   *   .withEverything()
-   *   .page(1);
-   * ```
+   * {@link Query.unscope} removes a scope from a query again.
    *
    * A scope narrows only the queries it is called on, and knows nothing of
-   * the request. Calling `isPublic()` in a Controller's `index` hides private
+   * the request. Calling `isPublic()` in a controller's `index` hides private
    * posts from that listing alone: `show`, relationship linkage, `include` and
    * the relationships of a write still reach them, and `unscope('isPublic')`
    * undoes it. To hide records from every request in a namespace, use the
-   * scope in a Controller visibility rule instead (`static visibility` on the
-   * namespace's `ApplicationController`), which Lumen applies to every query
-   * it issues for the request and `unscope()` cannot remove. See
-   * `Controller.visibility` for a side-by-side comparison.
-   *
-   * @property scopes
-   * @type {Object}
-   * @default {}
-   * @public
+   * scope in a controller visibility rule instead
+   * ({@link Controller.visibility}), which Lumen applies to every query it
+   * issues for the request and `unscope()` cannot remove.
    */
   declare static scopes: Record<string, unknown>;
 
   /**
-   * An object where you declare hooks to execute at certain times in a model
-   * instance's lifecycle.
+   * Functions that run at points of a record's life, by name.
    *
-   * There are many lifecycle hooks that are executed through out a model
-   * instance's lifetime. The have many use cases such as sanitization of
-   * attributes, creating dependent relationships, hashing passwords, and much
-   * more.
+   * | Creating | Updating | Deleting |
+   * |---|---|---|
+   * | `beforeValidation` | `beforeValidation` | `beforeDestroy` |
+   * | `afterValidation` | `afterValidation` | `afterDestroy` |
+   * | `beforeCreate` | `beforeUpdate` | |
+   * | `beforeSave` | `beforeSave` | |
+   * | `afterCreate` | `afterUpdate` | |
+   * | `afterSave` | `afterSave` | |
    *
-   * ##### Execution Order
-   *
-   * When creating a record.
-   *
-   * 1. beforeValidation
-   * 2. afterValidation
-   * 3. beforeCreate
-   * 4. beforeSave
-   * 5. afterCreate
-   * 6. afterSave
-   *
-   * When updating a record.
-   *
-   * 1. beforeValidation
-   * 2. afterValidation
-   * 3. beforeUpdate
-   * 4. beforeSave
-   * 5. afterUpdate
-   * 6. afterSave
-   *
-   * When deleting a record.
-   *
-   * 1. beforeDestroy
-   * 2. afterDestroy
-   *
-   * ##### Anatomy
-   *
-   * Hooks are async functions that are called with two arguments. The first
-   * argument is the record that the hook applies to and the second argument is
-   * the transaction object relevant to the method from which the hook was
-   * called.
-   *
-   * The record is bound to that transaction: reading its relationships
-   * (`await comment.post`, and the relationships of what that returns),
-   * `update`, `save`, `destroy` and `reload` all run in it, so they see what
-   * the write has done so far and are rolled back with it.
-   *
-   * Use the transaction object for queries on other models — creating,
-   * updating, or reading different record(s) within the hook:
-   * `Notification.transacting(trx).create(…)`, `Post.transacting(trx).find(…)`.
-   * That keeps them in the transaction too, so modifications made within the
-   * hook are rolled back if the function that initiated the transaction fails.
+   * A hook is called with the record and the write's transaction,
+   * `(record, trx)`, and may be async. Everything it does through the record
+   * — reading a relationship, `update`, `save`, `destroy`, `reload` — runs in
+   * that transaction. Pass the transaction on for queries on other models,
+   * with `Model.transacting(trx)`. Then they see what the write has done so
+   * far, and are rolled back with it if a later step fails:
    *
    * ```javascript
-   * import Notification from 'app/models/notification';
-   *
    * class Comment extends Model {
-   *   static belongsTo = {
-   *     post: {
-   *       inverse: 'comments'
-   *     },
-   *     user: {
-   *       inverse: 'comments'
-   *     }
-   *   };
-   *
    *   static hooks = {
    *     async afterCreate(comment, trx) {
-   *       let [post, commenter] = await Promise.all([
-   *         comment.post,
-   *         comment.user
-   *       ]);
+   *       const post = await comment.post;
    *
-   *       const commentee = await post.user;
-   *
-   *       post = post.title;
-   *       commenter = commenter.name;
-   *
-   *       // Calling .transacting(trx) prevents the commentee from getting a
-   *       // notification if the comment fails to be persisted in the database.
-   *       await Notification
-   *         .transacting(trx)
-   *         .create({
-   *           user: commentee,
-   *           message: `${commenter} commented on your post "${post}"`
-   *         });
-   *     },
-   *
-   *     async afterSave() {
-   *       // Good thing you called transacting in afterCreate.
-   *       throw new Error('Fatal Error');
+   *       await Notification.transacting(trx).create({
+   *         recipientId: post.userId,
+   *         message: `New comment on "${post.title}"`
+   *       });
    *     }
    *   };
    * }
    * ```
    *
-   * @property hooks
-   * @type {Object}
-   * @default {}
-   * @public
+   * The record a hook receives is a proxy of the instance being written:
+   * attributes read and assign as usual, but compare records by
+   * {@link Model.getPrimaryKey}, not `===`.
    */
   declare static hooks: ModelHooks;
 
   /**
-   * A reference to the application's logger.
-   *
-   * @property logger
-   * @type {Logger}
-   * @public
+   * The application's logger.
    */
   declare static logger: Logger;
 
   /**
-   * The name of the corresponding database table for the model.
-   *
-   * @property tableName
-   * @type {String}
-   * @public
+   * The model's table: the pluralized, underscored class name (`BlogPost` →
+   * `blog_posts`), unless the model sets it.
    */
   declare static tableName: string;
 
   /**
-   * The canonical name of the model.
-   *
-   * @property modelName
-   * @type {String}
-   * @public
+   * The model's name, singular and dasherized (`blog-post`).
    */
   declare static modelName: string;
 
   /**
-   * The name of the resource the model represents.
-   *
-   * @property resourceName
-   * @type {String}
-   * @public
+   * The resource type the model is served as, plural and dasherized
+   * (`blog-posts`).
    */
   declare static resourceName: string;
 
   /**
-   * The column name to use for a model's primary key.
-   *
-   * @property primaryKey
-   * @type {String}
-   * @default 'id'
-   * @public
+   * The primary key column.
    */
   static primaryKey: string = 'id';
 
-  /**
-   * @property table
-   * @type {Function}
-   * @private
-   */
+  /** @internal */
   declare static table: () => unknown;
 
-  /**
-   * @property store
-   * @type {Database}
-   * @private
-   */
+  /** @internal */
   declare static store: Database;
 
-  /**
-   * @property initialized
-   * @type {Boolean}
-   * @private
-   */
+  /** @internal */
   declare static initialized: boolean;
 
-  /**
-   * @property serializer
-   * @type {Serializer}
-   * @private
-   */
+  /** @internal */
   declare static serializer: Serializer<Model>;
 
-  /**
-   * @property attributes
-   * @type {Object}
-   * @private
-   */
+  /** @internal */
   declare static attributes: Record<string, unknown>;
 
-  /**
-   * @property attributeNames
-   * @type {Array}
-   * @private
-   */
+  /** @internal */
   declare static attributeNames: Array<string>;
 
-  /**
-   * @property relationships
-   * @type {Object}
-   * @private
-   */
+  /** @internal */
   declare static relationships: Record<string, RelationshipOptions>;
 
-  /**
-   * @property relationshipNames
-   * @type {Array}
-   * @private
-   */
+  /** @internal */
   declare static relationshipNames: Array<string>;
 
+  /**
+   * Build a record without saving it; {@link Model.create} builds and saves
+   * one. `attrs` may hold attributes and relationships.
+   */
   constructor(attrs: Record<string, unknown> = {}, initialize: boolean = true) {
     Object.defineProperties(this, {
       changeSets: {
@@ -717,108 +413,54 @@ class Model {
   }
 
   /**
-   * Indicates if the model is new.
+   * Whether the record has never been saved.
    *
    * ```javascript
-   * import Post from 'app/models/post';
+   * new Post({ title: 'Draft' }).isNew; // => true
    *
-   * let post = new Post({
-   *   body: '',
-   *   title: 'New Post',
-   *   isPublic: false
-   * });
-   *
-   * post.isNew;
-   * // => true
-   *
-   * Post.create({
-   *   body: '',
-   *   title: 'New Post',
-   *   isPublic: false
-   * }).then(post => {
-   *   post.isNew;
-   *   // => false;
-   * });
+   * const post = await Post.create({ title: 'Draft' });
+   * post.isNew; // => false
    * ```
-   *
-   * @property isNew
-   * @type {Boolean}
-   * @public
    */
   get isNew(): boolean {
     return !this.persistedChangeSet;
   }
 
   /**
-   * Indicates if the model is dirty.
+   * Whether the record has changes that aren't saved.
    *
    * ```javascript
-   * import Post from 'app/models/post';
+   * const post = await Post.find(1);
+   * post.isDirty; // => false
    *
-   * Post
-   *  .find(1)
-   *  .then(post => {
-   *     post.isDirty;
-   *     // => false
+   * post.title = 'Renamed';
+   * post.isDirty; // => true
    *
-   *     post.isPublic = true;
-   *
-   *     post.isDirty;
-   *     // => true
-   *
-   *     return post.save();
-   *   })
-   *   .then(post => {
-   *     post.isDirty;
-   *     // => false
-   *   });
+   * await post.save();
+   * post.isDirty; // => false
    * ```
-   *
-   * @property isDirty
-   * @type {Boolean}
-   * @public
    */
   get isDirty(): boolean {
     return Boolean(this.dirtyProperties.size);
   }
 
   /**
-   * Indicates if the model is persisted.
-   *
-   * ```javascript
-   * import Post from 'app/models/post';
-   *
-   * Post
-   *  .find(1)
-   *  .then(post => {
-   *     post.persisted;
-   *     // => true
-   *
-   *     post.isPublic = true;
-   *
-   *     post.persisted;
-   *     // => false
-   *
-   *     return post.save();
-   *   })
-   *   .then(post => {
-   *     post.persisted;
-   *     // => true
-   *   });
-   * ```
-   *
-   * @property persisted
-   * @type {Boolean}
-   * @public
+   * Whether the record is saved and has no unsaved changes: neither
+   * {@link Model.isNew} nor {@link Model.isDirty}.
    */
   get persisted(): boolean {
     return !this.isNew && !this.isDirty;
   }
 
   /**
-   * @property dirtyAttributes
-   * @type {Map}
-   * @public
+   * The attributes changed since the record was last saved, with their new
+   * values.
+   *
+   * ```javascript
+   * if (user.dirtyAttributes.has('password')) {
+   *   user.password = await hash(user.password);
+   * }
+   * ```
    */
   get dirtyAttributes(): Map<string, unknown> {
     const {
@@ -836,9 +478,8 @@ class Model {
   }
 
   /**
-   * @property dirtyRelationships
-   * @type {Map}
-   * @public
+   * The relationships changed since the record was last saved, with their new
+   * values.
    */
   get dirtyRelationships(): Map<string, unknown> {
     const {
@@ -855,11 +496,7 @@ class Model {
     return dirtyProperties;
   }
 
-  /**
-   * @property dirtyProperties
-   * @type {Map}
-   * @private
-   */
+  /** @internal */
   get dirtyProperties(): Map<string, unknown> {
     const { currentChangeSet, persistedChangeSet } = this;
 
@@ -870,149 +507,87 @@ class Model {
     return diffMap(persistedChangeSet, currentChangeSet);
   }
 
-  /**
-   * @property currentChangeSet
-   * @type {ChangeSet}
-   * @private
-   */
+  /** @internal */
   get currentChangeSet(): ChangeSet {
     return this.changeSets[0];
   }
 
-  /**
-   * @property currentChangeSet
-   * @type {void | ChangeSet}
-   * @private
-   */
+  /** @internal */
   get persistedChangeSet(): ChangeSet | undefined {
     return this.changeSets.find(({ isPersisted }) => isPersisted);
   }
 
   /**
-   * Specify the transaction object to use for following save, update, or
-   * destroy method calls.
-   *
-   * When you call a method like update or destroy, lumen will create a
-   * transaction and wrap the internals of the method and other downstream
-   * method calls like model hooks within. In some edge cases it can be more
-   * useful to manually initiate the transaction. Bulk updating or destroying
-   * are good examples of this. When you manually begin a transaction, you can
-   * call this method to specify the transaction object that you would like to
-   * use for subsequent mutation methods (save, update, destroy, etc.) so lumen
-   * knows not to automatically begin a new transaction if/when a mutation
-   * method is called.
+   * Bind the record to a transaction you started with
+   * {@link Model.transaction}: `save`, `update`, `destroy`, `reload` and
+   * relationship reads on the returned record run in `trx`, and so do the
+   * related records those reads return.
    *
    * ```javascript
-   * const post = await Post.first();
-   *
-   * // This call to update uses the transaction that lumen will initiate.
-   * await post.update({
-   *   // updates to post...
-   * });
-   *
-   * await post.transaction(trx => {
-   *   // This call to update uses the transaction that we created with the
-   *   // call to the transaction method.
-   *   return post
-   *     .transacting(trx)
-   *     .update({
-   *       // updates to post...
-   *     });
+   * await Post.transaction(async trx => {
+   *   await post.transacting(trx).update({ isPublic: true });
+   *   await user.transacting(trx).update({ isActive: true });
    * });
    * ```
    *
-   * @param {Transaction} trx - A transaction object to forward to save,
-   * update, or destroy method calls.
-   * @return {Model} - Returns a proxied version of `this` that delagates the
-   * transaction param to subsquent save, update, or destroy method calls.
-   * @public
+   * Model hooks receive their record bound already.
+   *
+   * @param trx - The transaction.
+   * @returns A proxy of the record that uses `trx`.
    */
   transacting(trx: unknown): this {
     return createInstanceTransactionProxy(this, trx);
   }
 
   /**
-   * Manually begin a new transaction.
+   * Run `fn` in a new transaction; the same as {@link Model.transaction} on
+   * the record's model.
    *
-   * Most of the time, you don't need to start transactions yourself. However,
-   * if you need to do something like implement bulk updating of related records
-   * the transaction method can be useful.
-   *
-   * ```javascript
-   * const post = await Post.first().include('user');
-   * const user = await post.user;
-   *
-   * await post.transaction(trx => {
-   *   return Promise.all([
-   *     post.transacting(trx).update({
-   *       // updates to post...
-   *     }),
-   *     user.transacting(trx).update({
-   *       // updates to user...
-   *     })
-   *   ]);
-   * });
-   * ```
-   *
-   * @param {Function} fn - The function used for executing the tranasction.
-   * This function is called with a new transaction object as it's only argument
-   * and is expected to return a promise.
-   * @return {Promise} Resolves with the resolved value of the fn param.
-   * @public
+   * @param fn - Called with the transaction. It commits when the promise `fn`
+   * returns resolves, and rolls back when it rejects.
+   * @returns Resolves with what `fn` resolved with.
    */
   transaction<T>(fn: (...args: Array<unknown>) => Promise<T>): Promise<T> {
     return this.constructor.transaction(fn);
   }
 
   /**
-   * Persist any unsaved changes to the database.
+   * Save the changes made by assigning to the record.
    *
    * ```javascript
-   * const post = await Post.first();
+   * const post = await Post.find(1);
    *
-   * console.log(post.title, post.isDirty);
-   * // => 'New Post' false
-   *
-   * post.title = 'How to Save a Lumen Model';
-   *
-   * console.log(post.title, post.isDirty);
-   * // => 'How to Update a Lumen Model' true
-   *
+   * post.title = 'Renamed';
    * await post.save();
-   *
-   * console.log(post.title, post.isDirty);
-   * // => 'How to Save a Lumen Model' false
    * ```
    *
-   * @return {Promise} Resolves with `this`.
-   * @public
+   * Validations and the update hooks run, in a transaction of their own unless
+   * one is given.
+   *
+   * @param transaction - A transaction to run in, instead of a new one.
+   * @returns Resolves with the record; its `didPersist` is `false` when
+   * there was nothing to save.
    */
   save(transaction?: unknown): Promise<TransactionResult<this, boolean>> {
     return this.update(mapToObject(this.dirtyProperties), transaction);
   }
 
   /**
-   * Assign values to the instance and persist any changes to the database.
+   * Assign `props` to the record and save it.
    *
    * ```javascript
-   * const post = await Post.first();
+   * const post = await Post.find(1);
    *
-   * console.log(post.title, post.isPublic, post.isDirty);
-   * // => 'New Post' false false
-   *
-   * await post.update({
-   *   title: 'How to Update a Lumen Model',
-   *   isPublic: true
-   * });
-   *
-   * console.log(post.title, post.isPublic, post.isDirty);
-   * // => 'How to Update a Lumen Model' true false
+   * await post.update({ title: 'Renamed', isPublic: true });
    * ```
    *
-   * @param {Object} props - An object containing key, value pairs of the
-   * attributes and/or relationships you would like to assign to the instance.
-   * @return {Promise} Resolves with `this`.
-   * @public
+   * Validations and the update hooks run, in a transaction of their own unless
+   * one is given.
+   *
+   * @param props - Attributes and relationships to assign.
+   * @param transaction - A transaction to run in, instead of a new one.
+   * @returns Resolves with the record; its `didPersist` is `false` when nothing
+   * changed.
    */
   update(
     props: Record<string, unknown> = {},
@@ -1084,10 +659,11 @@ class Model {
   }
 
   /**
-   * Permanently delete the instance from the database.
+   * Delete the record, running the destroy hooks, in a transaction of its own
+   * unless one is given.
    *
-   * @return {Promise} Resolves with `this`.
-   * @public
+   * @param transaction - A transaction to run in, instead of a new one.
+   * @returns Resolves with the record.
    */
   destroy(transaction?: unknown): Promise<TransactionResult<this, true>> {
     const run = async (trx: unknown) => {
@@ -1110,10 +686,10 @@ class Model {
   }
 
   /**
-   * Reload the record from the database.
+   * Fetch the record from the database again.
    *
-   * @return {Promise} Resolves with `this`.
-   * @public
+   * @returns Resolves with a new instance of the record as stored (the record
+   * itself if it was never saved).
    */
   reload(): Promise<Model> {
     if (this.isNew) {
@@ -1124,11 +700,9 @@ class Model {
   }
 
   /**
-   * Rollback attributes and relationships to the last known persisted set of
-   * values.
+   * Discard the changes made since the record was last saved.
    *
-   * @return {Model} Returns `this`.
-   * @public
+   * @returns The record.
    */
   rollback(): this {
     const { persistedChangeSet } = this;
@@ -1140,31 +714,32 @@ class Model {
     return this;
   }
 
-  /**
-   * @param {String} [...keys] - The keys of the properties to return.
-   * @return {Object} An object containing keys that were passed in as agruments
-   * and their associated values.
-   * @private
-   */
+  /** @internal */
   getAttributes(...keys: Array<string>): Record<string, unknown> {
     return pick(this, ...keys);
   }
 
   /**
-   * @return {Number} The value of the primary key for the instance.
-   * @private
+   * The record's primary key value. Compare records by it rather than by
+   * identity: the record a hook receives is a proxy of the one being written.
    */
   getPrimaryKey(): number {
     return readAttribute(this, this.constructor.primaryKey) as number;
   }
 
   /**
-   * Create and persist a new instance of the model.
+   * Build a record from `props` and save it.
    *
-   * @param {Object} props - An object containing key, value pairs of the
-   * attributes and/or relationships you would like to assign to the instance.
-   * @return {Promise} Resolves with the newly created model.
-   * @public
+   * ```javascript
+   * const post = await Post.create({ title: 'Hello', user });
+   * ```
+   *
+   * Validations and the create hooks run, in a transaction of their own unless
+   * one is given.
+   *
+   * @param props - Attributes and relationships of the new record.
+   * @param transaction - A transaction to run in, instead of a new one.
+   * @returns Resolves with the new record.
    */
   static create(
     props: Record<string, unknown> = {},
@@ -1236,36 +811,21 @@ class Model {
   }
 
   /**
-   * Specify the transaction object to use for following save, update, or
-   * destroy method calls.
-   *
-   * When you call a method like update or destroy, lumen will create a
-   * transaction and wrap the internals of the method and other downstream
-   * method calls like model hooks within. In some edge cases it can be more
-   * useful to manually initiate the transaction. Bulk updating or destroying
-   * are good examples of this. When you manually begin a transaction, you can
-   * call this method to specify the transaction object that you would like to
-   * use for calls to the static create method so lumen knows not to automatically
-   * begin a new transaction if/when the static create method is called.
+   * Bind the model to a transaction: `create`, and every query started from
+   * the returned model — `find`, `where`, `first`, `count`, scopes and the
+   * rest, with the queries that load their included relationships — run in
+   * `trx`.
    *
    * ```javascript
-   * // This call to create uses the transaction that lumen will initiate.
-   * await Post.create();
-   *
-   * await Post.transaction(trx => {
-   *   // This call to create uses the transaction that we created with the
-   *   // call to the transaction method.
-   *   return Post
-   *     .transacting(trx)
-   *     .create();
+   * await Post.transaction(async trx => {
+   *   const post = await Post.transacting(trx).create({ title: 'Hello' });
+   *   await Comment.transacting(trx).create({ postId: post.id });
    * });
    * ```
    *
-   * Queries started from it run in the transaction too — `find`, `where`,
-   * `first`, `count`, scopes and the rest — and so do the queries that load
-   * their included relationships. A model hook reads through the transaction
-   * it is given, so it sees what the write has done so far and does not wait
-   * on a second connection while the transaction holds one:
+   * A model hook reads through the transaction it is given, so it sees what the
+   * write has done so far, and doesn't wait for a second connection while the
+   * transaction holds one:
    *
    * ```javascript
    * static hooks = {
@@ -1276,41 +836,28 @@ class Model {
    * };
    * ```
    *
-   * @param {Transaction} trx - The transaction for the create calls and
-   * queries started from the returned model.
-   * @return {Model} - A proxied version of `this` whose `create` and
-   * query-starting methods use `trx`.
-   * @public
+   * @param trx - The transaction.
+   * @returns A proxy of the model that uses `trx`.
    */
   static transacting(trx: unknown): ModelClass {
     return createStaticTransactionProxy(this, trx);
   }
 
   /**
-   * Manually begin a new transaction.
-   *
-   * Most of the time, you don't need to start transactions yourself. However,
-   * the transaction method can be useful if you need to do something like
-   * bulk creating records.
+   * Run `fn` in a new transaction. Every write runs in a transaction of its
+   * own; start one yourself to group several, and pass it on with
+   * `transacting`:
    *
    * ```javascript
-   * await Post.transaction(trx => {
-   *   return Promise.all([
-   *     Post.transacting(trx).create({
-   *       // ...props
-   *     }),
-   *     Post.transacting(trx).create({
-   *       // ...props
-   *     })
-   *   ]);
+   * await Post.transaction(async trx => {
+   *   await Post.transacting(trx).create({ title: 'One' });
+   *   await Post.transacting(trx).create({ title: 'Two' });
    * });
    * ```
    *
-   * @param {Function} fn - The function used for executing the tranasction.
-   * This function is called with a new transaction object as it's only argument
-   * and is expected to return a promise.
-   * @return {Promise} Resolves with the resolved value of the fn param.
-   * @public
+   * @param fn - Called with the transaction. It commits when the promise `fn`
+   * returns resolves, and rolls back when it rejects.
+   * @returns Resolves with what `fn` resolved with.
    */
   static transaction<T>(
     fn: (...args: Array<unknown>) => Promise<T>
@@ -1339,44 +886,80 @@ class Model {
     });
   }
 
+  /**
+   * Every record. Starts a {@link Query}; see {@link Query.all}.
+   */
   static all(): Query<Array<Model>> {
     return new Query(this).all();
   }
 
+  /**
+   * The record with primary key `primaryKey`; rejects with a
+   * `RecordNotFoundError` (`404` through the API) if there is none. Starts a
+   * {@link Query}; see {@link Query.find}.
+   */
   static find(primaryKey: unknown): Query<Model> {
     return new Query(this).find(primaryKey);
   }
 
+  /**
+   * Page `num` of the records. Starts a {@link Query}; see {@link Query.page}.
+   */
   static page(num: number): Query<Array<Model>> {
     return new Query(this).page(num);
   }
 
+  /**
+   * At most `amount` records. Starts a {@link Query}; see {@link Query.limit}.
+   */
   static limit(amount: number): Query<Array<Model>> {
     return new Query(this).limit(amount);
   }
 
+  /**
+   * Skip `amount` records. Starts a {@link Query}; see {@link Query.offset}.
+   */
   static offset(amount: number): Query<Array<Model>> {
     return new Query(this).offset(amount);
   }
 
+  /**
+   * The number of records. Starts a {@link Query}; see {@link Query.count}.
+   */
   static count(): Query<number> {
     return new Query(this).count();
   }
 
+  /**
+   * The records sorted by `attr`. Starts a {@link Query}; see
+   * {@link Query.order}.
+   */
   static order(attr: string, direction?: string): Query<Array<Model>> {
     return new Query(this).order(attr, direction);
   }
 
+  /**
+   * The records matching `conditions`. Starts a {@link Query}; see
+   * {@link Query.where}.
+   */
   static where(conditions: Record<string, unknown>): Query<Array<Model>> {
     return new Query(this).where(conditions);
   }
 
+  /**
+   * The records with values within ranges. Starts a {@link Query}; see
+   * {@link Query.whereBetween}.
+   */
   static whereBetween(
     conditions: Record<string, unknown>
   ): Query<Array<Model>> {
     return new Query(this).whereBetween(conditions);
   }
 
+  /**
+   * The records matching a raw SQL condition. Starts a {@link Query}; see
+   * {@link Query.whereRaw}.
+   */
   static whereRaw(
     query: string,
     bindings: Array<unknown> = []
@@ -1384,53 +967,70 @@ class Model {
     return new Query(this).whereRaw(query, bindings);
   }
 
+  /**
+   * The records not matching `conditions`. Starts a {@link Query}; see
+   * {@link Query.not}.
+   */
   static not(conditions: Record<string, unknown>): Query<Array<Model>> {
     return new Query(this).not(conditions);
   }
 
+  /**
+   * The first record. Starts a {@link Query}; see {@link Query.first}.
+   */
   static first(): Query<Model> {
     return new Query(this).first();
   }
 
+  /**
+   * The last record. Starts a {@link Query}; see {@link Query.last}.
+   */
   static last(): Query<Model> {
     return new Query(this).last();
   }
 
+  /**
+   * Only these attributes. Starts a {@link Query}; see {@link Query.select}.
+   */
   static select(...params: Array<string>): Query<Array<Model>> {
     return new Query(this).select(...params);
   }
 
+  /**
+   * Unique values of these attributes. Starts a {@link Query}; see
+   * {@link Query.distinct}.
+   */
   static distinct(...params: Array<string>): Query<Array<Model>> {
     return new Query(this).distinct(...params);
   }
 
+  /**
+   * The records with these relationships loaded. Starts a {@link Query}; see
+   * {@link Query.include}.
+   */
   static include(
     ...relationships: Array<string | Record<string, unknown>>
   ): Query<Array<Model>> {
     return new Query(this).include(...relationships);
   }
 
+  /**
+   * The records without these scopes. Starts a {@link Query}; see
+   * {@link Query.unscope}.
+   */
   static unscope(...scopes: Array<string>): Query<Array<Model>> {
     return new Query(this).unscope(...scopes);
   }
 
   /**
-   * Check if a model has a scope.
-   *
-   * @param {String} name - The name of the scope to look for.
-   * @return {Boolean}
-   * @public
+   * Whether the model declares the scope `name` in {@link Model.scopes}.
    */
   static hasScope(name: string): boolean {
     return Boolean(this.scopes[name]);
   }
 
   /**
-   * Check if a value is an instance of a model.
-   *
-   * @param {any} value - The value in question.
-   * @return {Boolean}
-   * @public
+   * Whether `value` is a record of this model.
    */
   static isInstance(value: unknown): boolean {
     return value instanceof this;
@@ -1440,12 +1040,12 @@ class Model {
    * Bind the model's connection to the database and get inferred data from the
    * schema upon application boot.
    *
-   * @param {Database} store - A reference of the applications database
+   * @param store - A reference of the applications database
    * instance.
-   * @param {Table} table - A function that returns a knex query builder bound
+   * @param table - A function that returns a knex query builder bound
    * to the model's table name.
-   * @return {Promise} Resolves with the model class.
-   * @private
+   * @returns Resolves with the model class.
+   * @internal
    */
   static initialize(
     store: Database,
@@ -1481,34 +1081,19 @@ class Model {
     });
   }
 
-  /**
-   * @param {String} key - The respective attribute name of the column.
-   * @return {void | Object} An object containing metadata about the column if a
-   * match is found.
-   * @private
-   */
+  /** @internal */
   static columnFor(key: string): Database$column | undefined {
     return this.attributes[key] as Database$column | undefined;
   }
 
-  /**
-   * @param {String} key - The respective attribute name of the column.
-   * @return {void | String} The name of the column in the database if a match
-   * is found.
-   * @private
-   */
+  /** @internal */
   static columnNameFor(key: string): string | undefined {
     const column = this.columnFor(key);
 
     return column ? column.columnName : undefined;
   }
 
-  /**
-   * @param {String} key - The name of the relationship to match against.
-   * @return {void | Object} An object containing relationship metadata if a
-   * match is found.
-   * @private
-   */
+  /** @internal */
   static relationshipFor(key: string): RelationshipOptions | undefined {
     // Own keys only: `relationships` is a plain object, so `constructor` or
     // `toString` would otherwise come back as a "relationship".

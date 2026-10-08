@@ -20,7 +20,7 @@ import { runQuery, createRunner } from './runner';
  * Every condition the query builder can push belongs here: dropping one makes
  * the count (and so the index action's page links) disagree with the rows.
  *
- * @private
+ * @internal
  */
 const CONDITIONS = new Set([
   'where',
@@ -38,7 +38,7 @@ const CONDITIONS = new Set([
  * A knex query builder (e.g. `Model.table().select('user_id')`), used as a
  * subquery.
  *
- * @private
+ * @internal
  */
 function isSubquery(value: unknown): boolean {
   return (
@@ -50,32 +50,41 @@ function isSubquery(value: unknown): boolean {
 
 /**
  * A lazily built database query. `Model.all()`, `Model.where()`,
- * `Model.find()` and friends return one; chain more conditions onto it and
- * `await` it (it is a `Promise`) to run it.
+ * `Model.find()` and the other static query methods start one; chain more
+ * methods, and the model's scopes, onto it, and `await` it to run it:
  *
  * ```javascript
- * const posts = await Post.where({ isPublic: true }).order('createdAt', 'DESC').page(1);
+ * const posts = await Post.where({ isPublic: true })
+ *   .order('createdAt', 'DESC')
+ *   .include('user')
+ *   .page(2);
  * ```
  *
- * Controller actions may return a `Query` unresolved; the framework runs it
- * and serializes the result.
+ * A query resolves with an array of records, or with one record after
+ * {@link Query.find}, {@link Query.first} or {@link Query.last}, or with a
+ * number after {@link Query.count}. A controller action may return a query
+ * without awaiting it; Lumen runs it and serializes the result.
  */
 class Query<T = any> extends Promise<T> {
+  /** @internal */
   declare model: ModelClass;
 
+  /** @internal */
   declare isFind: boolean;
 
+  /** @internal */
   declare snapshots: Array<Array<any>>;
 
+  /** @internal */
   declare collection: boolean;
 
+  /** @internal */
   declare shouldCount: boolean;
 
+  /** @internal */
   declare relationships: Record<string, any>;
 
-  /**
-   * The transaction the query runs in, if any (see `transacting`).
-   */
+  /** @internal */
   declare trx: unknown;
 
   constructor(model: ModelClass) {
@@ -166,14 +175,36 @@ class Query<T = any> extends Promise<T> {
     return this;
   }
 
+  /**
+   * Every record: adds no condition. `Model.all()` reads better than a bare
+   * query.
+   */
   all(): this {
     return this;
   }
 
+  /**
+   * The records that do *not* match `conditions`; the opposite of
+   * {@link Query.where}, with the same conditions.
+   *
+   * ```javascript
+   * await User.not({ name: 'Bob' });
+   * await User.not({ deletedAt: null }); // deleted_at IS NOT NULL
+   * ```
+   */
   not(conditions: Record<string, any> = {}): this {
     return this.where(conditions, true);
   }
 
+  /**
+   * The record with primary key `primaryKey`. The query resolves with the
+   * record, or rejects with a `RecordNotFoundError` — a `404` through the API —
+   * if there is none.
+   *
+   * ```javascript
+   * const post = await Post.find(1);
+   * ```
+   */
   find(primaryKey: any): this {
     Object.assign(this, {
       isFind: true,
@@ -191,6 +222,14 @@ class Query<T = any> extends Promise<T> {
     return this;
   }
 
+  /**
+   * Page `num` of the records, counting from 1. The page size is the query's
+   * {@link Query.limit}, or 25.
+   *
+   * ```javascript
+   * await Post.order('createdAt', 'DESC').limit(10).page(2); // records 11–20
+   * ```
+   */
   page(num?: number): this {
     if (this.shouldCount) {
       return this;
@@ -211,6 +250,9 @@ class Query<T = any> extends Promise<T> {
     return this.offset(Math.max(parseInt(String(num), 10) - 1, 0) * limit);
   }
 
+  /**
+   * At most `amount` records.
+   */
   limit(amount?: number): this {
     if (!this.shouldCount) {
       this.snapshots.push(['limit', amount]);
@@ -219,6 +261,15 @@ class Query<T = any> extends Promise<T> {
     return this;
   }
 
+  /**
+   * Sort by the attribute `attr`, `'ASC'` (the default) or `'DESC'`. Ties are
+   * broken by the primary key, so pages are stable. A later `order` replaces an
+   * earlier one; an attribute the model doesn't have is ignored.
+   *
+   * ```javascript
+   * await Post.order('createdAt', 'DESC');
+   * ```
+   */
   order(attr: string, direction: string = 'ASC'): this {
     if (!this.shouldCount) {
       const columnName = this.model.columnNameFor(attr);
@@ -240,6 +291,21 @@ class Query<T = any> extends Promise<T> {
     return this;
   }
 
+  /**
+   * The records matching every condition in `conditions`, an object of
+   * attribute names (camelCase, as on records) and values:
+   *
+   * ```javascript
+   * await Post.where({ userId: 1, isPublic: true });
+   * await Post.where({ id: [1, 2, 3] });   // any of: id IN (1, 2, 3)
+   * await Post.where({ publishedAt: null }); // published_at IS NULL
+   * ```
+   *
+   * Names that aren't attributes of the model are ignored. Calls chain as
+   * `AND`.
+   *
+   * @param not - Used by {@link Query.not}.
+   */
   where(conditions: Record<string, any> = {}, not: boolean = false): this {
     const {
       model: { tableName }
@@ -291,6 +357,15 @@ class Query<T = any> extends Promise<T> {
     return this;
   }
 
+  /**
+   * The records whose attributes lie within ranges, inclusive:
+   *
+   * ```javascript
+   * await Post.whereBetween({ createdAt: [lastWeek, now] });
+   * ```
+   *
+   * @param not - `true` for the records *outside* the ranges.
+   */
   whereBetween(conditions: Record<string, any>, not: boolean = false): this {
     const {
       model: { tableName }
@@ -316,11 +391,26 @@ class Query<T = any> extends Promise<T> {
     return this;
   }
 
+  /**
+   * The records matching a raw SQL condition, with `?` placeholders for
+   * `bindings`. Columns are snake_case here, as in the database:
+   *
+   * ```javascript
+   * await Post.whereRaw('lower(title) LIKE ?', ['%lumen%']);
+   * ```
+   *
+   * Never build `query` from user input; pass values as `bindings`.
+   */
   whereRaw(query: string, bindings: Array<any> = []): this {
     this.snapshots.push(['whereRaw', [query, bindings]]);
     return this;
   }
 
+  /**
+   * Only the first record — by primary key, or by the query's
+   * {@link Query.order} — instead of an array. Resolves with `undefined` when
+   * nothing matches.
+   */
   first(): this {
     if (!this.shouldCount) {
       const willSort = this.snapshots.some(
@@ -339,6 +429,11 @@ class Query<T = any> extends Promise<T> {
     return this;
   }
 
+  /**
+   * Only the last record — by primary key, or by the query's
+   * {@link Query.order} — instead of an array. Resolves with `undefined` when
+   * nothing matches.
+   */
   last(): this {
     if (!this.shouldCount) {
       const willSort = this.snapshots.some(
@@ -357,6 +452,14 @@ class Query<T = any> extends Promise<T> {
     return this;
   }
 
+  /**
+   * The number of matching records, instead of the records. Only the query's
+   * conditions count; `limit`, `page`, `order` and `include` are ignored.
+   *
+   * ```javascript
+   * const total = await Post.where({ isPublic: true }).count();
+   * ```
+   */
   count(): Query<number> {
     Object.assign(this, {
       shouldCount: true,
@@ -370,6 +473,9 @@ class Query<T = any> extends Promise<T> {
     return this as unknown as Query<number>;
   }
 
+  /**
+   * Skip the first `amount` records.
+   */
   offset(amount: number): this {
     if (!this.shouldCount) {
       this.snapshots.push(['offset', amount]);
@@ -378,6 +484,14 @@ class Query<T = any> extends Promise<T> {
     return this;
   }
 
+  /**
+   * Load only these attributes. Include the primary key when you will use
+   * the records for more than reading these values.
+   *
+   * ```javascript
+   * await User.select('id', 'name');
+   * ```
+   */
   select(...attrs: Array<string>): this {
     if (!this.shouldCount) {
       this.snapshots.push(['select', formatSelect(this.model, attrs)]);
@@ -386,6 +500,9 @@ class Query<T = any> extends Promise<T> {
     return this;
   }
 
+  /**
+   * Only unique combinations of these attributes.
+   */
   distinct(...attrs: Array<string>): this {
     if (!this.shouldCount) {
       this.snapshots.push(['distinct', formatSelect(this.model, attrs)]);
@@ -394,6 +511,17 @@ class Query<T = any> extends Promise<T> {
     return this.select();
   }
 
+  /**
+   * Load these relationships with the records, so reading them doesn't cost
+   * a query per record:
+   *
+   * ```javascript
+   * const posts = await Post.where({ isPublic: true }).include('user', 'tags');
+   * ```
+   *
+   * Pass an object to load only some attributes of each:
+   * `include({ user: ['name'] })`.
+   */
   include(...relationships: Array<Record<string, any> | string>): this {
     let included: Array<any>;
 
@@ -497,6 +625,14 @@ class Query<T = any> extends Promise<T> {
     return this;
   }
 
+  /**
+   * Remove scopes from the query — by name, or every scope when called
+   * without arguments. `'order'` removes the sort order.
+   *
+   * ```javascript
+   * await Post.isPublic().unscope('isPublic');
+   * ```
+   */
   unscope(...scopes: Array<string>): this {
     if (scopes.length) {
       const keys = scopes.map(scope => {
@@ -536,6 +672,7 @@ class Query<T = any> extends Promise<T> {
     return super.catch(onRejected);
   }
 
+  /** @internal */
   static from(src: any): Query<unknown> {
     const { model, snapshots, collection, shouldCount, relationships, trx } =
       src;

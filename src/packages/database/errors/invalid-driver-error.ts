@@ -2,9 +2,7 @@ import chalk from '../../../utils/chalk';
 import { VALID_DRIVERS } from '../constants';
 import { line } from '../../logger';
 
-/**
- * @private
- */
+/** @internal */
 class InvalidDriverError extends Error {
   constructor(driver: string) {
     super(line`
