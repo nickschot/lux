@@ -15,7 +15,7 @@ type Controller$query = {
  * loaded by it: resource linkage and included resources are batch-loaded by
  * the Serializer.
  *
- * @private
+ * @internal
  */
 export default function paramsToQuery(
   model: ModelClass,

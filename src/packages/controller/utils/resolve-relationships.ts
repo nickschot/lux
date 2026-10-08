@@ -1,9 +1,7 @@
 import entries from '../../../utils/entries';
 import type { Model, ModelClass } from '../../database';
 
-/**
- * @private
- */
+/** @internal */
 export default function resolveRelationships<T extends Model>(
   model: ModelClass<T>,
   relationships: Record<string, unknown> = {}

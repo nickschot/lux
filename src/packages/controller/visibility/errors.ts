@@ -5,7 +5,7 @@ import type { ModelClass } from '../../database';
  * on a controller other than a namespace's `ApplicationController`, rules for
  * an unknown type, or a rule that is not a function.
  *
- * @private
+ * @internal
  */
 export class VisibilityConfigError extends TypeError {
   constructor(problems: Array<string>) {
@@ -23,7 +23,7 @@ export class VisibilityConfigError extends TypeError {
  * than narrow its query with conditions. A programming error, so it surfaces
  * as a `500`.
  *
- * @private
+ * @internal
  */
 export class VisibilityRuleError extends TypeError {
   constructor({ resourceName }: ModelClass, problem: string) {

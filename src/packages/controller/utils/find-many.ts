@@ -4,9 +4,7 @@ import type { Request } from '../../server';
 
 import paramsToQuery from './params-to-query';
 
-/**
- * @private
- */
+/** @internal */
 export default function findMany<T extends Model>(
   model: ModelClass<T>,
   req: Request
