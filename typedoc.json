@@ -27,9 +27,7 @@
     "Database",
     "Database$column",
     "Request$url",
-    "Response$stat",
-    "Route",
-    "Router"
+    "Route"
   ],
   "validation": {
     "notExported": true,

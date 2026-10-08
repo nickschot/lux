@@ -9,7 +9,7 @@ import filterParams from './filter-params';
  * params live. Query params cannot share these names: the spec reserves
  * all-lowercase names for its own parameters, none of which are these.
  *
- * @private
+ * @internal
  */
 const DOCUMENT_MEMBERS = [
   'data',
@@ -24,7 +24,7 @@ const DOCUMENT_MEMBERS = [
  * The params a request is logged with: filtered, and without the body unless
  * the logger's `requestBody` is on.
  *
- * @private
+ * @internal
  */
 export default function paramsFor(
   logger: Logger,

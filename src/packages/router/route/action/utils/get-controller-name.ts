@@ -1,8 +1,6 @@
 import type { Request } from '../../../../server';
 
-/**
- * @private
- */
+/** @internal */
 export default function getControllerName({
   route: {
     controller: {

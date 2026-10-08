@@ -50,7 +50,7 @@ function applicationFor(
  * whole namespace, since types are included across controllers), rules for a
  * type that has no model, and rules that are not functions.
  *
- * @private
+ * @internal
  */
 export default function resolveVisibility(
   controllers: Bundle$Namespace<Controller> | Map<string, Controller>,

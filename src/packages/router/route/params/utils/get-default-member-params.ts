@@ -4,7 +4,7 @@ import type Controller from '../../../../controller';
  * Without a fieldset, primary data loads every attribute its Serializer
  * declares. Other types need no default: an absent fieldset means all fields.
  *
- * @private
+ * @internal
  */
 export default function getDefaultMemberParams({
   model,

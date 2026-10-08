@@ -1,9 +1,7 @@
 import freeze from '../utils/freeze';
 import isFrozen from '../utils/is-frozen';
 
-/**
- * @private
- */
+/** @internal */
 class FreezeableMap<K, V> extends Map<K, V> {
   override set(key: K, value: V): this {
     if (!this.isFrozen()) {

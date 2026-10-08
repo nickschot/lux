@@ -1,6 +1,4 @@
-/**
- * @private
- */
+/** @internal */
 class InvalidConfigError extends Error {
   constructor(key: string, value: unknown, allowed: Iterable<string>) {
     super(

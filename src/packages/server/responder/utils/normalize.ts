@@ -4,9 +4,7 @@ import statusForError from '../../utils/status-for-error';
 
 import dataFor from './data-for';
 
-/**
- * @private
- */
+/** @internal */
 export default function normalize(data?: unknown) {
   let normalized;
   let statusCode;

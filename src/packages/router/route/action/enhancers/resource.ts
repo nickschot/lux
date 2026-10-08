@@ -7,9 +7,7 @@ import type { Serializer$fields } from '../../../../serializer/interfaces';
 import createPageLinks from '../utils/create-page-links';
 import type { Action } from '../interfaces';
 
-/**
- * @private
- */
+/** @internal */
 export default function resource(action: Action<unknown>): Action<unknown> {
   const resourceAction = async function (req: Request, res: Response) {
     const {

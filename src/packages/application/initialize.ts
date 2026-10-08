@@ -21,9 +21,7 @@ import type { Model, ModelClass } from '../database';
 import type Application from './index';
 import type { ApplicationOptions } from './index';
 
-/**
- * @private
- */
+/** @internal */
 export default async function initialize<T extends Application>(
   app: T,
   { path, port, logging, database, server: serverConfig }: ApplicationOptions

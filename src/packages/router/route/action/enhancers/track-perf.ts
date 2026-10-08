@@ -4,9 +4,7 @@ import getControllerName from '../utils/get-controller-name';
 import type { Request, Response } from '../../../../server';
 import type { Action } from '../interfaces';
 
-/**
- * @private
- */
+/** @internal */
 export default function trackPerf<T, U extends Action<T>>(
   action: U
 ): Action<T> {

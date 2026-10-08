@@ -5,7 +5,7 @@ import type ParameterGroup from '../index';
 /**
  * An error for each required member of `group` that `params` lacks.
  *
- * @private
+ * @internal
  */
 export default function missingParams(
   group: ParameterGroup,

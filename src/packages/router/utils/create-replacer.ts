@@ -11,16 +11,12 @@ export type Replacer = (pathname: string) => {
 
 const INTEGER = /^\d+$/;
 
-/**
- * @private
- */
+/** @internal */
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/**
- * @private
- */
+/** @internal */
 function decode(value: string): string {
   try {
     return decodeURIComponent(value);
@@ -32,7 +28,7 @@ function decode(value: string): string {
 /**
  * The resource name a controller's member routes are addressed by.
  *
- * @private
+ * @internal
  */
 function nameFor(controller: Controller): string {
   const { model, namespace } = controller;
@@ -55,7 +51,7 @@ function nameFor(controller: Controller): string {
  * a resource name. An id must be an integer unless the resource's primary key
  * is not numeric (e.g. a uuid), in which case any segment is one.
  *
- * @private
+ * @internal
  */
 export default function createReplacer(
   controllers: Map<string, Controller>

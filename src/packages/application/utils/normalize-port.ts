@@ -1,6 +1,4 @@
-/**
- * @private
- */
+/** @internal */
 export default function normalizePort(port?: string | number): number {
   switch (typeof port) {
     case 'string':

@@ -1,9 +1,7 @@
 import { ResourceMismatchError } from '../errors';
 import type { Request } from '../../../../server';
 
-/**
- * @private
- */
+/** @internal */
 export default function validateResourceId({
   params: {
     id,

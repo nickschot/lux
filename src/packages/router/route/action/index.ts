@@ -10,7 +10,7 @@ import type { Action } from './interfaces';
  * serves the related type, so `related`'s `beforeAction` hooks run too, after
  * the owner's, each hook once (both usually inherit the same ones).
  *
- * @private
+ * @internal
  */
 export function createAction(
   type: string,

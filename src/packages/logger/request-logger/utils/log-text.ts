@@ -6,9 +6,7 @@ import type { Request, Response } from '../../../server';
 
 import paramsFor from './params-for';
 
-/**
- * @private
- */
+/** @internal */
 export default function logText(
   logger: Logger,
   {

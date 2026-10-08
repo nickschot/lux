@@ -3,9 +3,7 @@ import sourceFor from '../../../../server/utils/source-for';
 import type { Server$ErrorSource } from '../../../../server';
 import type { ParameterLike } from '../index';
 
-/**
- * @private
- */
+/** @internal */
 class ParameterNotNullableError extends TypeError {
   declare source: Server$ErrorSource;
 

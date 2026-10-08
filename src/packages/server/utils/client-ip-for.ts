@@ -6,7 +6,7 @@ import type { Request } from '../request/interfaces';
  * came from the client and could be forged. Otherwise it is the connection's
  * own address.
  *
- * @private
+ * @internal
  */
 export default function clientIpFor(
   { headers, socket }: Request,

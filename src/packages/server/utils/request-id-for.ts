@@ -7,7 +7,7 @@ import type { Request } from '../request/interfaces';
  * else — too long, or with characters that could forge log lines — is
  * replaced rather than written to the logs.
  *
- * @private
+ * @internal
  */
 const REQUEST_ID = /^[\w.:-]{1,128}$/;
 
@@ -16,7 +16,7 @@ const REQUEST_ID = /^[\w.:-]{1,128}$/;
  * own `X-Request-Id` when it is well-formed, so a request can be traced
  * across services, otherwise a fresh UUID.
  *
- * @private
+ * @internal
  */
 export default function requestIdFor({ headers }: Request): string {
   const id = headers.get('x-request-id');

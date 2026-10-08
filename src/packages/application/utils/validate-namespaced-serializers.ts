@@ -22,7 +22,7 @@ const distance = (via: string): number => {
  * Serializer in exactly that namespace. Throws listing every gap, so a missing
  * serializer fails the boot instead of silently falling back to the root one.
  *
- * @private
+ * @internal
  */
 export default function validateNamespacedSerializers(
   controllers: Bundle$Namespace<Controller> | Map<string, Controller>,

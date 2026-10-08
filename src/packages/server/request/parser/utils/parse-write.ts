@@ -5,9 +5,7 @@ import type { Request } from '../../interfaces';
 
 import normalizeDocument from './normalize-document';
 
-/**
- * @private
- */
+/** @internal */
 export default function parseWrite(
   req: Request
 ): Promise<Record<string, unknown>> {

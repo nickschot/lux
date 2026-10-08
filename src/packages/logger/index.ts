@@ -16,111 +16,40 @@ import type {
 } from './interfaces';
 
 /**
- * @class Logger
- * @public
+ * The application's logger, configured by the `logging` section of
+ * `config/environments/<environment>.js` ({@link LoggerConfig}). Actions and
+ * hooks reach it as `request.logger`, models as `Model.logger`.
+ *
+ * It logs every request, server errors, and — with the database's `debug` on —
+ * SQL, and has a method per level for the app's own messages. See the
+ * [logging guide](https://github.com/nickschot/lux/blob/main/docs/guides/logging.md).
  */
 class Logger {
-  /**
-   * The level your application should log (DEBUG, INFO, WARN, or ERROR).
-   *
-   * @property level
-   * @type {String}
-   * @public
-   */
+  /** The least severe level written: `DEBUG`, `INFO`, `WARN` or `ERROR`. */
   declare level: LogLevel;
 
-  /**
-   * The output format of log data (text or json).
-   *
-   * @property format
-   * @type {String}
-   * @public
-   */
+  /** `text`, lines for people, or `json`, one object per line. */
   declare format: LogFormat;
 
   /**
-   * Hackers love logs. It's easy to get sensitive user information from log
-   * data if your server has been breached. To prevent leaking sensitive
-   * information in a potential attack, blacklist certain keys that should be
-   * filtered out of the logs.
-   *
-   * Params whose name contains `password`, `secret` or `token` are always
-   * filtered; the names listed here are added to those. A param is filtered
-   * when its name contains a listed name, ignoring case, at any depth —
-   * including inside arrays.
+   * Parameters to keep out of the logs. A parameter whose name contains
+   * `password`, `secret` or `token`, or a name listed in `filter.params`,
+   * ignoring case, is logged as `[FILTERED]` — in the body, the query string
+   * and inside arrays:
    *
    * ```javascript
-   * // config/environments/development.js
+   * // config/environments/production.js
    * export default {
    *   logging: {
-   *     level: 'DEBUG',
-   *     format: 'text',
-   *     enabled: true,
-   *     filter: {
-   *       params: ['password']
-   *     }
+   *     // …
+   *     filter: { params: ['email'] } // also filters `recoveryEmail`
    *   }
    * };
    * ```
-   *
-   * Now that we've added password to the array of parameters we want to filter
-   * out of the logs, let's try to create a new user.
-   *
-   * ```http
-   * POST /users HTTP/1.1
-   * Content-Type: application/vnd.api+json
-   * Host: 127.0.0.1:4000
-   * Connection: close
-   * User-Agent: Paw/3.0.14 (Macintosh; OS X/10.12.1) GCDHTTPRequest
-   * Content-Length: 188
-   *
-   * {
-   *   "data": {
-   *   "type": "users",
-   *     "attributes": {
-   *       "name": "Zachary Golba",
-   *       "email": "zachary.golba@postlight.com",
-   *       "password": "vcZxniFYyfnFDcLn%nhe8Vrt"
-   *     }
-   *   }
-   * }
-   * ```
-   *
-   * The request above will yield the following log message.
-   *
-   * ```text
-   * [2016-12-10T18:28:04.610Z] Processed POST "/users" from ::ffff:127.0.0.1
-   * with 201 Created by UsersController#create
-   *
-   * Params
-   *
-   * {
-   *   "data": {
-   *     "type": "users",
-   *     "attributes": {
-   *       "name": "Zachary Golba",
-   *       "email": "zachary.golba@postlight.com",
-   *       "password": "[FILTERED]"
-   *     }
-   *   }
-   * }
-   * ```
-   *
-   * It worked! The password value did not leak into the log message.
-   *
-   * @property filter
-   * @type {Object}
-   * @public
    */
   declare filter: LogFilter;
 
-  /**
-   * A boolean flag that determines whether or not the logger is enabled.
-   *
-   * @property enabled
-   * @type {Boolean}
-   * @public
-   */
+  /** Whether anything is logged; off in the test environment. */
   declare enabled: boolean;
 
   /**
@@ -128,10 +57,6 @@ class Logger {
    * of a `POST` or `PATCH`. Off unless enabled, and off by default in
    * production: a body is large and full of user data. Query and route params
    * are always logged (filtered).
-   *
-   * @property requestBody
-   * @type {Boolean}
-   * @public
    */
   declare requestBody: boolean;
 
@@ -139,80 +64,58 @@ class Logger {
    * Whether the text format stamps each line with the time. Turn it off where
    * the platform already does — Heroku prefixes every line with its own — to
    * avoid two timestamps per line. The JSON format always includes it.
-   *
-   * @property timestamps
-   * @type {Boolean}
-   * @public
    */
   declare timestamps: boolean;
 
   /**
-   * Log a message at the DEBUG level.
+   * Log a message at `DEBUG`.
+   *
+   * `context` adds fields to the line: top-level fields in JSON, left out of
+   * text. Pass the request's id to tie the message to its request:
    *
    * ```javascript
-   * logger.debug('Hello World!');
-   * // => [6/4/16 5:46:53 PM] Hello World!
+   * request.logger.debug('Cache miss', { requestId: request.id });
    * ```
-   *
-   * @param {any} data - The data you wish to log.
-   * @return {void}
-   * @public
    */
   declare debug: LogFunction;
 
   /**
-   * Log a message at the INFO level.
+   * Log a message at `INFO`.
+   *
+   * `context` adds fields to the line: top-level fields in JSON, left out of
+   * text. Pass the request's id to tie the message to its request:
    *
    * ```javascript
-   * logger.info('Hello World!');
-   * // => [6/4/16 5:46:53 PM] Hello World!
+   * request.logger.info('Synced posts', { requestId: request.id });
    * ```
-   *
-   * @param {any} data - The data you wish to log.
-   * @return {void}
-   * @public
    */
   declare info: LogFunction;
 
   /**
-   * Log a message at the WARN level.
+   * Log a message at `WARN`.
+   *
+   * `context` adds fields to the line: top-level fields in JSON, left out of
+   * text. Pass the request's id to tie the message to its request:
    *
    * ```javascript
-   * logger.warn('Good Bye World!');
-   * // => [6/4/16 5:46:53 PM] Good Bye World!
+   * request.logger.warn('Slow upstream', { requestId: request.id });
    * ```
-   *
-   * @param {any} data - The data you wish to log.
-   * @return {void}
-   * @public
    */
   declare warn: LogFunction;
 
   /**
-   * Log a message at the ERROR level.
+   * Log a message, or an error with its stack, at `ERROR`.
+   *
+   * `context` adds fields to the line: top-level fields in JSON, left out of
+   * text. Pass the request's id to tie the message to its request:
    *
    * ```javascript
-   * logger.warn('HELP!');
-   * // => [6/4/16 5:46:53 PM] HELP!
+   * request.logger.error('Sync failed', { requestId: request.id });
    * ```
-   *
-   * @param {any} data - The data you wish to log.
-   * @return {void}
-   * @public
    */
   declare error: LogFunction;
 
-  /**
-   * Internal method used for logging requests.
-   *
-   * @param {Request} request
-   * @param {Response} response
-   * @param {Object} opts - An options object.
-   * @param {Number} opts.startTime - The timestamp from when the request was
-   * received.
-   * @return {void}
-   * @private
-   */
+  /** @internal */
   declare request: Logger$RequestLogger;
 
   constructor({
@@ -319,8 +222,8 @@ class Logger {
   }
 
   /**
-   * @return {String} The current time as an ISO8601 string.
-   * @private
+   * @returns The current time as an ISO8601 string.
+   * @internal
    */
   getTimestamp() {
     return new Date().toISOString();

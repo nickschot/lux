@@ -15,15 +15,13 @@ import { camelizeKeys } from '../../../../../utils/transform-keys';
  * A member name as the client writes it (`created-at`) in its internal form
  * (`createdAt`).
  *
- * @private
+ * @internal
  */
 function memberName(name: string): string {
   return camelize(underscore(name), true);
 }
 
-/**
- * @private
- */
+/** @internal */
 function makeArray(source: string | Array<string>): Array<string> {
   if (!Array.isArray(source)) {
     return source.includes(',') ? source.split(',') : [source];
@@ -32,9 +30,7 @@ function makeArray(source: string | Array<string>): Array<string> {
   return source;
 }
 
-/**
- * @private
- */
+/** @internal */
 function formatScalar(source: unknown): unknown {
   if (typeof source !== 'string') {
     return source;
@@ -56,7 +52,7 @@ function formatScalar(source: unknown): unknown {
  * (`filter[id]=1,2` matches either). Values are data: unlike member names,
  * they are never camelized.
  *
- * @private
+ * @internal
  */
 function formatValue(source: string): unknown {
   if (source.includes(',')) {
@@ -66,9 +62,7 @@ function formatValue(source: string): unknown {
   return formatScalar(source);
 }
 
-/**
- * @private
- */
+/** @internal */
 export function formatSort(sort: string): string {
   if (sort.startsWith('-')) {
     return `-${memberName(sort.substr(1))}`;
@@ -77,9 +71,7 @@ export function formatSort(sort: string): string {
   return memberName(sort);
 }
 
-/**
- * @private
- */
+/** @internal */
 export function formatFields(
   fields: Record<string, unknown>
 ): Record<string, Array<string>> {
@@ -101,7 +93,7 @@ export function formatFields(
  * Relationship paths, with each member name camelized
  * (`comments.blog-author` -> `comments.blogAuthor`).
  *
- * @private
+ * @internal
  */
 export function formatInclude(include: string | Array<string>): Array<string> {
   return makeArray(include).map(path =>
@@ -114,7 +106,7 @@ export function formatInclude(include: string | Array<string>): Array<string> {
  * `filter[is-public]`), values are coerced (`123`, `true`, `null`, ISO dates)
  * and split on commas, but otherwise left as written.
  *
- * @private
+ * @internal
  */
 export default function format(
   params: Record<string, unknown>

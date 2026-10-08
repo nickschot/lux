@@ -5,7 +5,7 @@ import { DYNAMIC_PATTERN } from '../constants';
  * `:dynamic`, the form `Router#resolve()` turns request paths into. Only whole
  * segments are replaced — `/videos/:id` is `/videos/:dynamic`.
  *
- * @private
+ * @internal
  */
 export default function getStaticPath(path: string): string {
   return path.replace(DYNAMIC_PATTERN, ':dynamic');

@@ -1,9 +1,7 @@
 import isObject from '../../../../../utils/is-object';
 import { camelizeKeys } from '../../../../../utils/transform-keys';
 
-/**
- * @private
- */
+/** @internal */
 function normalizeResource(
   resource: Record<string, unknown>
 ): Record<string, unknown> {
@@ -28,7 +26,7 @@ function normalizeResource(
  * Anything that is not a resource document is passed through for parameter
  * validation to reject.
  *
- * @private
+ * @internal
  */
 export default function normalizeDocument(document: unknown): unknown {
   if (isObject(document) && isObject(document.data)) {

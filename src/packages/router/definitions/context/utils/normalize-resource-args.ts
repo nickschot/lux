@@ -8,9 +8,7 @@ import {
   type Controller$builtIn
 } from '../../../../controller';
 
-/**
- * @private
- */
+/** @internal */
 export default function normalizeResourceArgs(args: Array<any>): [
   {
     name: string;

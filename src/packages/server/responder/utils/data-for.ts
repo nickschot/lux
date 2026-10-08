@@ -9,7 +9,7 @@ const PUBLIC = /^\[public\]\s*/i;
 /**
  * The error object for `err`, answered with `status`.
  *
- * @private
+ * @internal
  */
 function errorObjectFor(
   status: number,
@@ -56,9 +56,7 @@ function errorObjectFor(
   return errData;
 }
 
-/**
- * @private
- */
+/** @internal */
 export default function dataFor(
   status: number,
   err?: Error

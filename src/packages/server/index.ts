@@ -22,9 +22,7 @@ import type { Request } from './request/interfaces';
 import type { Response } from './response/interfaces';
 import type { Server$opts, CorsConfig } from './interfaces';
 
-/**
- * @private
- */
+/** @internal */
 class Server {
   declare logger: Logger;
 

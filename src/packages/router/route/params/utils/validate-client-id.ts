@@ -5,7 +5,7 @@ import { ClientGeneratedIdError } from '../errors';
  * is answered with 403 (unsupported client-generated ID) rather than the 400
  * an unknown member gets.
  *
- * @private
+ * @internal
  */
 export default function validateClientId(params: Record<string, unknown>) {
   const { data } = params;

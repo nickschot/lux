@@ -7,7 +7,7 @@ import type { Server$ErrorSource } from '../../../../server';
  * unsupported request to update a resource or relationship." Used for members
  * the model knows about but the controller does not accept (`params`).
  *
- * @private
+ * @internal
  */
 class ForbiddenParameterError extends TypeError {
   declare source: Server$ErrorSource;

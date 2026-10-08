@@ -5,9 +5,7 @@ import paramsFor from './params-for';
 
 const MESSAGE = 'Processed Request';
 
-/**
- * @private
- */
+/** @internal */
 export default function logJSON(
   logger: Logger,
   {

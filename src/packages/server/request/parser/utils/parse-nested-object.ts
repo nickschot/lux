@@ -4,9 +4,7 @@ import entries from '../../../../../utils/entries';
 // `replace()` that follows every match, which resets it, kept that harmless.
 const DELIMITER = /^(.+)\[(.+)]$/;
 
-/**
- * @private
- */
+/** @internal */
 export default function parseNestedObject(
   source: Record<string, unknown>
 ): Record<string, unknown> {

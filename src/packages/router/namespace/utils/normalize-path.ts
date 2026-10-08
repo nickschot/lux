@@ -1,6 +1,4 @@
-/**
- * @private
- */
+/** @internal */
 export default function normalizePath(str: string): string {
   let path = str;
 

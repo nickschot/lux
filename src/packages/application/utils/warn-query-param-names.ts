@@ -11,7 +11,7 @@ const RESERVED_SHAPE = /^[a-z]+$/;
  * for itself (all lowercase a-z, e.g. `search`). They keep working; a
  * spec-aware client or a future version of the spec may not agree.
  *
- * @private
+ * @internal
  */
 export default function warnQueryParamNames(
   controllers: Map<string, Controller>,

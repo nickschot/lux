@@ -18,7 +18,7 @@ import type { Bundle$Namespace } from '../../loader';
  * resource without `show` (or without the relationship in its
  * `relationships`), or a custom route at that path.
  *
- * @private
+ * @internal
  */
 export default function validateLinksOnly(
   router: Router,

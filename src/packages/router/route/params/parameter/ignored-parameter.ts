@@ -7,7 +7,7 @@ import Parameter from './index';
  * serializes every attribute — keep working. A member the resource does not
  * have at all is still a 400. See nickschot/lux#47.
  *
- * @private
+ * @internal
  */
 class IgnoredParameter extends Parameter {
   constructor(path: string) {

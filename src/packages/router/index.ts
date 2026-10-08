@@ -15,7 +15,7 @@ import type { Router$opts } from './interfaces';
  * route `index` for a to-many relationship and `show` for a to-one. A type a
  * namespace does not list (or only lets clients `create`) stays unlisted.
  *
- * @private
+ * @internal
  */
 function dropUnservedRelated(router: Router): void {
   router.forEach((route, key) => {
@@ -38,9 +38,7 @@ function dropUnservedRelated(router: Router): void {
   });
 }
 
-/**
- * @private
- */
+/** @internal */
 class Router extends FreezeableMap<string, Route> {
   declare replacer: Replacer;
 

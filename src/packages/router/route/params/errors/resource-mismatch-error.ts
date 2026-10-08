@@ -3,9 +3,7 @@ import sourceFor from '../../../../server/utils/source-for';
 import { line } from '../../../../logger';
 import type { Server$ErrorSource } from '../../../../server';
 
-/**
- * @private
- */
+/** @internal */
 class ResourceMismatchError extends TypeError {
   declare source: Server$ErrorSource;
 

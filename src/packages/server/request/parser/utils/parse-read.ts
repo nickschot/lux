@@ -4,9 +4,7 @@ import type { Request } from '../../interfaces';
 import parseNestedObject from './parse-nested-object';
 import format, { formatSort, formatFields, formatInclude } from './format';
 
-/**
- * @private
- */
+/** @internal */
 export default function parseRead({
   url: { query }
 }: Request): Record<string, unknown> {

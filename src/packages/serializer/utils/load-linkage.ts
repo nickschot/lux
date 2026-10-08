@@ -9,7 +9,7 @@ import type { Model, ModelClass } from '../../database';
  * named relationship points to — an array for has-many, otherwise a single id
  * or `null`.
  *
- * @private
+ * @internal
  */
 export type Linkage = Record<string, Array<string> | string | null>;
 
@@ -31,7 +31,7 @@ const toId = (value: unknown): string | null =>
  * from foreign keys, not from the related table — is checked against it
  * afterwards (`dropHidden()`).
  *
- * @private
+ * @internal
  */
 export default async function loadLinkage(
   model: ModelClass,
@@ -182,7 +182,7 @@ export default async function loadLinkage(
  * drops the id — rather than link a resource that is not there. One query per
  * distinct related model.
  *
- * @private
+ * @internal
  */
 async function dropHidden(
   linkage: Map<string, Linkage>,

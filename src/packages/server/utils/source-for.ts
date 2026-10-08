@@ -7,7 +7,7 @@ import type { Server$ErrorSource } from '../interfaces';
  * Member names as the client sees them — responses dasherize, so pointers do
  * too (`isPublic` -> `is-public`). Escaped per RFC 6901 for use in a pointer.
  *
- * @private
+ * @internal
  */
 function memberName(key: string): string {
   return dasherize(underscore(key));
@@ -23,7 +23,7 @@ function escapePointer(segment: string): string {
  * (`data.attributes.isPublic` -> `/data/attributes/is-public`); anything else
  * is a query parameter (`page.size` -> `page[size]`).
  *
- * @private
+ * @internal
  */
 export default function sourceFor(path: string): Server$ErrorSource {
   const [root, ...rest] = path.split('.').filter(Boolean).map(memberName);

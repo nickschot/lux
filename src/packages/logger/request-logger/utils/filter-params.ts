@@ -4,7 +4,7 @@ import entries from '../../../../utils/entries';
  * Always filtered, on top of the app's `logging.filter.params`, so a missing
  * config never leaks credentials into the logs.
  *
- * @private
+ * @internal
  */
 export const FILTERED_PARAMS: readonly string[] = [
   'password',
@@ -18,7 +18,7 @@ const FILTERED = '[FILTERED]';
  * A key is filtered when it contains a filtered name, ignoring case — so
  * `password` also covers `passwordConfirmation` and `new-password`.
  *
- * @private
+ * @internal
  */
 function isFiltered(key: string, filtered: readonly string[]): boolean {
   const name = key.toLowerCase();
@@ -26,9 +26,7 @@ function isFiltered(key: string, filtered: readonly string[]): boolean {
   return filtered.some(item => name.includes(item.toLowerCase()));
 }
 
-/**
- * @private
- */
+/** @internal */
 function filterValue(value: unknown, filtered: readonly string[]): unknown {
   if (Array.isArray(value)) {
     return value.map(item => filterValue(item, filtered));
@@ -41,9 +39,7 @@ function filterValue(value: unknown, filtered: readonly string[]): unknown {
   return value;
 }
 
-/**
- * @private
- */
+/** @internal */
 function filterKeys(
   params: Record<string, unknown>,
   filtered: readonly string[]
@@ -60,9 +56,7 @@ function filterKeys(
   );
 }
 
-/**
- * @private
- */
+/** @internal */
 export default function filterParams(
   params: Record<string, unknown>,
   ...filtered: string[]

@@ -10,9 +10,7 @@ import type { ParameterLike } from '../interfaces';
 
 import { parseId, parserFor } from './parse-column-value';
 
-/**
- * @private
- */
+/** @internal */
 function primaryKeyTypeFor(model: ModelClass): string | undefined {
   const primaryKeyColumn = model.columnFor(model.primaryKey);
 
@@ -23,15 +21,13 @@ function primaryKeyTypeFor(model: ModelClass): string | undefined {
  * An optional object member the spec allows in a request document (`meta`,
  * `links`, `jsonapi`). It is accepted, not acted on.
  *
- * @private
+ * @internal
  */
 function getObjectParam(name: string, path: string): [string, ParameterLike] {
   return [name, new Parameter({ path, type: 'object' })];
 }
 
-/**
- * @private
- */
+/** @internal */
 function getIDParam({ model }: Controller): [string, ParameterLike] {
   const type = primaryKeyTypeFor(model);
 
@@ -46,9 +42,7 @@ function getIDParam({ model }: Controller): [string, ParameterLike] {
   ];
 }
 
-/**
- * @private
- */
+/** @internal */
 function getTypeParam({ model }: Controller): [string, ParameterLike] {
   return [
     'type',
@@ -66,7 +60,7 @@ function getTypeParam({ model }: Controller): [string, ParameterLike] {
  * ignored, or answered with 403 when `reject` is set. A name the model does
  * not have at all gets neither and is a 400. See nickschot/lux#47.
  *
- * @private
+ * @internal
  */
 function getUnlistedParams(
   names: Array<string>,
@@ -84,9 +78,7 @@ function getUnlistedParams(
     ]);
 }
 
-/**
- * @private
- */
+/** @internal */
 function getAttributesParam(
   { model, params, rejectUnlistedAttributes }: Controller,
   method: 'PATCH' | 'POST'
@@ -134,7 +126,7 @@ function getAttributesParam(
 /**
  * A resource identifier object (`{ id, type }`) of `model` at `path`.
  *
- * @private
+ * @internal
  */
 function getIdentifierParam(path: string, model: ModelClass): ParameterGroup {
   const type = primaryKeyTypeFor(model);
@@ -170,9 +162,7 @@ function getIdentifierParam(path: string, model: ModelClass): ParameterGroup {
   );
 }
 
-/**
- * @private
- */
+/** @internal */
 function getRelationshipsParam({
   model,
   params,
@@ -238,7 +228,7 @@ function getRelationshipsParam({
 /**
  * The top level members of a request document besides `data`.
  *
- * @private
+ * @internal
  */
 export function getDocumentParams(): Array<[string, ParameterLike]> {
   return [
@@ -248,9 +238,7 @@ export function getDocumentParams(): Array<[string, ParameterLike]> {
   ];
 }
 
-/**
- * @private
- */
+/** @internal */
 export default function getDataParams(
   controller: Controller,
   method: 'PATCH' | 'POST',
