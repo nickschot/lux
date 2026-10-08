@@ -1,22 +1,47 @@
 import { trapGet } from '../../../utils/proxy';
+import Query from '../query';
 import type { Model } from '../index';
 import type { ModelClass } from '../interfaces';
 
 import type { TransactionResult } from './interfaces';
 
 /**
+ * `target` with `create` writing in `trx`, and every static that starts a
+ * query (`find`, `where`, `first`, a scope, …) returning one that runs in it.
+ *
  * @private
  */
 export function createStaticTransactionProxy<T extends ModelClass>(
   target: T,
   trx: unknown
 ): T {
-  return new Proxy(target, {
-    get: trapGet({
-      create(model: T, props: Record<string, unknown> = {}) {
-        return model.create(props, trx);
+  const forward = trapGet<T>({
+    create(model: T, props: Record<string, unknown> = {}) {
+      return model.create(props, trx);
+    }
+  });
+
+  // The proxy's target is an empty object inheriting from the model, not the
+  // model: scopes are read-only, non-configurable statics, and a proxy may not
+  // report a different value for such a property of its own target.
+  return new Proxy(Object.create(target) as T, {
+    get(_, key, receiver) {
+      const model = target;
+      const value = forward(model, key as string, receiver);
+
+      if (key === 'create' || typeof value !== 'function') {
+        return value;
       }
-    })
+
+      return (...args: Array<unknown>) => {
+        const result = (value as (...a: Array<unknown>) => unknown).apply(
+          model,
+          args
+        );
+
+        return result instanceof Query ? result.transacting(trx) : result;
+      };
+    }
   });
 }
 

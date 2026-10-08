@@ -25,6 +25,7 @@ class Action extends Model {
 
     if (trackableType === 'Comment') {
       const trackable = await Comment
+        .transacting(trx)
         .first()
         .select('postId', 'userId')
         .where({ id: trackableId });
@@ -32,10 +33,12 @@ class Action extends Model {
       if (trackable) {
         const [user, post] = await Promise.all([
           User
+            .transacting(trx)
             .first()
             .select('name')
             .where({ id: trackable.userId }),
           Post
+            .transacting(trx)
             .first()
             .select('userId')
             .where({ id: trackable.postId })
@@ -56,6 +59,7 @@ class Action extends Model {
       let ReactableModel;
 
       const reaction = await Reaction
+        .transacting(trx)
         .first()
         .where({ id: trackableId });
 
@@ -72,10 +76,12 @@ class Action extends Model {
 
         const [user, reactable] = await Promise.all([
           User
+            .transacting(trx)
             .first()
             .select('name')
             .where({ id: reaction.userId }),
           ReactableModel
+            .transacting(trx)
             .first()
             .select('userId')
             .where({ id: reactableId })

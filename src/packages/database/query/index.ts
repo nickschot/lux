@@ -73,6 +73,11 @@ class Query<T = any> extends Promise<T> {
 
   declare relationships: Record<string, any>;
 
+  /**
+   * The transaction the query runs in, if any (see `transacting`).
+   */
+  declare trx: unknown;
+
   constructor(model: ModelClass) {
     let resolve;
     let reject;
@@ -121,6 +126,13 @@ class Query<T = any> extends Promise<T> {
         writable: true,
         enumerable: false,
         configurable: false
+      },
+
+      trx: {
+        value: null,
+        writable: true,
+        enumerable: false,
+        configurable: false
       }
     });
 
@@ -129,6 +141,29 @@ class Query<T = any> extends Promise<T> {
 
   static override get [Symbol.species]() {
     return Promise;
+  }
+
+  /**
+   * Run the query — and the queries that load its included relationships —
+   * in the transaction `trx`, so it sees the rows the transaction has written
+   * and does not wait for another connection while the transaction holds
+   * one. Model hooks receive the write's transaction for this:
+   *
+   * ```javascript
+   * static hooks = {
+   *   async afterCreate(comment, trx) {
+   *     const post = await Post.transacting(trx).find(comment.postId);
+   *     // …
+   *   }
+   * };
+   * ```
+   *
+   * `Model.transacting(trx)` starts a query that is already bound, as above;
+   * this method binds one built another way.
+   */
+  transacting(trx: unknown): this {
+    this.trx = trx;
+    return this;
   }
 
   all(): this {
@@ -502,7 +537,8 @@ class Query<T = any> extends Promise<T> {
   }
 
   static from(src: any): Query<unknown> {
-    const { model, snapshots, collection, shouldCount, relationships } = src;
+    const { model, snapshots, collection, shouldCount, relationships, trx } =
+      src;
 
     const dest = new this(model) as Query<unknown>;
 
@@ -510,7 +546,8 @@ class Query<T = any> extends Promise<T> {
       snapshots,
       collection,
       shouldCount,
-      relationships
+      relationships,
+      trx: trx ?? null
     });
 
     return dest;

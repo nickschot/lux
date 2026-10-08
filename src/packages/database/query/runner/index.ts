@@ -11,6 +11,16 @@ import getFindParam from './utils/get-find-param';
 import buildResults from './utils/build-results';
 
 /**
+ * The Knex builder a query's snapshots are applied to: the model's table, in
+ * the query's transaction when it has one.
+ */
+function base(model: Query<unknown>['model'], trx: unknown): any {
+  const table = model.table() as any;
+
+  return trx ? table.transacting(trx) : table;
+}
+
+/**
  * @private
  */
 export function createRunner(
@@ -49,28 +59,32 @@ export function createRunner(
         snapshots,
         collection,
         shouldCount,
-        relationships
+        relationships,
+        trx
       } = target;
 
       if (!shouldCount && !snapshots.some(([name]) => name === 'select')) {
         target.select(...target.model.attributeNames);
       }
 
-      const records: any = snapshots.reduce((query, snapshot) => {
-        let [name, params] = snapshot;
+      const records: any = snapshots.reduce(
+        (query, snapshot) => {
+          let [name, params] = snapshot;
 
-        if (!shouldCount && name === 'includeSelect') {
-          name = 'select';
-        }
+          if (!shouldCount && name === 'includeSelect') {
+            name = 'select';
+          }
 
-        const method = query[name];
+          const method = query[name];
 
-        if (!Array.isArray(params)) {
-          params = [params];
-        }
+          if (!Array.isArray(params)) {
+            params = [params];
+          }
 
-        return method.apply(query, params);
-      }, model.table() as any);
+          return method.apply(query, params);
+        },
+        base(model, trx)
+      );
 
       if (model.store.debug) {
         records.on('query', () => {
@@ -87,7 +101,8 @@ export function createRunner(
         results = await buildResults({
           model,
           records,
-          relationships
+          relationships,
+          trx
         });
 
         if (collection) {

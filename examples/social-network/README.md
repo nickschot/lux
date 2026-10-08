@@ -52,11 +52,3 @@ The API is on `http://localhost:4000` — try
 `pnpm run db:setup` resets, migrates and seeds the SQLite database with random
 data; run it again for a clean slate. `pnpm run smoke` boots the app and checks
 a set of representative requests — CI runs it on every change to the framework.
-
-## Things to know
-
-- **`pool: 5` in `config/database.js` is required.** Model hooks run inside the
-  write's transaction, but the reads in `Action#notifyOwner` cannot join it and
-  use a second connection. SQLite's default pool of one would deadlock.
-- For the same reason, those reads cannot see rows the transaction has not
-  committed yet, so notifications are not created while seeding.
