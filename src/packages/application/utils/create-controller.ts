@@ -5,6 +5,7 @@ import { closestAncestor } from '../../loader';
 import { tryCatchSync } from '../../../utils/try-catch';
 import type Database from '../../database';
 import type { Model, ModelClass } from '../../database';
+import { NAMESPACE_SETTINGS } from '../../controller';
 import type Controller from '../../controller';
 import type Serializer from '../../serializer';
 import type { Bundle$Namespace } from '../../loader';
@@ -55,16 +56,40 @@ export default function createController<T extends Controller>(
     }
   }
 
-  if (parent) {
-    instance.beforeAction = [
-      ...parent.beforeAction.map(fn => fn.bind(parent)),
-      ...instance.beforeAction.map(fn => fn.bind(instance))
-    ];
+  const ownBefore = instance.beforeAction.map(fn => fn.bind(instance));
+  const ownAfter = instance.afterAction.map(fn => fn.bind(instance));
 
-    instance.afterAction = [
-      ...instance.afterAction.map(fn => fn.bind(instance)),
-      ...parent.afterAction.map(fn => fn.bind(parent))
-    ];
+  // A namespace's `ApplicationController` that extends its parent namespace's
+  // (`AdminApplicationController extends ApplicationController`, to build on
+  // `super.visibility`) already has the parent's hooks, as the class fields it
+  // inherits — adding them again would run each one twice. Its own arrays are
+  // the namespace's hooks, as with any subclass.
+  const inheritsHooks =
+    parent !== null &&
+    posix.basename(key) === 'application' &&
+    instance instanceof parent.constructor;
+
+  if (parent && !inheritsHooks) {
+    // The parent's hooks are bound to it already (it was created first).
+    instance.beforeAction = [...parent.beforeAction, ...ownBefore];
+    instance.afterAction = [...ownAfter, ...parent.afterAction];
+  } else {
+    instance.beforeAction = ownBefore;
+    instance.afterAction = ownAfter;
+  }
+
+  if (parent) {
+    // Settings the controller does not set itself come from its namespace.
+    for (const setting of NAMESPACE_SETTINGS) {
+      if (!Object.hasOwn(instance, setting)) {
+        Object.defineProperty(instance, setting, {
+          value: parent[setting],
+          writable: true,
+          enumerable: true,
+          configurable: true
+        });
+      }
+    }
   }
 
   Object.defineProperty(instance, 'parent', {

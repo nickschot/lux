@@ -560,6 +560,52 @@ describe('visibility rules', () => {
       ]);
     });
 
+    it("gives a namespace whose ApplicationController declares no rules its parent namespace's", () => {
+      class ApplicationController extends Controller {
+        static override visibility = { posts };
+      }
+      // Extends `Controller`, not the root's class, and declares nothing:
+      // e.g. an ApplicationController that only adds a hook.
+      class MembersApplicationController extends Controller {}
+      class MembersV2ApplicationController extends Controller {}
+
+      const controllers = build([
+        ['application', ApplicationController],
+        ['members/application', MembersApplicationController],
+        ['members/posts', PlainController],
+        ['members/v2/application', MembersV2ApplicationController],
+        ['members/v2/posts', PlainController]
+      ]);
+
+      resolveVisibility(controllers, models.values());
+
+      expect(controllers.get('members/posts')?.visibility).to.deep.equal({
+        posts
+      });
+      expect(controllers.get('members/v2/posts')?.visibility).to.deep.equal({
+        posts
+      });
+    });
+
+    it('lets an ApplicationController that extends `Controller` declare none', () => {
+      class ApplicationController extends Controller {
+        static override visibility = { posts };
+      }
+      class AdminApplicationController extends Controller {
+        static override visibility = {};
+      }
+
+      const controllers = build([
+        ['application', ApplicationController],
+        ['admin/application', AdminApplicationController],
+        ['admin/posts', PlainController]
+      ]);
+
+      resolveVisibility(controllers, models.values());
+
+      expect(controllers.get('admin/posts')?.visibility).to.deep.equal({});
+    });
+
     it('gives a controller outside any namespace tree no rules', () => {
       class ApplicationController extends Controller {
         static override visibility = { posts };

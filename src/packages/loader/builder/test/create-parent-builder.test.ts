@@ -66,5 +66,48 @@ describe('module "loader/builder"', () => {
         }
       });
     });
+
+    describe('a namespace without an ApplicationController', () => {
+      // Records what each ApplicationController was built with.
+      const built: Array<[string, unknown]> = [];
+      const build = createParentBuilder<{ key: string }>((key, _, parent) => {
+        built.push([key, parent]);
+        return { key };
+      });
+
+      const parents = () => {
+        built.length = 0;
+
+        return new Map(
+          build(
+            new FreezeableMap([
+              ['root', new FreezeableMap([['application', class {}]])],
+              ['admin', new FreezeableMap([['posts', class {}]])],
+              ['admin/reports', new FreezeableMap([['application', class {}]])],
+              // No `members` namespace at all: only a nested one.
+              ['members/v2', new FreezeableMap([['posts', class {}]])]
+            ])
+          ).map(({ key, parent }) => [key, parent])
+        );
+      };
+
+      it("takes the closest ancestor namespace's", () => {
+        const result = parents();
+
+        expect(result.get('admin')).to.deep.equal({ key: 'root/application' });
+        expect(result.get('members/v2')).to.deep.equal({
+          key: 'root/application'
+        });
+      });
+
+      it("passes it on to a nested namespace's ApplicationController", () => {
+        parents();
+
+        expect(built).to.deep.equal([
+          ['root/application', null],
+          ['admin/reports/application', { key: 'root/application' }]
+        ]);
+      });
+    });
   });
 });

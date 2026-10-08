@@ -803,6 +803,44 @@ the optional `response` every action has always been called with, so a
 TypeScript override can take it — `index(request: Request, response?:
 Response)` — and pass it to `super`.
 
+## 27. Controllers — namespace settings and hooks
+
+- **`rejectUnlistedAttributes`, `rejectUnlistedRelationships` and
+  `maxIncludeDepth` set on a namespace's `ApplicationController` apply to every
+  controller in the namespace** (and nested namespaces) that does not set its
+  own. They used to be ordinary class fields, so only a controller that
+  *extended* `ApplicationController` saw them — and generated controllers
+  extend `Controller`, so an app-wide `rejectUnlistedRelationships = false`
+  was silently ignored. **Check:** a controller in a namespace whose
+  `ApplicationController` sets one of these now follows it.
+- **A namespace `ApplicationController` that extends its parent namespace's
+  no longer runs the parent's hooks twice.** `AdminApplicationController
+  extends ApplicationController` (the pattern for building on
+  `super.visibility`) inherited the root's `beforeAction`/`afterAction` as
+  class fields *and* received them from the root namespace, so with any root
+  hook every `/admin` request ran it twice. Such a class's arrays are now
+  taken as the namespace's hooks, like any subclass: keep the root's with
+  `beforeAction = [...this.beforeAction, requireAdmin]`; assigning
+  `beforeAction = [requireAdmin]` replaces them. An `ApplicationController`
+  that extends `Controller` still gets its parent namespace's hooks added.
+- **Hooks are bound to the controller that declares them** — the root
+  `ApplicationController`'s included, which used to run with `this`
+  undefined on its own routes (`this.get('health')`).
+- **A namespace without an `ApplicationController` gets its ancestors'
+  hooks and settings.** A namespace with controllers but no `application.js`
+  (`app/controllers/admin/posts.js` without
+  `app/controllers/admin/application.js`) used to get none of the root
+  `ApplicationController`'s hooks — an authentication `beforeAction`
+  included — nor its settings. It now takes the closest ancestor
+  namespace's, as it already did for visibility rules. **Check:** requests
+  to such a namespace now run the root's hooks.
+- **A namespace's `ApplicationController` that declares no visibility rules
+  follows its parent namespace's.** One that extended `Controller` — to add
+  a hook, say — used to give its namespace no rules at all, so records the
+  root's rules hide were visible there. It now takes the parent namespace's.
+  **Do:** to see everything in a namespace (an admin area), declare
+  `static visibility = {};` on its `ApplicationController`.
+
 ## 29. Generated migrations are named in order
 
 `lumen generate migration|model|resource` names migrations
