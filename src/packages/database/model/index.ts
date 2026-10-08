@@ -47,6 +47,11 @@ import type { ModelHooks } from './interfaces';
  * export default Post;
  * ```
  *
+ * Relationships are checked when the app boots: each `inverse` must name a
+ * relationship on the related model that points back, of a kind that pairs
+ * with it, and each foreign key must be a column. A mistake fails the boot,
+ * naming the relationship.
+ *
  * The static query methods (`find`, `where`, `first`, …) start a
  * {@link Query}; `create`, and `update`, `save` and `destroy` on a record,
  * write. See the

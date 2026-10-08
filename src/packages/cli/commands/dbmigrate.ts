@@ -21,6 +21,7 @@ export async function dbmigrate() {
     models,
     path: CWD,
     checkMigrations: false,
+    checkRelationships: false,
 
     logger: new Logger({ enabled: false } as ConstructorParameters<
       typeof Logger

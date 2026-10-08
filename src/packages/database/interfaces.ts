@@ -119,6 +119,9 @@ export type Database$opts = {
   // Optional: `dbseed` constructs a Database without it (undefined → the
   // migration check is skipped).
   checkMigrations?: boolean;
+  // Off for `db:migrate`/`db:rollback`: a foreign key column a pending
+  // migration adds must not keep that migration from running.
+  checkRelationships?: boolean;
 };
 
 export type Database$column = {
