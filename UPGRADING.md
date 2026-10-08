@@ -31,18 +31,21 @@ Check, if it applies to your app:
    list is now refused with `403`. Turn that off with
    `rejectUnlistedRelationships = false`, or stop sending it
    ([Requests](#requests)).
-5. **Hooks that authorize by action name** must also allow
+5. **Namespaces without their own `ApplicationController`, or with one that
+   declares no visibility rules,** now follow their ancestors' hooks and
+   rules ([Controllers](#controllers)).
+6. **Hooks that authorize by action name** must also allow
    `showRelationship` and `showRelated`, the actions of the new relationship
    endpoints ([Routing](#routing)).
-6. **Custom actions that `.include()` relationships:** drop the call; the
+7. **Custom actions that `.include()` relationships:** drop the call; the
    serializer loads relationships itself ([Controllers](#controllers)).
-7. **Clients or tests asserting status codes:** several changed
+8. **Clients or tests asserting status codes:** several changed
    ([Errors](#errors)).
-8. **Log parsing and alerting:** the text format changed, 4xx are no longer
+9. **Log parsing and alerting:** the text format changed, 4xx are no longer
    logged as errors, and `logging.level` must be uppercase
    ([Logging](#logging)).
-9. **Model hooks comparing records with `===`:** a hook now receives a proxy
-   of the record ([Models](#models)).
+10. **Model hooks comparing records with `===`:** a hook now receives a
+    proxy of the record ([Models](#models)).
 
 The rest is new behaviour that needs no change, such as visibility rules,
 relationship endpoints, `linksOnly` and request ids. Each is listed below with
@@ -182,6 +185,16 @@ See [Controllers](docs/guides/controllers.md).
 - **Hooks are bound to the controller declaring them**, including the root
   `ApplicationController`'s, whose hooks ran with `this` undefined on its own
   routes.
+- **A namespace without an `ApplicationController` runs its ancestors'
+  hooks.** Controllers in `app/controllers/admin/` with no
+  `admin/application.js` used to get none of the root's hooks — an
+  authentication `beforeAction` included — nor its settings. **Check:**
+  requests to such a namespace now run them.
+- **Visibility rules follow the parent namespace** until a namespace's
+  `ApplicationController` declares its own. One that extended `Controller`
+  without declaring rules used to give its namespace none, so records the
+  root's rules hide were visible there. **Do:** declare
+  `static visibility = {};` where a namespace should see everything.
 - New, opt-in: [visibility rules](docs/guides/controllers.md#visibility-rules),
   declared once per namespace, replace `super.index(request).where(…)`
   overrides and hooks that filter hidden records out of a response.
