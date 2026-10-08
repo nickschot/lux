@@ -869,8 +869,19 @@ static hooks = {
 ```
 
 Reads that do so can drop a `pool` raised only to avoid the deadlock.
-Reading a relationship from a model instance (`await post.comments`) is not
-bound to a transaction yet.
+
+**Records join a transaction too.** `record.transacting(trx)` used to bind
+only `save`, `update` and `destroy`; its relationship reads
+(`await comment.transacting(trx).post`) and `reload()` now run in `trx` as
+well, and the related records they return are bound in turn.
+
+**Hooks receive the record bound to their transaction.** In a hook,
+`await comment.post`, `await post.comments` and `comment.update({…})` now run
+in the write's transaction without any `transacting(trx)` — before, each of
+them ran on a second connection (and, on one connection, deadlocked). The
+record is a proxy of the instance being written: reading and assigning
+attributes work as before, but `record === someOtherReference` inside a hook
+is now `false`. Compare primary keys instead.
 
 ## 29. Generated migrations are named in order
 

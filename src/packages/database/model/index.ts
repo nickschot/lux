@@ -506,11 +506,16 @@ class Model {
    * the transaction object relevant to the method from which the hook was
    * called.
    *
-   * The only time you will need to use the transaction object is if you are
-   * creating, updating, or deleting different record(s) within the hook. Using
-   * the transaction object when modifying the database in a hook ensures that
-   * any modifications made within the hook will be rolled back if the function
-   * that initiated the transaction fails.
+   * The record is bound to that transaction: reading its relationships
+   * (`await comment.post`, and the relationships of what that returns),
+   * `update`, `save`, `destroy` and `reload` all run in it, so they see what
+   * the write has done so far and are rolled back with it.
+   *
+   * Use the transaction object for queries on other models — creating,
+   * updating, or reading different record(s) within the hook:
+   * `Notification.transacting(trx).create(…)`, `Post.transacting(trx).find(…)`.
+   * That keeps them in the transaction too, so modifications made within the
+   * hook are rolled back if the function that initiated the transaction fails.
    *
    * ```javascript
    * import Notification from 'app/models/notification';
@@ -1505,7 +1510,11 @@ class Model {
    * @private
    */
   static relationshipFor(key: string): RelationshipOptions | undefined {
-    return this.relationships[key];
+    // Own keys only: `relationships` is a plain object, so `constructor` or
+    // `toString` would otherwise come back as a "relationship".
+    return Object.hasOwn(this.relationships, key)
+      ? this.relationships[key]
+      : undefined;
   }
 }
 

@@ -43,11 +43,15 @@ export function set(
 }
 
 /**
+ * The value of `owner`'s relationship `key`: the loaded or assigned one, or
+ * else read from the database — in `trx` when given.
+ *
  * @private
  */
 export async function get(
   owner: Model,
-  key: string
+  key: string,
+  trx: unknown = null
 ): Promise<Array<Model> | Model | null> {
   const opts = owner.constructor.relationshipFor(key);
   let value: Array<Model> | Model | null = null;
@@ -64,24 +68,36 @@ export async function get(
     } else if (!value) {
       switch (type) {
         case 'hasOne':
-          value = await getHasOne(owner, {
-            ...opts,
-            foreignKey
-          });
+          value = await getHasOne(
+            owner,
+            {
+              ...opts,
+              foreignKey
+            },
+            trx
+          );
           break;
 
         case 'hasMany':
-          value = await getHasMany(owner, {
-            ...opts,
-            foreignKey
-          });
+          value = await getHasMany(
+            owner,
+            {
+              ...opts,
+              foreignKey
+            },
+            trx
+          );
           break;
 
         case 'belongsTo':
-          value = await getBelongsTo(owner, {
-            ...opts,
-            foreignKey
-          });
+          value = await getBelongsTo(
+            owner,
+            {
+              ...opts,
+              foreignKey
+            },
+            trx
+          );
           break;
 
         default:
