@@ -32,7 +32,7 @@
     "invalidLink": true,
     "invalidPath": true,
     "rewrittenLink": true,
-    "notDocumented": false
+    "notDocumented": true
   },
   "treatWarningsAsErrors": true
 }
