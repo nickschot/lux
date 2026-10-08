@@ -62,10 +62,10 @@ from the database.
 Clients may send member names either way (`created-at` or `createdAt`) in
 request bodies and in `sort`, `filter` and `fields`.
 
-An attribute must be a **column** of the model's table. A getter or other
-computed property listed in `attributes` is silently left out of the output
-([#104](https://github.com/nickschot/lux/issues/104)); compute such values in
-an `afterAction` hook or a custom action instead.
+An attribute must be a **column** of the model's table. Listing anything
+else — a getter or other computed property — is an error when the app
+boots, naming the serializer and the attribute. Add computed values to the
+document in an `afterAction` hook or a custom action instead.
 
 ## Relationships
 

@@ -95,13 +95,15 @@ class Controller {
   /**
    * The attributes `?sort=` accepts, each also with `-` for descending.
    * Defaults to every attribute the controller's serializer outputs; anything
-   * else is a `400 Bad Request`.
+   * else is a `400 Bad Request`. Each must be a column of the model's table,
+   * or the app refuses to boot.
    */
   sort: Array<string> = [];
 
   /**
    * The attributes `?filter[…]=` accepts. Defaults to every attribute the
    * controller's serializer outputs; anything else is a `400 Bad Request`.
+   * Each must be a column of the model's table, or the app refuses to boot.
    */
   filter: Array<string> = [];
 

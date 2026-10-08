@@ -86,7 +86,8 @@ class Serializer<T extends Model> {
 
   /**
    * The model attributes to serialize, camelCase as on the model; documents
-   * dasherize them (`createdAt` → `created-at`).
+   * dasherize them (`createdAt` → `created-at`). Each must be a column of the
+   * model's table: the app refuses to boot when one isn't (a getter, say).
    *
    * ```javascript
    * class PostsSerializer extends Serializer {

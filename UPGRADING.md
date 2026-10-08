@@ -102,6 +102,13 @@ and [Controllers: accepting writes](docs/guides/controllers.md#accepting-writes-
 
 See [Serializers and JSON:API](docs/guides/serializers.md).
 
+- **A serializer attribute that isn't a column fails the boot.** Listing a
+  getter or other computed property in `attributes` used to be accepted and
+  then silently ignored: missing from every response, while `sort` and
+  `filter` (which default to the serializer's attributes) accepted it and
+  did nothing. The same goes for a name listed in a controller's `sort` or
+  `filter`. **Do:** remove such names, and add computed values in an
+  `afterAction` hook or a custom action.
 - **A sparse fieldset selects relationships too.** `fields[posts]=title`
   returns posts without `relationships`; name a relationship to keep it
   (`fields[posts]=title,user`). A fieldset applies to every resource of its
