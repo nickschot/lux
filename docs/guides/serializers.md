@@ -130,10 +130,10 @@ class UsersSerializer extends Serializer {
 }
 ```
 
-Clients load the records from the `related` link, paged like an index;
-ember-data does this by itself for an async `hasMany`. A request that
-includes the relationship (`?include=posts`) still gets its `data`, since
-every included resource must be linked from the document.
+Clients load the records from the `related` link when they need them, paged
+like an index. A request that includes the relationship (`?include=posts`)
+still gets its `data`, since every included resource must be linked from the
+document.
 
 The names in `linksOnly` must be in `hasMany`, and the related endpoint must
 exist (the related type routes `index`, this type routes `show`); otherwise
