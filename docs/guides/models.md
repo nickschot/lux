@@ -68,8 +68,8 @@ class Post extends Model {
 | `hasOne` | `<inverse>_id` on the other table (`post_id`) | One record or `null` |
 | `hasMany` | `<inverse>_id` on the other table; with `through`, on the join model, the inverse singularized (`posts` → `post_id`) | An array |
 
-Foreign keys always follow these names; a column named otherwise can't be
-used yet ([#122](https://github.com/nickschot/lux/issues/122)).
+A `hasOne` or `hasMany` uses its inverse `belongsTo`'s column, so declaring
+a `foreignKey` on the `belongsTo` covers both sides.
 
 **Relationships are checked when the app boots.** An `inverse` that names no
 relationship on the other model, or one that doesn't point back, two sides of
@@ -90,6 +90,16 @@ Options beside `inverse`:
   name: `author: { inverse: 'books', model: 'user' }`.
 - **`through`** — the join model of a many-to-many relationship. The join
   model (`Categorization`) `belongsTo` both sides.
+- **`foreignKey`** — the column, when it doesn't follow the names above.
+  On a `belongsTo` it is the column of this table, and the other side's
+  `hasOne`/`hasMany` uses it too:
+  `writer: { inverse: 'books', model: 'author', foreignKey: 'written_by' }`.
+  On a `hasMany` with `through` it is this side's column on the join table;
+  set it on both sides and on the join model's `belongsTo`s.
+
+Polymorphic relationships — one that can point at records of several models,
+through an id and a type column — aren't supported yet
+([#132](https://github.com/nickschot/lux/issues/132)).
 
 ### Reading and assigning
 

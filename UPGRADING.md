@@ -212,6 +212,9 @@ See [Controllers](docs/guides/controllers.md).
 
 See [Models and queries](docs/guides/models.md).
 
+- **New: `foreignKey`** sets a relationship's column when it doesn't follow
+  the naming (`writer: { inverse: 'books', model: 'author', foreignKey:
+  'written_by' }`). It was documented before but never read.
 - **Relationships are checked at boot.** Each `inverse` must name a
   relationship on the related model that points back, of a kind that pairs
   with it, and each foreign key must be a column. A wrong one used to work

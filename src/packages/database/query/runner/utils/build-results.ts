@@ -43,9 +43,11 @@ export default async function buildResults<T extends Model>({
             .select(...relationship.attrs)
             .transacting(trx);
 
-          const baseKey =
-            `${relationship.through.tableName}.` +
-            `${singularize(underscore(name))}_id`;
+          // The join table's key for the related side: the inverse's.
+          const relatedKey =
+            relationship.model.relationshipFor(relationship.inverse)
+              ?.foreignKey ?? `${singularize(underscore(name))}_id`;
+          const baseKey = `${relationship.through.tableName}.${relatedKey}`;
 
           foreignKey = `${relationship.through.tableName}.${relationship.foreignKey}`;
 

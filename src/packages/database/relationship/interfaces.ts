@@ -23,6 +23,9 @@ export type RelationshipOptions = {
   /** The join model of a many-to-many relationship. */
   through?: ModelClass;
 
-  /** The foreign key column, derived from the relationship's names. */
+  /**
+   * The foreign key column: the declared `foreignKey`, or one derived from
+   * the relationship's names.
+   */
   foreignKey: string;
 };
