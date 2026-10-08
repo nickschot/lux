@@ -96,10 +96,8 @@ lumen db:migrate --environment production
 ```
 
 The app **refuses to start** while a migration is pending, so a deploy that
-skips this step fails loudly. (The process currently keeps running after
-logging that error instead of exiting:
-[#100](https://github.com/nickschot/lux/issues/100). Check the logs, not just
-the process.)
+skips this step fails loudly: `lumen serve` logs the error and exits with code
+`1`.
 
 Write migrations that the *previous* version of the app can run against: for
 a moment during a deploy, old code runs on the new schema. Add a column
@@ -127,17 +125,45 @@ own, to fail a deploy early if the app doesn't compile.
 worker. Where the platform scales by running more containers or dynos, one
 worker each is simplest. On a single machine, `--cluster` uses every core.
 
+**Failing to start.** When the app cannot start — a pending migration, an
+unreachable database, a route naming a controller that doesn't exist —
+`lumen serve` logs the error and exits with code `1`, so the platform reports
+the deploy as failed instead of a process that serves nothing.
+
 **Crashes.** A worker that crashes after it has started is replaced
-automatically, and the error is logged.
+automatically, and the error is logged. If the replacement cannot start
+either, `lumen serve` exits with code `1`.
 
 ## Stopping
 
-Platforms stop a process with `SIGTERM` on every deploy and restart. Lumen
-does not shut down gracefully yet: on `SIGTERM` the process exits
-immediately, and requests in progress are cut off
-([#117](https://github.com/nickschot/lux/issues/117)). Until that is fixed,
-deploy when traffic is low, or put the app behind a load balancer that drains
-connections before stopping an instance.
+Platforms stop a process with `SIGTERM` on every deploy and restart (Ctrl-C
+sends `SIGINT`). `lumen serve` then shuts down gracefully:
+
+1. each worker stops accepting connections and closes idle keep-alive ones;
+2. the requests in flight finish and are answered;
+3. the database connections close, and the process exits with code `0`.
+
+```text
+INFO  Received SIGTERM; finishing requests in flight
+INFO  Lumen Server stopped
+```
+
+A worker that hasn't finished after **8 seconds** is killed, so the process
+always exits within the grace period platforms allow before they kill it
+(Docker 10 s, Heroku and Kubernetes 30 s). Requests that may take longer need
+a longer `server.shutdownTimeout`, in milliseconds, and a matching grace
+period on the platform:
+
+```javascript
+// config/environments/production.js
+export default {
+  server: {
+    shutdownTimeout: 25000 // Heroku allows 30 s
+  },
+
+  logging: { … }
+};
+```
 
 ## A health check
 

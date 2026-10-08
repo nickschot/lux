@@ -86,7 +86,13 @@ Alias `lumen s`. Builds the app and starts the server.
 | `-c, --cluster` | off | Run one worker process per CPU core instead of one. |
 | `-w, --use-weak` | off | Build without strict mode. |
 
-The app refuses to start while a migration is pending.
+When the app can't start — a pending migration, an unreachable database, a
+broken route — `serve` logs the error and exits with code `1`. (With `--hot`,
+an error after a file change is logged instead, and saving a fix reloads.)
+
+On `SIGTERM` or `SIGINT` (Ctrl-C), `serve` stops gracefully: it finishes the
+requests in flight and exits with code `0`. See
+[Deployment](deployment.md#stopping).
 
 ### `lumen build`
 

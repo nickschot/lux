@@ -8,12 +8,14 @@ export function createCluster({
   path,
   port,
   logger,
-  maxWorkers
+  maxWorkers,
+  shutdownTimeout
 }: Cluster$opts) {
   return new Cluster({
     path,
     port,
     logger,
-    maxWorkers
+    maxWorkers,
+    shutdownTimeout
   });
 }
