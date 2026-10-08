@@ -6,6 +6,7 @@ import { ConfigMissingError, MigrationsPendingError } from './errors';
 import connect from './utils/connect';
 import createMigrations from './utils/create-migrations';
 import pendingMigrations from './utils/pending-migrations';
+import validateRelationships from './utils/validate-relationships';
 import type Database from './index';
 import type { Database$opts } from './index';
 
@@ -14,7 +15,13 @@ export default async function initialize<T extends Database>(
   instance: T,
   opts: Database$opts
 ): Promise<T> {
-  const { path, models, logger, checkMigrations } = opts;
+  const {
+    path,
+    models,
+    logger,
+    checkMigrations,
+    checkRelationships = true
+  } = opts;
   const config = opts.config[NODE_ENV];
 
   if (!config) {
@@ -93,6 +100,12 @@ export default async function initialize<T extends Database>(
       model.initialize(instance, () => instance.connection(model.tableName))
     )
   );
+
+  // Every model is initialized: relationships can be checked against both
+  // of their sides.
+  if (checkRelationships) {
+    validateRelationships(models.values());
+  }
 
   return instance;
 }

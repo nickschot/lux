@@ -87,8 +87,7 @@ describe('module "serializer/utils/load-linkage"', () => {
   // the lazy relationship getters load one record at a time.
   //
   // Only relationships a serializer declares are checked — those are the ones
-  // linkage is loaded for — which also skips `comment.actions`, a polymorphic
-  // relationship the framework does not support (its getter throws).
+  // linkage is loaded for.
   [
     'post',
     'comment',

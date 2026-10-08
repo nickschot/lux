@@ -71,6 +71,19 @@ class Post extends Model {
 Foreign keys always follow these names; a column named otherwise can't be
 used yet ([#122](https://github.com/nickschot/lux/issues/122)).
 
+**Relationships are checked when the app boots.** An `inverse` that names no
+relationship on the other model, or one that doesn't point back, two sides of
+the same kind, or a missing foreign key column fails the boot with a message
+naming the relationship:
+
+```
+Invalid relationships. Each must name its `inverse`: the relationship on the related model that points back:
+  - Post.belongsTo.user has inverse 'post', but User has no relationship 'post' (it has: posts)
+```
+
+A join model's `belongsTo` names the many-to-many relationship that goes
+through it (`Categorization.post` has `inverse: 'tags'`, `Post.tags`).
+
 Options beside `inverse`:
 
 - **`model`** — the related model when it differs from the relationship's

@@ -21,8 +21,8 @@ Required:
    ([Requirements](#requirements)).
 2. Remove `"test": "lumen test"` from `package.json`: the command is gone
    ([CLI](#the-lumen-cli-and-generators)).
-3. Check each `belongsTo` `inverse` names a relationship that exists, and the
-   order of the files in `db/migrate/`
+3. Fix any relationship the app now refuses to boot with ([Models](#models)),
+   and check the order of the files in `db/migrate/`
    ([CLI](#the-lumen-cli-and-generators)).
 
 Check, if it applies to your app:
@@ -212,6 +212,17 @@ See [Controllers](docs/guides/controllers.md).
 
 See [Models and queries](docs/guides/models.md).
 
+- **Relationships are checked at boot.** Each `inverse` must name a
+  relationship on the related model that points back, of a kind that pairs
+  with it, and each foreign key must be a column. A wrong one used to work
+  until the first write that set the relationship, which failed with an
+  unrelated-looking `500` (`Cannot destructure property 'type' of …`).
+  **Do:** fix what the boot error lists. A relationship that never worked,
+  such as a declared polymorphic one (`inverse: 'trackable'` with no
+  `trackable` relationship on the other side), must be removed. `db:migrate`
+  and `db:rollback` skip the check, so a migration adding a foreign key can
+  still run.
+
 - **Model hooks read inside their transaction.** Every query started from
   `Model.transacting(trx)` now runs in `trx` (`find`, `where`, `first`,
   `count`, scopes, included relationships); it used to forward only `create`.
@@ -286,9 +297,8 @@ See [The `lumen` command](docs/guides/cli.md).
 
 - **Generated `belongsTo` relationships name the plural inverse.**
   `lumen generate model post user:belongs-to` used to write `inverse: 'post'`,
-  and saving a post with a user failed with a `500`. **Check** the inverses
-  in models generated earlier: each must name a relationship on the related
-  model.
+  and saving a post with a user failed with a `500`. Models generated
+  earlier with that mistake now fail the boot (see [Models](#models)).
 - **Generated migration versions sort by creation time.** Versions are now
   `YYYYMMDDHHmmssCC` in UTC. They used to mix the UTC date with the local
   time and drop digits, so a migration could run before the one creating its

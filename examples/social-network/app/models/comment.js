@@ -14,10 +14,6 @@ class Comment extends Model {
   };
 
   static hasMany = {
-    actions: {
-      inverse: 'trackable'
-    },
-
     reactions: {
       inverse: 'comment'
     }
