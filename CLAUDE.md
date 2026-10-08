@@ -320,7 +320,11 @@ specs carried through the runner swap — were fixed once the migration settled.
   can be fed to a static site (e.g. VitePress) later without rewriting.
   Contributor-only notes go in `docs/internal/`. An app-visible change updates
   the matching guide *and* gets an [UPGRADING.md](UPGRADING.md) entry — don't
-  let UPGRADING become the only description of a feature again.
+  let UPGRADING become the only description of a feature again. UPGRADING is
+  grouped per major version, then by area (Requests, Responses, Errors, …), not
+  numbered: an entry says what changed and what to do or check, in a few lines,
+  and links to the guide. A required action also goes in the version's
+  "In short" list.
 - **API reference: TypeDoc** ([typedoc.json](typedoc.json), `pnpm docs:api` →
   gitignored `docs/api/`), from `src/index.ts`. CI's `docs` job fails on any
   warning — a broken `{@link}`, or a public signature naming a type
