@@ -327,7 +327,8 @@ specs carried through the runner swap — were fixed once the migration settled.
   "In short" list.
 - **API reference: TypeDoc** ([typedoc.json](typedoc.json), `pnpm docs:api` →
   gitignored `docs/api/`), from `src/index.ts`. CI's `docs` job fails on any
-  warning — a broken `{@link}`, or a public signature naming a type
+  warning — a public symbol without a doc comment (`notDocumented`), a
+  broken `{@link}`, or a public signature naming a type
   `src/index.ts` does not export. Fix the latter by exporting it — or (for
   framework internals) listing it in `intentionallyNotExported`.
 - **Public types** have plain names at their definition (`LoggerConfig`, not
