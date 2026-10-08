@@ -222,6 +222,13 @@ See [Models and queries](docs/guides/models.md).
 - **Has-many-through writes work.** Writing `tags` through `categorizations`
   used to fail with a database error. A workaround that writes the join rows
   itself can go.
+- **`ssl` applies with a database URL.** `DATABASE_URL`, or an environment's
+  `url`, used to replace every connection setting in `config/database.js`,
+  `ssl` included, so TLS could only be set in the URL or (for PostgreSQL)
+  with `PGSSLMODE`. `ssl` is now applied on top of the URL, and may be the
+  driver's TLS options (`{ rejectUnauthorized: false }`). A TLS setting in
+  the URL itself still wins. **Check:** an app that sets `ssl` next to a URL
+  now connects with it.
 - **inflection 3:** `focus` pluralizes to `focuses` and singularizes to
   `focus` (it was `focu`). Only a model, table or relationship named after
   "focus" is affected.

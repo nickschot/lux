@@ -135,7 +135,7 @@ Each takes `--environment` (default `development`, or `NODE_ENV`) and
 |---|---|
 | `NODE_ENV` | The environment, when `--environment` isn't given. |
 | `PORT` | The port for `serve`, when `--port` isn't given. |
-| `DATABASE_URL` | A connection string that overrides `config/database.js`. |
+| `DATABASE_URL` | A connection string: the host, credentials and database, over those in `config/database.js`. |
 
 ## Strict mode
 
