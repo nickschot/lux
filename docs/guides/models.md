@@ -62,17 +62,19 @@ class Post extends Model {
 }
 ```
 
-| Kind | Foreign key lives on | Value |
+| Kind | Foreign key | Value |
 |---|---|---|
-| `belongsTo` | this table (`user_id`) | One record or `null` |
-| `hasOne` | the other table (`post_id`) | One record or `null` |
-| `hasMany` | the other table, or a join model with `through` | An array |
+| `belongsTo` | `<name>_id` on this table (`user_id`) | One record or `null` |
+| `hasOne` | `<inverse>_id` on the other table (`post_id`) | One record or `null` |
+| `hasMany` | `<inverse>_id` on the other table; with `through`, on the join model, the inverse singularized (`posts` → `post_id`) | An array |
+
+Foreign keys always follow these names; a column named otherwise can't be
+used yet ([#122](https://github.com/nickschot/lux/issues/122)).
 
 Options beside `inverse`:
 
 - **`model`** — the related model when it differs from the relationship's
   name: `author: { inverse: 'books', model: 'user' }`.
-- **`foreignKey`** — the column when it isn't `<name>_id`.
 - **`through`** — the join model of a many-to-many relationship. The join
   model (`Categorization`) `belongsTo` both sides.
 
