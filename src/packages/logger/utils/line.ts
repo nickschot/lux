@@ -1,8 +1,6 @@
 import { insertValues } from '../../template';
 
-/**
- * @private
- */
+/** @internal */
 export default function line(
   strings: readonly string[],
   ...values: unknown[]

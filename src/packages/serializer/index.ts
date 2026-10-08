@@ -29,396 +29,70 @@ import { createIncludeTree } from './utils/include-tree';
 import type { IncludeTree } from './utils/include-tree';
 
 /**
- * ## Overview
- *
- * The Serializer class is used to describe which attributes and relationships
- * to include for a particular resource.
- *
- * The attributes and relationships you declare in a Serializer will determine
- * the attributes and relationships that will be included in the response from
- * the resource that the Serializer represents.
- *
- * #### Attributes
- *
- * You can add attributes to your serializer using an array assigned to the
- * class property `attributes` like the example below.
+ * The base class of an app's serializers. A serializer lists what a
+ * resource looks like in a JSON:API document: its `attributes`, and its
+ * relationships in `hasOne` (to-one, whether the model's relationship is
+ * `hasOne` or `belongsTo`) and `hasMany`.
  *
  * ```javascript
- * class UsersSerializer extends Serializer {
- *   attributes = [
- *     'name',
- *     'email',
- *     'username',
- *     'createdAt',
- *     'updatedAt'
- *   ];
- * }
- * ```
- *
- * Since the attributes required for a resource are declared ahead of time in a
- * Serializer, Lumen will optimize SQL queries for the resource to only include
- * what the Serializer needs to build the response.
- *
- * ```javascript
+ * // app/serializers/posts.js
  * import { Serializer } from 'lumen-framework';
  *
  * class PostsSerializer extends Serializer {
- *   attributes = [
- *     'body',
- *     'title',
- *     'createdAt'
- *   ];
+ *   attributes = ['title', 'body', 'createdAt'];
+ *   hasOne = ['user'];
+ *   hasMany = ['comments', 'tags'];
  * }
  *
  * export default PostsSerializer;
  * ```
  *
- * The Serializer above would result in resources returned from the `/posts`
- * endpoint to only include the `body`, `title`, and `createdAt` attributes. If
- * we wanted include an additional attribute such as `isPublic`, we would have
- * to add `'isPublic'` to the `attributes` property.
- *
- * ```javascript
- * import { Serializer } from 'lumen-framework';
- *
- * class PostsSerializer extends Serializer {
- *   attributes = [
- *     'body',
- *     'title',
- *     'isPublic',
- *     'createdAt'
- *   ];
- * }
- *
- * export default PostsSerializer;
- * ```
- *
- * #### Associations
- *
- * Similar to `attributes` you can declare associations by adding relationship
- * names to either the `hasOne` or `hasMany` property arrays on a Serializer.
- *
- * Serializers are not concerned with ownership when it comes to associations,
- * so both `hasOne` and `belongsTo` associations can be specified in the
- * `hasOne` array property.
- *
- * ```javascript
- * import { Model } from 'lumen-framework';
- *
- * class Post extends Model {
- *  static hasOne = {
- *    image: {
- *      inverse: 'post'
- *    }
- *  };
- *
- *  static hasMany = {
- *    tags: {
- *      inverse: 'posts',
- *      through: 'categorization'
- *    },
- *
- *    comments: {
- *      inverse: 'post'
- *    }
- *  };
- *
- *  static belongsTo = {
- *    user: {
- *      inverse: 'posts'
- *    }
- *  };
- * }
- *
- * export default Post;
- * ```
- *
- * To include the `user` and `image` associations in the response returned from
- * the `/posts` endpoint, we must specify both associations in the `hasOne`
- * property array of the Serializer.
- *
- * ```javascript
- * import { Serializer } from 'lumen-framework';
- *
- * class PostsSerializer extends Serializer {
- *  hasOne = [
- *    'user',
- *    'image'
- *  ];
- * }
- *
- * export default PostsSerializer;
- * ```
- *
- * If we wanted to also include the `tags` and `comments` in the response, we
- * have to add a `hasMany` array property containing `'tags'` and `'comments'`.
- *
- * ```javascript
- * import { Serializer } from 'lumen-framework';
- *
- * class PostsSerializer extends Serializer {
- *  hasOne = [
- *    'user',
- *    'image'
- *  ];
- *
- *  hasMany = [
- *    'tags',
- *    'comments'
- *  ];
- * }
- *
- * export default PostsSerializer;
- * ```
- *
- * You no longer need to specify that `tags` is a many to many relationship
- * using the `Categorization` model as a join table.
- *
- * #### Including Related Resources
- *
- * When requesting related resources for an endpoint, the included resource will
- * follow the serialization rules defined by the included resources Serializer.
- *
- * If we request that the `posts` association is included from the `/users`
- * endpoint, we will only get the `attributes` that the `PostsSerializer` has
- * defined even though the response is processed by the `UsersSerializer`.
- * The same goes for relationships: each included resource carries the
- * `relationships` its own Serializer declares in `hasOne` and `hasMany`.
- *
- * Included resources follow the request's namespace: from `/admin/posts`,
- * included comments are serialized by `AdminCommentsSerializer` when it
- * exists and by `CommentsSerializer` otherwise (the same fallback a
- * namespaced Controller uses), and their links point into `/admin`.
- *
- * Relationship paths may be nested, e.g. `/posts?include=comments.user`, up
- * to the controller's `maxIncludeDepth` (3 by default). The intermediate
- * resources (the comments) are included along with the leaves (their users).
- *
- * #### Sparse Fieldsets
- *
- * A request may narrow the fields of each resource type with `fields[TYPE]`
- * (e.g. `/posts?include=user&fields[posts]=title,user&fields[users]=name`).
- * A fieldset applies to every resource of its type in the document — primary
- * data and included resources alike — and selects attributes and
- * relationships: anything it does not name is left out, and an empty fieldset
- * leaves out all of them. It may name only fields the type's Serializer
- * declares (in `attributes`, `hasOne` or `hasMany`); any other name is
- * answered with `400 Bad Request`.
- *
- * #### Namespaces
- *
- * When using namespaces, you are not required to have a Serializer for each
- * resource as long as a Serializer for the given resource can be resolved
- * upstream.
- *
- * For example, if you have a `posts` resource and you decide to implement an
- * admin namespace, you only need to export an `AdminPostsSerializer` from
- * `app/serializers/admin/posts.js` if you want to specify different attributes
- * or relationships than the `PostsSerializer` exported from
- * `app/serializers/posts.js`.
- *
- * In the event that you do want to specify different attributes or
- * relationships that the `PostsSerializer` exported from
- * `app/serializers/posts.js`, you are not required to extend `PostsSerializer`.
- *
- * ```javascript
- * import { Serializer } from 'lumen-framework';
- *
- * class PostsSerializer extends Serializer {
- *   attributes = [
- *     'body',
- *     'title',
- *     'createdAt'
- *   ];
- *
- *   hasOne = [
- *     'user',
- *     'image'
- *   ];
- *
- *   hasMany = [
- *     'tags',
- *     'comments'
- *   ];
- * }
- *
- * export default PostsSerializer;
- * ```
- *
- * To add the `isPublic` attribute to the response payload of requests to a
- * `/admin/posts` endpoint we can do either of the following examples:
- *
- * ```javascript
- * // app/serializers/admin/posts.js
- * import PostsSerializer from 'app/serializers/posts';
- *
- * class AdminPostsSerializer extends PostsSerializer {
- *   attributes = [
- *     'body',
- *     'title',
- *     'isPublic',
- *     'createdAt'
- *   ];
- * }
- *
- * export default AdminPostsSerializer;
- * ```
- *
- * OR
- *
- * ```javascript
- * // app/serializers/admin/posts.js
- * import { Serializer } from 'lumen-framework';
- *
- * class AdminPostsSerializer extends Serializer {
- *   attributes = [
- *     'body',
- *     'title',
- *     'isPublic',
- *     'createdAt'
- *   ];
- *
- *   hasOne = [
- *     'user',
- *     'image'
- *   ];
- *
- *   hasMany = [
- *     'tags',
- *     'comments'
- *   ];
- * }
- *
- * export default AdminPostsSerializer;
- * ```
- *
- * Even with inheritance, the examples above are a tad repetitive. We can
- * improve this code by exporting constants from `app/serializers/posts.js`.
- *
- * ```javascript
- * import { Serializer } from 'lumen-framework';
- *
- * export const HAS_ONE = [
- *   'user',
- *   'image'
- * ];
- *
- * export const HAS_MANY = [
- *   'tags',
- *   'comments'
- * ];
- *
- * export const ATTRIBUTES = [
- *   'body',
- *   'title',
- *   'createdAt'
- * ];
- *
- * class PostsSerializer extends Serializer {
- *   hasOne = HAS_ONE;
- *   hasMany = HAS_MANY;
- *   attributes = ATTRIBUTES;
- * }
- *
- * export default PostsSerializer;
- * ```
- *
- * If we choose to use inheritance, our code can look like this:
- *
- * ```javascript
- * // app/serializers/admin/posts.js
- * import PostsSerializer, { ATTRIBUTES } from 'app/serializers/posts';
- *
- * class AdminPostsSerializer extends PostsSerializer {
- *   attributes = [
- *     ...ATTRIBUTES,
- *     'isPublic'
- *   ];
- * }
- *
- * export default AdminPostsSerializer;
- * ```
- *
- * If we choose not use inheritance, our code can look like this:
- *
- * ```javascript
- * // app/serializers/admin/posts.js
- * import { Serializer } from 'lumen-framework';
- * import { HAS_ONE, HAS_MANY, ATTRIBUTES } from 'app/serializers/posts';
- *
- * class AdminPostsSerializer extends PostsSerializer {
- *   hasOne = HAS_ONE;
- *   hasMany = HAS_MANY;
- *
- *   attributes = [
- *     ...ATTRIBUTES,
- *     'isPublic'
- *   ];
- * }
- *
- * export default AdminPostsSerializer;
- * ```
- *
- * @class Serializer
- * @public
+ * Lumen loads only the columns a serializer needs. The lists are also what
+ * clients may ask for: `sort` and `filter` default to the attributes,
+ * `include` accepts the relationships (nested up to the controller's
+ * `maxIncludeDepth`), and `fields[posts]` may name any of them. Each included
+ * resource is formatted by its own type's serializer.
+ *
+ * A namespace may have its own serializer for a type
+ * (`app/serializers/admin/posts.js`), used for that type everywhere in the
+ * namespace, included resources too; without one, the root serializer is used,
+ * unless the namespace's `ApplicationController` sets `serializerFallback =
+ * false`. See the
+ * [serializers guide](https://github.com/nickschot/lux/blob/main/docs/guides/serializers.md).
  */
 class Serializer<T extends Model> {
   /**
-   * An Array of the `hasOne` or `belongsTo` relationships on a Serializer
-   * instance's Model to include in the
-   * `relationships` resource object of a serialized payload.
+   * The to-one relationships to serialize — the model's `hasOne` and
+   * `belongsTo` relationships alike.
    *
    * ```javascript
    * class PostsSerializer extends Serializer {
-   *   hasOne = [
-   *     'user'
-   *   ];
+   *   hasOne = ['user', 'image'];
    * }
    * ```
-   *
-   * @property hasOne
-   * @type {Array}
-   * @default []
-   * @public
    */
   hasOne: Array<string> = [];
 
   /**
-   * An Array of the `hasMany` relationships on a Serializer instance's Model to
-   * include in the `relationships` resource object of a serialized payload.
+   * The to-many relationships to serialize.
    *
    * ```javascript
    * class PostsSerializer extends Serializer {
-   *   hasMany = [
-   *     'comments'
-   *   ];
+   *   hasMany = ['comments', 'tags'];
    * }
    * ```
-   *
-   * @property hasMany
-   * @type {Array}
-   * @default []
-   * @public
    */
   hasMany: Array<string> = [];
 
   /**
-   * An array of the `attributes` on a Serializer instance's Model to include in
-   * the `attributes` resource object of a serialized payload.
+   * The model attributes to serialize, camelCase as on the model; documents
+   * dasherize them (`createdAt` → `created-at`).
    *
    * ```javascript
    * class PostsSerializer extends Serializer {
-   *   attributes = [
-   *     'body',
-   *     'title'
-   *   ];
+   *   attributes = ['title', 'body', 'createdAt'];
    * }
    * ```
-   *
-   * @property attributes
-   * @type {Array}
-   * @default []
-   * @public
    */
   attributes: Array<string> = [];
 
@@ -455,20 +129,13 @@ class Serializer<T extends Model> {
    * one namespace that formats this type with this Serializer (the related
    * type's resource routing `index`, this type's routing `show`), or the
    * application refuses to boot.
-   *
-   * @property linksOnly
-   * @type {Array}
-   * @default []
-   * @public
    */
   linksOnly: Array<string> = [];
 
   /**
    * The resolved Model that a Serializer instance represents.
    *
-   * @property model
-   * @type {Model}
-   * @private
+   * @internal
    */
   declare model: ModelClass<T>;
 
@@ -476,18 +143,14 @@ class Serializer<T extends Model> {
    * A reference to the root Serializer for the namespace that a Serializer
    * instance is a member of.
    *
-   * @property parent
-   * @type {?Serializer}
-   * @private
+   * @internal
    */
   declare parent: Serializer<Model> | null;
 
   /**
    * The namespace that a Serializer instance is a member of.
    *
-   * @property namespace
-   * @type {String}
-   * @private
+   * @internal
    */
   declare namespace: string;
 
@@ -497,9 +160,7 @@ class Serializer<T extends Model> {
    * `serializerFor()` to serialize related resources in this Serializer's
    * namespace.
    *
-   * @property serializers
-   * @type {Map}
-   * @private
+   * @internal
    */
   declare serializers?: Bundle$Namespace<Serializer<Model>>;
 
@@ -518,53 +179,53 @@ class Serializer<T extends Model> {
    * [JSON API](http://jsonapi.org) document object.
    *
    *
-   * @param {Object} options - An options object used for building the
+   * @param options - An options object used for building the
    * returned [JSON API](http://jsonapi.org) document object.
    *
-   * @param {Model|Array} options.data - The Model instance or array of
+   * @param options.data - The Model instance or array of
    * Model instances to transform into the returned [JSON API](
    * http://jsonapi.org) document object.
    *
-   * @param {Object} options.links - An object containing links to include in
+   * @param options.links - An object containing links to include in
    * the top level links object of the returned [JSON API](http://jsonapi.org)
    * document object.
    *
-   * @param {String} options.domain - A string used to build links included in
+   * @param options.domain - A string used to build links included in
    * the resource and relationship objects in the returned [JSON API](
    * http://jsonapi.org) document object.
    *
-   * @param {Array} options.include - An array of relationship paths (e.g.
+   * @param options.include - An array of relationship paths (e.g.
    * `'comments'` or `'comments.user'`) whose resources should be added to the
    * top level included object of the returned [JSON API](http://jsonapi.org)
    * document object. Intermediate resources of a nested path are included too.
    *
-   * @param {Object} options.fields - The request's sparse fieldsets, keyed by
+   * @param options.fields - The request's sparse fieldsets, keyed by
    * type. Each narrows the attributes and relationships of every resource of
    * its type in the document; primary data was already loaded with its own.
    *
-   * @param {Scope} options.scope - The visibility rules of the request. Every
+   * @param options.scope - The visibility rules of the request. Every
    * related record loaded for the document — its linkage and `included` — is
    * narrowed by them; primary data was already loaded through them.
    *
-   * @param {Object} options.meta - Top level meta information of the returned
+   * @param options.meta - Top level meta information of the returned
    * document (`{ total }` for a page of a collection), if any.
    *
-   * @param {String} options.namespace - The namespace of the request, i.e. of
+   * @param options.namespace - The namespace of the request, i.e. of
    * the Controller handling it. Every link in the document is built in it, and
    * included resources are serialized by their Serializer in it (falling back
    * to the root). Defaults to this Serializer's namespace — which is the root
    * one when a namespaced Controller has no Serializer of its own, so the
    * Controller passes its namespace explicitly.
    *
-   * @param {Function} options.routed - Whether the application serves a path
+   * @param options.routed - Whether the application serves a path
    * (`/posts/:dynamic/relationships/user`). A relationship is only given the
    * links of the endpoints it is served by, since JSON:API requires every
    * relationship `self` link to be served. Without it, none are.
    *
-   * @return {Promise} Resolves with a [JSON API](http://jsonapi.org) document
+   * @returns Resolves with a [JSON API](http://jsonapi.org) document
    * object.
    *
-   * @private
+   * @internal
    */
   async format({
     data,
@@ -668,40 +329,40 @@ class Serializer<T extends Model> {
    * batch-loaded by `loadLinkage()`, without touching the database.
    *
    *
-   * @param {Object} options - An options object used for building the returned
+   * @param options - An options object used for building the returned
    * [JSON API](http://jsonapi.org) resource object.
    *
-   * @param {Model} options.item - The Model instance to transform into the
+   * @param options.item - The Model instance to transform into the
    * returned [JSON API](http://jsonapi.org) resource object.
    *
-   * @param {Object} options.links - An object containing links to include in
+   * @param options.links - An object containing links to include in
    * the top level links object of the returned [JSON API](http://jsonapi.org)
    * resource object.
    *
-   * @param {String} options.domain - A string used to build links included in
+   * @param options.domain - A string used to build links included in
    * the top level links object or relationship links objects in the returned
    * [JSON API](http://jsonapi.org) resource object.
    *
-   * @param {Object} options.linkage - The resource linkage (related primary
+   * @param options.linkage - The resource linkage (related primary
    * keys per relationship key) to serialize relationships from.
    *
-   * @param {Object} options.fields - The request's sparse fieldsets, keyed by
+   * @param options.fields - The request's sparse fieldsets, keyed by
    * type. Only the one for this resource's type applies.
    *
-   * @param {String} options.namespace - The namespace to build links in.
+   * @param options.namespace - The namespace to build links in.
    * Defaults to this Serializer's; included resources pass the namespace of
    * the request, so every link in a document points into the same namespace.
    *
-   * @param {Function} options.routed - Whether the application serves a path;
+   * @param options.routed - Whether the application serves a path;
    * see `format()`.
    *
-   * @param {Set} options.linksOnly - The relationships to serialize without
+   * @param options.linksOnly - The relationships to serialize without
    * resource linkage; see `linksOnlyFor()`.
    *
-   * @return {Promise} Resolves with a [JSON API](http://jsonapi.org) resource
+   * @returns Resolves with a [JSON API](http://jsonapi.org) resource
    * object.
    *
-   * @private
+   * @internal
    */
   async formatOne({
     item,
@@ -784,7 +445,7 @@ class Serializer<T extends Model> {
    * responds with: the relationship of `item` named `name` as resource
    * linkage, narrowed by `scope` like any other linkage, and its links.
    *
-   * @private
+   * @internal
    */
   async formatRelationship({
     item,
@@ -830,7 +491,7 @@ class Serializer<T extends Model> {
    * there (an included resource must be linked from the document) and with a
    * related endpoint in `namespace` to load them from.
    *
-   * @private
+   * @internal
    */
   linksOnlyFor(
     tree: IncludeTree,
@@ -859,7 +520,7 @@ class Serializer<T extends Model> {
    * `related` link: that link must not change when the relationship's content
    * does.
    *
-   * @private
+   * @internal
    */
   relationshipLinksFor({
     id,
@@ -898,7 +559,7 @@ class Serializer<T extends Model> {
    * to-one relationship and an array of them for a to-many one. Its links
    * come from `relationshipLinksFor()`.
    *
-   * @private
+   * @internal
    */
   formatLinkage(
     type: string | undefined,
@@ -932,7 +593,7 @@ class Serializer<T extends Model> {
    * is one and `CommentsSerializer` otherwise. The relationships of every level
    * are batch-loaded with one query per relationship, not one per record.
    *
-   * @private
+   * @internal
    */
   async addIncluded({
     model,
@@ -1021,7 +682,7 @@ class Serializer<T extends Model> {
    * `names`, those the parent's Serializer exposes, are followed. The tree is
    * walked in request order, so `included` is deterministic.
    *
-   * @private
+   * @internal
    */
   async includeRelated({
     model,
@@ -1096,7 +757,7 @@ class Serializer<T extends Model> {
    * Serializer in `namespace` declares, narrowed to the request's
    * `fields[type]` when there is one — possibly to none.
    *
-   * @private
+   * @internal
    */
   attributesFor(
     model: ModelClass,
@@ -1125,7 +786,7 @@ class Serializer<T extends Model> {
    * namespace is the root one whenever it is a namespaced Controller's
    * fallback.
    *
-   * @private
+   * @internal
    */
   serializerFor(
     model: ModelClass,
@@ -1146,9 +807,7 @@ class Serializer<T extends Model> {
     return model.serializer;
   }
 
-  /**
-   * @private
-   */
+  /** @internal */
   linkFor(
     domain: string,
     type: string,
@@ -1161,23 +820,19 @@ class Serializer<T extends Model> {
   /**
    * The path of the resource `type`/`id` in `namespace`.
    *
-   * @private
+   * @internal
    */
   pathFor(type: string, id: string, namespace: string = this.namespace) {
     return namespace ? `/${namespace}/${type}/${id}` : `/${type}/${id}`;
   }
 }
 
-/**
- * @private
- */
+/** @internal */
 function notRouted(): boolean {
   return false;
 }
 
-/**
- * @private
- */
+/** @internal */
 function resourceKey({ id, type }: { id: string; type: string }): string {
   return `${type}:${id}`;
 }
@@ -1187,7 +842,7 @@ function resourceKey({ id, type }: { id: string; type: string }): string {
  * type's fieldset keeps (all of them without one), and those `include`
  * follows — which may be left out of the fieldset and still be included.
  *
- * @private
+ * @internal
  */
 function linkedNames(
   names: Array<string>,

@@ -20,9 +20,7 @@ export type DefinitionContext = {
   [key: string]: (...args: Array<any>) => unknown;
 };
 
-/**
- * @private
- */
+/** @internal */
 export function contextFor(build: Router$DefinitionBuilder<Router$Namespace>) {
   return {
     create(namespace: Router$Namespace): DefinitionContext {

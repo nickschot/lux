@@ -5,9 +5,7 @@ import createDefinition from './create-definition';
 
 type DefinitionFn = (name: string, action?: string) => void;
 
-/**
- * @private
- */
+/** @internal */
 export default function createDefinitionGroup<T extends Router$Namespace>(
   type: Route$type,
   namespace: T

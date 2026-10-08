@@ -5,9 +5,7 @@ import type { Controller$builtIn } from '../../controller';
 import normalizeOnly from './utils/normalize-only';
 import type { Resource$opts, Resource$relationships } from './interfaces';
 
-/**
- * @private
- */
+/** @internal */
 class Resource extends Namespace {
   declare only: FreezeableSet<Controller$builtIn>;
 

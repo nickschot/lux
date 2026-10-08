@@ -5,7 +5,7 @@ import isObject from '../../../utils/is-object';
 /**
  * Anything exposing a `freeze` method — in practice FreezeableMap/FreezeableSet.
  *
- * @private
+ * @internal
  */
 interface Freezeable {
   freeze(deep?: boolean): unknown;
@@ -15,26 +15,20 @@ function isFreezeable(value: unknown): value is Freezeable {
   return Boolean(value) && typeof (value as Freezeable).freeze === 'function';
 }
 
-/**
- * @private
- */
+/** @internal */
 export default function freeze<T extends object>(value: T): T {
   FREEZER.add(value);
   return value;
 }
 
-/**
- * @private
- */
+/** @internal */
 export function freezeArray<T>(target: T[]): readonly T[] {
   const result = insert(new Array<T>(target.length), target);
 
   return Object.freeze(result);
 }
 
-/**
- * @private
- */
+/** @internal */
 export function freezeValue<T>(value: T): T {
   if (isFreezeable(value)) {
     return Object.freeze(value).freeze(true) as T;
@@ -45,9 +39,7 @@ export function freezeValue<T>(value: T): T {
   return value;
 }
 
-/**
- * @private
- */
+/** @internal */
 export function freezeProps<T extends object>(
   target: T,
   makePublic: boolean,
@@ -72,9 +64,7 @@ export function freezeProps<T extends object>(
   return target;
 }
 
-/**
- * @private
- */
+/** @internal */
 export function deepFreezeProps<T extends object>(
   target: T,
   makePublic: boolean,

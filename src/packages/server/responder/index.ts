@@ -4,9 +4,7 @@ import type { Request, Response } from '../index';
 import normalize from './utils/normalize';
 import hasContentType from './utils/has-content-type';
 
-/**
- * @private
- */
+/** @internal */
 export function createResponder(req: Request, res: Response) {
   return function respond(data?: unknown) {
     const normalized = normalize(data);

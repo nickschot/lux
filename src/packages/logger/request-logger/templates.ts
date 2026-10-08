@@ -3,18 +3,14 @@ import line from '../utils/line';
 
 import type { RequestLogger$templateData } from './interfaces';
 
-/**
- * @private
- */
+/** @internal */
 function countDigits(num: number) {
   const digits = Math.floor(Math.log10(num) + 1);
 
   return digits > 0 && Number.isFinite(digits) ? digits : 1;
 }
 
-/**
- * @private
- */
+/** @internal */
 function pad(startTime: number, endTime: number, duration: number) {
   const maxLength = countDigits(endTime - startTime);
 
@@ -25,7 +21,7 @@ function pad(startTime: number, endTime: number, duration: number) {
  * ` by PostsController#index`, or nothing when no route matched (it used to
  * read `by null`).
  *
- * @private
+ * @internal
  */
 function handledBy(route: RequestLogger$templateData['route']) {
   if (!route) {
@@ -37,9 +33,7 @@ function handledBy(route: RequestLogger$templateData['route']) {
   return ` by ${chalk.yellow(controller.constructor.name)}#${chalk.blue(action)}`;
 }
 
-/**
- * @private
- */
+/** @internal */
 export const debugTemplate = ({
   path,
   stats,
@@ -87,9 +81,7 @@ ${pad(
 ${(endTime - startTime).toString()} ms Actual\
 `;
 
-/**
- * @private
- */
+/** @internal */
 export const infoTemplate = ({
   path,
   route,

@@ -29,9 +29,7 @@ function shortRequestId(context?: Record<string, unknown>): string {
   return typeof id === 'string' && id ? `[${id.slice(0, 8)}]` : '';
 }
 
-/**
- * @private
- */
+/** @internal */
 export function createWriter(
   format: LogFormat,
   { timestamps = true }: { timestamps?: boolean } = {}

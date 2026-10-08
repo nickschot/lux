@@ -7,9 +7,7 @@ import validateValue from './utils/validate-value';
 import type { Parameter$opts } from './interfaces';
 import type { ParameterLike } from '../interfaces';
 
-/**
- * @private
- */
+/** @internal */
 class Parameter extends FreezeableSet<unknown> {
   declare path: string;
 

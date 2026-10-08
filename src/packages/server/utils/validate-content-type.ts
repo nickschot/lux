@@ -10,7 +10,7 @@ import {
  * with any media type parameters. A missing or different Content-Type is
  * also answered with 415, since that is the only type the server accepts.
  *
- * @private
+ * @internal
  */
 export default function validateContentType(contentType?: string): true {
   if (!contentType || !isJSONAPI(contentType)) {

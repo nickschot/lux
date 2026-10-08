@@ -1,8 +1,6 @@
 import { BUILT_IN_ACTIONS, type Controller$builtIn } from '../../../controller';
 
-/**
- * @private
- */
+/** @internal */
 export default function normalizeOnly(
   only: Array<Controller$builtIn>
 ): Array<Controller$builtIn> {

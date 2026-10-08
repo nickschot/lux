@@ -3,9 +3,7 @@ import type { Request } from '../interfaces';
 import parseRead from './utils/parse-read';
 import parseWrite from './utils/parse-write';
 
-/**
- * @private
- */
+/** @internal */
 export function parseRequest(req: Request): Promise<Record<string, unknown>> {
   switch (req.method) {
     case 'POST':

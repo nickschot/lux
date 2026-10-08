@@ -12,7 +12,7 @@ const QUALITY = /^q\s*=/i;
  * Split `value` on `delimiter`, ignoring delimiters inside quoted strings
  * (parameter values may be quoted and contain `,` or `;`).
  *
- * @private
+ * @internal
  */
 function splitUnquoted(value: string, delimiter: string): Array<string> {
   const parts: Array<string> = [];
@@ -42,7 +42,7 @@ function splitUnquoted(value: string, delimiter: string): Array<string> {
 /**
  * Parse a single media type, e.g. a `Content-Type` header value.
  *
- * @private
+ * @internal
  */
 export function parseMediaType(value: string): MediaType {
   const [type = '', ...params] = splitUnquoted(value, ';').map(part =>
@@ -61,7 +61,7 @@ export function parseMediaType(value: string): MediaType {
  * Per RFC 7231 §5.3.2 the `q` weight (and any accept-extension after it) is
  * not a media type parameter, so it is not reported in `params`.
  *
- * @private
+ * @internal
  */
 export function parseAccept(value: string): Array<MediaType> {
   return splitUnquoted(value, ',')

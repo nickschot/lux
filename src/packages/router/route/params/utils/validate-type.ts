@@ -9,7 +9,7 @@ import type { ParameterLike } from '../index';
  * The type of `value` as an error message should name it: unlike `typeof`,
  * telling arrays and dates apart from other objects.
  *
- * @private
+ * @internal
  */
 function describeType(value: unknown): string {
   if (Array.isArray(value)) {
@@ -21,9 +21,7 @@ function describeType(value: unknown): string {
   return typeof value;
 }
 
-/**
- * @private
- */
+/** @internal */
 export default function validateType(
   param: ParameterLike,
   value: unknown

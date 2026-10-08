@@ -1,8 +1,6 @@
 import { FREEZER } from '../constants';
 
-/**
- * @private
- */
+/** @internal */
 export default function isFrozen(value: unknown): boolean {
   // `WeakSet#has` returns false for non-objects rather than throwing, so this
   // keeps the original behaviour of accepting any value.

@@ -6,9 +6,7 @@ import normalizeName from './utils/normalize-name';
 import normalizePath from './utils/normalize-path';
 import type { Namespace$opts } from './interfaces';
 
-/**
- * @private
- */
+/** @internal */
 class Namespace extends FreezeableSet<Route | Router$Namespace> {
   declare name: string;
 

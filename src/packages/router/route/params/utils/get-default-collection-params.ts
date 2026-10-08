@@ -2,9 +2,7 @@ import type Controller from '../../../../controller';
 
 import getDefaultMemberParams from './get-default-member-params';
 
-/**
- * @private
- */
+/** @internal */
 function getDefaultCollectionParams(
   controller: Controller
 ): Record<string, unknown> {

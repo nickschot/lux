@@ -7,7 +7,7 @@ const PAGE_NUMBER = 'page[number]';
  * Percent-encode a query string component, leaving commas — which separate
  * list values (`include=user,comments`) and are allowed in a query — as is.
  *
- * @private
+ * @internal
  */
 function encode(value: string): string {
   return encodeURIComponent(value).replace(/%2C/gi, ',');
@@ -49,7 +49,7 @@ function createLinkTemplate({
  * requested — even past the last one, where `prev`/`next` are `null` — and
  * every link keeps the rest of the request's query string as is.
  *
- * @private
+ * @internal
  */
 export default function createPageLinks(opts: {
   total: number;

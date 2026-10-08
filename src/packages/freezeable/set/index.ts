@@ -1,9 +1,7 @@
 import freeze from '../utils/freeze';
 import isFrozen from '../utils/is-frozen';
 
-/**
- * @private
- */
+/** @internal */
 class FreezeableSet<T> extends Set<T> {
   override add(value: T): this {
     if (!this.isFrozen()) {

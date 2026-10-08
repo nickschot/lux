@@ -1,7 +1,7 @@
 /**
  * The status an error is answered with: its own `statusCode`, or `500`.
  *
- * @private
+ * @internal
  */
 export default function statusForError(err: unknown): number {
   const { statusCode } = (err || {}) as { statusCode?: unknown };

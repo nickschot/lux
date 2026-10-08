@@ -10,7 +10,7 @@ const ISO_8601 =
  * primary key takes the number a string of digits spells; anything else is
  * returned as is (a number still passes, for lenient clients).
  *
- * @private
+ * @internal
  */
 export function parseId(type: string | undefined) {
   return (value: unknown): unknown => {
@@ -27,7 +27,7 @@ export function parseId(type: string | undefined) {
  * one. JSON has no dates, so a date column takes an ISO 8601 string; every
  * other value is typed by JSON already and is validated as sent.
  *
- * @private
+ * @internal
  */
 export function parserFor(
   type: string | undefined

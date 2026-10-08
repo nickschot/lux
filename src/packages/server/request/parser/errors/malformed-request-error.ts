@@ -1,9 +1,7 @@
 import createServerError from '../../../utils/create-server-error';
 import { line } from '../../../../logger';
 
-/**
- * @private
- */
+/** @internal */
 class MalformedRequestError extends SyntaxError {
   constructor() {
     super(line`

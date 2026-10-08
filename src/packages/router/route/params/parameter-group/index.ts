@@ -9,9 +9,7 @@ import type { ParameterLike, ParameterLike$opts } from '../index';
 
 import missingParams from './utils/missing-params';
 
-/**
- * @private
- */
+/** @internal */
 class ParameterGroup extends FreezeableMap<string, ParameterLike> {
   declare type: string;
 

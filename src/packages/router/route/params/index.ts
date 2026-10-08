@@ -12,9 +12,7 @@ import {
   getCustomParams
 } from './utils/get-query-params';
 
-/**
- * @private
- */
+/** @internal */
 export function paramsFor({
   type,
   method,
@@ -55,9 +53,7 @@ export function paramsFor({
   });
 }
 
-/**
- * @private
- */
+/** @internal */
 export function defaultParamsFor({
   type,
   controller

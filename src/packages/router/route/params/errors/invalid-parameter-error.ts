@@ -2,9 +2,7 @@ import createServerError from '../../../../server/utils/create-server-error';
 import sourceFor from '../../../../server/utils/source-for';
 import type { Server$ErrorSource } from '../../../../server';
 
-/**
- * @private
- */
+/** @internal */
 class InvalidParameterError extends TypeError {
   declare source: Server$ErrorSource;
 

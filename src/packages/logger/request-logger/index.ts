@@ -4,9 +4,7 @@ import logText from './utils/log-text';
 import logJSON from './utils/log-json';
 import type { Logger$RequestLogger } from './interfaces';
 
-/**
- * @private
- */
+/** @internal */
 export function createRequestLogger(logger: Logger): Logger$RequestLogger {
   return function request(req, res, { startTime }: { startTime: number }) {
     if (logger.format === 'json') {

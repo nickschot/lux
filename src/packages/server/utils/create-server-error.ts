@@ -7,9 +7,7 @@ import type { Server$Error } from '../interfaces';
 
 type Constructor<T> = new (...args: Array<any>) => T;
 
-/**
- * @private
- */
+/** @internal */
 export default function createServerError<T extends object>(
   Target: Constructor<T>,
   statusCode: number

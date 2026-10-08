@@ -1,8 +1,6 @@
 import type { Request } from '../interfaces';
 
-/**
- * @private
- */
+/** @internal */
 export default function getDomain({
   headers,
 

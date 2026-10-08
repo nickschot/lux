@@ -9,9 +9,7 @@ import entries from '../../../utils/entries';
 
 import type { Request, Request$opts } from './interfaces';
 
-/**
- * @private
- */
+/** @internal */
 export function createRequest(
   req: any,
   { logger, router }: Request$opts

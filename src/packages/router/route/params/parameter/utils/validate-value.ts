@@ -2,9 +2,7 @@ import isNull from '../../../../../../utils/is-null';
 import { ParameterValueError, ResourceMismatchError } from '../../errors';
 import type Parameter from '../index';
 
-/**
- * @private
- */
+/** @internal */
 function validateOne<V>(param: Parameter, value: V): V {
   if (!param.required && isNull(value)) {
     return value;
@@ -26,9 +24,7 @@ function validateOne<V>(param: Parameter, value: V): V {
   return value;
 }
 
-/**
- * @private
- */
+/** @internal */
 export default function validateValue<V>(param: Parameter, value: V): V {
   if (Array.isArray(value)) {
     if (param.sanitize) {

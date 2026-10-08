@@ -2,9 +2,7 @@ import { MIME_TYPE } from '../constants';
 import { line } from '../../logger';
 import createServerError from '../../server/utils/create-server-error';
 
-/**
- * @private
- */
+/** @internal */
 class NotAcceptableError extends TypeError {
   constructor(accept: string) {
     super(line`

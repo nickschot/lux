@@ -25,9 +25,7 @@
   },
   "intentionallyNotExported": [
     "Request$url",
-    "Response$stat",
-    "Route",
-    "Router"
+    "Route"
   ],
   "validation": {
     "notExported": true,

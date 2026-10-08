@@ -1,9 +1,7 @@
 import Parameter from '../parameter';
 import type { ParameterLike } from '../interfaces';
 
-/**
- * @private
- */
+/** @internal */
 export default function getURLParams(
   dynamicSegments: Array<string>
 ): Array<[string, ParameterLike]> {

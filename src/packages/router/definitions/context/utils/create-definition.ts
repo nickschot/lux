@@ -7,7 +7,7 @@ import type { Router$Namespace, Route$opts, Route$type } from '../../../index';
  * Add the route `opts` describes to `namespace`, along with a `HEAD` route
  * for a `GET` and an `OPTIONS` route for its path.
  *
- * @private
+ * @internal
  */
 export function addRoute(namespace: Router$Namespace, opts: Route$opts) {
   namespace.add(new Route(opts));
@@ -27,9 +27,7 @@ export function addRoute(namespace: Router$Namespace, opts: Route$opts) {
   );
 }
 
-/**
- * @private
- */
+/** @internal */
 export default function createDefinition({
   type,
   method,

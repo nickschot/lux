@@ -4,9 +4,7 @@ import sourceFor from '../../../../server/utils/source-for';
 import type { Server$ErrorSource } from '../../../../server';
 import type Parameter from '../parameter';
 
-/**
- * @private
- */
+/** @internal */
 class ParameterRangeError extends RangeError {
   declare source: Server$ErrorSource;
 

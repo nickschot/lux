@@ -6,7 +6,7 @@ import type { Server$ErrorSource } from '../../../../server';
  * JSON:API 1.0: "A server MUST return 403 Forbidden in response to an
  * unsupported request to create a resource with a client-generated ID."
  *
- * @private
+ * @internal
  */
 class ClientGeneratedIdError extends TypeError {
   declare source: Server$ErrorSource;

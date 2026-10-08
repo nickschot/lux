@@ -1,9 +1,7 @@
 import { ParameterRangeError } from '../../errors';
 import type Parameter from '../index';
 
-/**
- * @private
- */
+/** @internal */
 export default function validateRange(param: Parameter, value: unknown): true {
   const { min = -Infinity, max = Infinity } = param;
 

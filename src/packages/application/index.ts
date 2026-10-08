@@ -13,96 +13,80 @@ import initialize from './initialize';
 import type { ApplicationOptions } from './interfaces';
 
 /**
- * @class Application
- * @public
+ * A running Lumen app: its models, controllers, serializers, routes and HTTP
+ * server. `app/index.js` exports a subclass, usually empty:
+ *
+ * ```javascript
+ * import { Application } from 'lumen-framework';
+ *
+ * class Blog extends Application {}
+ *
+ * export default Blog;
+ * ```
+ *
+ * `lumen serve` builds the app and constructs it; constructing one resolves
+ * once the database is connected, every module is loaded and the server is
+ * listening.
  */
 class Application {
-  /**
-   * The path of `Application` instance.
-   *
-   * @property path
-   * @type {String}
-   * @public
-   */
+  /** The app's root directory. */
   declare path: string;
 
-  /**
-   * The port that an `Application` instance is listening for incomming HTTP
-   * requests.
-   *
-   * @property port
-   * @type {Number}
-   * @public
-   */
+  /** The port the app listens on. */
   declare port: number;
 
   /**
    * A reference to the `Database` instance.
    *
-   * @property store
-   * @type {Database}
-   * @private
+   * @internal
    */
   declare store: Database;
 
   /**
    * A reference to the `Logger` instance.
    *
-   * @property logger
-   * @type {Logger}
-   * @private
+   * @internal
    */
   declare logger: Logger;
 
   /**
    * A reference to the `Router` instance.
    *
-   * @property router
-   * @type {Router}
-   * @private
+   * @internal
    */
   declare router: Router;
 
   /**
    * A reference to the `Server` instance.
    *
-   * @property server
-   * @type {Server}
-   * @private
+   * @internal
    */
   declare server: Server;
 
   /**
    * A map containing each `Model` class.
    *
-   * @property models
-   * @type {Map}
-   * @private
+   * @internal
    */
   declare models: FreezeableMap<string, ModelClass>;
 
   /**
    * A map containing each `Controller` instance.
    *
-   * @property controllers
-   * @type {Map}
-   * @private
+   * @internal
    */
   declare controllers: FreezeableMap<string, Controller>;
 
   /**
    * A map containing each `Serializer` instance.
    *
-   * @property serializers
-   * @type {Map}
-   * @private
+   * @internal
    */
   declare serializers: FreezeableMap<string, Serializer<Model>>;
 
   /**
-   * @param {Object} opts
-   * @return {Promise}
-   * @public
+   * Boot the app. Resolves with the ready instance, though TypeScript types
+   * it as the instance itself; `await` it.
    */
   constructor(opts: ApplicationOptions) {
     // Applications construct asynchronously (see Database/Watcher); `new

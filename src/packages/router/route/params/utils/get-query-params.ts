@@ -7,9 +7,7 @@ import {
   enumerateIncludeTypes
 } from '../../../../serializer/utils/include-tree';
 
-/**
- * @private
- */
+/** @internal */
 function getPageParam({ maxPerPage }: Controller): [string, ParameterLike] {
   return [
     'page',
@@ -36,9 +34,7 @@ function getPageParam({ maxPerPage }: Controller): [string, ParameterLike] {
   ];
 }
 
-/**
- * @private
- */
+/** @internal */
 function getSortParam({ sort }: Controller): [string, ParameterLike] {
   return [
     'sort',
@@ -51,9 +47,7 @@ function getSortParam({ sort }: Controller): [string, ParameterLike] {
   ];
 }
 
-/**
- * @private
- */
+/** @internal */
 function getFilterParam({ filter }: Controller): [string, ParameterLike] {
   return [
     'filter',
@@ -77,7 +71,7 @@ function getFilterParam({ filter }: Controller): [string, ParameterLike] {
  * Unknown types are ignored (a client may send the same fieldsets everywhere);
  * an unknown field of a known type is a 400.
  *
- * @private
+ * @internal
  */
 function getFieldsParam(controller: Controller): [string, ParameterLike] {
   const { model, serializer, maxIncludeDepth } = controller;
@@ -110,9 +104,7 @@ function getFieldsParam(controller: Controller): [string, ParameterLike] {
   ];
 }
 
-/**
- * @private
- */
+/** @internal */
 function getIncludeParam(controller: Controller): [string, ParameterLike] {
   const { model, maxIncludeDepth, serializer } = controller;
   const { hasOne, hasMany } = serializer;
@@ -142,9 +134,7 @@ function getIncludeParam(controller: Controller): [string, ParameterLike] {
   ];
 }
 
-/**
- * @private
- */
+/** @internal */
 export function getCustomParams({
   query
 }: Controller): Array<[string, ParameterLike]> {
@@ -156,9 +146,7 @@ export function getCustomParams({
   ]);
 }
 
-/**
- * @private
- */
+/** @internal */
 export function getMemberQueryParams(
   controller: Controller
 ): Array<[string, ParameterLike]> {
@@ -173,9 +161,7 @@ export function getMemberQueryParams(
   return getCustomParams(controller);
 }
 
-/**
- * @private
- */
+/** @internal */
 export function getCollectionQueryParams(
   controller: Controller
 ): Array<[string, ParameterLike]> {

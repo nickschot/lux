@@ -1,8 +1,6 @@
 import type { Server$Error } from '../interfaces';
 
-/**
- * @private
- */
+/** @internal */
 function isServerError(error: unknown): error is Server$Error {
   return (
     error instanceof Error &&
@@ -16,7 +14,7 @@ function isServerError(error: unknown): error is Server$Error {
  * multiple problems for a single request, the most generally applicable HTTP
  * error code SHOULD be used" — `400` for client errors, `500` otherwise.
  *
- * @private
+ * @internal
  */
 function statusFor(errors: Array<Server$Error>): number {
   const codes = new Set(errors.map(({ statusCode }) => statusCode));
@@ -32,7 +30,7 @@ function statusFor(errors: Array<Server$Error>): number {
  * Several problems with one request, reported together: each becomes its own
  * error object in the response's `errors`.
  *
- * @private
+ * @internal
  */
 class ErrorList extends Error implements Server$Error {
   declare errors: Array<Server$Error>;
@@ -63,7 +61,7 @@ class ErrorList extends Error implements Server$Error {
  * `statusCode`) they throw instead of stopping at the first; anything else
  * is a bug and is rethrown at once. Throws the collected errors, if any.
  *
- * @private
+ * @internal
  */
 export function collectErrors(
   steps: Array<() => void>,

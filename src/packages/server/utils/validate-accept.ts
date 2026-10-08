@@ -5,7 +5,7 @@ import { MIME_TYPE, parseAccept, NotAcceptableError } from '../../jsonapi';
  * type and *all* instances of it are modified with media type parameters.
  * An Accept header without the JSON:API media type is left alone.
  *
- * @private
+ * @internal
  */
 export default function validateAccept(accept?: string): true {
   if (accept) {

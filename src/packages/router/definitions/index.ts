@@ -16,7 +16,7 @@ import type { DefinitionContext } from './context';
 /**
  * The relationships of `controller`'s model its Serializer exposes.
  *
- * @private
+ * @internal
  */
 function relationshipsFor(controller: Controller): Array<string> {
   const { model, serializer, hasModel, hasSerializer } = controller;
@@ -38,7 +38,7 @@ function relationshipsFor(controller: Controller): Array<string> {
  * which `?include=` in this namespace does not use. It needs a model and a
  * Serializer.
  *
- * @private
+ * @internal
  */
 function relatedControllerFor(
   controller: Controller,
@@ -65,7 +65,7 @@ function relatedControllerFor(
  * related type has a controller, a related endpoint (`/posts/1/comments`).
  * Naming a relationship the Serializer does not expose is a boot error.
  *
- * @private
+ * @internal
  */
 function defineRelationships(namespace: Resource): void {
   const { controller, controllers, path, relationships } = namespace;
@@ -117,9 +117,7 @@ function defineRelationships(namespace: Resource): void {
   });
 }
 
-/**
- * @private
- */
+/** @internal */
 export function build<T extends Router$Namespace>(
   builder: (() => void) | undefined,
   namespace: T
@@ -166,9 +164,7 @@ export function build<T extends Router$Namespace>(
   return namespace;
 }
 
-/**
- * @private
- */
+/** @internal */
 export function define<T extends Router$Namespace>(router: Router, parent: T) {
   parent.forEach(child => {
     if (child instanceof Route) {

@@ -5,7 +5,7 @@ import type Serializer from '../index';
  * A parsed `include` parameter: each relationship name maps to the tree of
  * relationships to include from the records it points to.
  *
- * @private
+ * @internal
  */
 export type IncludeTree = Map<string, IncludeTree>;
 
@@ -15,7 +15,7 @@ export type IncludeTree = Map<string, IncludeTree>;
  * requires the intermediate resources of a multi-part path to be included
  * along with its leaves (`comments.user` includes the comments too).
  *
- * @private
+ * @internal
  */
 export function createIncludeTree(paths: Array<string> = []): IncludeTree {
   const tree: IncludeTree = new Map();
@@ -47,7 +47,7 @@ export function createIncludeTree(paths: Array<string> = []): IncludeTree {
  * fallback to the root). Used to build the allowed values of the `include`
  * parameter.
  *
- * @private
+ * @internal
  */
 export function enumerateIncludePaths(
   model: ModelClass,
@@ -96,7 +96,7 @@ export function enumerateIncludePaths(
  * through `include` from it down to `depth` levels — direct relationships
  * always, as with `include`. Used to build the allowed `fields[TYPE]`.
  *
- * @private
+ * @internal
  */
 export function enumerateIncludeTypes(
   model: ModelClass,

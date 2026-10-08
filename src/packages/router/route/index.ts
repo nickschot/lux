@@ -16,9 +16,7 @@ import type { Action } from './action';
 import type { ParameterGroup } from './params';
 import type { Route$opts } from './interfaces';
 
-/**
- * @private
- */
+/** @internal */
 function isToMany(controller: Controller, relationship?: string): boolean {
   return (
     Boolean(relationship) &&
@@ -26,9 +24,7 @@ function isToMany(controller: Controller, relationship?: string): boolean {
   );
 }
 
-/**
- * @private
- */
+/** @internal */
 class Route extends FreezeableSet<Action<unknown>> {
   declare type: string;
 

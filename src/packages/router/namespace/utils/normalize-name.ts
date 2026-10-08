@@ -1,6 +1,4 @@
-/**
- * @private
- */
+/** @internal */
 export default function normalizeName(str: string): string {
   let name = str;
 
