@@ -22,479 +22,167 @@ import type {
 } from './interfaces';
 
 /**
- * ## Overview
- *
- * The Controller class is responsible for taking in requests from the outside
- * world and returning the appropriate response.
- *
- * Think of a Controller as a server at a restaurant. A client makes a request
- * to an application, that request is routed to the appropriate Controller and
- * then the Controller interprets the request and returns data relative to what
- * the client has request.
- *
- * #### Actions
- *
- * Controller actions are functions that call on a Controller in response to an
- * incoming HTTP request. The job of Controller actions are to return the data
- * that the Lumen Application will respond with.
- *
- * There is no special API for Controller actions. They are simply functions
- * that return a value. If an action returns a Query or Promise the resolved
- * value will be used rather than the immediate return value of the action.
- *
- * Below you will find a table showing the different types of responses you can
- * get from different action return values. Keep in mind, Lumen is agnostic to
- * whether or not the value is returned synchronously or resolved from a
- * Promise.
- *
- * | Return/Resolved Value        | Response                                   |
- * |------------------------------|--------------------------------------------|
- * | Array<Model> or Model        | Serialized JSON String                     |
- * | Array or Object Literal      | JSON String                                |
- * | String Literal               | Plain Text                                 |
- * | Number Literal               | [HTTP Status Code](https://goo.gl/T2lMc7)  |
- * | true                         | [204 No Content](https://goo.gl/GxKoqz)    |
- * | false                        | [401 Unauthorized](https://goo.gl/60QqCW)  |
- *
- * **Built-In Actions**
- *
- * Built-in actions refer to Controller actions that you get for free when
- * extending the Controller class (show, index, create, update, destroy). These
- * actions are highly optimized to load only the attributes and relationships
- * that are defined in the resolved Serializer for a Controller.
- *
- * If applicable, built-in actions support the following features described in
- * the [JSON API specification](http://jsonapi.org/):
- *
- * - [Sorting](http://jsonapi.org/format/#fetching-sorting)
- * - [Filtering](http://jsonapi.org/format/#fetching-filtering)
- * - [Pagination](http://jsonapi.org/format/#fetching-pagination)
- * - [Sparse Fieldsets](http://jsonapi.org/format/#fetching-sparse-fieldsets)
- * - [Including Related Resources](http://jsonapi.org/format/#fetching-includes)
- *
- * **Extending Built-In Actions**
- *
- * Considering the amount of functionality built-in actions provide, you will
- * rarely need to override the default behavior of a built-in action. In the
- * event that you do need to override a built-in action, you have the ability to
- * opt back into the built-in logic by calling the super class.
- *
- * Read actions such as index and show return a Query which allows us to chain
- * methods to the super call. In the following example  we will extend the
- * default behavior of the index action to only match records that meet an
- * additional hard-coded set of conditions. We will still be able to use all of
- * the functionality that the built-in index action provides.
+ * The base class of an app's controllers. A controller handles the requests
+ * for one resource; its built-in actions — `index`, `show`, `create`,
+ * `update`, `destroy`, and the relationship endpoints' `showRelationship` and
+ * `showRelated` — read and write records with sorting, filtering, paging,
+ * `include` and sparse fieldsets, so a controller is mostly configuration:
  *
  * ```javascript
  * // app/controllers/posts.js
  * import { Controller } from 'lumen-framework';
  *
  * class PostsController extends Controller {
- *    index(request, response) {
- *      return super.index(request, response).where({
- *        isPublic: true
- *      });
- *    }
- *  }
- *
- *  export default PostsController;
- * ```
- *
- * A `where` like this only narrows the index: the excluded posts are still
- * served by `show` and reachable through relationships and `include`. To hide
- * records from every request, declare a visibility rule instead (see
- * `visibility`).
- *
- * **Custom Actions**
- *
- * Sometimes it is necessary to add a custom action to a Controller. Lumen allows
- * you to do so by adding an instance method to a Controller. In the following
- * example you will see how to add a custom action with the name `check` to a
- * Controller. We are implementing this action to use as a health check for the
- * application so we want to return the `Number` literal `204`.
- *
- * ```javascript
- * // app/controllers/health.js
- * import { Controller } from 'lumen-framework';
- *
- * class HealthController extends Controller {
- *   async check() {
- *     return 204;
- *   }
- * }
- *
- * export default HealthController;
- * ```
- *
- * The example above is nice but we can make the code a bit more concise with an
- * Arrow `Function`.
- *
- * ```javascript
- * // app/controllers/health.js
- * import { Controller } from 'lumen-framework';
- *
- * class HealthController extends Controller {
- *   check = async () => 204;
- * }
- *
- * export default HealthController;
- * ```
- *
- * Using an Arrow Function instead of a traditional method Controller can be
- * useful when immediately returning a value. However, there are a few downsides
- * to using an Arrow `Function` for a Controller action, such as not being able
- * to call the `super class`. This can be an issue if you are looking to extend
- * a built-in action.
- *
- * Another use case for a custom action could be to return a specific scope of
- * data from a `Model`. Let's implement
- * a custom `drafts` route on a `PostsController`.
- *
- * ```javascript
- * // app/controllers/posts.js
- * import { Controller } from 'lumen-framework';
- * import Post from 'app/models/posts';
- *
- * class PostsController extends Controller {
- *   drafts() {
- *     return Post.where({
- *       isPublic: false
- *     });
- *   }
+ *   params = ['title', 'body', 'user'];
+ *   sort = ['title', 'createdAt'];
+ *   maxPerPage = 50;
  * }
  *
  * export default PostsController;
  * ```
  *
- * While the example above works, we would have to implement all the custom
- * logic that we get for free with built-in actions. Since we aren't getting too
- * crazy with our custom action we can likely just call the `index` action and
- * chain a `.where()` to it.
+ * Override a built-in action, or add a custom one, with a method that takes
+ * `(request, response)`. `index` and `show` return a {@link Query}, so an
+ * override can narrow it and keep everything else:
  *
  * ```javascript
- * // app/controllers/posts.js
- * import { Controller } from 'lumen-framework';
- *
  * class PostsController extends Controller {
- *   drafts(request, response) {
- *     return this.index(request, response).where({
- *       isPublic: false
- *     });
- *   }
- * }
- *
- * export default PostsController;
- * ```
- *
- * Now we can sort, filter, and paginate our custom `drafts` route!
- *
- * #### Middleware
- *
- * Middleware can be a very powerful tool in many Node.js server frameworks. Lumen
- * is no exception. Middleware can be used to execute logic before or after a
- * Controller action is executed.
- *
- * There are two hooks where you can execute middleware functions,
- * `beforeAction` and `afterAction`. Functions added to the `beforeAction` hook
- * will execute before the Controller action and functions added to the
- * `afterAction` hook will be executed after the `Controller` action.
- *
- * **Context**
- *
- * Middleware functions will be bound to the Controller they are added to upon
- * the start of an Application.
- *
- * Due to the lexical binding of arrow functions, if you need to use the `this`
- * keyword within a middleware function, declare the middleware function using
- * the `function` keyword and not as an arrow function.
- *
- * **Scoping Middleware**
- *
- * Middleware is scoped by Controller and includes a parent Controller's
- * middleware recursively until the parent Controller is the root
- * `ApplicationController`. This allows you to implement custom logic that can
- * be executed for resources, namespaces, or an entire Application. The parent
- * is the namespace's `ApplicationController`, whatever class a controller
- * extends. A namespace's `ApplicationController` that extends its parent
- * namespace's (`AdminApplicationController extends ApplicationController`)
- * already has the parent's hooks as inherited class fields, so they are not
- * added again: its `beforeAction`/`afterAction` arrays are the namespace's,
- * extended or replaced like any subclass's.
- *
- * Let's say we want to require authentication for every route in our
- * Application. All we have to do is move our authentication middleware function
- * from the example above to the `ApplicationController`.
- *
- * ```javascript
- * // app/controllers/application.js
- * import { Controller } from 'lumen-framework';
- *
- * class ApplicationController extends Controller {
- *   beforeAction = [
- *     async function authenticate(request) {
- *       if (!request.currentUser) {
- *         // 401 Unauthorized
- *         return false;
- *       }
- *     }
- *   ];
- * }
- *
- * export default ApplicationController;
- * ```
- *
- * **Execuation Order**
- *
- * Understanding the execution order of middleware functions and a `Controller`
- * action is essential to productivity with Lumen. Depending on what you use case
- * is, you may want your function to execute at different times in the
- * `request` / `response` cycle.
- *
- * 1. Parent `Controller` `beforeAction` hooks
- * 2. `Controller` `beforeAction` hooks
- * 3. `Controller` Action
- * 4. `Controller` `afterAction` hooks
- * 5. Parent `Controller` `afterAction` hooks
- *
- * **Modules**
- *
- * It is considered a best practice to define your middleware functions in
- * separate file and export them for use throughout an Application. Typically
- * this is done within an `app/middleware` directory.
- *
- * ```javascript
- * // app/middleware/authenticate.js
- * export default async function authenticate(request) {
- *   if (!request.currentUser) {
- *     // 401 Unauthorized
- *     return false;
+ *   index(request, response) {
+ *     return super.index(request, response).where({ isPublic: true });
  *   }
  * }
  * ```
  *
- * This keeps the Controller code clean, easier to read, and easier to modify.
+ * What an action returns becomes the response: a query, record or array of
+ * records is serialized as a JSON:API document; another object or array is
+ * sent as JSON, a string as the body; a number is that status, `true` a
+ * `204 No Content`, `false` a `401 Unauthorized`, and `undefined` a
+ * `404 Not Found`.
  *
- * ```javascript
- * // app/controllers/application.js
- * import { Controller } from 'lumen-framework';
- * import authenticate from 'app/middleware/authenticate';
- *
- * class ApplicationController extends Controller {
- *   beforeAction = [
- *     authenticate
- *   ];
- * }
- *
- * export default ApplicationController;
- * ```
- *
- * @class Controller
- * @public
+ * A namespace's `ApplicationController` (`app/controllers/application.js`,
+ * `app/controllers/admin/application.js`) holds what applies to the whole
+ * namespace: its hooks run around every action in it, and it declares the
+ * {@link Controller.visibility} rules and the settings
+ * `rejectUnlistedAttributes`, `rejectUnlistedRelationships` and
+ * `maxIncludeDepth` for every controller in it. See the
+ * [controllers guide](https://github.com/nickschot/lux/blob/main/docs/guides/controllers.md).
  */
 class Controller {
   /**
-   * An array of custom query parameter keys that are allowed to reach a
-   * Controller instance from an incoming `HTTP` request.
-   *
-   * For security reasons, query parameters passed to Controller actions from an
-   * incoming request other than sort, filter, and page must have their key
-   * whitelisted.
+   * Query parameters an action may read beyond the JSON:API ones (`sort`,
+   * `filter`, `page`, `include`, `fields`). Any other query parameter is a
+   * `400 Bad Request`. A listed one arrives in `request.params`:
    *
    * ```javascript
-   * class UsersController extends Controller {
-   *   // Allow the following custom query parameters to be used for this
-   *   // Controller's actions.
-   *   query = [
-   *     'cache'
-   *   ];
+   * class PostsController extends Controller {
+   *   query = ['search'];
+   *
+   *   index(request, response) {
+   *     const { search } = request.params;
+   *     const posts = super.index(request, response);
+   *
+   *     return search ? posts.where({ body: search }) : posts;
+   *   }
    * }
    * ```
    *
-   * @property query
-   * @type {Array}
-   * @default []
-   * @public
+   * Name them with a character other than a–z (`search-term`, `searchTerm`):
+   * JSON:API reserves all-lowercase names for itself, and Lumen warns about
+   * them at boot.
    */
   query: Array<string> = [];
 
   /**
-   * An array of sort query parameter values that are allowed to reach a
-   * Controller instance from an incoming `HTTP` request.
-   *
-   * If you do not override this property all of the attributes specified in the
-   * Serializer that represents a Controller's resource. If the Serializer
-   * cannot be resolved, this property will default to an empty array.
-   *
-   * @property sort
-   * @type {Array}
-   * @default []
-   * @public
+   * The attributes `?sort=` accepts, each also with `-` for descending.
+   * Defaults to every attribute the controller's serializer outputs; anything
+   * else is a `400 Bad Request`.
    */
   sort: Array<string> = [];
 
   /**
-   * An array of filter query parameter keys that are allowed to reach a
-   * Controller instance from an incoming `HTTP` request.
-   *
-   * If you do not override this property all of the attributes specified in the
-   * Serializer that represents a Controller's resource. If the Serializer
-   * cannot be resolved, this property will default to an empty array.
-   *
-   * @property filter
-   * @type {Array}
-   * @default []
-   * @public
+   * The attributes `?filter[…]=` accepts. Defaults to every attribute the
+   * controller's serializer outputs; anything else is a `400 Bad Request`.
    */
   filter: Array<string> = [];
 
   /**
-   * An array of parameter keys that are allowed to reach a Controller instance
-   * from an incoming `POST` or `PATCH` request body.
+   * The attributes and relationships a `POST` or `PATCH` body may set.
    *
-   * If you do not override this property all of the attributes specified in the
-   * Serializer that represents a Controller's resource. If the Serializer
-   * cannot be resolved, this property will default to an empty array.
+   * ```javascript
+   * class PostsController extends Controller {
+   *   params = ['title', 'body', 'user'];
+   * }
+   * ```
    *
-   * An attribute the model has but this list does not name is ignored
-   * (dropped from `request.params`), so clients may send read-only attributes
-   * back; a relationship like that is answered with `403 Forbidden`. See
-   * `rejectUnlistedAttributes` and `rejectUnlistedRelationships` to change
-   * either. A member the model does not have at all is answered with
-   * `400 Bad Request`.
-   *
-   * @property params
-   * @type {Array}
-   * @default []
-   * @public
+   * An attribute the model has but this list doesn't name is ignored (dropped
+   * from `request.params`), so clients may send read-only attributes back; a
+   * relationship like that is answered with `403 Forbidden`.
+   * {@link Controller.rejectUnlistedAttributes} and
+   * {@link Controller.rejectUnlistedRelationships} change either. A member the
+   * model doesn't have at all is a `400 Bad Request`.
    */
   params: Array<string> = [];
 
   /**
-   * Functions to execute on each request handled by a `Controller` before the
-   * `Controller` action is executed.
-   *
-   * Functions added to the `beforeAction` hook behave similarly to `Controller`
-   * actions, however, they are expected to return `undefined`. If a middleware
-   * function returns a value other than `undefined` the `request` / `response`
-   * cycle will end before remaining middleware and/or Controller actions are
-   * executed. This makes the `beforeAction` hook a very powerful tool for
-   * dealing with many common tasks, such as authentication.
-   *
-   * Functions called from the `beforeAction` hook will have `request` and
-   * `response` objects passed as arguments.
-   *
-   * **Example:**
+   * Hooks that run before each action, called with `(request, response)`.
+   * Returning nothing lets the request continue; returning anything else ends
+   * it, with that value as the response (`false` → `401 Unauthorized`, a
+   * number → that status):
    *
    * ```javascript
-   * import { Controller } from 'lumen-framework';
-   *
-   * const UNSAFE_METHODS = /(?:POST|PATCH|DELETE)/i;
-   *
-   * function isAdmin(user) {
-   *   if (user) {
-   *     return user.isAdmin;
-   *   }
-   *
-   *   return false;
-   * }
-   *
-   * async function authentication(request) {
-   *   const { method, currentUser } = request;
-   *   const isUnsafe = UNSAFE_METHODS.test(method);
-   *
-   *   if (isUnsafe && !isAdmin(currentUser)) {
-   *     return false; // 401 Unauthorized if the current user is not an admin.
+   * async function requireUser(request) {
+   *   if (!request.currentUser) {
+   *     return false;
    *   }
    * }
    *
    * class PostsController extends Controller {
-   *   beforeAction = [
-   *     authentication
-   *   ];
+   *   beforeAction = [requireUser];
    * }
-   *
-   * export default PostsController;
    * ```
    *
-   * @property beforeAction
-   * @type {Array}
-   * @default []
-   * @public
+   * The hooks of a namespace's `ApplicationController` run around every action
+   * in the namespace, before the controller's own. Hooks run after the
+   * request's parameters are validated, and are called with `this` as the
+   * controller that declares them (use `function`, not an arrow function, to
+   * read it).
    */
   beforeAction: Array<BeforeAction> = [];
 
   /**
-   * Functions to execute on each request handled by a `Controller` after the
-   * `Controller` action is executed.
-   *
-   * Functions called from the `afterAction` hook will have `request` and
-   * `response` objects passed as arguments as well as a third `payload`
-   * argument. The `payload` argument is a reference to the resolved data of
-   * the Controller action that was called within the current `request` /
-   * `response` cycle. You need to explicitly return this `payload` in order for
-   * the afterAction to resolve with it's data. If you return a modified value
-   * from a function added to the `afterAction` hook, that value will be used
-   * instead of the resolved data from the preceding Controller action.
-   * Subsequent hooks called from an `afterAction` hook will will use the value
-   * returned or resolved from the preceding hook. This makes `afterAction` a
-   * great place to modify the data you are sending back to the client.
-   *
-   * **Example:**
+   * Hooks that run after each action, called with
+   * `(request, response, payload)`. `payload` is the action's result — for a
+   * resource, the JSON:API document about to be sent. What a hook returns is
+   * sent instead, and passed to the next hook, so return `payload` when
+   * leaving it as it is:
    *
    * ```javascript
-   * import { Controller } from 'lumen-framework';
-   *
-   * async function addCopyright(request, response, payload) {
-   *   const { action } = request;
-   *
-   *   if (payload && action !== preflight) {
-   *     return {
-   *       ...payload,
-   *       meta: {
-   *         copyright: '2016 (c) Postlight'
-   *       }
-   *     };
+   * async function addVersion(request, response, payload) {
+   *   if (payload && payload.jsonapi) {
+   *     return { ...payload, meta: { ...payload.meta, apiVersion: '2' } };
    *   }
    *
    *   return payload;
    * }
    *
    * class ApplicationController extends Controller {
-   *   afterAction = [
-   *     addCopyright
-   *   ];
+   *   afterAction = [addVersion];
    * }
-   *
-   * export default ApplicationController;
    * ```
    *
-   * @property afterAction
-   * @type {Array}
-   * @default []
-   * @public
+   * A namespace `ApplicationController`'s `afterAction` hooks run after the
+   * controller's own.
    */
   afterAction: Array<AfterAction> = [];
 
   /**
-   * The default amount of items to include per each response of the index
-   * action if a `?page[size]` query parameter is not specified.
-   *
-   * @property defaultPerPage
-   * @type {Number}
-   * @default 25
-   * @public
+   * The page size of `index` when the request gives no `?page[size]=`.
    */
   defaultPerPage: number = 25;
 
   /**
-   * The largest `?page[size]` the index action accepts. A larger one is
-   * answered with `400 Bad Request` (as is a `page[size]` or `page[number]`
-   * below 1).
-   *
-   * @property maxPerPage
-   * @type {Number}
-   * @default 100
-   * @public
+   * The largest `?page[size]=` `index` accepts. A larger one is a
+   * `400 Bad Request`, as is a `page[size]` or `page[number]` below 1.
    */
   maxPerPage: number = 100;
 
@@ -508,10 +196,7 @@ class Controller {
    * controller in the namespace (and in namespaces nested in it) that does not
    * set it itself — whatever class those controllers extend.
    *
-   * @property rejectUnlistedAttributes
-   * @type {Boolean}
    * @default false
-   * @public
    */
   declare rejectUnlistedAttributes: boolean;
 
@@ -529,10 +214,7 @@ class Controller {
    * }
    * ```
    *
-   * @property rejectUnlistedRelationships
-   * @type {Boolean}
    * @default true
-   * @public
    */
   declare rejectUnlistedRelationships: boolean;
 
@@ -556,10 +238,7 @@ class Controller {
    * relationships, and each nested level costs its own queries per request, so
    * keep this small.
    *
-   * @property maxIncludeDepth
-   * @type {Number}
    * @default 3
-   * @public
    */
   declare maxIncludeDepth: number;
 
@@ -585,10 +264,7 @@ class Controller {
    * serialize or `include` (down to each controller's `maxIncludeDepth`) has
    * no Serializer in that namespace, listing each missing one.
    *
-   * @property serializerFallback
-   * @type {Boolean}
    * @default true
-   * @public
    */
   serializerFallback: boolean = true;
 
@@ -680,11 +356,6 @@ class Controller {
    * `included` for `/users?include=posts`, linked from a comment's `post`,
    * and accepted as the `post` of a new comment. `posts: query =>
    * query.isPublic()` as a visibility rule closes every one of those paths.
-   *
-   * @property visibility
-   * @type {Object}
-   * @default {}
-   * @public
    */
   static visibility: Visibility = {};
 
@@ -700,10 +371,9 @@ class Controller {
    * }
    * ```
    *
-   * @param {Query} query - A query of any type.
-   * @param {Request} request - The request object.
-   * @return {Query} The same query, narrowed.
-   * @public
+   * @param query - A query of any type.
+   * @param request - The request object.
+   * @returns The same query, narrowed.
    */
   visible<Q extends Query<unknown>>(query: Q, request: Request): Q {
     return scopeFor(this.visibility, request).apply(query);
@@ -717,7 +387,7 @@ class Controller {
    * Always this Controller's namespace — not its Serializer's, which is the
    * root one when the namespace has no Serializer for this resource.
    *
-   * @private
+   * @internal
    */
   serializerFor(model: ModelClass): Serializer<Model> {
     const { serializer, namespace } = this;
@@ -730,9 +400,7 @@ class Controller {
   /**
    * The resolved Model for a Controller instance.
    *
-   * @property model
-   * @type {Model}
-   * @private
+   * @internal
    */
   declare model: ModelClass<Model>;
 
@@ -740,27 +408,21 @@ class Controller {
    * A reference to the root Controller for the namespace that a Controller
    * instance is a member of.
    *
-   * @property parent
-   * @type {?Controller}
-   * @private
+   * @internal
    */
   declare parent: Controller | null;
 
   /**
    * The namespace that a Controller instance is a member of.
    *
-   * @property namespace
-   * @type {String}
-   * @private
+   * @internal
    */
   declare namespace: string;
 
   /**
    * The resolved Serializer for a Controller instance.
    *
-   * @property serializer
-   * @type {Serializer}
-   * @private
+   * @internal
    */
   declare serializer: Serializer<Model>;
 
@@ -768,9 +430,7 @@ class Controller {
    * A Map instance containing a reference to all the Controller within an
    * Application instance.
    *
-   * @property controllers
-   * @type {Map}
-   * @private
+   * @internal
    */
   declare controllers: Map<string, Controller>;
 
@@ -779,9 +439,7 @@ class Controller {
    * from the `static visibility` of the closest `ApplicationController`, from
    * its own namespace's up, that declares rules.
    *
-   * @property visibility
-   * @type {Object}
-   * @private
+   * @internal
    */
   declare visibility: Visibility;
 
@@ -789,9 +447,7 @@ class Controller {
    * A boolean value representing whether or not a Controller instance has a
    * Model.
    *
-   * @property hasModel
-   * @type {Boolean}
-   * @private
+   * @internal
    */
   declare hasModel: boolean;
 
@@ -799,9 +455,7 @@ class Controller {
    * A boolean value representing whether or not a Controller instance is within
    * a namespace.
    *
-   * @property hasNamespace
-   * @type {Boolean}
-   * @private
+   * @internal
    */
   declare hasNamespace: boolean;
 
@@ -809,9 +463,7 @@ class Controller {
    * A boolean value representing whether or not a Controller instance has a
    * Serializer.
    *
-   * @property hasSerializer
-   * @type {Boolean}
-   * @private
+   * @internal
    */
   declare hasSerializer: boolean;
 
@@ -833,16 +485,13 @@ class Controller {
   }
 
   /**
-   * This method supports filtering, sorting, pagination, including
-   * relationships, and sparse fieldsets via query parameters. For more
-   * information, see the [fetching resources](https://goo.gl/q7FVgZ) section of
-   * the JSON API specification.
+   * `GET /posts`: the records, sorted, filtered and paged by the request's
+   * query parameters, with its `include` and `fields`. Visibility rules apply.
    *
-   * @param {Request} request - The request object.
-   * @param {Response} [response] - The response. Unused by the built-in action,
-   *   but every action is called with it, so an override can take it.
-   * @return {Promise} Resolves with an array of Model instances.
-   * @public
+   * @param request - The request.
+   * @param response - The response. Unused by the built-in action, but every
+   * action is called with it, so an override can take it.
+   * @returns A query of the page of records; narrow it in an override.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   index(request: Request, response?: Response): Query<Array<Model>> {
@@ -850,16 +499,14 @@ class Controller {
   }
 
   /**
-   * This method supports including relationships, and sparse fieldsets via
-   * query parameters. For more information, see the [fetching resources](
-   * https://goo.gl/q7FVgZ) section of the JSON API specification.
+   * `GET /posts/1`: the record with the route's id, with the request's
+   * `include` and `fields`. Visibility rules apply; a record the request may
+   * not see, like a missing one, is a `404 Not Found`.
    *
-   * @param {Request} request - The request object.
-   * @param {Response} [response] - The response. Unused by the built-in action,
-   *   but every action is called with it, so an override can take it.
-   * @return {Promise} Resolves with a Model instance with the id equal to the
-   * id url parameter.
-   * @public
+   * @param request - The request.
+   * @param response - The response. Unused by the built-in action, but every
+   * action is called with it, so an override can take it.
+   * @returns A query of the record; narrow it in an override.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   show(request: Request, response?: Response): Query<Model> {
@@ -867,25 +514,20 @@ class Controller {
   }
 
   /**
-   * Serve a relationship endpoint (`GET /posts/1/relationships/comments`):
-   * resolve the resource that owns the relationship, which the response's
-   * resource linkage is then loaded for. The relationship is the route's
-   * (`request.route.relationship`). For more information, see the [fetching
-   * relationships](https://jsonapi.org/format/1.0/#fetching-relationships)
-   * section of the JSON API specification.
+   * `GET /posts/1/relationships/comments`, a relationship endpoint: resolves
+   * the resource that owns the relationship (`request.route.relationship`),
+   * whose resource linkage is the response.
    *
-   * The resource is resolved through this controller's `show`, with a
-   * request for its primary key only, so whatever `show` enforces holds here
-   * too: an override that narrows its query or rejects the request applies,
-   * and a resource the request may not see is `404 Not Found`. Hooks see the
-   * action `showRelationship` (`request.route.type` is `relationship`).
+   * The resource is resolved through this controller's `show`, asking for its
+   * primary key only, so whatever `show` enforces holds here too: an override
+   * that narrows its query or rejects the request applies, and a resource the
+   * request may not see is a `404 Not Found`. Hooks see the action
+   * `showRelationship` (`request.route.type` is `relationship`).
    *
-   * @param {Request} request - The request object.
-   * @param {Response} [response] - The response. Unused by the built-in action,
-   *   but every action is called with it, so an override can take it.
-   * @return {Promise} Resolves with the Model instance with the id equal to
-   * the id url parameter.
-   * @public
+   * @param request - The request.
+   * @param response - The response. Unused by the built-in action, but every
+   * action is called with it, so an override can take it.
+   * @returns A query of the owning record.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   showRelationship(request: Request, response?: Response): Query<Model> {
@@ -902,25 +544,23 @@ class Controller {
   }
 
   /**
-   * Serve a related endpoint (`GET /posts/1/comments`): the resources the
-   * relationship `request.route.relationship` of the resource with the id
-   * url parameter points to. For more information, see the [fetching
-   * resources](https://jsonapi.org/format/1.0/#fetching-resources) section of
-   * the JSON API specification.
+   * `GET /posts/1/comments`, a related endpoint: the resources the
+   * relationship `request.route.relationship` of the record with the route's id
+   * points to.
    *
    * The query parameters are those of the related type's controller: for a
    * to-many relationship they page, sort and filter like its `index`, for a
    * to-one one they include and select like its `show`. Visibility rules apply
-   * to the related resources; the owning resource is resolved with
-   * `showRelationship()` first, so one the request may not see is
-   * `404 Not Found`.
+   * to the related resources; the owning record is resolved with
+   * {@link Controller.showRelationship} first, so one the request may not see
+   * is a `404 Not Found`. Hooks see the action `showRelated`
+   * (`request.route.type` is `related`).
    *
-   * @param {Request} request - The request object.
-   * @param {Response} [response] - The response. Unused by the built-in action,
-   *   but every action is called with it, so an override can take it.
-   * @return {Query} The related Model instances (to-many) or instance (to-one,
-   * resolving to `undefined` when there is none).
-   * @public
+   * @param request - The request.
+   * @param response - The response. Unused by the built-in action, but every
+   * action is called with it, so an override can take it.
+   * @returns A query of the related records (to-many), or of the related record
+   * (to-one, resolving with `undefined` when there is none).
    */
   showRelated(
     request: Request,
@@ -980,14 +620,14 @@ class Controller {
   }
 
   /**
-   * Create and return a single Model instance that the Controller instance
-   * represents. For more information, see the [creating resources](
-   * https://goo.gl/4Obc9t) section of the JSON API specification.
+   * `POST /posts`: creates a record from the request body's attributes and
+   * relationships, after checking that every related record exists and is
+   * visible (a `404 Not Found` otherwise). Answers `201 Created` with a
+   * `Location` header.
    *
-   * @param {Request} request - The request object.
-   * @param {Response} response - The response object.
-   * @return {Promise} Resolves with the newly created Model instance.
-   * @public
+   * @param request - The request.
+   * @param response - The response, for the status and `Location` header.
+   * @returns Resolves with the new record.
    */
   async create(request: Request, response: Response): Promise<Model> {
     const { model } = this;
@@ -1021,16 +661,15 @@ class Controller {
   }
 
   /**
-   * Update and return a single Model instance that the Controller instance
-   * represents. For more information, see the [updating resources](
-   * https://goo.gl/o2ZdOR)section of the JSON API specification.
+   * `PATCH /posts/1`: updates the record with the route's id from the request
+   * body, after checking that every related record exists and is visible.
+   * A record the request may not see is a `404 Not Found`.
    *
-   * @param {Request} request - The request object.
-   * @param {Response} [response] - The response. Unused by the built-in action,
-   *   but every action is called with it, so an override can take it.
-   * @return {Promise} Resolves with the updated Model if changes occur.
-   * Resolves with the number `204` if no changes occur.
-   * @public
+   * @param request - The request.
+   * @param response - The response. Unused by the built-in action, but every
+   * action is called with it, so an override can take it.
+   * @returns Resolves with the updated record, or with `204` (`204 No Content`)
+   * when nothing changed.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   update(request: Request, response?: Response): Promise<number | Model> {
@@ -1065,15 +704,13 @@ class Controller {
   }
 
   /**
-   * Destroy a single Model instance that the Controller instance represents.
-   * For more information, see the [deleting resources](https://goo.gl/nUZn8t)
-   * section of the JSON API specification.
+   * `DELETE /posts/1`: deletes the record with the route's id. A record the
+   * request may not see is a `404 Not Found`.
    *
-   * @param {Request} request - The request object.
-   * @param {Response} [response] - The response. Unused by the built-in action,
-   *   but every action is called with it, so an override can take it.
-   * @return {Promise} Resolves with the number `204`.
-   * @public
+   * @param request - The request.
+   * @param response - The response. Unused by the built-in action, but every
+   * action is called with it, so an override can take it.
+   * @returns Resolves with `204` (`204 No Content`).
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   destroy(request: Request, response?: Response): Promise<number> {
@@ -1083,13 +720,13 @@ class Controller {
   }
 
   /**
-   * Respond to HEAD or OPTIONS requests.
+   * Answers `OPTIONS` requests: `204 No Content`, with the path's methods in
+   * `Allow`.
    *
-   * @param {Request} [request] - The request. Unused.
-   * @param {Response} [response] - The response. Unused by the built-in action,
-   *   but every action is called with it, so an override can take it.
-   * @return {Promise} Resolves with the number `204`.
-   * @public
+   * @param request - The request. Unused.
+   * @param response - The response. Unused by the built-in action, but every
+   * action is called with it, so an override can take it.
+   * @returns Resolves with `204`.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   preflight(request?: Request, response?: Response): Promise<number> {

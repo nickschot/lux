@@ -8,7 +8,7 @@ import type { Model, ModelClass } from '../../database';
  * write cannot leave dangling linkage, or link a record `scope` hides. One
  * query per relationship.
  *
- * @private
+ * @internal
  */
 export default async function validateRelationships<T extends Model>(
   model: ModelClass<T>,

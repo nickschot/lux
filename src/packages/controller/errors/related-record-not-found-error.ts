@@ -8,7 +8,7 @@ import type { Server$ErrorSource } from '../../server';
  * JSON:API 1.0: "A server MUST return 404 Not Found when processing a request
  * that references a related resource that does not exist."
  *
- * @private
+ * @internal
  */
 class RelatedRecordNotFoundError extends Error {
   declare source: Server$ErrorSource;

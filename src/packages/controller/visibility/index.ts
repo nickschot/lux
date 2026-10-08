@@ -19,7 +19,7 @@ export type Visibility = Record<
  * issues for the request — primary data, linkage, `included`, relationship
  * checks on writes — goes through `apply()`.
  *
- * @private
+ * @internal
  */
 export class Scope {
   /**
@@ -119,7 +119,7 @@ const scopes = new WeakMap<Request, Scope>();
  * The `Scope` of `request` under `rules`, created once per request so each
  * rule runs at most once however many queries it narrows.
  *
- * @private
+ * @internal
  */
 export function scopeFor(rules: Visibility, request: Request): Scope {
   let scope = scopes.get(request);
