@@ -85,10 +85,8 @@ answers.
 
 - [Guides](docs/guides/) — start with
   [Getting started](docs/guides/getting-started.md).
-- [UPGRADING.md](UPGRADING.md) — what changes for apps moving to Lumen 4.0,
-  and how to adapt. Until the guides land, it is also the most complete
-  description of routing, visibility rules, compound documents, relationship
-  endpoints, error responses and logging.
+- [UPGRADING.md](UPGRADING.md) — what an app has to change, or check, to
+  move to Lumen 4.0.
 - [CHANGELOG.md](CHANGELOG.md) — release notes.
 - [examples/social-network](examples/social-network/) — an example app that
   uses most of the framework, with a map of where each feature lives.

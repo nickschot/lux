@@ -408,8 +408,7 @@ The generated files are a few lines of declarations, and from them you got:
   app with namespaces (`/admin`, `/members`), visibility rules, a serializer
   per namespace, custom actions and more. Its README maps each feature to the
   file that shows it.
-- **[UPGRADING.md](../../UPGRADING.md)** describes routing, visibility rules,
-  compound documents, relationship endpoints, error responses and logging in
-  detail, until the guides on those topics are written.
+- **[The guides](README.md)** cover routing, controllers, serializers, models,
+  errors, migrations, logging, the `lumen` command and deployment.
 - **The API reference**, built with `pnpm docs:api` in a checkout of the
   repository, documents every class and type `lumen-framework` exports.
