@@ -274,6 +274,10 @@ class AdminApplicationController extends ApplicationController {
 export default AdminApplicationController;
 ```
 
+A namespace without an `ApplicationController` of its own (controllers in
+`app/controllers/admin/`, but no `admin/application.js`) runs its closest
+ancestor namespace's hooks, so the root's authentication still applies there.
+
 Hooks run after the request's parameters are validated, so a request rejected
 with a `400` never reaches them.
 
@@ -338,10 +342,12 @@ and read from the request.
 
 ### Per namespace
 
-Each namespace has its own rules, on its own `ApplicationController`, and a
-namespace `ApplicationController` inherits its parent class's rules. The
-example app hides private posts everywhere, shows everything to admins, and
-hides more from members:
+A nested namespace follows its parent namespace's rules until its
+`ApplicationController` declares its own — also when the namespace has no
+`ApplicationController`, or one that extends `Controller` only to add a hook.
+Declaring rules replaces the parent's; to build on them, extend the parent's
+class and use `super`. The example app hides private posts everywhere, shows
+everything to admins, and hides more from members:
 
 ```javascript
 // app/controllers/admin/application.js
@@ -409,7 +415,11 @@ sets its own:
 | `rejectUnlistedAttributes` | `false` | `403` for an attribute not in `params`, instead of ignoring it. |
 | `rejectUnlistedRelationships` | `true` | `403` for a relationship not in `params`; `false` ignores it. |
 | `maxIncludeDepth` | `3` | How deep `?include=` may go. |
-| `serializerFallback` | `true` | Whether the namespace may use the root serializer for a type it has none for. `false` makes the app refuse to boot until every type the namespace can return has a serializer in it. |
+
+One more applies to its own namespace only, not to nested ones:
+`serializerFallback` (default `true`) says whether the namespace may use the
+root serializer for a type it has none for. `false` makes the app refuse to
+boot until every type the namespace can return has a serializer in it.
 
 ```javascript
 // app/controllers/application.js
