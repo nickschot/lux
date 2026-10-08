@@ -90,7 +90,7 @@ function updateHasMany({ record, value, opts, trx }: Params): Array<unknown> {
  * are left untouched. Runs in `trx` itself, since it has to read the existing
  * rows first.
  *
- * @private
+ * @internal
  */
 async function updateHasManyThrough({
   record,
@@ -175,7 +175,7 @@ function updateBelongsTo({ record, value, opts, trx }: Params): Array<unknown> {
  * changed. A has-many-through relationship is written to its join table
  * before this resolves, and contributes no statements.
  *
- * @private
+ * @internal
  */
 export default async function updateRelationship(
   record: Model,

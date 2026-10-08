@@ -7,9 +7,7 @@ import initialize from './initialize';
 import normalizeModelName from './utils/normalize-model-name';
 import type { Database$opts, ModelClass } from './interfaces';
 
-/**
- * @private
- */
+/** @internal */
 class Database {
   declare path: string;
 

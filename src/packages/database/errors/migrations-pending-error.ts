@@ -1,9 +1,7 @@
 import chalk from '../../../utils/chalk';
 import { line } from '../../logger';
 
-/**
- * @private
- */
+/** @internal */
 class MigrationsPendingError extends Error {
   constructor(migrations: Array<string> = []) {
     const pending = migrations

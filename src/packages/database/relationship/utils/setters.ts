@@ -6,9 +6,7 @@ import unassociate from './unassociate';
 import validateType from './validate-type';
 import { setHasOneInverse, setHasManyInverse } from './inverse-setters';
 
-/**
- * @private
- */
+/** @internal */
 export function setHasMany(
   owner: Model,
   key: string,
@@ -49,9 +47,7 @@ export function setHasMany(
   }
 }
 
-/**
- * @private
- */
+/** @internal */
 export function setHasOne(
   owner: Model,
   key: string,
@@ -92,9 +88,7 @@ export function setHasOne(
   });
 }
 
-/**
- * @private
- */
+/** @internal */
 export function setBelongsTo(
   owner: Model,
   key: string,

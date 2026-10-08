@@ -24,8 +24,6 @@
     }
   },
   "intentionallyNotExported": [
-    "Database",
-    "Database$column",
     "Request$url",
     "Response$stat",
     "Route",

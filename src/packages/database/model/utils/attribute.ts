@@ -9,7 +9,7 @@ import type Model from '../index';
 /**
  * Read an attribute (or relationship) of `record` by name.
  *
- * @private
+ * @internal
  */
 export function readAttribute(record: Model, key: string): unknown {
   return (record as unknown as Record<string, unknown>)[key];
@@ -19,7 +19,7 @@ export function readAttribute(record: Model, key: string): unknown {
  * Write an attribute (or relationship) of `record` by name. Unlike
  * `Reflect.set`, a failed write throws rather than returning `false`.
  *
- * @private
+ * @internal
  */
 export function writeAttribute(record: Model, key: string, value: unknown) {
   (record as unknown as Record<string, unknown>)[key] = value;

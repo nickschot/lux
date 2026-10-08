@@ -1,8 +1,6 @@
 import type Database from '../index';
 
-/**
- * @private
- */
+/** @internal */
 export default async function createMigrations(
   schema: Database['schema']
 ): Promise<boolean> {

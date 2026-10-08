@@ -20,9 +20,7 @@ function base(model: Query<unknown>['model'], trx: unknown): any {
   return trx ? table.transacting(trx) : table;
 }
 
-/**
- * @private
- */
+/** @internal */
 export function createRunner(
   target: Query<unknown>,
   opts: {

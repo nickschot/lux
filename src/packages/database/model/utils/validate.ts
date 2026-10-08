@@ -6,7 +6,7 @@ import type { Model } from '../../index';
  * Run the model's validators over its dirty attributes. Every attribute that
  * fails is reported (one 422 error object each), not just the first.
  *
- * @private
+ * @internal
  */
 export default function validate(instance: Model): true {
   const failed = Array.from(instance.dirtyAttributes)

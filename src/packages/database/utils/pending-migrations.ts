@@ -1,8 +1,6 @@
 import { readdir } from '../../fs';
 
-/**
- * @private
- */
+/** @internal */
 export default async function pendingMigrations(
   appPath: string,
   table: () => any // eslint-disable-line @typescript-eslint/no-explicit-any

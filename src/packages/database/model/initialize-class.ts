@@ -34,9 +34,7 @@ const VALID_HOOKS = new Set([
   'beforeValidation'
 ]);
 
-/**
- * @private
- */
+/** @internal */
 function initializeProps(
   prototype: object,
   attributes: Record<string, any>,
@@ -71,9 +69,7 @@ function initializeProps(
   });
 }
 
-/**
- * @private
- */
+/** @internal */
 function initializeHooks({
   model,
   hooks,
@@ -106,9 +102,7 @@ function initializeHooks({
   );
 }
 
-/**
- * @private
- */
+/** @internal */
 function initializeValidations(opts: {
   model: ModelClass;
   logger: Logger;
@@ -153,9 +147,7 @@ function initializeValidations(opts: {
   return Object.freeze(validates);
 }
 
-/**
- * @private
- */
+/** @internal */
 export default async function initializeClass<T extends ModelClass>({
   store,
   table,

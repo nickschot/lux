@@ -1,9 +1,7 @@
 import type Model from '../../model';
 import { writeAttribute } from '../../model/utils/attribute';
 
-/**
- * @private
- */
+/** @internal */
 function unassociateOne<T extends Model | null | undefined>(
   value: T,
   foreignKey: string
@@ -15,9 +13,7 @@ function unassociateOne<T extends Model | null | undefined>(
   return value;
 }
 
-/**
- * @private
- */
+/** @internal */
 export default function unassociate<T extends Model>(
   value: Array<T>,
   foreignKey: string

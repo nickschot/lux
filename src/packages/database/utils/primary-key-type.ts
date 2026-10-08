@@ -12,7 +12,7 @@ const NUMERIC = /int|serial|numeric|decimal|float|double|real/i;
  * as `character varying`, which `typeForColumn` does not know). `'number'`
  * when the column is unknown.
  *
- * @private
+ * @internal
  */
 export default function primaryKeyType(model: ModelClass): string {
   const column = model.columnFor(model.primaryKey);

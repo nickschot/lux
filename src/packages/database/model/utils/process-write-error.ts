@@ -5,7 +5,7 @@ import { UniqueConstraintError } from '../../errors';
  * knex prefixes a failed statement's error message with the SQL (and its
  * bound values) as `<sql> - <driver message>`; keep only the driver message.
  *
- * @private
+ * @internal
  */
 function driverMessage(message: string): string {
   const index = message.lastIndexOf(' - ');
@@ -16,7 +16,7 @@ function driverMessage(message: string): string {
 /**
  * Map a database write error to the server error it should surface as.
  *
- * @private
+ * @internal
  */
 export default function processWriteError(err: unknown): unknown {
   if (!(err instanceof Error)) {
@@ -39,7 +39,7 @@ export default function processWriteError(err: unknown): unknown {
 /**
  * `.catch()` handler for a write: rethrows the mapped error.
  *
- * @private
+ * @internal
  */
 export function rethrowWriteError(err: unknown): never {
   throw processWriteError(err);

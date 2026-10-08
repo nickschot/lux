@@ -3,9 +3,7 @@ import type { ModelClass } from '../../interfaces';
 import type { RelationshipOptions } from '../index';
 import { writeAttribute } from '../../model/utils/attribute';
 
-/**
- * @private
- */
+/** @internal */
 export function setHasManyInverse(
   owner: Model,
   value: Array<Model>,
@@ -37,9 +35,7 @@ export function setHasManyInverse(
   }
 }
 
-/**
- * @private
- */
+/** @internal */
 export function setHasOneInverse(
   owner: Model,
   value: Model | null | undefined,

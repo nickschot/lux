@@ -4,9 +4,7 @@ import createGetter from './create-getter';
 import createSetter from './create-setter';
 import createNormalizer from './create-normalizer';
 
-/**
- * @private
- */
+/** @internal */
 export default function createAttribute(
   opts: Attribute$meta
 ): PropertyDescriptor {

@@ -1,8 +1,6 @@
 import type { Validation$opts } from './interfaces';
 
-/**
- * @private
- */
+/** @internal */
 class Validation<T> {
   declare key: string;
 
