@@ -14,13 +14,42 @@ import { NODE_ENV } from '../../../constants';
 import { line } from '../../logger';
 import omit from '../../../utils/omit';
 import range from '../../../utils/range';
-import { composeAsync } from '../../../utils/compose';
 import type Logger from '../../logger';
 
 import type { Cluster$opts } from './interfaces';
 
 /**
- * @private
+ * How long a worker may take to start listening before it is replaced.
+ */
+const BOOT_TIMEOUT = 30000;
+
+/**
+ * How long a worker may take to finish its requests and exit when it is
+ * shut down, before it is killed. Below the grace period of common platforms
+ * (Docker's 10 s, Heroku's and Kubernetes' 30 s).
+ */
+const SHUTDOWN_TIMEOUT = 8000;
+
+/**
+ * Why a worker never started listening.
+ *
+ * @internal
+ */
+export class WorkerBootError extends Error {
+  constructor(pid: number | undefined, reason: string) {
+    super(`Worker process ${pid} failed to start: ${reason}`);
+  }
+}
+
+/**
+ * Forks the application's worker processes, replaces one that crashes, and
+ * shuts them down gracefully.
+ *
+ * Emits `ready` once every worker of the initial fork is listening, and
+ * `error` (with a `WorkerBootError`) when one of them fails to start instead —
+ * an application that cannot boot should stop, not report it is listening.
+ *
+ * @internal
  */
 class Cluster extends EventEmitter {
   declare path: string;
@@ -33,7 +62,24 @@ class Cluster extends EventEmitter {
 
   declare maxWorkers: number;
 
-  constructor({ path, port, logger, maxWorkers }: Cluster$opts) {
+  declare shutdownTimeout: number;
+
+  /**
+   * Workers being shut down on purpose (a reload or `stop()`), whose exit is
+   * not a crash to replace.
+   */
+  declare retiring: WeakSet<Worker>;
+
+  /** Set by `stop()`: no worker is forked or replaced any more. */
+  declare stopping: boolean;
+
+  constructor({
+    path,
+    port,
+    logger,
+    maxWorkers,
+    shutdownTimeout = SHUTDOWN_TIMEOUT
+  }: Cluster$opts) {
     super();
 
     Object.defineProperties(this, {
@@ -70,6 +116,27 @@ class Cluster extends EventEmitter {
         writable: false,
         enumerable: true,
         configurable: false
+      },
+
+      shutdownTimeout: {
+        value: shutdownTimeout,
+        writable: false,
+        enumerable: true,
+        configurable: false
+      },
+
+      retiring: {
+        value: new WeakSet(),
+        writable: false,
+        enumerable: false,
+        configurable: false
+      },
+
+      stopping: {
+        value: false,
+        writable: true,
+        enumerable: false,
+        configurable: false
       }
     });
 
@@ -85,159 +152,228 @@ class Cluster extends EventEmitter {
       this.reload();
     });
 
-    this.forkAll().then(() => this.emit('ready'));
+    this.forkAll().then(
+      () => this.emit('ready'),
+      err => {
+        // Workers stopped while booting (a signal during start-up) are not a
+        // failure to report.
+        if (!this.stopping) {
+          this.emit('error', err);
+        }
+      }
+    );
   }
 
-  fork(retry: boolean = true): Promise<Worker> {
-    return new Promise(resolve => {
-      if (this.workers.size < this.maxWorkers) {
-        const worker = cluster.fork({
-          NODE_ENV,
-          PORT: this.port
-        });
+  /**
+   * Fork a worker. Resolves with it once it is listening (or with `null`
+   * when the cluster is full or stopping); rejects with a `WorkerBootError`
+   * when it fails to start — it reports an error, exits, or does not listen
+   * within `BOOT_TIMEOUT` twice in a row.
+   */
+  fork(retry: boolean = true): Promise<Worker | null> {
+    if (this.stopping || this.workers.size >= this.maxWorkers) {
+      return Promise.resolve(null);
+    }
 
-        const timeout = setTimeout(() => {
-          this.logger.info(line`
-            Removing worker process: ${chalk.red(`${worker.process.pid}`)}
-          `);
+    return new Promise((resolve, reject) => {
+      const worker = cluster.fork({
+        NODE_ENV,
+        PORT: this.port
+      });
+      const { pid } = worker.process;
+      let booted = false;
 
+      const fail = (reason: string) => {
+        clearTimeout(timeout);
+        worker.removeAllListeners();
+        worker.kill();
+        this.logger.info(`Removing worker process: ${chalk.red(`${pid}`)}`);
+        reject(new WorkerBootError(pid, reason));
+      };
+
+      const timeout = setTimeout(() => {
+        if (retry) {
           clearTimeout(timeout);
-
           worker.removeAllListeners();
           worker.kill();
-
-          this.workers.delete(worker);
-
-          resolve(worker);
-
-          if (retry) {
-            this.fork(false);
-          }
-        }, 30000);
-
-        const handleError = (err?: any) => {
-          if (err) {
-            this.logger.error(err);
-          }
-
-          this.logger.info(line`
-            Removing worker process: ${chalk.red(`${worker.process.pid}`)}
-          `);
-
-          clearTimeout(timeout);
-
-          worker.removeAllListeners();
-          worker.kill();
-
-          this.workers.delete(worker);
-
-          resolve(worker);
-        };
-
-        worker.on('message', (msg: string | Record<string, any>) => {
-          let data: Record<string, any> = {};
-          let message = msg;
-
-          if (typeof message === 'object') {
-            data = omit(message, 'message');
-            message = message.message;
-          }
-
-          switch (message) {
-            case 'ready':
-              this.logger.info(line`
-                Adding worker process: ${chalk.green(`${worker.process.pid}`)}
-              `);
-
-              this.workers.add(worker);
-
-              clearTimeout(timeout);
-              worker.removeListener('error', handleError);
-
-              resolve(worker);
-              break;
-
-            case 'error':
-              handleError(data.error);
-              break;
-
-            default:
-              break;
-          }
-        });
-
-        worker.once('error', handleError);
-        worker.once('exit', (code: number | null) => {
-          const {
-            process: { pid }
-          } = worker;
-
-          if (typeof code === 'number') {
-            this.logger.info(line`
-              Worker process: ${chalk.red(`${pid}`)} exited with code ${code}
-            `);
-          }
-
           this.logger.info(`Removing worker process: ${chalk.red(`${pid}`)}`);
+          this.fork(false).then(resolve, reject);
+        } else {
+          fail(`not listening after ${BOOT_TIMEOUT / 1000} s`);
+        }
+      }, BOOT_TIMEOUT);
 
-          clearTimeout(timeout);
+      worker.on('message', (msg: string | Record<string, any>) => {
+        let data: Record<string, any> = {};
+        let message = msg;
 
-          worker.removeAllListeners();
-          this.workers.delete(worker);
+        if (typeof message === 'object') {
+          data = omit(message, 'message');
+          message = message.message;
+        }
 
-          this.fork();
-        });
+        switch (message) {
+          case 'ready':
+            booted = true;
+            clearTimeout(timeout);
+
+            this.logger.info(line`
+              Adding worker process: ${chalk.green(`${pid}`)}
+            `);
+
+            this.workers.add(worker);
+            resolve(worker);
+            break;
+
+          case 'error':
+            if (data.error) {
+              this.logger.error(data.error);
+            }
+
+            if (!booted) {
+              fail('it reported an error while booting');
+            }
+            break;
+
+          default:
+            break;
+        }
+      });
+
+      worker.once('error', (err: Error) => {
+        this.logger.error(err);
+
+        if (!booted) {
+          fail(err.message);
+        }
+      });
+
+      worker.once('exit', (code: number | null, signal: string | null) => {
+        clearTimeout(timeout);
+        worker.removeAllListeners();
+        this.workers.delete(worker);
+
+        if (!booted) {
+          reject(
+            new WorkerBootError(
+              pid,
+              `it exited with ${code === null ? signal : `code ${code}`}`
+            )
+          );
+          return;
+        }
+
+        if (this.retiring.has(worker)) {
+          return;
+        }
+
+        // A crash after a successful boot: replace the worker.
+        this.logger.info(line`
+          Worker process: ${chalk.red(`${pid}`)} exited with
+          ${code === null ? `signal ${signal}` : `code ${code}`}
+        `);
+
+        this.logger.info(`Removing worker process: ${chalk.red(`${pid}`)}`);
+
+        this.fork().catch(err => this.replacementFailed(err));
+      });
+    });
+  }
+
+  /**
+   * A replacement for a crashed worker did not start. With none left, the
+   * application is down: stop, so the platform can restart it.
+   */
+  replacementFailed(err: Error) {
+    this.logger.error(err);
+
+    if (!this.stopping && !this.workers.size) {
+      this.emit('error', err);
+    }
+  }
+
+  /**
+   * Shut `worker` down gracefully: it stops accepting connections, finishes
+   * the requests in flight, closes its database connections and exits. It is
+   * killed if it has not exited after `shutdownTimeout`.
+   */
+  shutdown<T extends Worker>(worker: T): Promise<T> {
+    return new Promise(resolve => {
+      this.workers.delete(worker);
+      this.retiring.add(worker);
+
+      if (worker.isDead()) {
+        resolve(worker);
+        return;
+      }
+
+      const timeout = setTimeout(() => {
+        this.logger.warn(line`
+          Worker process: ${chalk.red(`${worker.process.pid}`)} did not exit
+          within ${this.shutdownTimeout} ms; killing it.
+        `);
+        worker.kill('SIGKILL');
+      }, this.shutdownTimeout);
+
+      worker.once('exit', () => {
+        clearTimeout(timeout);
+        resolve(worker);
+      });
+
+      if (worker.isConnected()) {
+        worker.send('shutdown');
+      } else {
+        worker.kill();
       }
     });
   }
 
-  shutdown<T extends Worker>(worker: T): Promise<T> {
-    return new Promise(resolve => {
-      this.workers.delete(worker);
+  /**
+   * Shut every worker down gracefully, booting ones included, and fork no
+   * more. Resolves once all have exited.
+   */
+  async stop(): Promise<void> {
+    this.stopping = true;
 
-      const timeout = setTimeout(() => worker.kill(), 5000);
+    const workers = Object.values(cluster.workers ?? {}).filter(
+      (worker): worker is Worker => Boolean(worker)
+    );
 
-      worker.once('disconnect', () => {
-        worker.kill();
-      });
-
-      worker.once('exit', () => {
-        resolve(worker);
-        clearTimeout(timeout);
-      });
-
-      worker.send('shutdown');
-      worker.disconnect();
-    });
+    await Promise.all(workers.map(worker => this.shutdown(worker)));
   }
 
-  reload() {
-    if (this.workers.size) {
-      const groups = Array.from(this.workers).reduce<
-        Array<() => Promise<Array<Worker>>>
-      >((arr, item, idx, src) => {
-        if ((idx + 1) % 2) {
-          const group = src.slice(idx, idx + 2);
-
-          return [
-            ...arr,
-            () => Promise.all(group.map(worker => this.shutdown(worker)))
-          ];
-        }
-
-        return arr;
-      }, []);
-
-      // groups is non-empty here (guarded by workers.size); composeAsync's
-      // fixed-first-param signature can't be spread with a dynamic array.
-      return (composeAsync as any)(...groups)();
+  /**
+   * Replace every worker with one running the rebuilt application, two at a
+   * time. A replacement that fails to start is logged, and the cluster keeps
+   * watching: saving a fix reloads again.
+   */
+  async reload(): Promise<void> {
+    if (this.stopping) {
+      return;
     }
 
-    return this.fork();
+    const workers = Array.from(this.workers);
+    const failed = (err: Error) => {
+      this.logger.error(`${err.message}. Save a fix to reload.`);
+    };
+
+    if (!workers.length) {
+      await this.forkAll().catch(failed);
+      return;
+    }
+
+    for (let i = 0; i < workers.length; i += 2) {
+      await Promise.all(
+        workers.slice(i, i + 2).map(async worker => {
+          await this.shutdown(worker);
+          await this.fork().catch(failed);
+        })
+      );
+    }
   }
 
-  forkAll() {
-    return Promise.race(
+  forkAll(): Promise<Array<Worker | null>> {
+    return Promise.all(
       Array.from(range(1, this.maxWorkers)).map(() => this.fork())
     );
   }

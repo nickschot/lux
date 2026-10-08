@@ -97,6 +97,30 @@ class Application {
       merge(createDefaultConfig(), opts)
     ) as unknown as Application;
   }
+
+  /**
+   * Stop the application gracefully: the server stops accepting connections
+   * and closes idle ones, the requests in flight finish, and then the
+   * database connections close. Resolves once all of that is done.
+   *
+   * `lumen serve` calls it in each worker when the process is asked to stop
+   * (`SIGTERM`, `SIGINT`); call it yourself when you construct an
+   * application in a script or a test.
+   */
+  async close(): Promise<void> {
+    const { server, store } = this;
+
+    if (server.instance.listening) {
+      await new Promise<void>((resolve, reject) => {
+        server.instance.close(err => (err ? reject(err) : resolve()));
+        // Keep-alive connections with no request in flight would otherwise
+        // hold `close()` open until they time out.
+        server.instance.closeIdleConnections();
+      });
+    }
+
+    await store.connection.destroy();
+  }
 }
 
 export default Application;

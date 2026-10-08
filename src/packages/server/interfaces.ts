@@ -42,6 +42,14 @@ export type ServerConfig = {
    * anything.
    */
   trustProxy?: boolean;
+
+  /**
+   * How long, in milliseconds, `lumen serve` lets a worker finish the
+   * requests in flight when it stops (`SIGTERM`, `SIGINT`) before killing
+   * it. Defaults to `8000`: within Docker's 10 s grace period, and Heroku's
+   * and Kubernetes' 30 s.
+   */
+  shutdownTimeout?: number;
 };
 
 export type Server$opts = ServerConfig & {

@@ -1,3 +1,5 @@
+import cluster from 'cluster';
+
 import { LUMEN_CONSOLE } from '../../constants';
 import Database from '../database';
 import Logger from '../logger';
@@ -20,6 +22,42 @@ import type Serializer from '../serializer';
 import type { Model, ModelClass } from '../database';
 import type Application from './index';
 import type { ApplicationOptions } from './index';
+
+/**
+ * In a `lumen serve` worker: close the application gracefully, then exit,
+ * when the master asks (`'shutdown'`), when it goes away, or on `SIGTERM` /
+ * `SIGINT` — platforms may signal every process, and Ctrl-C signals the whole
+ * process group.
+ */
+function handleShutdown(app: Application, logger: Logger): void {
+  let closing = false;
+
+  const stop = () => {
+    if (closing) {
+      return;
+    }
+
+    closing = true;
+
+    app.close().then(
+      () => process.exit(0),
+      (err: unknown) => {
+        logger.error(err instanceof Error ? err : String(err));
+        process.exit(1);
+      }
+    );
+  };
+
+  process.on('message', message => {
+    if (message === 'shutdown') {
+      stop();
+    }
+  });
+
+  process.once('disconnect', stop);
+  process.once('SIGTERM', stop);
+  process.once('SIGINT', stop);
+}
 
 /** @internal */
 export default async function initialize<T extends Application>(
@@ -117,6 +155,10 @@ export default async function initialize<T extends Application>(
   });
 
   if (!LUMEN_CONSOLE) {
+    if (cluster.isWorker) {
+      handleShutdown(app, logger);
+    }
+
     server.instance.listen(normalizedPort).once('listening', () => {
       if (typeof process.send === 'function') {
         process.send('ready');

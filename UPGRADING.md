@@ -283,6 +283,17 @@ See [The `lumen` command](docs/guides/cli.md).
   the highest version, which may not be the newest migration.
 - **`--use-weak` works in an app with a `tsconfig.json`.** A strict
   `tsconfig.json` above the app used to force strict mode.
+- **`lumen serve` exits with code `1` when the app can't start** (a pending
+  migration, an unreachable database, a broken route). It used to log the
+  error, then "listening", and keep running with no worker. **Check:** a
+  deploy that relied on the process staying up now fails, as it should.
+- **`lumen serve` shuts down gracefully** on `SIGTERM` and `SIGINT`: workers
+  stop accepting connections, finish the requests in flight, close their
+  database connections and exit `0`. It used to exit at once, cutting off
+  every request in flight on each deploy. A worker still busy after
+  `server.shutdownTimeout` (new, default 8000 ms) is killed. Scripts and tests
+  that construct an `Application` themselves can stop it the same way with
+  the new `app.close()`.
 
 ### Types
 

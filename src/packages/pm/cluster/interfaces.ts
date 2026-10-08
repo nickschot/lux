@@ -5,4 +5,5 @@ export type Cluster$opts = {
   port: number;
   logger: Logger;
   maxWorkers?: number;
+  shutdownTimeout?: number;
 };

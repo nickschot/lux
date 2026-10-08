@@ -89,7 +89,8 @@ A few things to keep in mind:
 
 Applied migrations are recorded by version in a `migrations` table.
 
-**The app refuses to start while a migration is pending:**
+**The app refuses to start while a migration is pending:** `lumen serve`
+logs this and exits with code `1`.
 
 ```
 ERROR Error: The following migrations are pending 2026100720143375-add-published-at-to-posts.

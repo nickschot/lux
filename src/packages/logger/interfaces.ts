@@ -6,7 +6,7 @@ export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
  * format leaves it out.
  */
 export type LogFunction = (
-  data: string | Record<string, unknown>,
+  data: string | Error | Record<string, unknown>,
   context?: Record<string, unknown>
 ) => void;
 /** Lines for people (`text`) or one JSON object per line (`json`). */
