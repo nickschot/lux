@@ -53,11 +53,20 @@ production: {
 }
 ```
 
-The `driver` (`pg`, `mysql2` or `sqlite3`) and `pool` (the connection pool
-size, per process) always come from `config/database.js`. A URL replaces
-**all** the other connection settings, `ssl` included: set TLS in the URL
-(`?sslmode=require` for PostgreSQL) or, for PostgreSQL, with the `PGSSLMODE`
-environment variable.
+A URL gives the host, credentials and database, and replaces those
+settings. The rest still comes from `config/database.js`: the `driver`
+(`pg`, `mysql2` or `sqlite3`), `pool` (the connection pool size, per
+process) and `ssl`, which is applied on top of the URL:
+
+```javascript
+production: {
+  driver: 'pg',
+  ssl: { rejectUnauthorized: false } // TLS, for a URL that has none
+}
+```
+
+A TLS setting written in the URL itself (`?sslmode=require` for PostgreSQL,
+`?ssl=…` for MySQL) takes precedence over `ssl`.
 
 Keep secrets out of the repository: `config/*.js` are plain modules, so read
 them from `process.env` as above.
@@ -203,23 +212,17 @@ web: npm start
 ```
 
 Heroku sets `NODE_ENV=production`, `PORT`, and — with a Postgres add-on —
-`DATABASE_URL`, which Lumen uses automatically. The production entry only
-needs the driver:
+`DATABASE_URL`, which Lumen uses automatically. Heroku Postgres requires TLS
+with a certificate Node doesn't verify by default, and `DATABASE_URL`
+carries no TLS settings, so the production entry sets them:
 
 ```javascript
 // config/database.js
 production: {
   driver: 'pg',
-  pool: 10
+  pool: 10,
+  ssl: { rejectUnauthorized: false }
 }
-```
-
-Heroku Postgres requires TLS with a certificate Node doesn't verify by
-default; since `DATABASE_URL` carries no TLS settings, set them for the
-driver:
-
-```bash
-heroku config:set PGSSLMODE=no-verify
 ```
 
 Use the logging recipe from [Logging](logging.md#recipes): text without

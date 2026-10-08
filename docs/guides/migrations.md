@@ -171,5 +171,6 @@ lumen db:migrate --environment production
 ```
 
 Each environment has its own database, so the development database is never
-touched by tests or production. `DATABASE_URL`, when set, overrides
-`config/database.js` (see the deployment guide).
+touched by tests or production. `DATABASE_URL`, when set, gives the host,
+credentials and database instead of `config/database.js` (see the
+[deployment guide](deployment.md#database)).

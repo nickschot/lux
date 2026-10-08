@@ -41,8 +41,9 @@ type Database$columnType =
  * }
  * ```
  *
- * A `url`, or the `DATABASE_URL` environment variable, replaces every
- * connection setting; `driver`, `pool` and `debug` still apply.
+ * A `url`, or the `DATABASE_URL` environment variable, replaces the host,
+ * credentials and database settings; `driver`, `pool`, `debug` and `ssl`
+ * still apply.
  */
 export type DatabaseEnvironmentConfig = {
   /** The database server's host name. */
@@ -78,12 +79,18 @@ export type DatabaseEnvironmentConfig = {
   /** The database server's port. */
   port?: number;
 
-  /** Connect over TLS. Ignored when a `url` is used. */
-  ssl?: boolean;
+  /**
+   * Connect over TLS: `true`, or the driver's TLS options
+   * (`{ rejectUnauthorized: false }` for a certificate Node doesn't trust,
+   * as on Heroku Postgres). Applies with a `url` or `DATABASE_URL` too,
+   * unless the URL sets TLS itself (`?sslmode=…`).
+   */
+  ssl?: boolean | Record<string, unknown>;
 
   /**
    * A connection string (`postgres://user:pass@host:5432/db`) that replaces
-   * the other connection settings. `DATABASE_URL` takes precedence over it.
+   * the host, credentials and database settings. `DATABASE_URL` takes
+   * precedence over it.
    */
   url?: string;
 };

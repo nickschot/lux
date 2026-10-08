@@ -7,6 +7,54 @@ import { VALID_DRIVERS } from '../constants';
 import { InvalidDriverError } from '../errors';
 import type { DatabaseEnvironmentConfig } from '../interfaces';
 
+/**
+ * The knex `connection` for an environment's database config.
+ *
+ * A URL — `DATABASE_URL`, else the environment's `url` — gives the host,
+ * credentials and database, and replaces those settings. `ssl` from the
+ * config still applies on top of it (for `pg` and `mysql2`, which take the
+ * URL as `connectionString` / `uri` next to their other options), so an app
+ * on a platform that sets `DATABASE_URL` can configure TLS in
+ * `config/database.js`. A TLS setting written in the URL itself
+ * (`?sslmode=…` for `pg`, `?ssl=…` for `mysql2`) takes precedence: the
+ * drivers apply what they parse from the URL last.
+ *
+ * @internal
+ */
+export function connectionFor(
+  path: string,
+  config: DatabaseEnvironmentConfig,
+  databaseUrl: string | undefined = DATABASE_URL
+): string | Record<string, unknown> {
+  const { host, socket, driver, database, username, password, port, ssl, url } =
+    config;
+  const connectionUrl = databaseUrl || url;
+
+  if (connectionUrl) {
+    if (driver === 'sqlite3' || ssl === undefined) {
+      return connectionUrl;
+    }
+
+    return driver === 'pg'
+      ? { connectionString: connectionUrl, ssl }
+      : { uri: connectionUrl, ssl };
+  }
+
+  return {
+    host,
+    database,
+    password,
+    port,
+    ssl,
+    user: username,
+    socketPath: socket,
+    filename:
+      driver === 'sqlite3'
+        ? joinPath(path, 'db', `${database || 'default'}_${NODE_ENV}.sqlite`)
+        : undefined
+  };
+}
+
 /** @internal */
 export default function connect(
   path: string,
@@ -14,8 +62,7 @@ export default function connect(
 ): Knex {
   let { pool } = config;
 
-  const { host, socket, driver, database, username, password, port, ssl, url } =
-    config;
+  const { driver } = config;
 
   if (VALID_DRIVERS.indexOf(driver) < 0) {
     throw new InvalidDriverError(driver);
@@ -32,23 +79,9 @@ export default function connect(
   const knex = require(joinPath(path, 'node_modules', 'knex'));
   const usingSQLite = driver === 'sqlite3';
 
-  const connection = DATABASE_URL ||
-    url || {
-      host,
-      database,
-      password,
-      port,
-      ssl,
-      user: username,
-      socketPath: socket,
-      filename: usingSQLite
-        ? joinPath(path, 'db', `${database || 'default'}_${NODE_ENV}.sqlite`)
-        : undefined
-    };
-
   return knex({
     pool,
-    connection,
+    connection: connectionFor(path, config),
     debug: false,
     client: driver,
     useNullAsDefault: usingSQLite
