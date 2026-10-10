@@ -8,8 +8,8 @@ installed with the framework:
 npm install -g lumen-framework
 ```
 
-Every command has a one-letter alias (`lumen s` for `lumen serve`), and
-`--help`:
+Every command has `--help`, and all but the `db:` commands have a
+one-letter alias (`lumen s` for `lumen serve`):
 
 ```bash
 lumen serve --help

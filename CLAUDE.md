@@ -18,11 +18,11 @@ The GitHub repository is still `nickschot/lux` **until it is renamed**, so URLs 
 point there on purpose; `rollup-plugin-lux` and `babel-preset-lux` are unrelated upstream
 npm packages and must never be renamed.
 
-**Status: the modernization is complete and released.** v3.x is published to npm as
-`lumen-framework`; the toolchain is TypeScript + esbuild + Vitest on Node 22 (details in
-"Toolchain" below). The plan, the phase-by-phase log, and the reasoning behind the
-choices are archived in [docs/internal/MIGRATION-NOTES.md](docs/internal/MIGRATION-NOTES.md) — read that
-before revisiting a decision, not to learn the current state.
+**Status:** published to npm as `lumen-framework`, released with
+[release-plan](RELEASE.md). The toolchain is TypeScript + esbuild + Vitest on Node 22
+(details in "Toolchain" below). The 3.0 modernization's plan, phase-by-phase log and
+reasoning are archived in [docs/internal/MIGRATION-NOTES.md](docs/internal/MIGRATION-NOTES.md)
+— read that before revisiting a decision, not to learn the current state.
 
 **Compatibility scope — still load-bearing:** this package is consumed **only by the
 maintainer's own apps**. There are no external downstream users, so the public API
@@ -31,7 +31,7 @@ app-facing compiler may change freely; consumer apps are co-evolved. Prefer a cl
 result over backward compatibility, and record anything app-visible in
 [UPGRADING.md](UPGRADING.md).
 
-## Traps this migration hit (all pre-existing bugs the runner swap exposed)
+## Traps (pre-existing bugs the 3.0 migration exposed)
 
 - **`declare`, not `!`, for class fields backed by prototype accessors.** With
   `useDefineForClassFields` (default true at `target: ES2022`) a declaration-only field is
@@ -72,21 +72,12 @@ result over backward compatibility, and record anything app-visible in
 - **Vitest has no `done` callback and no globals.** Callback tests must become
   promise-based; hook globals (`beforeEach` etc.) must be imported or the file fails to
   **collect** — 0 tests run and the total silently drops rather than going red.
-- **Neither `tsc` nor eslint catches Flow syntax in `.ts` test files** (`tsc` excludes
-  `src/**/test`; eslint parses `void | ?string` without complaint — verified). Only
-  `pnpm build` does, via Babel. Do not skip the build gate.
-- Chai 3→4 breaks are the most common per-batch fix: dotted/indexed `deep.property` paths
-  moved to `.nested.property`, and `constructor`/`__proto__` are guarded outright — assert
-  the value directly instead. Also, oxc keeps `async` functions native, so
-  `expect(asyncFn).to.be.a('function')` fails (`type-detect` says `'AsyncFunction'`); use
-  `typeof x === 'function'`.
-
-**Two weak specs were carried through the runner swap behaviour-faithful, then fixed once
-the migration settled:** `fs.test`'s `returnsPromiseSpec` used to capture its path at
-describe-collection time (before `beforeEach`), so 7 of 8 callers ran `fs` methods with
-`undefined` and only asserted "returns a Promise" — now the args are a run-time thunk and the
-spec `await`s the real call; and `logger.test`'s "writes with a recent timestamp" exact-equality
-1 ms race is now a `[before, now]` window assertion.
+- **Test files are not type-checked** (`tsconfig` excludes `src/**/test`), so a type
+  error there only shows up in `pnpm build` or the suite. Do not skip the build gate.
+- Chai (6, bundled with Vitest): dotted/indexed paths need `.nested.property`, and
+  `constructor`/`__proto__` are guarded outright — assert the value directly instead.
+  `expect(asyncFn).to.be.a('function')` fails on a native `async` function
+  (`'AsyncFunction'`); use `typeof x === 'function'`.
 
 ## Conventions (keep these consistent)
 
@@ -99,8 +90,8 @@ spec `await`s the real call; and `logger.test`'s "writes with a recent timestamp
 - Confine unavoidable casts to return boundaries where dynamic key access genuinely makes
   the shape unknowable, and comment why.
 - `noImplicitOverride` is on: subclass methods need `override`.
-- Keep conversions **behaviour-faithful**. Several latent bugs surfaced (dead `worker.pid`
-  branch, redundant spreads, an ignored `dasherize` argument); fix them only when the fix
+- Keep refactors **behaviour-faithful**. A latent bug found along the way gets its own
+  change, with a test that fails before the fix; fold it into a refactor only when the fix
   is provably a no-op, and say so in the commit.
 
 ## Toolchain (current)
@@ -123,22 +114,21 @@ spec `await`s the real call; and `logger.test`'s "writes with a recent timestamp
   points at `dist/types/index.d.ts`, so consumers get real types instead of `any`. Kept
   separate from `pnpm build` so the hot build/test loop stays fast; `prepack` runs both, and
   the CI `static` job runs `build:types` to catch declaration-only errors (e.g. TS2742).
-- **Lint/format:** **ESLint 9 flat** ([eslint.config.mjs](eslint.config.mjs)) +
+- **Lint/format:** **ESLint 10 flat** ([eslint.config.mjs](eslint.config.mjs)) +
   typescript-eslint + **Prettier**. `pnpm lint`, `pnpm format`, `pnpm format:check`. `.ts`
   uses typescript-eslint; the remaining `.js` (test-app fixture + tooling) uses the default
   parser (the old `@babel/eslint-parser` block is gone). **eslint does not catch Flow syntax
   in `.ts` files** (verified), so it is not a substitute for the build gate.
-- **Test:** **Vitest 4** ([vitest.config.ts](vitest.config.ts)) + Sinon, with chai-style
-  `expect` (Vitest bundles chai 5). Single fork, `isolate: false`, `fileParallelism: false`
+- **Test:** **Vitest 5** ([vitest.config.ts](vitest.config.ts)) + Sinon, with chai-style
+  `expect` (Vitest bundles chai 6). Single fork, `isolate: false`, `fileParallelism: false`
   — the `getTestApp()` singleton and the migrated DB are shared, matching Mocha's old
   single-process model. `globalSetup: test/vitest.global-setup.ts` runs `lumen db:*`.
   Run: `pnpm test` (= `vitest run`). Coverage is Vitest's **v8** provider
   (`pnpm test --coverage`), reported in CI as a job summary / PR comment.
   The Mocha stack — `mocha.opts`, `lib/`, `test/index.js`, mocha/nyc/chai — was removed
   once no suite referenced it.
-- **Package manager:** **pnpm 10** (migrated from yarn; `pnpm-lock.yaml`, `packageManager`
-  field). The old `yarn.lock` is retained untracked for reference only.
-- **Node:** pinned to **22** via **Volta** (`volta` field in `package.json`; `.nvmrc` = 22);
+- **Package manager:** **pnpm 10** (`pnpm-lock.yaml`, `packageManager` field).
+- **Node:** pinned to **22** (`volta` field in `package.json`; `.nvmrc` = 22);
   `engines` is `>= 22.14`: the first 22.x with **N-API 10**, which better-sqlite3 13's
   prebuilt binary needs (on 22.13 it segfaults — `lumen db:migrate` exits 139). Below
   that: 22.13 is where `require()` of ESM is stable (22.12 unflagged it but still warns)
@@ -155,10 +145,10 @@ Sources": bind-mounting the macOS filesystem is slow for this workload (large
 repo URL and branch — so **the branch has to exist on the remote**; it will not pick up
 local-only commits. `postCreateCommand` then runs
 [post-create.sh](.devcontainer/post-create.sh), which installs both dependency trees and
-builds `dist/`. **Verified end-to-end in clone mode: `552 passing`** with
+builds `dist/`. **Verified end-to-end in clone mode**: the suite passes with
 typecheck/lint/format green, watchman tests included.
 
-Ships the latest Node **22.x** (the same line as the Volta pin), pnpm **10.34.5** via corepack,
+Ships the latest Node **22.x** (the same line as the `volta` pin), pnpm **10.34.5** via corepack,
 watchman, the `gh` CLI (devcontainer feature), and Claude Code. First run: `claude`
 prompts for login and `gh auth login` (or export `GH_TOKEN` on the host — `remoteEnv`
 forwards it, along with `GIT_AUTHOR_NAME`/`GIT_AUTHOR_EMAIL`).
@@ -210,27 +200,21 @@ Bind-mounting still works via the devcontainer CLI/VS Code, but is not the suppo
 pnpm will refuse to reuse a host-built `node_modules` (`ERR_PNPM_ABORTED_REMOVE_MODULES_DIR`),
 which is correct — auto-purging would delete the host's tree.
 
-Inside the container there is **no Volta**, so the `VOLTA_FEATURE_PNPM` dance below does
-not apply — `node` and `pnpm` are simply on PATH.
+Inside the container `node` and `pnpm` are simply on PATH.
 
 ## Environment (host)
 
-This machine uses **Volta**, not nvm. Two gotchas when running the suite locally:
-
-- **`VOLTA_FEATURE_PNPM=1` must be set** in your interactive shell's config (fish:
-  `set -gx VOLTA_FEATURE_PNPM 1` in `~/.config/fish/config.fish`; zsh/bash: export it in
-  `~/.zshrc`/`~/.bashrc`). Without it, Volta's pnpm shim runs children on the *default*
-  Node (18) instead of the project's pinned Node 22.
-  Inside `test/test-app/` Volta also falls back to Node 18 because that nested
-  `package.json` has no `volta` field — harmless (the legacy stack runs on 18).
-- **The `lumen` CLI is resolved via `node_modules/.bin`.** The test bootstrap
-  ([test/index.js](test/index.js)) shells out to `lumen db:reset / db:migrate / db:seed`
-  (each first runs a full app compile via the legacy Rollup+Babel pipeline). The old flow
-  relied on `npm link`; instead the repo now self-links via a `lumen-framework: link:.`
-  devDependency, so `pnpm install` places `lumen` in the root `node_modules/.bin`. pnpm
-  prepends that dir to PATH for `pnpm test`, and the child_process `exec('lumen …')` inherits
-  it — so no `npm link` or manual PATH is needed. (Replacing these `exec('lumen …')`
-  shell-outs is still a later-phase cleanup.)
+- **Node:** whatever manages it (proto, Volta, nvm), the suite needs **Node >= 22.14** —
+  better-sqlite3 segfaults below that. A non-interactive shell may find another `node`
+  first (e.g. Homebrew's); check `node --version` before trusting a failure.
+- **pnpm:** a version-switching pnpm (Homebrew's, corepack) picks its version from
+  `packageManager`; the root, `test/test-app` and the example app all pin `pnpm@10.34.5`.
+- **The `lumen` CLI is resolved via `node_modules/.bin`.** The suite's global setup
+  ([test/vitest.global-setup.ts](test/vitest.global-setup.ts)) shells out to
+  `lumen db:reset / db:migrate / db:seed`, each of which compiles the test-app first. The
+  repo self-links via a `lumen-framework: link:.` devDependency, so `pnpm install` places
+  `lumen` in the root `node_modules/.bin`; pnpm prepends that dir to PATH for `pnpm test`,
+  and `exec('lumen …')` inherits it — no `npm link` or manual PATH needed.
 
 ## Commands
 
@@ -238,15 +222,16 @@ This machine uses **Volta**, not nvm. Two gotchas when running the suite locally
 pnpm install          # install deps (root)
 pnpm --dir test/test-app install   # install the test fixture app's deps
 
-# The five gates — all must pass before committing a conversion batch:
+# The gates CI runs — all must pass before pushing:
 pnpm typecheck        # tsc --noEmit (strict); the real type gate
-pnpm exec prettier --write "src/**/*.ts"
-pnpm lint             # eslint 9 flat
-pnpm build            # Babel 8 -> build/, esbuild -> dist/
-VOLTA_FEATURE_PNPM=1 pnpm test    # 552 passing
+pnpm lint             # eslint 10 flat
+pnpm format:check     # prettier (`pnpm format` writes)
+pnpm build:types      # declaration-only errors, e.g. TS2742
+pnpm docs:api         # TypeDoc; fails on any warning
+pnpm build            # esbuild -> dist/; always before testing
+pnpm test             # vitest run
 
-pnpm format:check     # prettier verification (CI-style)
-pnpm run clean        # remove build/dist/coverage artifacts
+pnpm run clean        # remove dist/coverage artifacts
 ```
 
 `pnpm build` matters more than it looks: the app compiler consumes `dist/index.mjs`, so
@@ -267,17 +252,19 @@ regenerate a lockfile from scratch after removing a dependency: knex's optional 
 (`sqlite3`, `tedious`) and their trees lingered in the test-app's for years. CI
 additionally runs `pg` / `mysql2` via `DATABASE_DRIVER`.
 
-**Current baseline (Node 22 / pnpm 10):** `850 passing` across 103 files, all on **Vitest**
-(`pnpm test` = `vitest run`, ~30 s). Coverage sits at ~70% of statements.
+**Current baseline (Node 22 / pnpm 10):** `999 passing` across 129 files, all on **Vitest**
+(`pnpm test` = `vitest run`). A drop in the *file* count means a file failed to collect.
 
 ### CI — GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml))
 
-Two jobs on push to `develop`/`modernization`, on every PR, and on demand:
-`static` (typecheck + lint + format:check — none of which the old CI ran) and `test`,
-a matrix over `better-sqlite3` / `pg` / `mysql2`.
+Runs on push to `main`, on every PR, and on demand. Jobs: `static` (typecheck, lint,
+format:check, build:types), `docs` (TypeDoc + an offline Markdown link check), `test` (a
+matrix: `better-sqlite3` / `pg` / `mysql2` on Node 22, plus `better-sqlite3` on 22.14.0,
+24 and 26), `consume` (packs the package and installs it production-only into a
+throwaway app) and `example` (migrates, seeds and smoke-tests examples/social-network).
 
 Things worth knowing before editing it:
-- **⚠ The test-app's DB drivers are ancient enough to break on modern Node.**
+- **⚠ The test-app's DB drivers were once ancient enough to break on modern Node.**
   `pg@7.18` (2019) is **silently broken on Node 20**: `Client#connect()` returns a promise
   that never settles *and* keeps no handle alive, so the process just exits. knex reports
   that only as `Timeout acquiring a connection. The pool is probably full`, which sends you
@@ -365,9 +352,8 @@ specs carried through the runner swap — were fixed once the migration settled.
   prefer `@internal` in new comments, and drop YUIDoc leftovers (`@method`,
   `@static`, `@type {X}`) when touching a comment — TypeDoc reads the types
   from TypeScript.
-- Follow existing conventions: respect the 80-col limit, match the import ordering the
-  airbnb config enforces. Prettier owns formatting for `.ts` — run it, don't
-  hand-format.
+- Follow existing conventions: respect the 80-col limit and the existing import
+  grouping. Prettier owns formatting for `.ts` — run it, don't hand-format.
 - **Don't reach for `Reflect.*`.** It was mandated by upstream's `prefer-reflect` rule
   (long removed from ESLint); `Reflect.get` returns `any`, which switches type checking
   off, and `Reflect.defineProperty`/`set` fail silently by returning `false`. Use plain
@@ -379,12 +365,8 @@ specs carried through the runner swap — were fixed once the migration settled.
   model a silent `unknown`. Proxy traps forwarding to their target keep `Reflect.get`
   behind an inline disable.
 - `dist/` is **gitignored** (not committed) and generated by the build; don't hand-edit
-  it. Note: there is currently **no `pretest`/`prepare` build wired**, so the suite relies
-  on a `dist` already existing locally (a stale artifact today). `npm publish` builds it
-  first (the old CI ran `npm run build` before publish). Wiring a reliable build step is
-  part of Phase 2.
-- When modernizing, prefer changing tooling/config over rewriting framework behavior
-  unless a change is explicitly requested. The public surface is `src/index.js` exports
-  (`Model`, `Controller`, `Serializer`, `Application`, `Logger`, `lumenify`).
+  it. There is **no `pretest` build**, so the suite runs against whatever `dist/` exists:
+  build first. `prepack` builds it (and the types) for publishing.
+- The public surface is what [src/index.ts](src/index.ts) exports.
 - Upstream is unmaintained — this fork is the source of truth. When comparing against
   `postlight/lux`, remember fork commits (#2–#8) intentionally diverge.

@@ -205,8 +205,9 @@ class Comment extends Model {
 
 Use `trx` for every query on *other* models in a hook. A query without it
 runs on another connection: it cannot see what the write has done yet, and
-with a single connection (SQLite's default) it waits for the transaction
-forever.
+with a single connection (always the case with SQLite) it waits for the
+transaction to end, until the request fails after 60 seconds with
+`Timeout acquiring a connection`.
 
 Inside a hook, the record is a proxy of the instance being written: attributes
 read and assign as usual, but compare records by `getPrimaryKey()`, not `===`.
@@ -335,7 +336,7 @@ so it is sent in development only (see
     {
       "status": "409",
       "title": "Conflict",
-      "detail": "SQLITE_CONSTRAINT: UNIQUE constraint failed: users.email"
+      "detail": "UNIQUE constraint failed: users.email"
     }
   ],
   "jsonapi": { "version": "1.0" }

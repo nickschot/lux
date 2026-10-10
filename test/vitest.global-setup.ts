@@ -4,7 +4,7 @@ import exec from '../src/utils/exec';
 
 // Vitest global setup. Runs once, in the main process, before any suite: it
 // resets, migrates and seeds the test-app database (each `lumen db:*` first
-// compiles the app through the legacy Rollup+Babel pipeline). It does *not*
+// compiles the app with esbuild, through `dist/`). It does *not*
 // warm the `getTestApp()` singleton — that cache lives in the test worker, so
 // suites lazy-init it there on first use.
 //

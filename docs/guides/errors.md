@@ -68,7 +68,8 @@ the database driver. In production it carries only what is safe:
 ```
 
 `source`, when the error has one, says what in the request was wrong in
-every environment; the logs (see the logging guide) keep the full error.
+every environment; the logs (see [Logging](logging.md)) keep the full
+error.
 
 ## What Lumen reports
 
@@ -81,7 +82,7 @@ every environment; the logs (see the logging guide) keep the full error.
 | `405 Method Not Allowed` | A method the path doesn't route, with an `Allow` header. | [Routing](routing.md#resources) |
 | `406 Not Acceptable` | An `Accept` header whose every JSON:API entry has parameters. | [Serializers](serializers.md#request-documents) |
 | `409 Conflict` | `data.type` or `data.id` not matching the resource; a unique constraint violation. | [Serializers](serializers.md#request-documents), [Models](models.md#errors-from-the-database) |
-| `415 Unsupported Media Type` | A body without `Content-Type: application/vnd.api+json`. | [Serializers](serializers.md#request-documents) |
+| `415 Unsupported Media Type` | A body without `Content-Type: application/vnd.api+json` (a [plain route](routing.md#plain-routes) also takes `application/json`). | [Serializers](serializers.md#request-documents) |
 | `422 Unprocessable Entity` | A model validation failed. | [Models](models.md#validations) |
 | `500 Internal Server Error` | Any other error. | — |
 
