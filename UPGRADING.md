@@ -277,6 +277,11 @@ See [Controllers](docs/guides/controllers.md).
 - New, opt-in: [visibility rules](docs/guides/controllers.md#visibility-rules),
   declared once per namespace, replace `super.index(request).where(…)`
   overrides and hooks that filter hidden records out of a response.
+- New: [`auditVisibility()`](docs/guides/controllers.md#checking-what-a-request-can-see)
+  requests every read a namespace serves, with every include path, and
+  reports each record a response contains that a hand-written list doesn't
+  allow. Use it to check an upgrade: scoping done in `index`/`show`
+  overrides doesn't reach included records or relationship endpoints.
 - New: [`maxPerPage`](docs/guides/controllers.md#reading-what-clients-may-ask-for)
   and the `rejectUnlisted*` properties above.
 
