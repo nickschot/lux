@@ -13,8 +13,13 @@ export function createResponder(req: Request, res: Response) {
       res.statusCode = normalized.statusCode;
     }
 
+    // A string an action returns is its body as is: plain text, unless the
+    // action set a Content-Type of its own (CSV, HTML, …).
     if (res.statusCode !== 204 && !hasContentType(res)) {
-      res.setHeader('Content-Type', MIME_TYPE);
+      res.setHeader(
+        'Content-Type',
+        typeof data === 'string' ? 'text/plain; charset=utf-8' : MIME_TYPE
+      );
     }
 
     res.end(normalized.data);

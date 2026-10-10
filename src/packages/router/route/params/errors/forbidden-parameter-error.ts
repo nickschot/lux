@@ -1,5 +1,5 @@
 import createServerError from '../../../../server/utils/create-server-error';
-import sourceFor from '../../../../server/utils/source-for';
+import sourceFor, { nameFor } from '../../../../server/utils/source-for';
 import type { Server$ErrorSource } from '../../../../server';
 
 /**
@@ -13,9 +13,11 @@ class ForbiddenParameterError extends TypeError {
   declare source: Server$ErrorSource;
 
   constructor(path: string) {
-    super(`Setting '${path}' is not supported for this resource.`);
+    super(`Setting '${nameFor(path)}' is not supported for this resource.`);
     this.source = sourceFor(path);
   }
 }
 
-export default createServerError(ForbiddenParameterError, 403);
+export default createServerError(ForbiddenParameterError, 403, {
+  isPublic: true
+});

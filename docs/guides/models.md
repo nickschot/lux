@@ -325,6 +325,10 @@ Write errors reach the API as JSON:API errors:
 | A unique constraint violation | `409 Conflict` |
 | `RecordNotFoundError` (`find`) | `404 Not Found` |
 
+A unique constraint violation's `detail` is the database driver's message,
+so it is sent in development only (see
+[Errors](errors.md#what-clients-receive)):
+
 ```json
 {
   "errors": [

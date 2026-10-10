@@ -27,12 +27,14 @@ returns or throws.
 | `status` | The HTTP status, as a string. | Always |
 | `title` | The status's name (`Unprocessable Entity`), or the error's own `title`. | Always |
 | `source` | What in the request was wrong: `pointer` into the request body (`/data/attributes/email`), or `parameter` for a query parameter (`sort`). | Always |
-| `detail` | The error's message. | **In development only**, unless the message is marked public (below). |
+| `detail` | The error's message. | For Lumen's own client errors, always; for any other error, **in development only**, unless the message is marked public (below). |
 | `id`, `code`, `meta`, `links.about` | Whatever the error carries. | Always, when present |
 
-**`detail` is hidden outside development** because an error message can
-contain anything: SQL, a connection string, a stack of internal names. The
-same request answered in production carries only what is safe:
+**Lumen's own client errors keep their `detail` in every environment:** the
+parameter, media-type, `404`, `405` and `422` errors in the table below.
+Their messages only describe the request: the names a client sent, the names
+it may send instead, and the record it asked for. Names are written as in
+documents (`created-at`, `fields[posts]`):
 
 ```json
 {
@@ -40,15 +42,33 @@ same request answered in production carries only what is safe:
     {
       "status": "400",
       "title": "Bad Request",
-      "source": { "parameter": "sort" }
+      "source": { "parameter": "sort" },
+      "detail": "Expected value for parameter 'sort' to be one of [title, created-at, -title, -created-at] but got body."
     }
   ],
   "jsonapi": { "version": "1.0" }
 }
 ```
 
-`source` says *what* was wrong in every environment; the logs (see the
-logging guide) keep the full error.
+**Any other error's `detail` is hidden outside development**, because its
+message can contain anything: SQL, a connection string, internal names. That
+includes the `409` for a unique constraint violation, whose message comes from
+the database driver. In production it carries only what is safe:
+
+```json
+{
+  "errors": [
+    {
+      "status": "409",
+      "title": "Conflict"
+    }
+  ],
+  "jsonapi": { "version": "1.0" }
+}
+```
+
+`source`, when the error has one, says what in the request was wrong in
+every environment; the logs (see the logging guide) keep the full error.
 
 ## What Lumen reports
 

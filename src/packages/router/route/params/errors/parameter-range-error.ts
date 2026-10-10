@@ -1,6 +1,6 @@
 import { line } from '../../../../logger';
 import createServerError from '../../../../server/utils/create-server-error';
-import sourceFor from '../../../../server/utils/source-for';
+import sourceFor, { nameFor } from '../../../../server/utils/source-for';
 import type { Server$ErrorSource } from '../../../../server';
 import type Parameter from '../parameter';
 
@@ -17,11 +17,11 @@ class ParameterRangeError extends RangeError {
       .join(' and ');
 
     super(line`
-      Expected value for parameter '${path}' to be ${bounds} but got
+      Expected value for parameter '${nameFor(path)}' to be ${bounds} but got
       ${String(actual)}.
     `);
     this.source = sourceFor(path);
   }
 }
 
-export default createServerError(ParameterRangeError, 400);
+export default createServerError(ParameterRangeError, 400, { isPublic: true });

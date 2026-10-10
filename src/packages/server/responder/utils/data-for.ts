@@ -41,7 +41,13 @@ function errorObjectFor(
     errData.source = source;
   }
 
-  if (err?.message && (env.isDevelopment() || PUBLIC.test(err.message))) {
+  // A message can contain anything (SQL, stored values, internals), so it is
+  // shown outside development only when marked public: by the framework's own
+  // client errors, which only describe the request, or with `[public]`.
+  if (
+    err?.message &&
+    (env.isDevelopment() || err.isPublic || PUBLIC.test(err.message))
+  ) {
     errData.detail = err.message.replace(PUBLIC, '');
   }
 

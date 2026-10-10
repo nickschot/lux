@@ -10,4 +10,4 @@ class RecordNotFoundError extends Error {
   }
 }
 
-export default createServerError(RecordNotFoundError, 404);
+export default createServerError(RecordNotFoundError, 404, { isPublic: true });

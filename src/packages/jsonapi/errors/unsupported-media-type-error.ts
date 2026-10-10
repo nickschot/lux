@@ -13,4 +13,6 @@ class UnsupportedMediaTypeError extends TypeError {
   }
 }
 
-export default createServerError(UnsupportedMediaTypeError, 415);
+export default createServerError(UnsupportedMediaTypeError, 415, {
+  isPublic: true
+});

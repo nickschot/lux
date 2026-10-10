@@ -40,3 +40,43 @@ export default function sourceFor(path: string): Server$ErrorSource {
     parameter: `${root}${rest.map(key => `[${key}]`).join('')}`
   };
 }
+
+/**
+ * A parameter path as the client writes it, for error messages: request
+ * document members dasherized and dotted (`data.attributes.is-public`), query
+ * parameters in brackets (`filter[created-at]`, `page[size]`).
+ *
+ * @internal
+ */
+export function nameFor(path: string): string {
+  const [root, ...rest] = path.split('.').filter(Boolean).map(memberName);
+
+  if (!root) {
+    return '';
+  } else if (root === 'data') {
+    return [root, ...rest].join('.');
+  }
+
+  return `${root}${rest.map(key => `[${key}]`).join('')}`;
+}
+
+/**
+ * A member name or relationship path as it appears in documents, keeping a
+ * `sort` value's leading `-` (`-createdAt` -> `-created-at`,
+ * `comments.user` stays dotted). Anything but a string is returned as is.
+ *
+ * @internal
+ */
+export function memberPathFor(value: unknown): unknown {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  const descending = value.startsWith('-');
+  const path = (descending ? value.slice(1) : value)
+    .split('.')
+    .map(memberName)
+    .join('.');
+
+  return descending ? `-${path}` : path;
+}

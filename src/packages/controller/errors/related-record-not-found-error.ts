@@ -25,4 +25,6 @@ class RelatedRecordNotFoundError extends Error {
   }
 }
 
-export default createServerError(RelatedRecordNotFoundError, 404);
+export default createServerError(RelatedRecordNotFoundError, 404, {
+  isPublic: true
+});

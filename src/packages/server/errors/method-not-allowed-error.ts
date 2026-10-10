@@ -14,4 +14,6 @@ class MethodNotAllowedError extends Error {
   }
 }
 
-export default createServerError(MethodNotAllowedError, 405);
+export default createServerError(MethodNotAllowedError, 405, {
+  isPublic: true
+});
