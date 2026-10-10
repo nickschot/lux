@@ -35,10 +35,14 @@ it('lists posts', async () => {
 - **The environment** is `NODE_ENV`, which picks `config/environments/*.js`
   and the entry of `config/database.js`. `startApp()` sets it to `test` when
   it is unset; `env` sets another one. Compile for the same environment.
+  It keeps that value while the app runs, since the app reads it again per
+  request, and `close()` restores what it was.
 - **Once per process.** Booting sets up the app's model classes, which can
   happen only once in a process, so starting the same app again throws.
   Start it once (in a shared setup file, with your runner running test files
-  in one process) and share it.
+  in one process) and share it. A boot that fails can be retried; if the
+  retry fails too, its error also names the first failure, since a failed
+  boot can leave the app half set up.
 - `app` gives the tests the models (`app.models.get('post')`) for creating
   fixtures, and is what `auditVisibility()` reads the routes from.
 

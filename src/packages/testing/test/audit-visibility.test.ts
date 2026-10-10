@@ -268,18 +268,28 @@ describe('auditVisibility()', () => {
     });
 
     it('sends them to every read of the type, not to linkage', async () => {
-      const { requests } = await auditVisibility(app, {
+      // A seeded tag, so that a tag is requested by id too.
+      const Tag = models.get('tag') as ModelClass;
+      const tag = idOf((await Tag.first()) as unknown as Model);
+
+      const { requests, violations } = await auditVisibility(app, {
         namespace: 'members',
         query: MEMBER_QUERY,
         visible: memberVisible,
-        ids: fixtureIds()
+        ids: { ...fixtureIds(), tags: [tag] }
       });
       const post = idOf(fixtures.publicPost);
       const params = (url: string) =>
         new URLSearchParams(url.split('?')[1] ?? '');
 
-      // The list, and the related endpoint that serves tags.
-      ['/members/tags?', `/members/posts/${post}/tags?`].forEach(prefix => {
+      expect(violations).to.deep.equal([]);
+
+      // The list, a tag by id, and the related endpoint that serves tags.
+      [
+        '/members/tags?',
+        `/members/tags/${tag}?`,
+        `/members/posts/${post}/tags?`
+      ].forEach(prefix => {
         const sent = requests.filter(url => url.startsWith(prefix));
 
         expect(sent, prefix).to.not.be.empty;
@@ -291,7 +301,9 @@ describe('auditVisibility()', () => {
       expect(requests).to.include(`/members/posts/${post}/relationships/tags`);
       expect(
         requests
-          .filter(url => !/\/members\/(tags|posts\/\d+\/tags)\?/.test(url))
+          .filter(
+            url => !/\/members\/(tags(\/\d+)?|posts\/\d+\/tags)\?/.test(url)
+          )
           .some(url => params(url).has('fromDate'))
       ).to.equal(false);
     });
