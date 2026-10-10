@@ -116,13 +116,6 @@ export default [
       globals: {
         ...globals.node
       }
-    },
-    rules: {
-      // ESLint 9 flipped this default to 'all', which flags `catch (err)` where
-      // the binding is unused. Rewriting those to optional catch binding is not
-      // an option here: `bin/lumen` must stay Babel-6-parseable (see the note at
-      // the top of that file).
-      'no-unused-vars': ['error', { caughtErrors: 'none' }]
     }
   },
 
