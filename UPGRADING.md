@@ -319,6 +319,12 @@ See [The `lumen` command](docs/guides/cli.md).
   table. **Check** the order of the files in `db/migrate/`: rename a
   not-applied migration whose version sorts wrong. `lumen db:rollback` undoes
   the highest version, which may not be the newest migration.
+- **`lumen new` names SQLite databases once.** It used to write
+  `database: 'blog_dev'` (and `_test`, `_prod`), to which SQLite appends the
+  environment again: `db/blog_dev_development.sqlite`. New apps get
+  `database: 'blog'`, so `db/blog_development.sqlite`. Existing apps keep
+  working as they are. **Optional:** set `database: 'blog'` for every
+  environment in `config/database.js` and rename the files in `db/` to match.
 - **`--use-weak` works in an app with a `tsconfig.json`.** A strict
   `tsconfig.json` above the app used to force strict mode.
 - **`lumen serve` exits with code `1` when the app can't start** (a pending

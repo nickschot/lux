@@ -169,7 +169,8 @@ lumen db:migrate
 ```
 
 This builds the app and applies the migrations in `db/migrate/`. With SQLite
-the database is a file in `db/`, created on first use. With PostgreSQL or
+the database is a file per environment, `db/blog_development.sqlite`,
+created on first use. With PostgreSQL or
 MySQL, set the connection details in `config/database.js` and create the
 database with the server's own tools first (`createdb blog_dev`, or
 `CREATE DATABASE blog_dev;`) — `lumen db:create` can't do it for those yet

@@ -1,6 +1,12 @@
 import indent from '../utils/indent';
 import underscore from '../../../utils/underscore';
 
+const SUFFIXES: Record<string, string> = {
+  development: 'dev',
+  test: 'test',
+  production: 'prod'
+};
+
 /**
  * @private
  */
@@ -33,22 +39,12 @@ export default (name: string, driver: string): string => {
       template += `${indent(4)}username: '${username}',\n`;
     }
 
-    switch (environment) {
-      case 'development':
-        template += `${indent(4)}database: '${schemaName}_dev'\n`;
-        break;
-
-      case 'test':
-        template += `${indent(4)}database: '${schemaName}_test'\n`;
-        break;
-
-      case 'production':
-        template += `${indent(4)}database: '${schemaName}_prod'\n`;
-        break;
-
-      default:
-        template += `${indent(4)}database: '${schemaName}_${environment}'\n`;
-        break;
+    // SQLite appends the environment itself (`db/blog_development.sqlite`);
+    // a server database's name is used as is.
+    if (driverName === 'sqlite3') {
+      template += `${indent(4)}database: '${schemaName}'\n`;
+    } else {
+      template += `${indent(4)}database: '${schemaName}_${SUFFIXES[environment]}'\n`;
     }
 
     template += `${indent(2)}}`;
