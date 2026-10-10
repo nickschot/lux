@@ -121,9 +121,10 @@ this.resource('posts', function () {
 
 A **collection** route takes the query parameters of `index` (`sort`,
 `filter`, `page`, `include`, `fields`); a **member** route those of `show`,
-plus the `:id`. (A custom action's response is paged, but has no page links
-or `meta.total` yet: [#142](https://github.com/nickschot/lux/issues/142).) Whatever the action returns — a `Query`, a model, an array of
-models — is serialized like a built-in response. The easiest way to write one
+plus the `:id`. Whatever the action returns — a `Query`, a model, an array of
+models — is serialized like a built-in response. A collection action's query
+that is paged, as one built on `index` is, gets `index`'s page links and
+`meta.total` too. The easiest way to write one
 is to start from the built-in action and narrow it (this assumes posts have
 an `isPublic` column, as in the example app):
 

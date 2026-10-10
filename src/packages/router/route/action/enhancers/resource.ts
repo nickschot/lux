@@ -16,7 +16,7 @@ export default function resource(action: Action<unknown>): Action<unknown> {
     // A related route serves resources of the related type: they are
     // serialized and paged by its controller.
     const target = (type === 'related' && related) || controller;
-    const paged =
+    const pagedRoute =
       actionName === 'index' ||
       (type === 'related' &&
         controller.model.relationshipFor(relationship || '')?.type ===
@@ -28,6 +28,14 @@ export default function resource(action: Action<unknown>): Action<unknown> {
     }
 
     const result = action(req, res);
+    // A custom collection action is paged when its query is: one built on
+    // `index` carries the request's page. (A plain route is not: it takes no
+    // `page`, so page links would point at a 400.)
+    const paged =
+      pagedRoute ||
+      (type === 'collection' &&
+        result instanceof Query &&
+        result.snapshots.some(([name]) => name === 'offset'));
     let links;
     let data;
     let total;
