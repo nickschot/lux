@@ -13,6 +13,47 @@ function encode(value: string): string {
   return encodeURIComponent(value).replace(/%2C/gi, ',');
 }
 
+/**
+ * A link to `pathname` with the query `pairs`, each key and value
+ * percent-encoded, so it is a valid URI however the client spelled the
+ * request (`fields[users]` becomes `fields%5Busers%5D`).
+ *
+ * @internal
+ */
+function linkTo(
+  baseURL: string,
+  pairs: Array<[string, string] | Array<string>>
+): string {
+  if (!pairs.length) {
+    return baseURL;
+  }
+
+  return `${baseURL}?${pairs
+    .map(([key, value]) => `${encode(key)}=${encode(value)}`)
+    .join('&')}`;
+}
+
+/**
+ * The link to the request itself: its path and its query as the client wrote
+ * it (member names, order, values), encoded like page links.
+ *
+ * @internal
+ */
+export function createSelfLink({
+  search,
+  domain,
+  pathname
+}: {
+  search: string;
+  domain: string;
+  pathname: string;
+}): string {
+  return linkTo(
+    `${domain}${pathname}`,
+    Array.from(new URLSearchParams(search))
+  );
+}
+
 function createLinkTemplate({
   search,
   domain,
@@ -31,16 +72,10 @@ function createLinkTemplate({
   );
 
   return function linkTemplate(pageNum: number): string {
-    const pairs =
-      pageNum > 1 ? [...query, [PAGE_NUMBER, String(pageNum)]] : query;
-
-    if (!pairs.length) {
-      return baseURL;
-    }
-
-    return `${baseURL}?${pairs
-      .map(([key, value]) => `${encode(key)}=${encode(value)}`)
-      .join('&')}`;
+    return linkTo(
+      baseURL,
+      pageNum > 1 ? [...query, [PAGE_NUMBER, String(pageNum)]] : query
+    );
   };
 }
 

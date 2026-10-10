@@ -176,6 +176,8 @@ A response to `GET /posts?page[size]=1` has this shape:
 
 - **`id`** is always a string, **`type`** the plural resource type.
 - **`links.self`** of each resource is its URL in the request's namespace.
+- **`links.self`** of the document is the request's URL, its query
+  percent-encoded (`fields%5Busers%5D=name`), as are page links.
 - **`meta.total`** (lists only) counts every matching record across all
   pages, after filters and visibility rules.
 - The **page links** keep the request's query string as written; only
