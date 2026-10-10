@@ -22,4 +22,4 @@ class ValidationError extends Error {
   }
 }
 
-export default createServerError(ValidationError, 422);
+export default createServerError(ValidationError, 422, { isPublic: true });

@@ -12,4 +12,6 @@ class InvalidContentTypeError extends TypeError {
   }
 }
 
-export default createServerError(InvalidContentTypeError, 415);
+export default createServerError(InvalidContentTypeError, 415, {
+  isPublic: true
+});

@@ -13,4 +13,4 @@ class NotAcceptableError extends TypeError {
   }
 }
 
-export default createServerError(NotAcceptableError, 406);
+export default createServerError(NotAcceptableError, 406, { isPublic: true });

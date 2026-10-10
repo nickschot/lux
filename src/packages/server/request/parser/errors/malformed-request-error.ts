@@ -11,4 +11,6 @@ class MalformedRequestError extends SyntaxError {
   }
 }
 
-export default createServerError(MalformedRequestError, 400);
+export default createServerError(MalformedRequestError, 400, {
+  isPublic: true
+});

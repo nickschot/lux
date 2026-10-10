@@ -1,6 +1,6 @@
 import { line } from '../../../../logger';
 import createServerError from '../../../../server/utils/create-server-error';
-import sourceFor from '../../../../server/utils/source-for';
+import sourceFor, { nameFor } from '../../../../server/utils/source-for';
 import type { Server$ErrorSource } from '../../../../server';
 import type { ParameterLike } from '../index';
 
@@ -12,11 +12,11 @@ class ParameterTypeError extends TypeError {
     const { type, path } = param;
 
     super(line`
-      Expected type '${type || 'undefined'}' for parameter '${path}' but got
+      Expected type '${type || 'undefined'}' for parameter '${nameFor(path)}' but got
       '${actual}'.
     `);
     this.source = sourceFor(path);
   }
 }
 
-export default createServerError(ParameterTypeError, 400);
+export default createServerError(ParameterTypeError, 400, { isPublic: true });

@@ -17,4 +17,6 @@ class ClientGeneratedIdError extends TypeError {
   }
 }
 
-export default createServerError(ClientGeneratedIdError, 403);
+export default createServerError(ClientGeneratedIdError, 403, {
+  isPublic: true
+});

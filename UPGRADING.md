@@ -39,8 +39,9 @@ Check, if it applies to your app:
    endpoints ([Routing](#routing)).
 7. **Custom actions that `.include()` relationships:** drop the call; the
    serializer loads relationships itself ([Controllers](#controllers)).
-8. **Clients or tests asserting status codes:** several changed
-   ([Errors](#errors)).
+8. **Clients or tests asserting status codes or error `detail`s:** several
+   changed ([Errors](#errors)). A string an action returns is now
+   `text/plain` ([Responses](#responses)).
 9. **Log parsing and alerting:** the text format changed, 4xx are no longer
    logged as errors, and `logging.level` must be uppercase
    ([Logging](#logging)).
@@ -127,6 +128,9 @@ See [Serializers and JSON:API](docs/guides/serializers.md).
   be arbitrary.
 - **A created resource's `links.self` equals its `Location`** (`/tags/101`).
   It used to be the collection's URL.
+- **A string an action returns is sent as `text/plain; charset=utf-8`.** It
+  used to be labelled `application/vnd.api+json`. A `Content-Type` the action
+  sets itself is kept. **Check:** clients that read such a response.
 - New, opt-in: a serializer's
   [`linksOnly`](docs/guides/serializers.md#links-only) sends a to-many
   relationship as links without its ids.
@@ -151,6 +155,13 @@ See [Errors](docs/guides/errors.md).
   `links.about`** in the error object. `detail` is still shown only in
   development, or when the message starts with `[public]`. The prefix and the
   whitespace after it are now stripped.
+- **Lumen's own client errors keep their `detail` in production**: the
+  parameter, media-type, `404`, `405` and `422` errors, whose messages only
+  describe the request. The `409` for a unique constraint violation (the
+  database driver's message) and errors from your code are still hidden.
+- **Error messages name members as documents do:** `created-at`,
+  `fields[posts]`, `filter[is-public]`, not `createdAt` or `fields.posts`.
+  Clients that match on a `detail` must follow.
 
 ### Routing
 

@@ -1,5 +1,5 @@
 import createServerError from '../../../../server/utils/create-server-error';
-import sourceFor from '../../../../server/utils/source-for';
+import sourceFor, { nameFor } from '../../../../server/utils/source-for';
 import { line } from '../../../../logger';
 import type { Server$ErrorSource } from '../../../../server';
 
@@ -15,11 +15,13 @@ class ResourceMismatchError extends TypeError {
     }
 
     super(line`
-      Expected '${String(expected)}' for parameter '${path}' but got
+      Expected '${String(expected)}' for parameter '${nameFor(path)}' but got
       ${String(normalized)}.
     `);
     this.source = sourceFor(path);
   }
 }
 
-export default createServerError(ResourceMismatchError, 409);
+export default createServerError(ResourceMismatchError, 409, {
+  isPublic: true
+});
