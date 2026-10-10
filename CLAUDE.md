@@ -147,7 +147,15 @@ result over backward compatibility, and record anything app-visible in
   `volta` field; `.npmrc`'s `use-node-version` is ignored by pnpm 12.) The pin covers
   scripts run through pnpm only; the CI legs on other Node versions delete
   `node_modules/.bin/node` so their own Node runs (a frozen install doesn't restore that
-  link: remove `node_modules` and reinstall). `engines` is `>= 22.14`: the first 22.x with **N-API 10**, which better-sqlite3 13's
+  link: remove `node_modules` and reinstall).
+  **`devEngines.runtime` is an array of two entries, and must stay one.** npm 11 checks it
+  too, for any npm command in the repo, but has no `onFail: "download"`: against the pin
+  alone, npm on another Node fails with `EBADDEVENGINES`. release-plan's actions run
+  `npm view` and `npm install -g` here on a hardcoded Node 24, so Plan Release broke. npm
+  accepts the first entry that matches, so the second (`>= 22.14`, `onFail: "warn"`) lets
+  it through; pnpm uses the first, the pin. `pnpm add -D node@runtime:<version>` updates
+  the first and keeps the second.
+  `engines` is `>= 22.14`: the first 22.x with **N-API 10**, which better-sqlite3 13's
   prebuilt binary needs (on 22.13 it segfaults — `lumen db:migrate` exits 139). Below
   that: 22.13 is where `require()` of ESM is stable (22.12 unflagged it but still warns)
   and the floor faker 10 and ESLint 10 declare. CI runs a leg on exactly 22.14.0 so the
