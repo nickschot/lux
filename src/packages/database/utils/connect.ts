@@ -3,7 +3,7 @@ import { join as joinPath } from 'path';
 import type { Knex } from 'knex';
 
 import { NODE_ENV, DATABASE_URL } from '../../../constants';
-import { VALID_DRIVERS } from '../constants';
+import { SQLITE_DRIVER, VALID_DRIVERS } from '../constants';
 import { InvalidDriverError } from '../errors';
 import type { DatabaseEnvironmentConfig } from '../interfaces';
 
@@ -31,7 +31,7 @@ export function connectionFor(
   const connectionUrl = databaseUrl || url;
 
   if (connectionUrl) {
-    if (driver === 'sqlite3' || ssl === undefined) {
+    if (driver === SQLITE_DRIVER || ssl === undefined) {
       return connectionUrl;
     }
 
@@ -49,7 +49,7 @@ export function connectionFor(
     user: username,
     socketPath: socket,
     filename:
-      driver === 'sqlite3'
+      driver === SQLITE_DRIVER
         ? joinPath(path, 'db', `${database || 'default'}_${NODE_ENV}.sqlite`)
         : undefined
   };
@@ -68,7 +68,15 @@ export default function connect(
     throw new InvalidDriverError(driver);
   }
 
-  if (pool && typeof pool === 'number') {
+  const usingSQLite = driver === SQLITE_DRIVER;
+
+  if (usingSQLite) {
+    // One connection, whatever `pool` says. better-sqlite3 is synchronous: a
+    // connection waiting on another's lock blocks the event loop, so the one
+    // holding it can never finish, and the wait fails ("database is locked").
+    // With one connection, writes queue in the pool instead.
+    pool = { min: 1, max: 1 };
+  } else if (pool && typeof pool === 'number') {
     pool = {
       min: pool > 1 ? 2 : 1,
       max: pool
@@ -77,7 +85,6 @@ export default function connect(
 
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const knex = require(joinPath(path, 'node_modules', 'knex'));
-  const usingSQLite = driver === 'sqlite3';
 
   return knex({
     pool,

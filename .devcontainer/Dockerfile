@@ -5,9 +5,9 @@
 FROM mcr.microsoft.com/devcontainers/typescript-node:22-trixie
 
 # unzip is for the watchman release below; python3/make/g++ are a fallback for
-# native modules — sqlite3 normally fetches a prebuilt N-API binary, but the
-# toolchain being present means a cache miss degrades to a slow build rather
-# than a failed install.
+# native modules — better-sqlite3 bundles prebuilt N-API binaries, but the
+# toolchain being present means a module without one degrades to a slow build
+# rather than a failed install.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         python3 \

@@ -17,7 +17,8 @@ an app would write them.
 
 Required:
 
-1. Run **Node 22.13 or later**, and update the database drivers
+1. Run **Node 22.13 or later**, and update the database drivers. **SQLite
+   apps:** switch from `sqlite3` to `better-sqlite3`
    ([Requirements](#requirements)).
 2. Remove `"test": "lumen test"` from `package.json`: the command is gone
    ([CLI](#the-lumen-cli-and-generators)).
@@ -66,9 +67,28 @@ ESM-only dependencies rely on it. Pin it with `engines`, `.nvmrc` or `volta`.
 // package.json "dependencies"
 "pg": "^8.23.1",
 "mysql2": "^3.24.5",
-"sqlite3": "^6.0.1",  // was ^5.x
-"knex": "^3.3.0"      // was ^0.x
+"better-sqlite3": "^13.0.3",  // replaces sqlite3
+"knex": "^3.3.0"              // was ^0.x
 ```
+
+**SQLite: `better-sqlite3` replaces `sqlite3`.** node-sqlite3 is unmaintained
+since its 6.0.0, and Lumen no longer accepts it: an app with
+`driver: 'sqlite3'` refuses to boot, saying what to change. **Do:**
+
+1. In `config/database.js`, set `driver: 'better-sqlite3'` for every
+   environment.
+2. Replace the dependency: remove `sqlite3`, add `better-sqlite3`. It ships
+   prebuilt binaries; with pnpm, add
+   `"pnpm": { "ignoredBuiltDependencies": ["better-sqlite3"] }` to
+   `package.json` so it doesn't try to compile it.
+
+The database files (`db/<database>_<environment>.sqlite`) stay where they
+are and need no conversion. SQLite now always uses a single connection,
+whatever `pool` says: better-sqlite3 is synchronous, so a second connection
+waiting on the first's lock would block the process.
+
+The drivers `mariasql`, `strong-oracle` and `oracle`, which knex 3 no longer
+has, are no longer accepted either.
 
 ### Requests
 

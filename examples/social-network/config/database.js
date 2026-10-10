@@ -3,17 +3,17 @@
 // `host`/`username`/`password`, and install the driver package.
 export default {
   development: {
-    driver: 'sqlite3',
+    driver: 'better-sqlite3',
     database: 'social_network'
   },
 
   test: {
-    driver: 'sqlite3',
+    driver: 'better-sqlite3',
     database: 'social_network'
   },
 
   production: {
-    driver: 'sqlite3',
+    driver: 'better-sqlite3',
     database: 'social_network'
   }
 };

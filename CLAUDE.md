@@ -250,10 +250,16 @@ pnpm run clean        # remove build/dist/coverage artifacts
 `pnpm build` matters more than it looks: the app compiler consumes `dist/index.mjs`, so
 the suite runs against the *last build*, not the working tree. Always build before test.
 
-Tests need a database; the test-app defaults to **`sqlite3`** (`^6.0.1`, a prebuilt
-N-API binary — no native compile, no Python). Upstream marked node-sqlite3 **unmaintained**
-alongside v6.0.0, so it is a dead end; knex's `better-sqlite3` client is the likely successor. CI additionally runs `pg` /
-`mysql2` via `DATABASE_DRIVER`.
+Tests need a database; the test-app defaults to **`better-sqlite3`** (`^13.0.3`), which
+replaced the unmaintained `sqlite3` in #74. It **bundles prebuilt N-API binaries** and
+sets `"gypfile": false`, so nothing compiles: npm skips the build, and pnpm is told to
+with `ignoredBuiltDependencies` (pnpm otherwise runs `node-gyp rebuild` for its
+`binding.gyp` and fails without a toolchain). **SQLite always gets one connection**
+(`connect()` ignores `pool` for it): better-sqlite3 is synchronous, so a second connection
+waiting on the first's lock blocks the event loop and fails with "database is locked".
+`sqlite3` still appears in the test-app's lockfile only as an auto-installed optional peer
+of knex (like `tedious`); nothing loads it. CI additionally runs `pg` / `mysql2` via
+`DATABASE_DRIVER`.
 
 **Current baseline (Node 22 / pnpm 10):** `850 passing` across 103 files, all on **Vitest**
 (`pnpm test` = `vitest run`, ~30 s). Coverage sits at ~70% of statements.
@@ -262,7 +268,7 @@ alongside v6.0.0, so it is a dead end; knex's `better-sqlite3` client is the lik
 
 Two jobs on push to `develop`/`modernization`, on every PR, and on demand:
 `static` (typecheck + lint + format:check — none of which the old CI ran) and `test`,
-a matrix over `sqlite3` / `pg` / `mysql2`.
+a matrix over `better-sqlite3` / `pg` / `mysql2`.
 
 Things worth knowing before editing it:
 - **⚠ The test-app's DB drivers are ancient enough to break on modern Node.**
@@ -274,8 +280,8 @@ Things worth knowing before editing it:
   a healthy driver gives `ECONNREFUSED` immediately; the broken one exits 0 in silence.
   `mysql2` was bumped 1.7 -> 3.x for the same reason, which let the workflow drop a
   `mysql:8.0` pin and a `mysql_native_password` switch; both services now run current
-  releases (postgres:16, mysql:8.4) with ordinary password auth. `sqlite3` is current
-  (6.0.1). **If a driver is ever pinned back, expect the server-side workarounds
+  releases (postgres:16, mysql:8.4) with ordinary password auth. `better-sqlite3` is
+  current (13.x). **If a driver is ever pinned back, expect the server-side workarounds
   to come back with it.**
 - **`lumen db:reset` provisions pg/mysql too** (#111): `db:create`/`db:drop` connect to the
   server (`postgres` maintenance database, or none for MySQL), not to `lumen_test`, and a
