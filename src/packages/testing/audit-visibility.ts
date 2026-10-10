@@ -42,12 +42,69 @@ export type AuditVisibilityOptions = {
    * keep the database small or list the ids.
    */
   ids?: Record<string, ReadonlyArray<string | number>>;
+
+  /**
+   * Query parameters a read requires, keyed by the type it serves: they are
+   * sent with that type's list, its records by id, and every related
+   * endpoint that serves it (`/posts/:id/comments` serves `comments`, and
+   * takes the parameters of the comments' controller). Relationship
+   * endpoints take none.
+   *
+   * ```javascript
+   * query: { comments: { fromDate: '2026-01-01' } }
+   * ```
+   */
+  query?: Record<string, Record<string, string>>;
+
+  /**
+   * Where the application is served, when not by `app` itself: a server
+   * started as a separate process (`lumen serve`), such as
+   * `'http://localhost:4000'`. `app` still provides the routes, the
+   * include paths and the ids, so it must be booted in the test, but need
+   * not listen.
+   */
+  origin?: string;
+
+  /**
+   * Called with each document a read answers with, for checks beyond which
+   * records appear, such as the fields a request may see of each. Return a
+   * message, or several, for each problem found: each is reported as a
+   * violation of that request. May be async.
+   *
+   * ```javascript
+   * onDocument({ document }) {
+   *   return document.included
+   *     ?.filter(({ type, attributes }) => type === 'users' && attributes.email)
+   *     .map(({ id }) => `users ${id} shows its email`);
+   * }
+   * ```
+   */
+  onDocument?: (
+    response: AuditedDocument
+  ) => DocumentCheckResult | Promise<DocumentCheckResult>;
+};
+
+/** A document a read answered with, for `onDocument`. */
+export type AuditedDocument = {
+  /** The request, as a path and query string. */
+  url: string;
+  /** Its status. */
+  status: number;
+  /** The parsed JSON:API document. */
+  document: Record<string, unknown>;
 };
 
 /**
- * A record a response contained that the audit's `visible` does not allow, or
- * a request that failed with an error other than `401`, `403` or `404`, so
- * that what it serves could not be checked.
+ * What `onDocument` returns: a message for each problem found, or nothing
+ * when there is none.
+ */
+export type DocumentCheckResult =
+  string | ReadonlyArray<string> | null | undefined | void;
+
+/**
+ * A record a response contained that the audit's `visible` does not allow; a
+ * request that failed with an error other than `401`, `403` or `404`, so that
+ * what it serves could not be checked; or a problem `onDocument` found.
  */
 export type VisibilityViolation = {
   /** The request, as a path and query string. */
@@ -58,6 +115,8 @@ export type VisibilityViolation = {
   type?: string;
   /** The record's id, if the violation is a record. */
   id?: string;
+  /** What `onDocument` found, if the violation comes from it. */
+  message?: string;
 };
 
 /** What {@link auditVisibility} found. */
@@ -66,6 +125,12 @@ export type VisibilityAudit = {
   requests: Array<string>;
   /** What should not have been in a response, in request order. */
   violations: Array<VisibilityViolation>;
+  /**
+   * Every record the responses named, keyed by type: as primary data,
+   * included or as linkage, allowed or not, each id once. Compare it with
+   * what the request should see to check that the audit reached it all.
+   */
+  seen: Record<string, Array<string>>;
 };
 
 // The built-in reads; custom routes take parameters the audit cannot know.
@@ -77,6 +142,20 @@ const DENIED = new Set([401, 403, 404]);
 
 // Bounds the `links.next` chain of a single list, should one never end.
 const MAX_PAGES = 1000;
+
+/** Where `app` itself is listening, if it is. */
+function originOf(app: Application): string {
+  const address = app.server.instance.address() as AddressInfo | null;
+
+  if (!address) {
+    throw new Error(
+      'auditVisibility: the application is not listening. Start it ' +
+        '(`startApp()`), or pass the `origin` of the server to audit.'
+    );
+  }
+
+  return `http://localhost:${address.port}`;
+}
 
 function allows(visible: VisibleRecords | undefined, id: string): boolean {
   if (visible === true) {
@@ -139,24 +218,33 @@ function includesOf(route: Route): Array<string | undefined> {
  * });
  * ```
  *
- * Requests are made one at a time to the running application: `app` must be
- * listening. Custom routes are not requested. Each route is requested once per
+ * Requests are made one at a time, to `app` itself (which must then be
+ * listening, as {@link startApp} leaves it) or to `origin`. Custom routes are
+ * not requested. Each route is requested once per
  * id (and per page), so run it against a small fixture database, or narrow
  * the ids with `ids`.
  *
  * @param app - The application, listening.
  * @param options - What to audit, and what the request may see.
- * @returns Every request made, and every violation found.
+ * @returns Every request made, every violation found, and every record
+ * seen.
  * @throws When the namespace serves no reads, so a mistyped namespace cannot
  * pass by checking nothing.
  */
 export default async function auditVisibility(
   app: Application,
-  { namespace = '', visible, headers = {}, ids = {} }: AuditVisibilityOptions
+  {
+    namespace = '',
+    visible,
+    headers = {},
+    ids = {},
+    query: required = {},
+    origin = originOf(app),
+    onDocument
+  }: AuditVisibilityOptions
 ): Promise<VisibilityAudit> {
-  const { port } = app.server.instance.address() as AddressInfo;
-  const origin = `http://localhost:${port}`;
-  const audit: VisibilityAudit = { requests: [], violations: [] };
+  const audit: VisibilityAudit = { requests: [], violations: [], seen: {} };
+  const seen = new Map<string, Set<string>>();
 
   const routes = Array.from(app.router.values()).filter(
     route =>
@@ -203,6 +291,12 @@ export default async function auditVisibility(
 
   const check = (url: string, status: number, found: Array<Identifier>) => {
     found.forEach(({ type, id }) => {
+      if (!seen.has(type)) {
+        seen.set(type, new Set());
+      }
+
+      seen.get(type)?.add(id);
+
       if (!allows(visible[type], id)) {
         audit.violations.push({ url, status, type, id });
       }
@@ -239,6 +333,22 @@ export default async function auditVisibility(
 
       check(url, res.status, identifiersIn(document));
 
+      if (onDocument && document) {
+        const found = await onDocument({
+          url,
+          status: res.status,
+          document: document as Record<string, unknown>
+        });
+        const messages =
+          typeof found === 'string' ? [found] : Array.from(found ?? []);
+
+        const at = { url, status: res.status };
+
+        messages.forEach(message => {
+          audit.violations.push({ ...at, message });
+        });
+      }
+
       const next: unknown = document?.links?.next;
 
       url = typeof next === 'string' ? relative(next) : undefined;
@@ -250,8 +360,15 @@ export default async function auditVisibility(
       ? (route.related ?? route.controller).maxPerPage
       : undefined;
 
+    // The type the route's records are of: none for a relationship
+    // endpoint, which answers with linkage and takes no parameters.
+    const served =
+      route.type === 'relationship'
+        ? undefined
+        : (route.related ?? route.controller).model.resourceName;
+
     const query = (include: string | undefined) => {
-      const params = new URLSearchParams();
+      const params = new URLSearchParams(served ? required[served] : {});
 
       if (include) {
         params.set('include', include);
@@ -278,6 +395,10 @@ export default async function auditVisibility(
       }
     }
   }
+
+  seen.forEach((list, type) => {
+    audit.seen[type] = Array.from(list);
+  });
 
   return audit;
 }

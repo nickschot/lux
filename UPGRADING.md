@@ -302,11 +302,14 @@ See [Controllers](docs/guides/controllers.md).
 - New, opt-in: [visibility rules](docs/guides/controllers.md#visibility-rules),
   declared once per namespace, replace `super.index(request).where(…)`
   overrides and hooks that filter hidden records out of a response.
-- New: [`auditVisibility()`](docs/guides/controllers.md#checking-what-a-request-can-see),
-  from `lumen-framework/testing`, requests every read a namespace serves, with every include path, and
-  reports each record a response contains that a hand-written list doesn't
-  allow. Use it to check an upgrade: scoping done in `index`/`show`
-  overrides doesn't reach included records or relationship endpoints.
+- New, in `lumen-framework/testing` ([Testing](docs/guides/testing.md)):
+  `auditVisibility()` requests every read a namespace serves, with every
+  include path, and reports each record a response contains that a
+  hand-written list doesn't allow. It also returns every record it saw, and
+  takes a callback for checking fields. Use it to check an upgrade: scoping
+  done in `index`/`show` overrides doesn't reach included records or
+  relationship endpoints. `startApp()` boots the app in a test from its
+  compiled bundle.
 - New: [`maxPerPage`](docs/guides/controllers.md#reading-what-clients-may-ask-for)
   and the `rejectUnlisted*` properties above.
 
@@ -452,7 +455,8 @@ import:
 
 - `lumen-framework`, as before;
 - `lumen-framework/testing`, test helpers such as
-  [`auditVisibility()`](docs/guides/controllers.md#checking-what-a-request-can-see),
+  [`auditVisibility()`](docs/guides/testing.md#checking-what-a-request-can-see-auditvisibility)
+  and [`startApp()`](docs/guides/testing.md#booting-the-app-startapp),
   kept out of the main entry so they never reach an app's runtime bundle;
 - `lumen-framework/package.json`.
 

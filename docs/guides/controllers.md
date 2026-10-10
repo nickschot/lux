@@ -429,46 +429,11 @@ class ApplicationController extends Controller {
 
 ### Checking what a request can see
 
-`auditVisibility()`, from `lumen-framework/testing`, tests the result rather
-than the rules. It requests
-every read a namespace serves: each list, each record by id, each
-relationship and related endpoint, without `include` and with every path it
-accepts, following every page. Then it reports each record in a response
-that a list you write by hand doesn't allow, whether as primary data,
-included or in a relationship's linkage:
-
-```javascript
-import { auditVisibility } from 'lumen-framework/testing';
-
-it('shows a member only public posts and their comments', async () => {
-  const { violations } = await auditVisibility(app, {
-    namespace: 'members',
-    headers: { Authorization: `Bearer ${memberToken}` },
-    visible: {
-      posts: [publicPost.id],
-      comments: [commentOnPublicPost.id],
-      users: true,
-      tags: true
-    }
-  });
-
-  expect(violations).toEqual([]);
-});
-```
-
-- `visible` lists, per type, the ids the request may see, `true` for all of
-  them, or a function taking an id. **A type left out may not appear at
-  all**, so a relationship added later fails the test until you decide what
-  it shows.
-- `headers` are sent with every request: authenticate as the user the
-  audit is for.
-- Each route that takes an id is requested with every id of its type in the
-  database, visible or not; `ids` narrows them per type. A `404` for a
-  hidden record passes, as do `401` and `403`. Any other error is reported,
-  since that read went unchecked.
-- `app` must be listening. Custom routes aren't requested.
-
-Requests go one at a time, so run it against a small fixture database.
+Test the result, not just the rules: `auditVisibility()`, from
+`lumen-framework/testing`, requests every read a namespace serves, with
+every `include` path, and reports each record a response contains that a list
+you write by hand doesn't allow. See
+[Testing](testing.md#checking-what-a-request-can-see-auditvisibility).
 
 ### Rules and model scopes
 
