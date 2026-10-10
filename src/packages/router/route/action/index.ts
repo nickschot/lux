@@ -20,7 +20,9 @@ export function createAction(
 ): Array<Action<unknown>> {
   let fn = action.bind(controller);
 
-  if (type !== 'custom' && controller.hasModel && controller.hasSerializer) {
+  // Every route of a resource, plain ones included: a model, an array of
+  // models or a query they return is serialized; anything else is sent as is.
+  if (controller.hasModel && controller.hasSerializer) {
     fn = resource(fn);
   }
 

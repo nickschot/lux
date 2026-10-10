@@ -166,7 +166,10 @@ this.collection(function () {
 
 `this.get('stats')` directly inside a resource — not in `member` or
 `collection` — adds `GET /posts/stats` as a **plain** route. A plain route
-gets no query parameters and its result is sent as is, not serialized:
+takes no query parameters except the controller's
+[`query`](controllers.md#reading-what-clients-may-ask-for), so a client
+can't sort, filter, page or `include` it. That makes it the place for
+responses that aren't a list of resources:
 
 ```javascript
 class PostsController extends Controller {
@@ -180,11 +183,25 @@ class PostsController extends Controller {
 { "count": 2 }
 ```
 
-Use plain routes for responses that are not JSON:API resources. Returning
-models from one, or calling `this.index(request)` in it, does not work (the
-models are not serialized, and the built-in actions need the query
-parameters a plain route does not have) — use a `collection` or `member`
-route instead.
+Models it returns are still serialized, like everywhere else, and the
+built-in actions work in it, with `index`'s defaults (the first page, sorted
+by `createdAt`):
+
+```javascript
+this.resource('posts', function () {
+  this.get('featured');
+});
+```
+
+```javascript
+class PostsController extends Controller {
+  featured(request) {
+    return this.index(request).where({ isPublic: true }); // a JSON:API document
+  }
+}
+```
+
+For a list the client can sort, filter and page, use a `collection` route.
 
 A plain route at the top level is handled by the application controller:
 
