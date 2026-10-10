@@ -1,7 +1,8 @@
 # trixie, not bookworm: Meta's prebuilt watchman links against GLIBC 2.38 /
 # GLIBCXX 3.4.32, and bookworm only ships glibc 2.36 — the binary refuses to run
 # there. trixie has glibc 2.41. Its node tracks the latest 22.x, the same line
-# as the `volta` pin in package.json.
+# as the devEngines.runtime pin in package.json (on which pnpm runs the repo's
+# scripts anyway).
 FROM mcr.microsoft.com/devcontainers/typescript-node:22-trixie
 
 # unzip is for the watchman release below; python3/make/g++ are a fallback for
@@ -39,9 +40,8 @@ RUN curl -fsSL -o /tmp/watchman.zip \
 # installer puts everything under the user's own $HOME instead.
 
 # pnpm comes from corepack, which honours the `packageManager` field in
-# package.json (pnpm@12.5.1) — so the container pins the same version as the
-# host without Volta. This also removes the host's VOLTA_FEATURE_PNPM gotcha
-# entirely: node here is simply the image's node.
+# package.json (pnpm@12.5.1) — so the container runs the same version as the
+# host.
 #
 # The base image ships its own globally npm-installed pnpm which is newer than
 # this project's pin and would shadow corepack's shim. (On the old Node 20 image

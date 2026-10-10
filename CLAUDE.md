@@ -139,8 +139,15 @@ result over backward compatibility, and record anything app-visible in
   one unfrozen `pnpm install` in each of the three directories. `lumen new` writes the
   same kind of file for generated apps (`cli/templates/pnpm-workspace.ts`): esbuild, a
   dependency of the framework, always; better-sqlite3 for SQLite.
-- **Node:** pinned to **22** (`volta` field in `package.json`; `.nvmrc` = 22);
-  `engines` is `>= 22.14`: the first 22.x with **N-API 10**, which better-sqlite3 13's
+- **Node:** pinned to **22.23.3** by `devEngines.runtime` in `package.json`: pnpm installs
+  that Node into `node_modules` (`node_modules/.bin/node`) and runs every script on it,
+  whatever `node` is on PATH. Bump it with `pnpm add -D node@runtime:<version>`, which
+  updates `package.json` and the lockfile. **Never hand-edit the version**: pnpm 12 doesn't
+  notice, even with `--frozen-lockfile`, and keeps the old Node. (There is no `.nvmrc` or
+  `volta` field; `.npmrc`'s `use-node-version` is ignored by pnpm 12.) The pin covers
+  scripts run through pnpm only; the CI legs on other Node versions delete
+  `node_modules/.bin/node` so their own Node runs (a frozen install doesn't restore that
+  link: remove `node_modules` and reinstall). `engines` is `>= 22.14`: the first 22.x with **N-API 10**, which better-sqlite3 13's
   prebuilt binary needs (on 22.13 it segfaults — `lumen db:migrate` exits 139). Below
   that: 22.13 is where `require()` of ESM is stable (22.12 unflagged it but still warns)
   and the floor faker 10 and ESLint 10 declare. CI runs a leg on exactly 22.14.0 so the
@@ -159,7 +166,7 @@ local-only commits. `postCreateCommand` then runs
 builds `dist/`. **Verified end-to-end in clone mode**: the suite passes with
 typecheck/lint/format green, watchman tests included.
 
-Ships the latest Node **22.x** (the same line as the `volta` pin), pnpm **12.5.1** via corepack,
+Ships the latest Node **22.x** (pnpm runs the scripts on the `devEngines.runtime` pin), pnpm **12.5.1** via corepack,
 watchman, the `gh` CLI (devcontainer feature), and Claude Code. First run: `claude`
 prompts for login and `gh auth login` (or export `GH_TOKEN` on the host — `remoteEnv`
 forwards it, along with `GIT_AUTHOR_NAME`/`GIT_AUTHOR_EMAIL`).
@@ -215,9 +222,9 @@ Inside the container `node` and `pnpm` are simply on PATH.
 
 ## Environment (host)
 
-- **Node:** whatever manages it (proto, Volta, nvm), the suite needs **Node >= 22.14** —
-  better-sqlite3 segfaults below that. A non-interactive shell may find another `node`
-  first (e.g. Homebrew's); check `node --version` before trusting a failure.
+- **Node:** pnpm runs scripts (`pnpm test`, `pnpm build`, …) on the pinned Node, so
+  whatever `node` the shell finds only runs pnpm itself. Running a tool directly
+  (`node …`, `npx …`) uses the shell's `node`; use `pnpm exec` to get the pinned one.
 - **pnpm:** a version-switching pnpm (Homebrew's, corepack) picks its version from
   `packageManager`; the root, `test/test-app` and the example app all pin `pnpm@12.5.1`.
 - **The `lumen` CLI is resolved via `node_modules/.bin`.** The suite's global setup
