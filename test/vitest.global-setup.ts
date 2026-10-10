@@ -8,11 +8,8 @@ import exec from '../src/utils/exec';
 // warm the `getTestApp()` singleton — that cache lives in the test worker, so
 // suites lazy-init it there on first use.
 //
-// `lumen db:reset` can only provision sqlite. For pg/mysql `dbdrop` connects *to*
-// `lumen_test` before dropping it (which Postgres refuses) and `dbcreate` connects
-// to a database it is about to create — so those drivers need the database
-// created externally, and whoever does that sets LUMEN_SKIP_DB_RESET. See the
-// pg/mysql legs of .github/workflows/ci.yml.
+// `lumen db:reset` provisions every driver. LUMEN_SKIP_DB_RESET skips it, for
+// a database created by other means.
 const { LUMEN_SKIP_DB_RESET } = process.env;
 
 export default async function setup(): Promise<void> {

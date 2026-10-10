@@ -4,8 +4,8 @@ import { CWD, NODE_ENV, DATABASE_URL } from '../../../constants';
 import { CONNECTION_STRING_MESSAGE } from '../constants';
 import DatabaseConfigMissingError from '../errors/database-config-missing';
 import { rmrf } from '../../fs';
-import { connect } from '../../database';
 import { createLoader } from '../../loader';
+import provision from '../utils/server-database';
 
 /**
  * @private
@@ -28,17 +28,5 @@ export function dbdrop() {
     return Promise.resolve();
   }
 
-  const { schema } = connect(CWD, config);
-  const query = `DROP DATABASE IF EXISTS ${config.database}`;
-
-  // Knex query builders are event emitters at runtime, but `.once` isn't on the
-  // `SchemaBuilder` type surface.
-  const raw = schema.raw(query) as unknown as {
-    once(event: string, listener: () => void): Promise<unknown>;
-  };
-
-  return raw.once('query', () => {
-    process.stdout.write(query);
-    process.stdout.write(EOL);
-  });
+  return provision(CWD, config, 'drop');
 }
