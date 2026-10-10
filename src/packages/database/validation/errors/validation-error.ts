@@ -1,6 +1,6 @@
 import createServerError from '../../../server/utils/create-server-error';
 import sourceFor from '../../../server/utils/source-for';
-import type { Server$ErrorSource } from '../../../server';
+import type { ServerErrorSource } from '../../../server';
 
 /**
  * A model validator (`static validates`) rejected an attribute. Answered with
@@ -13,7 +13,7 @@ import type { Server$ErrorSource } from '../../../server';
 class ValidationError extends Error {
   declare key: string;
 
-  declare source: Server$ErrorSource;
+  declare source: ServerErrorSource;
 
   constructor(key: string) {
     super(`Validation failed for ${key}.`);

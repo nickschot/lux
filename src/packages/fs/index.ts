@@ -5,14 +5,14 @@ import type { Stats } from 'fs';
 import Watcher from './watcher';
 import createResolver from './utils/create-resolver';
 import createPathRemover from './utils/create-path-remover';
-import type { fs$readOpts, fs$writeOpts } from './interfaces';
+import type { ReadOptions, WriteOptions } from './interfaces';
 
 export { default as rmrf } from './utils/rmrf';
 export { default as exists } from './utils/exists';
 export { default as isJSFile } from './utils/is-js-file';
 export { default as parsePath } from './utils/parse-path';
 
-export type { fs$ParsedPath } from './interfaces';
+export type { ParsedPath } from './interfaces';
 
 /**
  * @private
@@ -78,7 +78,7 @@ export function rmdir(path: string): Promise<void> {
 export function readdir(
   path: string,
   // opts is accepted for signature parity with readdirRec but unused here.
-  opts?: fs$readOpts // eslint-disable-line @typescript-eslint/no-unused-vars
+  opts?: ReadOptions // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Promise<Array<string>> {
   return new Promise((resolve, reject) => {
     fs.readdir(path, createResolver(resolve, reject));
@@ -90,7 +90,7 @@ export function readdir(
  */
 export function readdirRec(
   path: string,
-  opts?: fs$readOpts
+  opts?: ReadOptions
 ): Promise<Array<string>> {
   const stripPath = createPathRemover(path);
 
@@ -129,7 +129,7 @@ export function readdirRec(
  */
 export function readFile(
   path: string,
-  opts?: fs$readOpts
+  opts?: ReadOptions
 ): Promise<string | Buffer> {
   return new Promise((resolve, reject) => {
     fs.readFile(
@@ -146,7 +146,7 @@ export function readFile(
 export function writeFile(
   path: string,
   data: string | Buffer,
-  opts?: fs$writeOpts
+  opts?: WriteOptions
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     fs.writeFile(
@@ -164,7 +164,7 @@ export function writeFile(
 export function appendFile(
   path: string,
   data: string | Buffer,
-  opts?: fs$writeOpts
+  opts?: WriteOptions
 ): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     fs.appendFile(

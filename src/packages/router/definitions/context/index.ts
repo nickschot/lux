@@ -9,8 +9,8 @@
 import Resource from '../../resource';
 import Namespace from '../../namespace';
 import K from '../../../../utils/k';
-import type { Router$Namespace } from '../../index';
-import type { Router$DefinitionBuilder } from '../interfaces';
+import type { RouterNamespace } from '../../index';
+import type { RouterDefinitionBuilder } from '../interfaces';
 import ControllerMissingError from '../../../../errors/controller-missing-error';
 
 import createDefinitionGroup from './utils/create-definition-group';
@@ -21,9 +21,9 @@ export type DefinitionContext = {
 };
 
 /** @internal */
-export function contextFor(build: Router$DefinitionBuilder<Router$Namespace>) {
+export function contextFor(build: RouterDefinitionBuilder<RouterNamespace>) {
   return {
-    create(namespace: Router$Namespace): DefinitionContext {
+    create(namespace: RouterNamespace): DefinitionContext {
       let context: DefinitionContext = {
         member: K,
         resource: K,

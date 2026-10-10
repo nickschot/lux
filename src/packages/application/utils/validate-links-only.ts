@@ -4,7 +4,7 @@ import LinksOnlyError from '../../../errors/links-only-error';
 import type Router from '../../router';
 import type Serializer from '../../serializer';
 import type { Model } from '../../database';
-import type { Bundle$Namespace } from '../../loader';
+import type { BundleNamespace } from '../../loader';
 
 /**
  * Check every Serializer's `linksOnly` against the built `router`: each
@@ -23,7 +23,7 @@ import type { Bundle$Namespace } from '../../loader';
 export default function validateLinksOnly(
   router: Router,
   serializers:
-    Bundle$Namespace<Serializer<Model>> | Map<string, Serializer<Model>>
+    BundleNamespace<Serializer<Model>> | Map<string, Serializer<Model>>
 ): void {
   const problems: Array<string> = [];
   // The relationships each Serializer has a related endpoint for, in some

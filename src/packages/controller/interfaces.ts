@@ -17,8 +17,7 @@ export type ControllerOptions = {
   serializer?: Serializer<Model>;
 };
 
-export type Controller$builtIn =
-  'show' | 'index' | 'create' | 'update' | 'destroy';
+export type BuiltInAction = 'show' | 'index' | 'create' | 'update' | 'destroy';
 
 /**
  * A {@link Controller.beforeAction} hook. Resolving with anything but
@@ -39,10 +38,6 @@ export type AfterAction = (
   responseData?: unknown
 ) => Promise<unknown>;
 
-export type Controller$findOne<T extends Model> = (
-  request: Request
-) => Query<T>;
+export type FindOne<T extends Model> = (request: Request) => Query<T>;
 
-export type Controller$findMany<T extends Model> = (
-  request: Request
-) => Query<Array<T>>;
+export type FindMany<T extends Model> = (request: Request) => Query<Array<T>>;

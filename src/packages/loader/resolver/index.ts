@@ -1,12 +1,10 @@
 import { FreezeableMap } from '../../freezeable';
-import type { Bundle$Namespace, Bundle$NamespaceGroup } from '../index';
+import type { BundleNamespace, BundleNamespaceGroup } from '../index';
 
 /**
  * @private
  */
-export function resolve<T>(
-  group: Bundle$Namespace<T>
-): Bundle$NamespaceGroup<T> {
+export function resolve<T>(group: BundleNamespace<T>): BundleNamespaceGroup<T> {
   return Array.from(group)
     .map(([key, value]): [string, T, string] => {
       const parts = key.split('/');
@@ -18,7 +16,7 @@ export function resolve<T>(
 
       return [key, value, 'root'];
     })
-    .reduce<Bundle$NamespaceGroup<T>>((map, [key, value, namespace]) => {
+    .reduce<BundleNamespaceGroup<T>>((map, [key, value, namespace]) => {
       let nsValue = map.get(namespace);
 
       if (!nsValue) {

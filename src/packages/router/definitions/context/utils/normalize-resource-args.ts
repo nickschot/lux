@@ -3,17 +3,14 @@
  * the public route DSL accepts. The input tuple is genuinely untyped until this
  * function resolves it into the structured `[opts, builder]` return shape.
  */
-import {
-  BUILT_IN_ACTIONS,
-  type Controller$builtIn
-} from '../../../../controller';
+import { BUILT_IN_ACTIONS, type BuiltInAction } from '../../../../controller';
 
 /** @internal */
 export default function normalizeResourceArgs(args: Array<any>): [
   {
     name: string;
     path: string;
-    only: Array<Controller$builtIn>;
+    only: Array<BuiltInAction>;
     relationships?: boolean | Array<string>;
   },
   () => void

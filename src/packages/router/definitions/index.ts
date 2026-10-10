@@ -7,7 +7,7 @@ import Resource from '../resource';
 import { normalizePath } from '../namespace';
 import type Router from '../index';
 import type Controller from '../../controller';
-import type { Router$Namespace } from '../index';
+import type { RouterNamespace } from '../index';
 
 import { contextFor } from './context';
 import { addRoute } from './context/utils/create-definition';
@@ -118,7 +118,7 @@ function defineRelationships(namespace: Resource): void {
 }
 
 /** @internal */
-export function build<T extends Router$Namespace>(
+export function build<T extends RouterNamespace>(
   builder: (() => void) | undefined,
   namespace: T
 ): T {
@@ -165,7 +165,7 @@ export function build<T extends Router$Namespace>(
 }
 
 /** @internal */
-export function define<T extends Router$Namespace>(router: Router, parent: T) {
+export function define<T extends RouterNamespace>(router: Router, parent: T) {
   parent.forEach(child => {
     if (child instanceof Route) {
       const { method, staticPath } = child;

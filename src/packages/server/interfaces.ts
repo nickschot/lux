@@ -52,12 +52,12 @@ export type ServerConfig = {
   shutdownTimeout?: number;
 };
 
-export type Server$opts = ServerConfig & {
+export type ServerOptions = ServerConfig & {
   logger: Logger;
   router: Router;
 };
 
-export type Server$ErrorSource = {
+export type ServerErrorSource = {
   pointer?: string;
   parameter?: string;
 };
@@ -70,9 +70,9 @@ export type Server$ErrorSource = {
  * with `[public]`, or for the framework's own client errors, which set
  * `isPublic`.)
  */
-export interface Server$Error extends Error {
+export interface ServerError extends Error {
   statusCode: number;
-  source?: Server$ErrorSource;
+  source?: ServerErrorSource;
   id?: string;
   code?: string;
   title?: string;

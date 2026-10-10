@@ -1,17 +1,17 @@
 import Namespace from '../namespace';
 import { FreezeableSet } from '../../freezeable';
-import type { Controller$builtIn } from '../../controller';
+import type { BuiltInAction } from '../../controller';
 
 import normalizeOnly from './utils/normalize-only';
-import type { Resource$opts, Resource$relationships } from './interfaces';
+import type { ResourceOptions, ResourceRelationships } from './interfaces';
 
 /** @internal */
 class Resource extends Namespace {
-  declare only: FreezeableSet<Controller$builtIn>;
+  declare only: FreezeableSet<BuiltInAction>;
 
-  declare relationships: Resource$relationships;
+  declare relationships: ResourceRelationships;
 
-  constructor({ only, relationships = true, ...opts }: Resource$opts) {
+  constructor({ only, relationships = true, ...opts }: ResourceOptions) {
     super(opts);
 
     Object.defineProperty(this, 'relationships', {
@@ -36,4 +36,4 @@ class Resource extends Namespace {
 
 export default Resource;
 
-export type { Resource$opts, Resource$relationships } from './interfaces';
+export type { ResourceOptions, ResourceRelationships } from './interfaces';

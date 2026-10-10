@@ -8,7 +8,7 @@ import type { LogFormat } from '../interfaces';
 
 import { STDOUT, STDERR } from './constants';
 import formatMessage from './utils/format-message';
-import type { Logger$Writer } from './interfaces';
+import type { LogWriter } from './interfaces';
 
 /**
  * A logged message that is itself an object carrying its own `message` field,
@@ -33,7 +33,7 @@ function shortRequestId(context?: Record<string, unknown>): string {
 export function createWriter(
   format: LogFormat,
   { timestamps = true }: { timestamps?: boolean } = {}
-): Logger$Writer {
+): LogWriter {
   return function write(data) {
     const { level, context, timestamp, ...etc } = data;
     let { message } = etc;

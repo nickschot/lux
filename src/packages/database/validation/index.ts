@@ -1,4 +1,4 @@
-import type { Validation$opts } from './interfaces';
+import type { ValidationOptions } from './interfaces';
 
 /** @internal */
 class Validation<T> {
@@ -8,7 +8,7 @@ class Validation<T> {
 
   declare validator: (value?: T) => boolean;
 
-  constructor(opts: Validation$opts<T>) {
+  constructor(opts: ValidationOptions<T>) {
     Object.defineProperties(this, {
       key: {
         value: opts.key,

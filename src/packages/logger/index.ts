@@ -5,8 +5,8 @@ import { FORMATS, LEVELS } from './constants';
 import InvalidConfigError from './errors/invalid-config-error';
 import { createWriter } from './writer';
 import { createRequestLogger } from './request-logger';
-import type { Logger$Writer } from './writer/interfaces';
-import type { Logger$RequestLogger } from './request-logger/interfaces';
+import type { LogWriter } from './writer/interfaces';
+import type { RequestLoggerFn } from './request-logger/interfaces';
 import type {
   LoggerConfig,
   LogFormat,
@@ -116,7 +116,7 @@ class Logger {
   declare error: LogFunction;
 
   /** @internal */
-  declare request: Logger$RequestLogger;
+  declare request: RequestLoggerFn;
 
   constructor({
     level,
@@ -126,8 +126,8 @@ class Logger {
     requestBody = false,
     timestamps = true
   }: LoggerConfig) {
-    let write: Logger$Writer = K;
-    let request: Logger$RequestLogger = K;
+    let write: LogWriter = K;
+    let request: RequestLoggerFn = K;
 
     // A disabled logger never writes, so only an enabled one needs these —
     // and must have them right: a typo used to fall back to DEBUG silently,

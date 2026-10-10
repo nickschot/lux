@@ -1,7 +1,7 @@
 import chalk from '../../../utils/chalk';
 import line from '../utils/line';
 
-import type { RequestLogger$templateData } from './interfaces';
+import type { RequestLoggerTemplateData } from './interfaces';
 
 /** @internal */
 function countDigits(num: number) {
@@ -23,7 +23,7 @@ function pad(startTime: number, endTime: number, duration: number) {
  *
  * @internal
  */
-function handledBy(route: RequestLogger$templateData['route']) {
+function handledBy(route: RequestLoggerTemplateData['route']) {
   if (!route) {
     return '';
   }
@@ -46,7 +46,7 @@ export const debugTemplate = ({
   statusCode,
   statusMessage,
   remoteAddress
-}: RequestLogger$templateData) => `\
+}: RequestLoggerTemplateData) => `\
 ${line`
   Processed ${chalk.cyan(`${method}`)} "${path}" from ${remoteAddress}
   with ${colorStr(`${statusCode}`)}
@@ -93,7 +93,7 @@ export const infoTemplate = ({
   statusCode,
   statusMessage,
   remoteAddress
-}: RequestLogger$templateData) =>
+}: RequestLoggerTemplateData) =>
   // Built directly rather than with `line`, which would also collapse runs
   // of spaces inside param values.
   [

@@ -1,5 +1,5 @@
 import Cluster from './cluster';
-import type { Cluster$opts } from './cluster';
+import type { ClusterOptions } from './cluster';
 
 /**
  * @private
@@ -10,7 +10,7 @@ export function createCluster({
   logger,
   maxWorkers,
   shutdownTimeout
-}: Cluster$opts) {
+}: ClusterOptions) {
   return new Cluster({
     path,
     port,

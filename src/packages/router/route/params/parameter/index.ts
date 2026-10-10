@@ -4,7 +4,7 @@ import { collectErrors } from '../../../../server/errors/error-list';
 
 import validateRange from './utils/validate-range';
 import validateValue from './utils/validate-value';
-import type { Parameter$opts } from './interfaces';
+import type { ParameterOptions } from './interfaces';
 import type { ParameterLike } from '../interfaces';
 
 /** @internal */
@@ -57,7 +57,7 @@ class Parameter extends FreezeableSet<unknown> {
     items,
     required,
     sanitize
-  }: Parameter$opts) {
+  }: ParameterOptions) {
     super(values);
 
     Object.assign(this, {

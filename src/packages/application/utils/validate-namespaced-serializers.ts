@@ -4,7 +4,7 @@ import NamespacedSerializerMissingError from '../../../errors/namespaced-seriali
 import type Controller from '../../controller';
 import type Serializer from '../../serializer';
 import type { Model, ModelClass } from '../../database';
-import type { Bundle$Namespace } from '../../loader';
+import type { BundleNamespace } from '../../loader';
 
 // How many relationships away from a controller's own resource `via` is:
 // `admin/comments` is 0, `admin/posts?include=comments` is 1.
@@ -25,9 +25,9 @@ const distance = (via: string): number => {
  * @internal
  */
 export default function validateNamespacedSerializers(
-  controllers: Bundle$Namespace<Controller> | Map<string, Controller>,
+  controllers: BundleNamespace<Controller> | Map<string, Controller>,
   serializers:
-    Bundle$Namespace<Serializer<Model>> | Map<string, Serializer<Model>>
+    BundleNamespace<Serializer<Model>> | Map<string, Serializer<Model>>
 ): void {
   const missing = new Map<string, string>();
 

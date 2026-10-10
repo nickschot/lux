@@ -756,7 +756,7 @@ export { Scope } from './visibility';
 export type { Visibility } from './visibility';
 export type {
   ControllerOptions,
-  Controller$builtIn,
+  BuiltInAction,
   BeforeAction,
   AfterAction
 } from './interfaces';

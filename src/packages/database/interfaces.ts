@@ -24,7 +24,7 @@ export type DatabasePoolConfig =
       max: number;
     };
 
-type Database$columnType =
+type DatabaseColumnType =
   'floating' | 'enu' | 'bool' | 'varchar' | 'bigInteger';
 
 /**
@@ -111,7 +111,7 @@ export type DatabaseConfig = {
   [environment: string]: DatabaseEnvironmentConfig | undefined;
 };
 
-export type Database$opts = {
+export type DatabaseOptions = {
   path: string;
   models: Map<string, ModelClass>;
   config: DatabaseConfig;
@@ -124,8 +124,8 @@ export type Database$opts = {
   checkRelationships?: boolean;
 };
 
-export type Database$column = {
-  type: Database$columnType;
+export type DatabaseColumn = {
+  type: DatabaseColumnType;
   nullable: boolean;
   maxLength: string;
   columnName: string;
@@ -211,7 +211,7 @@ export interface ModelClass<T extends Model = Model> {
   transaction<R>(fn: (...args: Array<unknown>) => Promise<R>): Promise<R>;
 
   /** @internal */
-  columnFor(key: string): Database$column | undefined;
+  columnFor(key: string): DatabaseColumn | undefined;
 
   /** @internal */
   columnNameFor(key: string): string | undefined;

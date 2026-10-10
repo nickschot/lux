@@ -1,8 +1,8 @@
-import { BUILT_IN_ACTIONS, type Controller$builtIn } from '../../../controller';
+import { BUILT_IN_ACTIONS, type BuiltInAction } from '../../../controller';
 
 /** @internal */
 export default function normalizeOnly(
-  only: Array<Controller$builtIn>
-): Array<Controller$builtIn> {
+  only: Array<BuiltInAction>
+): Array<BuiltInAction> {
   return only.filter(action => BUILT_IN_ACTIONS.indexOf(action) >= 0);
 }

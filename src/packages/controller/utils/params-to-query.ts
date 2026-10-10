@@ -1,7 +1,7 @@
 import type { ModelClass } from '../../database';
 import type { RequestParams } from '../../server';
 
-type Controller$query = {
+type ControllerQuery = {
   id?: number | string | Buffer;
   filter?: Record<string, unknown>;
   select: Array<string>;
@@ -20,8 +20,8 @@ type Controller$query = {
 export default function paramsToQuery(
   model: ModelClass,
   { id, page, sort, filter, fields }: RequestParams
-): Controller$query {
-  let query: Controller$query = {
+): ControllerQuery {
+  let query: ControllerQuery = {
     id,
     filter,
     // A fieldset may also name relationships, which are not columns.

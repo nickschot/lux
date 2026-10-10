@@ -7,12 +7,12 @@ export { parseAccept, parseMediaType } from './utils/media-type';
 export type { MediaType } from './utils/media-type';
 
 export type {
-  JSONAPI$versions,
-  JSONAPI$Document,
-  JSONAPI$ErrorObject,
-  JSONAPI$DocumentLinks,
-  JSONAPI$ResourceObject,
-  JSONAPI$IdentifierObject,
-  JSONAPI$RelationshipObject,
-  JSONAPI$RelationshipDocument
+  JsonApiVersion,
+  JsonApiDocument,
+  JsonApiErrorObject,
+  JsonApiDocumentLinks,
+  JsonApiResourceObject,
+  JsonApiIdentifierObject,
+  JsonApiRelationshipObject,
+  JsonApiRelationshipDocument
 } from './interfaces';

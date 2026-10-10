@@ -1,6 +1,6 @@
 import createServerError from '../../../../server/utils/create-server-error';
 import sourceFor, { nameFor } from '../../../../server/utils/source-for';
-import type { Server$ErrorSource } from '../../../../server';
+import type { ServerErrorSource } from '../../../../server';
 
 /**
  * JSON:API 1.0: "A server MUST return 403 Forbidden in response to an
@@ -10,7 +10,7 @@ import type { Server$ErrorSource } from '../../../../server';
  * @internal
  */
 class ForbiddenParameterError extends TypeError {
-  declare source: Server$ErrorSource;
+  declare source: ServerErrorSource;
 
   constructor(path: string) {
     super(`Setting '${nameFor(path)}' is not supported for this resource.`);

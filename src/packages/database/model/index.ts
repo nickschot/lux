@@ -18,7 +18,7 @@ import type Database from '../../database';
 import type Serializer from '../../serializer';
 
 import type { RelationshipOptions } from '../relationship';
-import type { ModelClass, Database$column } from '../interfaces';
+import type { ModelClass, DatabaseColumn } from '../interfaces';
 import type { TransactionResult } from '../transaction';
 
 import { create, update, destroy, createRunner } from './utils/persistence';
@@ -1099,8 +1099,8 @@ class Model {
   }
 
   /** @internal */
-  static columnFor(key: string): Database$column | undefined {
-    return this.attributes[key] as Database$column | undefined;
+  static columnFor(key: string): DatabaseColumn | undefined {
+    return this.attributes[key] as DatabaseColumn | undefined;
   }
 
   /** @internal */

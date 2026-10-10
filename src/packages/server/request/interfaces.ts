@@ -6,12 +6,12 @@ import type Router from '../../router';
 import type { Route } from '../../router';
 import type Controller from '../../controller';
 
-export type Request$opts = {
+export type RequestOptions = {
   logger: Logger;
   router: Router;
 };
 
-type Request$url = {
+type RequestUrl = {
   protocol?: string;
   slashes?: boolean;
   auth?: string;
@@ -138,7 +138,7 @@ export interface Request extends Readable {
   controller: Controller;
 
   /** The parsed URL: `pathname`, `query` and the rest. */
-  url: Request$url;
+  url: RequestUrl;
 
   /** @internal */
   connection: {

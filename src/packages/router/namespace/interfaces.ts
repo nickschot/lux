@@ -1,10 +1,10 @@
 import type Controller from '../../controller';
-import type { Router$Namespace } from '../index';
+import type { RouterNamespace } from '../index';
 
-export type Namespace$opts = {
+export type NamespaceOptions = {
   name: string;
   path: string;
-  namespace?: Router$Namespace;
+  namespace?: RouterNamespace;
   controller: Controller;
   controllers: Map<string, Controller>;
 };

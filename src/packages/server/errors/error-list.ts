@@ -1,7 +1,7 @@
-import type { Server$Error } from '../interfaces';
+import type { ServerError } from '../interfaces';
 
 /** @internal */
-function isServerError(error: unknown): error is Server$Error {
+function isServerError(error: unknown): error is ServerError {
   return (
     error instanceof Error &&
     typeof (error as { statusCode?: unknown }).statusCode === 'number'
@@ -16,7 +16,7 @@ function isServerError(error: unknown): error is Server$Error {
  *
  * @internal
  */
-function statusFor(errors: Array<Server$Error>): number {
+function statusFor(errors: Array<ServerError>): number {
   const codes = new Set(errors.map(({ statusCode }) => statusCode));
 
   if (codes.size === 1) {
@@ -32,12 +32,12 @@ function statusFor(errors: Array<Server$Error>): number {
  *
  * @internal
  */
-class ErrorList extends Error implements Server$Error {
-  declare errors: Array<Server$Error>;
+class ErrorList extends Error implements ServerError {
+  declare errors: Array<ServerError>;
 
   declare statusCode: number;
 
-  constructor(errors: Array<Server$Error>) {
+  constructor(errors: Array<ServerError>) {
     const flat = errors.flatMap(error =>
       error instanceof ErrorList ? error.errors : [error]
     );
@@ -51,7 +51,7 @@ class ErrorList extends Error implements Server$Error {
   /**
    * The error to throw for `errors`: the only one, or a list of them.
    */
-  static from(errors: Array<Server$Error>): Server$Error {
+  static from(errors: Array<ServerError>): ServerError {
     return errors.length === 1 ? errors[0]! : new ErrorList(errors);
   }
 }
@@ -65,7 +65,7 @@ class ErrorList extends Error implements Server$Error {
  */
 export function collectErrors(
   steps: Array<() => void>,
-  errors: Array<Server$Error> = []
+  errors: Array<ServerError> = []
 ): void {
   steps.forEach(step => {
     try {

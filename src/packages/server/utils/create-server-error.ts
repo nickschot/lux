@@ -3,7 +3,7 @@
  * arbitrary arguments; `new (...args: any[])` is required so that error classes
  * with any constructor signature remain assignable to `Constructor<T>`.
  */
-import type { Server$Error } from '../interfaces';
+import type { ServerError } from '../interfaces';
 
 type Constructor<T> = new (...args: Array<any>) => T;
 
@@ -20,8 +20,8 @@ export default function createServerError<T extends object>(
   Target: Constructor<T>,
   statusCode: number,
   { isPublic = false }: { isPublic?: boolean } = {}
-): Constructor<T & Server$Error> {
-  const ServerError = class extends (Target as Constructor<object>) {
+): Constructor<T & ServerError> {
+  const StatusError = class extends (Target as Constructor<object>) {
     declare statusCode: number;
 
     declare isPublic: boolean;
@@ -33,9 +33,9 @@ export default function createServerError<T extends object>(
     }
   };
 
-  Object.defineProperty(ServerError, 'name', {
+  Object.defineProperty(StatusError, 'name', {
     value: Target.name
   });
 
-  return ServerError as unknown as Constructor<T & Server$Error>;
+  return StatusError as unknown as Constructor<T & ServerError>;
 }

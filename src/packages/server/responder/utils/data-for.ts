@@ -1,8 +1,8 @@
 import { VERSION } from '../../../jsonapi';
 import { STATUS_CODES } from '../../constants';
 import * as env from '../../../../utils/env';
-import type { JSONAPI$Document, JSONAPI$ErrorObject } from '../../../jsonapi';
-import type { Server$Error } from '../../interfaces';
+import type { JsonApiDocument, JsonApiErrorObject } from '../../../jsonapi';
+import type { ServerError } from '../../interfaces';
 
 const PUBLIC = /^\[public\]\s*/i;
 
@@ -13,10 +13,10 @@ const PUBLIC = /^\[public\]\s*/i;
  */
 function errorObjectFor(
   status: number,
-  err?: Partial<Server$Error>
-): JSONAPI$ErrorObject {
+  err?: Partial<ServerError>
+): JsonApiErrorObject {
   const title = err?.title || STATUS_CODES.get(status);
-  const errData: JSONAPI$ErrorObject = {
+  const errData: JsonApiErrorObject = {
     status: status.toString()
   };
 
@@ -56,7 +56,7 @@ function errorObjectFor(
   }
 
   if (err?.meta) {
-    errData.meta = err.meta as JSONAPI$ErrorObject['meta'];
+    errData.meta = err.meta as JsonApiErrorObject['meta'];
   }
 
   return errData;
@@ -66,19 +66,19 @@ function errorObjectFor(
 export default function dataFor(
   status: number,
   err?: Error
-): string | JSONAPI$Document {
+): string | JsonApiDocument {
   if (status < 400 || status > 599) {
     return '';
   }
 
   // An `ErrorList` (several problems with one request) is one error object
   // each, at its own status; the response's status is the list's.
-  const { errors } = (err || {}) as { errors?: Array<Server$Error> };
+  const { errors } = (err || {}) as { errors?: Array<ServerError> };
 
   return {
     errors: Array.isArray(errors)
       ? errors.map(error => errorObjectFor(error.statusCode || status, error))
-      : [errorObjectFor(status, err as Partial<Server$Error> | undefined)],
+      : [errorObjectFor(status, err as Partial<ServerError> | undefined)],
 
     jsonapi: {
       version: VERSION

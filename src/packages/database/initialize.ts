@@ -8,12 +8,12 @@ import createMigrations from './utils/create-migrations';
 import pendingMigrations from './utils/pending-migrations';
 import validateRelationships from './utils/validate-relationships';
 import type Database from './index';
-import type { Database$opts } from './index';
+import type { DatabaseOptions } from './index';
 
 /** @internal */
 export default async function initialize<T extends Database>(
   instance: T,
-  opts: Database$opts
+  opts: DatabaseOptions
 ): Promise<T> {
   const {
     path,

@@ -1,7 +1,7 @@
 import type Model from '../../model';
 import isNull from '../../../../utils/is-null';
 import isUndefined from '../../../../utils/is-undefined';
-import type { Attribute$meta } from '../index';
+import type { AttributeMeta } from '../index';
 
 /** @internal */
 export default function createSetter({
@@ -9,7 +9,7 @@ export default function createSetter({
   nullable,
   normalize,
   defaultValue
-}: Attribute$meta & {
+}: AttributeMeta & {
   normalize: (value: unknown) => unknown;
 }): (this: Model, value?: unknown) => void {
   return function setter(this: Model, nextValue?: unknown) {

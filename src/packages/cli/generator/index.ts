@@ -2,7 +2,7 @@ import chalk from '../../../utils/chalk';
 import createPrompt from '../utils/create-prompt';
 
 import generatorFor from './utils/generator-for';
-import type { Generator$opts } from './interfaces';
+import type { GeneratorOptions } from './interfaces';
 
 /**
  * @private
@@ -13,10 +13,10 @@ export async function runGenerator({
   name,
   attrs
 }: {
-  cwd: Generator$opts['cwd'];
-  type: Generator$opts['type'];
-  name: Generator$opts['name'];
-  attrs: Generator$opts['attrs'];
+  cwd: GeneratorOptions['cwd'];
+  type: GeneratorOptions['type'];
+  name: GeneratorOptions['name'];
+  attrs: GeneratorOptions['attrs'];
 }): Promise<void> {
   const generator = generatorFor(type);
   const prompt = createPrompt();
@@ -37,6 +37,6 @@ export async function runGenerator({
 
 export type {
   Generator,
-  Generator$opts,
-  Generator$template
+  GeneratorOptions,
+  GeneratorTemplate
 } from './interfaces';

@@ -1,9 +1,9 @@
 import type { Model } from '../index';
 import type { ModelClass } from '../interfaces';
 
-type Relationship$ref = Model | Array<Model>;
+type RelationshipRef = Model | Array<Model>;
 
-export type Relationship$refs = WeakMap<Model, Map<string, Relationship$ref>>;
+export type RelationshipRefs = WeakMap<Model, Map<string, RelationshipRef>>;
 
 /**
  * A relationship as Lumen resolves it when the app boots, from a model's

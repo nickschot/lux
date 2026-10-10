@@ -1,4 +1,4 @@
-import type { Attribute$meta } from '../index';
+import type { AttributeMeta } from '../index';
 
 import createGetter from './create-getter';
 import createSetter from './create-setter';
@@ -6,7 +6,7 @@ import createNormalizer from './create-normalizer';
 
 /** @internal */
 export default function createAttribute(
-  opts: Attribute$meta
+  opts: AttributeMeta
 ): PropertyDescriptor {
   const normalize = createNormalizer(opts.type);
   const meta = {

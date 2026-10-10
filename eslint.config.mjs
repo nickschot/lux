@@ -88,6 +88,11 @@ export default [
           property,
           message
         }))
+      ],
+      // Types are plain PascalCase (`RouteOptions`), not Flow's `Route$opts`.
+      '@typescript-eslint/naming-convention': [
+        'error',
+        { selector: 'typeLike', format: ['PascalCase'] }
       ]
     }
   },

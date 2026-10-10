@@ -4,7 +4,7 @@ import Controller from '../../controller';
 import { VisibilityConfigError } from '../../controller/visibility/errors';
 import type { Visibility } from '../../controller';
 import type { ModelClass } from '../../database';
-import type { Bundle$Namespace } from '../../loader';
+import type { BundleNamespace } from '../../loader';
 
 type ControllerClass = { visibility?: Visibility };
 
@@ -29,7 +29,7 @@ const declaresRules = (application: Controller): boolean =>
  * ends whatever the key.
  */
 function rulesFor(
-  controllers: Bundle$Namespace<Controller> | Map<string, Controller>,
+  controllers: BundleNamespace<Controller> | Map<string, Controller>,
   key: string
 ): Visibility | undefined {
   let namespace = posix.dirname(key);
@@ -62,7 +62,7 @@ function rulesFor(
  * @internal
  */
 export default function resolveVisibility(
-  controllers: Bundle$Namespace<Controller> | Map<string, Controller>,
+  controllers: BundleNamespace<Controller> | Map<string, Controller>,
   models: Iterable<ModelClass>
 ): void {
   const types = new Set(Array.from(models, model => model.resourceName));

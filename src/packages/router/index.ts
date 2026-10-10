@@ -7,7 +7,7 @@ import Route, { DYNAMIC_PATTERN } from './route';
 import { build, define } from './definitions';
 import createReplacer from './utils/create-replacer';
 import type { Replacer } from './utils/create-replacer';
-import type { Router$opts } from './interfaces';
+import type { RouterOptions } from './interfaces';
 
 /**
  * Remove each related route (`/posts/:dynamic/comments`) whose type is not
@@ -42,7 +42,7 @@ function dropUnservedRelated(router: Router): void {
 class Router extends FreezeableMap<string, Route> {
   declare replacer: Replacer;
 
-  constructor({ routes, controller, controllers }: Router$opts) {
+  constructor({ routes, controller, controllers }: RouterOptions) {
     const definitions = build(
       routes,
       new Namespace({
@@ -103,7 +103,7 @@ class Router extends FreezeableMap<string, Route> {
 export default Router;
 export { Route, DYNAMIC_PATTERN };
 
-export type { Router$Namespace } from './interfaces';
-export type { Resource$opts } from './resource';
-export type { Namespace$opts } from './namespace';
-export type { Action, Route$opts, Route$type } from './route';
+export type { RouterNamespace } from './interfaces';
+export type { ResourceOptions } from './resource';
+export type { NamespaceOptions } from './namespace';
+export type { Action, RouteOptions, RouteType } from './route';

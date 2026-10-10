@@ -5,7 +5,7 @@ import { collectErrors } from '../../../../server/errors/error-list';
 import isNull from '../../../../../utils/is-null';
 import entries from '../../../../../utils/entries';
 import validateType from '../utils/validate-type';
-import type { ParameterLike, ParameterLike$opts } from '../index';
+import type { ParameterLike, ParameterLikeOptions } from '../index';
 
 import missingParams from './utils/missing-params';
 
@@ -21,7 +21,7 @@ class ParameterGroup extends FreezeableMap<string, ParameterLike> {
 
   constructor(
     contents: Array<[string, ParameterLike]>,
-    { path, required, sanitize }: ParameterLike$opts
+    { path, required, sanitize }: ParameterLikeOptions
   ) {
     super(contents);
 

@@ -1,7 +1,7 @@
 import { dasherize } from 'inflection';
 
 import underscore from '../../../utils/underscore';
-import type { Server$ErrorSource } from '../interfaces';
+import type { ServerErrorSource } from '../interfaces';
 
 /**
  * Member names as the client sees them — responses dasherize, so pointers do
@@ -25,7 +25,7 @@ function escapePointer(segment: string): string {
  *
  * @internal
  */
-export default function sourceFor(path: string): Server$ErrorSource {
+export default function sourceFor(path: string): ServerErrorSource {
   const [root, ...rest] = path.split('.').filter(Boolean).map(memberName);
 
   if (!root) {

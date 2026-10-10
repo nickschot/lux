@@ -21,10 +21,10 @@ export type SerializerOptions<T extends Model> = {
  * keyed by resource type (`fields[users]=name,posts` →
  * `{ users: ['name', 'posts'] }`). An empty list selects no fields.
  */
-export type Serializer$fields = Record<string, Array<string>>;
+export type SerializerFields = Record<string, Array<string>>;
 
 /**
  * Whether the application serves `GET` at a route key path
  * (`/posts/:dynamic/relationships/user`).
  */
-export type Serializer$routed = (path: string) => boolean;
+export type SerializerRouted = (path: string) => boolean;

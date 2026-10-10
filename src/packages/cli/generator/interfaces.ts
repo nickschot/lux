@@ -1,4 +1,4 @@
-export type Generator$opts = {
+export type GeneratorOptions = {
   cwd: string;
   type: string;
   name: string;
@@ -6,5 +6,5 @@ export type Generator$opts = {
   onConflict(text: string): Promise<string | boolean>;
 };
 
-export type Generator = (opts: Generator$opts) => Promise<void>;
-export type Generator$template = (name: string, attrs: Array<string>) => string;
+export type Generator = (opts: GeneratorOptions) => Promise<void>;
+export type GeneratorTemplate = (name: string, attrs: Array<string>) => string;

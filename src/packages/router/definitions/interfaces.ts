@@ -1,12 +1,12 @@
-import type { Router$Namespace, Resource$opts } from '../index';
+import type { RouterNamespace, ResourceOptions } from '../index';
 
-export type Router$DefinitionBuilder<T extends Router$Namespace> = (
+export type RouterDefinitionBuilder<T extends RouterNamespace> = (
   builder: (() => void) | undefined,
   namespace: T
 ) => T;
 
-export type Router$resourceArgs = [
+export type RouterResourceArgs = [
   string,
-  (Resource$opts | null | undefined)?,
+  (ResourceOptions | null | undefined)?,
   ((() => void) | null | undefined)?
 ];

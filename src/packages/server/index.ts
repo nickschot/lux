@@ -20,7 +20,7 @@ import requestIdFor from './utils/request-id-for';
 import clientIpFor from './utils/client-ip-for';
 import type { Request } from './request/interfaces';
 import type { Response } from './response/interfaces';
-import type { Server$opts, CorsConfig } from './interfaces';
+import type { ServerOptions, CorsConfig } from './interfaces';
 
 /** @internal */
 class Server {
@@ -34,7 +34,7 @@ class Server {
 
   declare instance: HTTPServer;
 
-  constructor({ logger, router, cors, trustProxy = false }: Server$opts) {
+  constructor({ logger, router, cors, trustProxy = false }: ServerOptions) {
     Object.defineProperties(this, {
       router: {
         value: router,
@@ -172,8 +172,8 @@ export { default as ErrorList } from './errors/error-list';
 export type {
   CorsConfig,
   ServerConfig,
-  Server$Error,
-  Server$ErrorSource
+  ServerError,
+  ServerErrorSource
 } from './interfaces';
 
 export type {

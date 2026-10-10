@@ -5,22 +5,22 @@ import { dasherize } from 'inflection';
 import { VERSION } from '../jsonapi';
 import { freezeProps } from '../freezeable';
 import closestAncestor from '../loader/resolver/utils/closest-ancestor';
-import type { Bundle$Namespace } from '../loader';
+import type { BundleNamespace } from '../loader';
 import underscore from '../../utils/underscore';
 import { dasherizeKeys } from '../../utils/transform-keys';
 import type { Model, ModelClass } from '../database';
 import type {
-  JSONAPI$Document,
-  JSONAPI$DocumentLinks,
-  JSONAPI$ResourceObject,
-  JSONAPI$RelationshipObject,
-  JSONAPI$RelationshipDocument
+  JsonApiDocument,
+  JsonApiDocumentLinks,
+  JsonApiResourceObject,
+  JsonApiRelationshipObject,
+  JsonApiRelationshipDocument
 } from '../jsonapi';
 
 import type {
-  Serializer$fields,
+  SerializerFields,
   SerializerOptions,
-  Serializer$routed
+  SerializerRouted
 } from './interfaces';
 import { Scope } from '../controller/visibility';
 import loadLinkage from './utils/load-linkage';
@@ -163,7 +163,7 @@ class Serializer<T extends Model> {
    *
    * @internal
    */
-  declare serializers?: Bundle$Namespace<Serializer<Model>>;
+  declare serializers?: BundleNamespace<Serializer<Model>>;
 
   constructor({ model, parent, namespace }: SerializerOptions<T>) {
     Object.assign(this, {
@@ -240,17 +240,17 @@ class Serializer<T extends Model> {
     routed = notRouted
   }: {
     data: T | Array<T>;
-    meta?: JSONAPI$Document['meta'];
-    links: JSONAPI$DocumentLinks;
+    meta?: JsonApiDocument['meta'];
+    links: JsonApiDocumentLinks;
     domain: string;
     include: Array<string>;
-    fields?: Serializer$fields;
+    fields?: SerializerFields;
     scope?: Scope;
     namespace?: string;
-    routed?: Serializer$routed;
-  }): Promise<JSONAPI$Document> {
+    routed?: SerializerRouted;
+  }): Promise<JsonApiDocument> {
     const tree = createIncludeTree(include);
-    const included = new Map<string, JSONAPI$ResourceObject>();
+    const included = new Map<string, JsonApiResourceObject>();
     const records = Array.isArray(data) ? data : [data];
     const names = [...this.hasOne, ...this.hasMany];
     const linksOnly = this.linksOnlyFor(tree, namespace, routed);
@@ -319,7 +319,7 @@ class Serializer<T extends Model> {
       jsonapi: {
         version: VERSION
       }
-    } as JSONAPI$Document;
+    } as JsonApiDocument;
   }
 
   /**
@@ -379,11 +379,11 @@ class Serializer<T extends Model> {
     links?: boolean;
     domain: string;
     linkage?: Linkage;
-    fields?: Serializer$fields;
+    fields?: SerializerFields;
     namespace?: string;
-    routed?: Serializer$routed;
+    routed?: SerializerRouted;
     linksOnly?: Set<string>;
-  }): Promise<JSONAPI$ResourceObject> {
+  }): Promise<JsonApiResourceObject> {
     const { resourceName: type } = item;
     const id = String(item.getPrimaryKey());
     const fieldset = fields[type];
@@ -398,14 +398,14 @@ class Serializer<T extends Model> {
       )
     );
 
-    const serialized: JSONAPI$ResourceObject = {
+    const serialized: JsonApiResourceObject = {
       id,
       type,
-      attributes: attributes as JSONAPI$ResourceObject['attributes']
+      attributes: attributes as JsonApiResourceObject['attributes']
     };
 
     const relationships = names.reduce<
-      Record<string, JSONAPI$RelationshipObject>
+      Record<string, JsonApiRelationshipObject>
     >(
       (hash, name) => ({
         ...hash,
@@ -461,8 +461,8 @@ class Serializer<T extends Model> {
     domain: string;
     scope?: Scope;
     namespace?: string;
-    routed?: Serializer$routed;
-  }): Promise<JSONAPI$RelationshipDocument> {
+    routed?: SerializerRouted;
+  }): Promise<JsonApiRelationshipDocument> {
     const id = String(item.getPrimaryKey());
     const linkage = await loadLinkage(this.model, [item], [name], scope);
     const { links = {} } = this.relationshipLinksFor({
@@ -497,7 +497,7 @@ class Serializer<T extends Model> {
   linksOnlyFor(
     tree: IncludeTree,
     namespace: string,
-    routed: Serializer$routed
+    routed: SerializerRouted
   ): Set<string> {
     const route = this.pathFor(this.model.resourceName, ':dynamic', namespace);
 
@@ -535,13 +535,13 @@ class Serializer<T extends Model> {
     type: string;
     name: string;
     domain: string;
-    routed: Serializer$routed;
+    routed: SerializerRouted;
     namespace: string;
-  }): Pick<JSONAPI$RelationshipObject, 'links'> {
+  }): Pick<JsonApiRelationshipObject, 'links'> {
     const segment = dasherize(underscore(name));
     const route = this.pathFor(type, ':dynamic', namespace);
     const base = domain + this.pathFor(type, id, namespace);
-    const links: NonNullable<JSONAPI$RelationshipObject['links']> = {};
+    const links: NonNullable<JsonApiRelationshipObject['links']> = {};
 
     if (routed(`${route}/relationships/${segment}`)) {
       links.self = `${base}/relationships/${segment}`;
@@ -565,7 +565,7 @@ class Serializer<T extends Model> {
   formatLinkage(
     type: string | undefined,
     linkage: Array<string> | string | null | undefined
-  ): JSONAPI$RelationshipObject {
+  ): JsonApiRelationshipObject {
     if (Array.isArray(linkage)) {
       return {
         data: type ? linkage.map(id => ({ id, type })) : []
@@ -612,9 +612,9 @@ class Serializer<T extends Model> {
     tree: IncludeTree;
     scope: Scope;
     domain: string;
-    fields: Serializer$fields;
-    routed: Serializer$routed;
-    included: Map<string, JSONAPI$ResourceObject>;
+    fields: SerializerFields;
+    routed: SerializerRouted;
+    included: Map<string, JsonApiResourceObject>;
     namespace: string;
   }): Promise<void> {
     // Resolved in the request's namespace at every level — never in that of
@@ -703,9 +703,9 @@ class Serializer<T extends Model> {
     tree: IncludeTree;
     scope: Scope;
     domain: string;
-    fields: Serializer$fields;
-    routed: Serializer$routed;
-    included: Map<string, JSONAPI$ResourceObject>;
+    fields: SerializerFields;
+    routed: SerializerRouted;
+    included: Map<string, JsonApiResourceObject>;
     namespace: string;
   }): Promise<void> {
     for (const [name, children] of tree) {
@@ -763,7 +763,7 @@ class Serializer<T extends Model> {
   attributesFor(
     model: ModelClass,
     namespace: string,
-    fields: Serializer$fields
+    fields: SerializerFields
   ): Array<string> {
     const attributes = this.serializerFor(model, namespace).attributes.filter(
       attr => model.attributeNames.includes(attr)

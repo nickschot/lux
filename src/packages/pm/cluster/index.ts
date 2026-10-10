@@ -16,7 +16,7 @@ import omit from '../../../utils/omit';
 import range from '../../../utils/range';
 import type Logger from '../../logger';
 
-import type { Cluster$opts } from './interfaces';
+import type { ClusterOptions } from './interfaces';
 
 /**
  * How long a worker may take to start listening before it is replaced.
@@ -79,7 +79,7 @@ class Cluster extends EventEmitter {
     logger,
     maxWorkers,
     shutdownTimeout = SHUTDOWN_TIMEOUT
-  }: Cluster$opts) {
+  }: ClusterOptions) {
     super();
 
     Object.defineProperties(this, {
@@ -381,4 +381,4 @@ class Cluster extends EventEmitter {
 
 export default Cluster;
 
-export type { Cluster$opts } from './interfaces';
+export type { ClusterOptions } from './interfaces';
