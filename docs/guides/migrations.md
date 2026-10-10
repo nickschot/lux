@@ -84,8 +84,8 @@ A few things to keep in mind:
 
 | Command | Does |
 |---|---|
-| `lumen db:migrate` | Applies every pending migration, in version order, printing the SQL. |
-| `lumen db:rollback` | Runs `down` of the most recent migration, and forgets it. Run again to go back further. |
+| `lumen db:migrate` | Applies every pending migration, in version order, printing each SQL statement as it runs. |
+| `lumen db:rollback` | Runs `down` of the most recent migration, printing its SQL, and forgets it. Run again to go back further. |
 
 Applied migrations are recorded by version in a `migrations` table.
 
