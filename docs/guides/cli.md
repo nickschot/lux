@@ -23,7 +23,9 @@ exit code `1`.
 ### `lumen new <name>`
 
 Creates the app in a new directory, initializes a git repository, and
-installs its dependencies with npm.
+installs its dependencies with npm. Its `pnpm-workspace.yaml` tells pnpm
+which build scripts to skip (esbuild's, and better-sqlite3's, which ships
+prebuilt binaries), so `pnpm install` works too; npm ignores the file.
 
 | Option | Default | |
 |---|---|---|

@@ -1,0 +1,5 @@
+# esbuild's postinstall only links its platform binary over the `esbuild`
+# command; nothing here runs that command (build.mjs and the app compiler use
+# its JavaScript API, which finds the binary itself), so it is not run.
+allowBuilds:
+  esbuild: false

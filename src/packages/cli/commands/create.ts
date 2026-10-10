@@ -13,6 +13,7 @@ import routesTemplate from '../templates/routes';
 import dbTemplate from '../templates/database';
 import seedTemplate from '../templates/seed';
 import pkgJSONTemplate from '../templates/package-json';
+import pnpmWorkspaceTemplate from '../templates/pnpm-workspace';
 import eslintConfigTemplate from '../templates/eslint-config';
 import readmeTemplate from '../templates/readme';
 import licenseTemplate from '../templates/license';
@@ -77,7 +78,9 @@ export async function create(name: string, database: string) {
 
     writeFile(`${project}/eslint.config.mjs`, eslintConfigTemplate()),
 
-    writeFile(`${project}/.gitignore`, gitignoreTemplate())
+    writeFile(`${project}/.gitignore`, gitignoreTemplate()),
+
+    writeFile(`${project}/pnpm-workspace.yaml`, pnpmWorkspaceTemplate(driver))
   ]);
 
   const logOutput = template`
@@ -94,6 +97,7 @@ export async function create(name: string, database: string) {
     ${chalk.green('create')} package.json
     ${chalk.green('create')} eslint.config.mjs
     ${chalk.green('create')} .gitignore
+    ${chalk.green('create')} pnpm-workspace.yaml
   `;
 
   process.stdout.write(logOutput.substr(0, logOutput.length - 1));

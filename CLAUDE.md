@@ -127,9 +127,27 @@ result over backward compatibility, and record anything app-visible in
   (`pnpm test --coverage`), reported in CI as a job summary / PR comment.
   The Mocha stack — `mocha.opts`, `lib/`, `test/index.js`, mocha/nyc/chai — was removed
   once no suite referenced it.
-- **Package manager:** **pnpm 10** (`pnpm-lock.yaml`, `packageManager` field).
-- **Node:** pinned to **22** (`volta` field in `package.json`; `.nvmrc` = 22);
-  `engines` is `>= 22.14`: the first 22.x with **N-API 10**, which better-sqlite3 13's
+- **Package manager:** **pnpm 12** (`pnpm-lock.yaml`, `packageManager` field). pnpm 12
+  reads its settings from `pnpm-workspace.yaml` only: a `pnpm` field in `package.json` is
+  ignored. **Build scripts must be decided** in `allowBuilds` (`true` runs one, `false`
+  skips it); an undecided one fails the install (`ERR_PNPM_IGNORED_BUILDS`). The root
+  skips esbuild's (it only relinks the `esbuild` command, which nothing here runs), the
+  test-app and the example skip better-sqlite3's. **Each of those apps keeps its own
+  `pnpm-workspace.yaml`**: with only the root's, pnpm 12 treats them as part of the root
+  workspace, and `pnpm --dir test/test-app install` installs nothing. Each lockfile also
+  records pnpm itself (`packageManagerDependencies`), so bumping `packageManager` means
+  one unfrozen `pnpm install` in each of the three directories. `lumen new` writes the
+  same kind of file for generated apps (`cli/templates/pnpm-workspace.ts`): esbuild, a
+  dependency of the framework, always; better-sqlite3 for SQLite.
+- **Node:** pinned to **22.23.3** by `devEngines.runtime` in `package.json`: pnpm installs
+  that Node into `node_modules` (`node_modules/.bin/node`) and runs every script on it,
+  whatever `node` is on PATH. Bump it with `pnpm add -D node@runtime:<version>`, which
+  updates `package.json` and the lockfile. **Never hand-edit the version**: pnpm 12 doesn't
+  notice, even with `--frozen-lockfile`, and keeps the old Node. (There is no `.nvmrc` or
+  `volta` field; `.npmrc`'s `use-node-version` is ignored by pnpm 12.) The pin covers
+  scripts run through pnpm only; the CI legs on other Node versions delete
+  `node_modules/.bin/node` so their own Node runs (a frozen install doesn't restore that
+  link: remove `node_modules` and reinstall). `engines` is `>= 22.14`: the first 22.x with **N-API 10**, which better-sqlite3 13's
   prebuilt binary needs (on 22.13 it segfaults — `lumen db:migrate` exits 139). Below
   that: 22.13 is where `require()` of ESM is stable (22.12 unflagged it but still warns)
   and the floor faker 10 and ESLint 10 declare. CI runs a leg on exactly 22.14.0 so the
@@ -148,7 +166,7 @@ local-only commits. `postCreateCommand` then runs
 builds `dist/`. **Verified end-to-end in clone mode**: the suite passes with
 typecheck/lint/format green, watchman tests included.
 
-Ships the latest Node **22.x** (the same line as the `volta` pin), pnpm **10.34.5** via corepack,
+Ships the latest Node **22.x** (pnpm runs the scripts on the `devEngines.runtime` pin), pnpm **12.5.1** via corepack,
 watchman, the `gh` CLI (devcontainer feature), and Claude Code. First run: `claude`
 prompts for login and `gh auth login` (or export `GH_TOKEN` on the host — `remoteEnv`
 forwards it, along with `GIT_AUTHOR_NAME`/`GIT_AUTHOR_EMAIL`).
@@ -204,11 +222,11 @@ Inside the container `node` and `pnpm` are simply on PATH.
 
 ## Environment (host)
 
-- **Node:** whatever manages it (proto, Volta, nvm), the suite needs **Node >= 22.14** —
-  better-sqlite3 segfaults below that. A non-interactive shell may find another `node`
-  first (e.g. Homebrew's); check `node --version` before trusting a failure.
+- **Node:** pnpm runs scripts (`pnpm test`, `pnpm build`, …) on the pinned Node, so
+  whatever `node` the shell finds only runs pnpm itself. Running a tool directly
+  (`node …`, `npx …`) uses the shell's `node`; use `pnpm exec` to get the pinned one.
 - **pnpm:** a version-switching pnpm (Homebrew's, corepack) picks its version from
-  `packageManager`; the root, `test/test-app` and the example app all pin `pnpm@10.34.5`.
+  `packageManager`; the root, `test/test-app` and the example app all pin `pnpm@12.5.1`.
 - **The `lumen` CLI is resolved via `node_modules/.bin`.** The suite's global setup
   ([test/vitest.global-setup.ts](test/vitest.global-setup.ts)) shells out to
   `lumen db:reset / db:migrate / db:seed`, each of which compiles the test-app first. The
@@ -240,19 +258,17 @@ the suite runs against the *last build*, not the working tree. Always build befo
 Tests need a database; the test-app defaults to **`better-sqlite3`** (`^13.0.3`), which
 replaced the unmaintained `sqlite3` in #74. It **bundles prebuilt N-API binaries** and
 sets `"gypfile": false`, so nothing compiles: npm skips the build, and pnpm is told to
-with `ignoredBuiltDependencies` (pnpm otherwise runs `node-gyp rebuild` for its
-`binding.gyp` and fails without a toolchain). **SQLite always gets one connection**
+with `allowBuilds` in the test-app's `pnpm-workspace.yaml` (pnpm otherwise runs
+`node-gyp rebuild` for its `binding.gyp` and fails without a toolchain). **SQLite always gets one connection**
 (`connect()` ignores `pool` for it): better-sqlite3 is synchronous, so a second connection
 waiting on the first's lock blocks the event loop and fails with "database is locked".
-The test-app pins **`"packageManager": "pnpm@10.34.5"`**, like the root and the example
-app: without it a version-switching pnpm (Homebrew's, corepack) runs a newer pnpm there,
-which ignores `package.json`'s `pnpm` settings, writes a stray `pnpm-workspace.yaml` and
-fails the install on the skipped build. pnpm keeps a lockfile's existing resolutions, so
+The test-app pins **`"packageManager"`** like the root and the example app, so a
+version-switching pnpm runs the same version in all three. pnpm keeps a lockfile's existing resolutions, so
 regenerate a lockfile from scratch after removing a dependency: knex's optional peers
 (`sqlite3`, `tedious`) and their trees lingered in the test-app's for years. CI
 additionally runs `pg` / `mysql2` via `DATABASE_DRIVER`.
 
-**Current baseline (Node 22 / pnpm 10):** `999 passing` across 129 files, all on **Vitest**
+**Current baseline (Node 22 / pnpm 12):** `1002 passing` across 130 files, all on **Vitest**
 (`pnpm test` = `vitest run`). A drop in the *file* count means a file failed to collect.
 
 ### CI — GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml))
