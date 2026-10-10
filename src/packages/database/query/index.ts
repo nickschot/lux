@@ -579,6 +579,7 @@ class Query<T = any> extends Promise<T> {
               attrs,
               type: 'hasMany',
               model: relationship.model,
+              inverse: relationship.inverse,
               through: relationship.through,
               foreignKey: relationship.foreignKey
             };

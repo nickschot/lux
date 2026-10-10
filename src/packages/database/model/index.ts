@@ -136,7 +136,8 @@ class Model {
    * }
    * ```
    *
-   * The foreign key is `<inverse>_id` on the other table. Set `model` when
+   * The foreign key is on the other table: its inverse `belongsTo`'s, which
+   * is `<inverse>_id` unless that declares a `foreignKey`. Set `model` when
    * the related model's name differs from the relationship's
    * (`avatar: { inverse: 'owner', model: 'image' }`).
    */
@@ -160,7 +161,8 @@ class Model {
    * }
    * ```
    *
-   * The foreign key is `<inverse>_id` on the other table. Set `model` when
+   * The foreign key is on the other table: its inverse `belongsTo`'s, which
+   * is `<inverse>_id` unless that declares a `foreignKey`. Set `model` when
    * the related model's name differs from the relationship's
    * (`publications: { inverse: 'author', model: 'book' }`).
    *
@@ -213,8 +215,18 @@ class Model {
    * The foreign key is `<name>_id` on this table, and is also an attribute
    * (`book.authorId`), so the relationship can be set by id as well as by
    * record. Set `model` when the related model's name differs from the
-   * relationship's (`writer: { inverse: 'books', model: 'author' }`, with a
-   * `writer_id` column).
+   * relationship's, and `foreignKey` for a column named otherwise:
+   *
+   * ```javascript
+   * class Book extends Model {
+   *   static belongsTo = {
+   *     writer: { inverse: 'books', model: 'author', foreignKey: 'written_by' }
+   *   };
+   * }
+   * ```
+   *
+   * The `hasOne` or `hasMany` on the other side uses the same column without
+   * declaring it.
    */
   declare static belongsTo: Record<string, unknown>;
 

@@ -869,12 +869,14 @@ describe('module "database/query"', () => {
           'attrs',
           'type',
           'model',
+          'inverse',
           'through',
           'foreignKey'
         ]);
 
         expect(comments).to.have.property('type', 'hasMany');
         expect(comments).to.have.property('model', Comment);
+        expect(comments).to.have.property('inverse', 'post');
         expect(comments).to.have.property('through', undefined);
         expect(comments).to.have.property('foreignKey', 'post_id');
 

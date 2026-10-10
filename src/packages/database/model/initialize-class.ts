@@ -21,6 +21,25 @@ import type Database from '../index';
 import type { Model } from '../index';
 import type { ModelClass } from '../interfaces';
 
+/**
+ * The foreign key of a `hasOne` or non-through `hasMany` that does not
+ * declare one: its inverse `belongsTo`'s, which may declare it, else
+ * `<inverse>_id`. Models initialize concurrently, so `related.belongsTo` is
+ * either still its declaration or already initialized; both carry a declared
+ * `foreignKey`, and the default is the same.
+ */
+export function inverseForeignKey(
+  related: ModelClass,
+  inverse: string
+): string {
+  const belongsTo: Record<string, any> = related.belongsTo || {};
+  const declared = Object.hasOwn(belongsTo, inverse)
+    ? belongsTo[inverse]?.foreignKey
+    : undefined;
+
+  return declared || `${underscore(inverse)}_id`;
+}
+
 const VALID_HOOKS = new Set([
   'afterCreate',
   'afterDestroy',
@@ -178,7 +197,7 @@ export default async function initializeClass<T extends ModelClass>({
 
   const belongsTo = entries(model.belongsTo || {}).reduce<Record<string, any>>(
     (obj, [relatedName, value]) => {
-      const { inverse, model: relatedModel } = value as any;
+      const { inverse, model: relatedModel, foreignKey } = value as any;
       const relationship = {};
 
       Object.defineProperties(relationship, {
@@ -204,7 +223,7 @@ export default async function initializeClass<T extends ModelClass>({
         },
 
         foreignKey: {
-          value: `${underscore(relatedName)}_id`,
+          value: foreignKey || `${underscore(relatedName)}_id`,
           writable: false,
           enumerable: false,
           configurable: false
@@ -221,12 +240,13 @@ export default async function initializeClass<T extends ModelClass>({
 
   const hasOne = entries(model.hasOne || {}).reduce<Record<string, any>>(
     (obj, [relatedName, value]) => {
-      const { inverse, model: relatedModel } = value as any;
+      const { inverse, model: relatedModel, foreignKey } = value as any;
       const relationship = {};
+      const target = store.modelFor(relatedModel || relatedName);
 
       Object.defineProperties(relationship, {
         model: {
-          value: store.modelFor(relatedModel || relatedName),
+          value: target,
           writable: false,
           enumerable: true,
           configurable: false
@@ -247,7 +267,7 @@ export default async function initializeClass<T extends ModelClass>({
         },
 
         foreignKey: {
-          value: `${underscore(inverse)}_id`,
+          value: foreignKey || inverseForeignKey(target, inverse),
           writable: false,
           enumerable: false,
           configurable: false
@@ -267,7 +287,8 @@ export default async function initializeClass<T extends ModelClass>({
       const { inverse } = opts as any;
       const relationship = {};
       let { through, model: relatedModel } = opts as any;
-      let foreignKey;
+      const { foreignKey: declared } = opts as any;
+      let foreignKey: string;
 
       if (typeof relatedModel === 'string') {
         relatedModel = store.modelFor(relatedModel);
@@ -275,11 +296,13 @@ export default async function initializeClass<T extends ModelClass>({
         relatedModel = store.modelFor(relatedName);
       }
 
+      const target = relatedModel;
+
       if (typeof through === 'string') {
         through = store.modelFor(through);
-        foreignKey = `${singularize(underscore(inverse))}_id`;
+        foreignKey = declared || `${singularize(underscore(inverse))}_id`;
       } else {
-        foreignKey = `${underscore(inverse)}_id`;
+        foreignKey = declared || inverseForeignKey(target, inverse);
       }
 
       Object.defineProperties(relationship, {

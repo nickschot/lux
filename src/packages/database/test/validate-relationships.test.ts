@@ -169,12 +169,27 @@ describe('module "database" #validateRelationships()', () => {
       problemsOf(
         models(
           user({ posts: { ...hasManyPosts('user'), foreignKey: 'author_id' } }),
-          post({ user: belongsToUser('posts') })
+          post({ user: { ...belongsToUser('posts'), foreignKey: 'author_id' } })
         )
       )
     ).to.include(
       'User.hasMany.posts needs the foreign key column `author_id` on ' +
         '`posts`, which has no such column'
+    );
+  });
+
+  it('rejects two sides that name different foreign keys', () => {
+    expect(
+      problemsOf(
+        models(
+          user({ posts: { ...hasManyPosts('user'), foreignKey: 'author_id' } }),
+          post({ user: belongsToUser('posts') })
+        )
+      )
+    ).to.include(
+      'User.hasMany.posts has foreign key `author_id`, but ' +
+        'Post.belongsTo.user has `user_id`; both sides must name the same ' +
+        'column'
     );
   });
 

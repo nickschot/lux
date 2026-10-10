@@ -102,6 +102,22 @@ export default function validateRelationships(
         continue;
       }
 
+      // Both sides of a belongsTo name the same column (a hasOne/hasMany
+      // without its own `foreignKey` takes the belongsTo's).
+      if (
+        !opts.through &&
+        !inverseOpts.through &&
+        inverseOpts.foreignKey !== foreignKey
+      ) {
+        problems.push(
+          `${where} has foreign key \`${foreignKey}\`, but ` +
+            `${related.name}.${inverseOpts.type}.${inverse} has ` +
+            `\`${inverseOpts.foreignKey}\`; both sides must name the same ` +
+            'column'
+        );
+        continue;
+      }
+
       const holder = keyHolder(model, opts);
       const column = camelize(foreignKey, true);
 
