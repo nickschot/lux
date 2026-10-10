@@ -1,6 +1,7 @@
 import { describe, it, beforeAll, afterAll, expect } from 'vitest';
 
 import type { Model, ModelClass } from '../index';
+import { inverseForeignKey } from '../model/initialize-class';
 import { readAttribute } from '../model/utils/attribute';
 import { getTestApp } from '../../../../test/utils/get-test-app';
 
@@ -100,5 +101,20 @@ describe('relationship option `foreignKey`', () => {
     expect(ids(await readAttribute(foundBook, 'shelves'))).to.deep.equal([
       idOf(shelf)
     ]);
+  });
+
+  it("reads the inverse's column whether or not it is initialized yet", () => {
+    // Models initialize concurrently, so the other side may still be its
+    // declaration.
+    const declared = {
+      belongsTo: { writer: { inverse: 'books', foreignKey: 'written_by' } }
+    } as unknown as ModelClass;
+    const bare = { belongsTo: { writer: { inverse: 'books' } } };
+
+    expect(inverseForeignKey(declared, 'writer')).to.equal('written_by');
+    expect(inverseForeignKey(Book, 'writer')).to.equal('written_by');
+    expect(inverseForeignKey(bare as unknown as ModelClass, 'writer')).to.equal(
+      'writer_id'
+    );
   });
 });

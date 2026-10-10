@@ -24,15 +24,20 @@ import type { ModelClass } from '../interfaces';
 /**
  * The foreign key of a `hasOne` or non-through `hasMany` that does not
  * declare one: its inverse `belongsTo`'s, which may declare it, else
- * `<inverse>_id`. Read when it is used — after every model is initialized —
- * so both sides always agree.
+ * `<inverse>_id`. Models initialize concurrently, so `related.belongsTo` is
+ * either still its declaration or already initialized; both carry a declared
+ * `foreignKey`, and the default is the same.
  */
-function inverseForeignKey(related: ModelClass, inverse: string): string {
-  const opts = related.relationshipFor?.(inverse);
+export function inverseForeignKey(
+  related: ModelClass,
+  inverse: string
+): string {
+  const belongsTo: Record<string, any> = related.belongsTo || {};
+  const declared = Object.hasOwn(belongsTo, inverse)
+    ? belongsTo[inverse]?.foreignKey
+    : undefined;
 
-  return opts?.type === 'belongsTo'
-    ? opts.foreignKey
-    : `${underscore(inverse)}_id`;
+  return declared || `${underscore(inverse)}_id`;
 }
 
 const VALID_HOOKS = new Set([
@@ -262,7 +267,8 @@ export default async function initializeClass<T extends ModelClass>({
         },
 
         foreignKey: {
-          get: () => foreignKey || inverseForeignKey(target, inverse),
+          value: foreignKey || inverseForeignKey(target, inverse),
+          writable: false,
           enumerable: false,
           configurable: false
         }
@@ -282,7 +288,7 @@ export default async function initializeClass<T extends ModelClass>({
       const relationship = {};
       let { through, model: relatedModel } = opts as any;
       const { foreignKey: declared } = opts as any;
-      let foreignKey: () => string;
+      let foreignKey: string;
 
       if (typeof relatedModel === 'string') {
         relatedModel = store.modelFor(relatedModel);
@@ -294,9 +300,9 @@ export default async function initializeClass<T extends ModelClass>({
 
       if (typeof through === 'string') {
         through = store.modelFor(through);
-        foreignKey = () => declared || `${singularize(underscore(inverse))}_id`;
+        foreignKey = declared || `${singularize(underscore(inverse))}_id`;
       } else {
-        foreignKey = () => declared || inverseForeignKey(target, inverse);
+        foreignKey = declared || inverseForeignKey(target, inverse);
       }
 
       Object.defineProperties(relationship, {
@@ -329,7 +335,8 @@ export default async function initializeClass<T extends ModelClass>({
         },
 
         foreignKey: {
-          get: foreignKey,
+          value: foreignKey,
+          writable: false,
           enumerable: false,
           configurable: false
         }
