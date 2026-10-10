@@ -4,7 +4,7 @@ import { getDomain } from '../../../../server';
 import type { Request, Response } from '../../../../server';
 import { scopeFor } from '../../../../controller/visibility';
 import type { SerializerFields } from '../../../../serializer/interfaces';
-import createPageLinks from '../utils/create-page-links';
+import createPageLinks, { createSelfLink } from '../utils/create-page-links';
 import type { Action } from '../interfaces';
 
 /** @internal */
@@ -50,14 +50,16 @@ export default function resource(action: Action<unknown>): Action<unknown> {
     const {
       params,
       router,
-      url: { path, pathname, search }
+      url: { pathname, search }
     } = req;
+    // The request itself, its query percent-encoded so it is a valid URI.
+    const self = createSelfLink({ domain, pathname, search: search || '' });
 
     // An empty to-one relationship.
     if (type === 'related' && data == null) {
       return {
         data: null,
-        links: { self: domain + path },
+        links: { self },
         jsonapi: { version: VERSION }
       };
     }
@@ -100,7 +102,7 @@ export default function resource(action: Action<unknown>): Action<unknown> {
         };
       } else {
         links = {
-          self: domain + path
+          self
         };
       }
 

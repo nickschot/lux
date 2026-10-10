@@ -642,6 +642,18 @@ describe('compound documents over HTTP', () => {
       });
     });
 
+    it('links to itself with the query percent-encoded', async () => {
+      const path = `/posts/${idOf(fixtures.post)}`;
+      const { body } = await get(
+        `${path}?include=user,comments.user&fields[users]=name`
+      );
+
+      // `[` and `]` aren't allowed in a URI's query; commas are.
+      expect(body.links?.self).to.equal(
+        `${DOMAIN}${path}?include=user,comments.user&fields%5Busers%5D=name`
+      );
+    });
+
     it('includes the intermediate and the leaf resources', async () => {
       const { post, author, commenter, commentByAuthor, commentByCommenter } =
         fixtures;

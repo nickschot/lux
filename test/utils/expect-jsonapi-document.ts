@@ -51,16 +51,6 @@ const KNOWN_DEVIATIONS: Array<(document: Record<string, unknown>) => void> = [
         delete attributes.type;
       }
     });
-  },
-
-  // #150: a non-paged `links.self` repeats the request's query as sent, with
-  // `[` and `]` unencoded, which isn't a valid URI.
-  document => {
-    const links = document.links as Record<string, unknown> | undefined;
-
-    if (typeof links?.self === 'string') {
-      links.self = links.self.replace(/\[/g, '%5B').replace(/\]/g, '%5D');
-    }
   }
 ];
 

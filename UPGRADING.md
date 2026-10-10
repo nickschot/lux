@@ -130,6 +130,10 @@ See [Serializers and JSON:API](docs/guides/serializers.md).
 - **Pagination:** `links.self` is never `null`, page links keep the query
   string as the client wrote it, and an index response has
   `"meta": { "total": … }`.
+- **A document's `links.self` is percent-encoded**, as page links already
+  were: `?fields[users]=name` comes back as `?fields%5Busers%5D=name`, a valid
+  URI. It used to repeat the request's query as sent. Clients that compare
+  `links.self` with the URL they requested must decode it first.
 - **A has-one with several candidate rows links the lowest id.** It used to
   be arbitrary.
 - **A created resource's `links.self` equals its `Location`** (`/tags/101`).
