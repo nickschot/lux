@@ -18,8 +18,10 @@ class PostsController extends Controller {
   }
 
   // A plain route's body is any JSON, as sent.
+  // The body as received, and the params: which on a plain route hold only
+  // the query string.
   echo(request) {
-    return { received: request.body ?? null };
+    return { received: request.body ?? null, params: request.params };
   }
 
   topRated(request) {

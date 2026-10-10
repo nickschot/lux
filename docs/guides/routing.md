@@ -224,6 +224,11 @@ class PostsController extends Controller {
 ```
 
 Check the body yourself: nothing about it is guaranteed but that it is JSON.
+Its keys aren't camelized and its dates stay strings, and it never reaches
+`request.params`, which on a plain route holds only the query string. For a
+body that is a JSON:API document of the controller's type, define the route
+in `member` or `collection` instead: there it is validated, and arrives
+camelized as `request.params.data`.
 
 Plain routes are also the only routes outside a resource. At the top level,
 one is handled by the application controller:

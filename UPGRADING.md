@@ -38,20 +38,28 @@ Check, if it applies to your app:
    endpoints, and the app warns about each at boot. Scoping done in
    `index`/`show` overrides or action-named hooks never reached included
    records or those endpoints ([Controllers](#controllers)).
-7. **Hooks that authorize by action name** must also allow
+7. **Plain routes whose action reads `request.params.data`**, such as a
+   controller that lists `data` in `query` to get the body through: the
+   body is now only in `request.body`, as sent, so `request.params.data` is
+   `undefined` and the action fails with a `500` ([Requests](#requests)).
+8. **A namespace's `ApplicationController` that extends its parent's and
+   declares hooks:** its `beforeAction` and `afterAction` now replace the
+   parent's, so the parent's hooks stop running unless it spreads them in
+   ([Controllers](#controllers)).
+9. **Hooks that authorize by action name** must also allow
    `showRelationship` and `showRelated`, the actions of the new relationship
    endpoints ([Routing](#routing)).
-8. **Custom actions that `.include()` relationships:** drop the call; the
-   serializer loads relationships itself ([Controllers](#controllers)).
-9. **Clients or tests asserting status codes or error `detail`s:** several
-   changed ([Errors](#errors)). A string an action returns is now
-   `text/plain` ([Responses](#responses)).
-10. **Log parsing and alerting:** the text format changed, 4xx are no longer
+10. **Custom actions that `.include()` relationships:** drop the call; the
+    serializer loads relationships itself ([Controllers](#controllers)).
+11. **Clients or tests asserting status codes or error `detail`s:** several
+    changed ([Errors](#errors)). A string an action returns is now
+    `text/plain` ([Responses](#responses)).
+12. **Log parsing and alerting:** the text format changed, 4xx are no longer
     logged as errors, and `logging.level` must be uppercase
     ([Logging](#logging)).
-11. **Model hooks comparing records with `===`:** a hook now receives a
+13. **Model hooks comparing records with `===`:** a hook now receives a
     proxy of the record ([Models](#models)).
-11. **Imports of files inside the package** (`lumen-framework/dist/…`) no
+14. **Imports of files inside the package** (`lumen-framework/dist/…`) no
     longer resolve ([Package entries](#package-entries)).
 
 **ember-data clients:** a `belongsTo` the controller's `params` don't list
@@ -119,6 +127,17 @@ and [Controllers: accepting writes](docs/guides/controllers.md#accepting-writes-
   `request.body`. It used to be a `415`, or a `400` for any member in it
   ([Routing](docs/guides/routing.md#plain-routes)). `request.body` holds the
   JSON:API document as sent on other routes too.
+- **Plain routes no longer put the body in `request.params`.** In 3.x, a
+  controller that listed `data` in `query` got a plain route's body into
+  `request.params.data`, with its keys camelized and date strings turned
+  into `Date`s. Now `request.params` holds only the query string, so
+  `request.params.data` is `undefined` and an action reading it fails with
+  a `500`. **Do:** if the body is a JSON:API document of the controller's
+  type, define the route in `member` or `collection`, where
+  `request.params.data` is validated and camelized as before. Otherwise
+  read `request.body`, which is exactly as sent: camelize its keys and
+  parse its dates yourself where the action expects them. Remove `data`
+  from `query`; the app warns about its name at boot.
 - **Members a model doesn't have are a `400`**, with a pointer
   (`/data/attributes/nope`). They used to be dropped silently.
 - **Relationships the controller's `params` don't list are a `403`**, as in
@@ -274,8 +293,21 @@ See [Controllers](docs/guides/controllers.md).
   ignored. A controller that doesn't set its own now follows its namespace.
 - **A namespace's `ApplicationController` that extends its parent's no
   longer runs the parent's hooks twice.** Its `beforeAction` and
-  `afterAction` replace the parent's; keep them with
-  `beforeAction = [...this.beforeAction, requireAdmin]`.
+  `afterAction` replace the parent's, so declaring either drops the
+  parent's: an `afterAction = [stamp]` silently stops the parent's after
+  hooks, such as one that adds `meta` or removes fields. **Do:** spread the
+  inherited ones in, in the order hooks of a nested namespace run, the
+  parent's `beforeAction` hooks first and its `afterAction` hooks last:
+
+  ```javascript
+  class AdminApplicationController extends ApplicationController {
+    beforeAction = [...this.beforeAction, requireAdmin];
+    afterAction = [stamp, ...this.afterAction];
+  }
+  ```
+
+  A class field's `this.beforeAction` is the parent's, set before the
+  subclass's fields.
 - **Hooks are bound to the controller declaring them**, including the root
   `ApplicationController`'s, whose hooks ran with `this` undefined on its own
   routes.

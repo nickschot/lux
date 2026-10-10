@@ -126,6 +126,53 @@ describe('module "application" #createController()', () => {
       ]);
     });
 
+    describe('after hooks of an ApplicationController that extends the root one', () => {
+      const adminMeta: AfterAction = async (req, res, data) => {
+        calls.push('adminMeta');
+        return data;
+      };
+
+      const hooksOf = (Admin: typeof Controller) => {
+        const application = create('application', ApplicationController);
+        const admin = create('admin/application', Admin, application);
+
+        return runHooks(
+          create('admin/posts', class extends Controller {}, admin)
+        );
+      };
+
+      it("replace the root's when declared on their own", async () => {
+        class AdminApplicationController extends ApplicationController {
+          override afterAction: Array<AfterAction> = [adminMeta];
+        }
+
+        expect(await hooksOf(AdminApplicationController)).to.deep.equal([
+          'authenticate',
+          'adminMeta'
+        ]);
+      });
+
+      it("run as a nested namespace's do when the root's are spread in last", async () => {
+        class AdminApplicationController extends ApplicationController {
+          override afterAction: Array<AfterAction> = [
+            adminMeta,
+            ...this.afterAction
+          ];
+        }
+        // Not extending the root's class: its hooks are added around these.
+        class NestedApplicationController extends Controller {
+          override afterAction: Array<AfterAction> = [adminMeta];
+        }
+
+        const extending = await hooksOf(AdminApplicationController);
+
+        expect(extending).to.deep.equal(['authenticate', 'adminMeta', 'stamp']);
+        expect(extending).to.deep.equal(
+          await hooksOf(NestedApplicationController)
+        );
+      });
+    });
+
     it("adds the parent namespace's hooks to an ApplicationController that does not extend it", async () => {
       class AdminApplicationController extends Controller {
         override beforeAction: Array<BeforeAction> = [

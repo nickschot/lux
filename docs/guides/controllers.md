@@ -277,6 +277,9 @@ import requireAdmin from '../../middleware/require-admin';
 class AdminApplicationController extends ApplicationController {
   // Keeps the root's hooks; `beforeAction = [requireAdmin]` would replace them.
   beforeAction = [...this.beforeAction, requireAdmin];
+
+  // The same for after hooks, with the root's last, as they would run.
+  afterAction = [addAdminMeta, ...this.afterAction];
 }
 
 export default AdminApplicationController;
