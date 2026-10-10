@@ -73,6 +73,12 @@ ESM-only dependencies rely on it. Pin it with `engines`, `.nvmrc` or `volta`.
 See [Serializers: request documents](docs/guides/serializers.md#request-documents)
 and [Controllers: accepting writes](docs/guides/controllers.md#accepting-writes-params).
 
+- New: **plain routes take any JSON body.** A `POST` or `PATCH` to a route
+  outside `member` and `collection` accepts `application/json` as well as
+  the JSON:API type, and hands the body to the action unvalidated as
+  `request.body`. It used to be a `415`, or a `400` for any member in it
+  ([Routing](docs/guides/routing.md#plain-routes)). `request.body` holds the
+  JSON:API document as sent on other routes too.
 - **Members a model doesn't have are a `400`**, with a pointer
   (`/data/attributes/nope`). They used to be dropped silently.
 - **Relationships the controller's `params` don't list are a `403`**, as in

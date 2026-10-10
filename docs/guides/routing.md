@@ -190,9 +190,36 @@ class PostsController extends Controller {
 ```
 
 Use one for a response whose shape you fix, and a `collection` route for
-anything a client should be able to query. A plain route can't take a
-request body yet
-([#141](https://github.com/nickschot/lux/issues/141)).
+anything a client should be able to query.
+
+A plain `POST` or `PATCH` takes **any JSON body**, sent as `application/json`
+or `application/vnd.api+json`. It is not validated, and arrives as
+`request.body` exactly as sent (an empty body is `undefined`); body that
+isn't JSON is a `400`. That makes plain routes the place for webhooks and
+actions that aren't a resource write:
+
+```javascript
+this.resource('posts', function () {
+  this.post('import');
+});
+```
+
+```javascript
+class PostsController extends Controller {
+  async import(request) {
+    const { url } = request.body ?? {};
+
+    if (typeof url !== 'string') {
+      return 400;
+    }
+
+    await importFrom(url);
+    return true; // 204 No Content
+  }
+}
+```
+
+Check the body yourself: nothing about it is guaranteed but that it is JSON.
 
 Plain routes are also the only routes outside a resource. At the top level,
 one is handled by the application controller:

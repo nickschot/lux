@@ -121,6 +121,13 @@ export interface Request extends Readable {
   /** The parsed, validated parameters. */
   params: RequestParams;
 
+  /**
+   * The parsed JSON body of a `POST` or `PATCH`, as the client sent it. On a
+   * plain route (neither `member` nor `collection`) it is any JSON, and is
+   * not validated: read it here, not in `params`. `undefined` without a body.
+   */
+  body?: unknown;
+
   /** @internal */
   defaultParams: RequestParams;
 

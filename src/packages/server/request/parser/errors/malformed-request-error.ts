@@ -3,10 +3,10 @@ import { line } from '../../../../logger';
 
 /** @internal */
 class MalformedRequestError extends SyntaxError {
-  constructor() {
+  constructor(expected: string = 'a valid JSON API document') {
     super(line`
       There was an error parsing the request body. Please make sure that the
-      request body is a valid JSON API document.
+      request body is ${expected}.
     `);
   }
 }

@@ -17,6 +17,11 @@ class PostsController extends Controller {
     return this.model.where({ isPublic: true }).limit(2);
   }
 
+  // A plain route's body is any JSON, as sent.
+  echo(request) {
+    return { received: request.body ?? null };
+  }
+
   topRated(request) {
     return this.index(request).where({ isPublic: true });
   }

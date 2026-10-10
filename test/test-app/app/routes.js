@@ -1,4 +1,7 @@
 export default function routes() {
+  // A plain route outside any resource: ApplicationController#webhooks.
+  this.post('webhooks');
+
   this.resource('actions', {
     only: ['show', 'index']
   });
@@ -38,6 +41,7 @@ export default function routes() {
     // Plain routes: neither `member` nor `collection`.
     this.get('featured');
     this.get('top-rated', 'topRated');
+    this.post('echo');
   });
   this.resource('reactions');
   this.resource('tags');
