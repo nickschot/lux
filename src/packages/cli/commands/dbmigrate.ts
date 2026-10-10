@@ -1,10 +1,9 @@
-import { EOL } from 'os';
-
 import { CWD } from '../../../constants';
 import Database, { pendingMigrations } from '../../database';
 import Logger from '../../logger';
 import { createLoader } from '../../loader';
 import { composeAsync } from '../../../utils/compose';
+import printStatements from '../utils/print-statements';
 
 /**
  * @private
@@ -41,18 +40,11 @@ export async function dbmigrate() {
       .filter(([, migration]) => Boolean(migration))
       .reverse()
       .map(([version, migration]) => () => {
-        const query = migration.run(schema());
-
-        return query
-          .on('query', () => {
-            process.stdout.write(query.toString());
-            process.stdout.write(EOL);
+        return printStatements(migration.run(schema()), connection).then(() =>
+          connection('migrations').insert({
+            version
           })
-          .then(() =>
-            connection('migrations').insert({
-              version
-            })
-          );
+        );
       });
 
     // `composeAsync`'s variadic signature doesn't model a spread of an array
