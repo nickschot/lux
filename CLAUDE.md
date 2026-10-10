@@ -325,6 +325,14 @@ specs carried through the runner swap — were fixed once the migration settled.
   numbered: an entry says what changed and what to do or check, in a few lines,
   and links to the guide. A required action also goes in the version's
   "In short" list.
+- **HTTP tests validate what they fetch.** Read a response with
+  `readDocument(res)` from
+  [test/utils/expect-jsonapi-document.ts](test/utils/expect-jsonapi-document.ts),
+  not `res.json()`: every `application/vnd.api+json` body is then checked
+  against the JSON:API 1.0 schema in `test/jsonapi-schema/` (vendored
+  unchanged; see its README). Known deviations live in the helper's
+  `KNOWN_DEVIATIONS`, each tied to an issue (#149, #150); delete the entry
+  with the fix rather than adding broader ones.
 - **API reference: TypeDoc** ([typedoc.json](typedoc.json), `pnpm docs:api` →
   gitignored `docs/api/`), from `src/index.ts`. CI's `docs` job fails on any
   warning — a public symbol without a doc comment (`notDocumented`), a

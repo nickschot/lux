@@ -4,6 +4,7 @@ import Server from '../../server';
 import validateRelationships from '../utils/validate-relationships';
 
 import { getTestApp } from '../../../../test/utils/get-test-app';
+import { readDocument } from '../../../../test/utils/expect-jsonapi-document';
 
 const PORT = 4110;
 const DOMAIN = `http://localhost:${PORT}`;
@@ -18,7 +19,7 @@ async function request(method: string, path: string, body?: unknown) {
     body: body === undefined ? undefined : JSON.stringify(body)
   });
 
-  const { errors } = await res.json();
+  const { errors } = await readDocument(res);
 
   return { status: res.status, error: errors[0] };
 }
@@ -99,7 +100,7 @@ describe('module "controller"', () => {
           }
         })
       });
-      const { errors } = await res.json();
+      const { errors } = await readDocument(res);
 
       // A 409 and a 400: the response takes the more general 400.
       expect(res.status).to.equal(400);
@@ -166,7 +167,7 @@ describe('module "controller"', () => {
 
     it('points query parameter errors at the parameter', async () => {
       const res = await fetch(`${DOMAIN}/posts?page%5Bsize%5D=abc`);
-      const { errors } = await res.json();
+      const { errors } = await readDocument(res);
 
       expect(res.status).to.equal(400);
       expect(errors[0].source).to.deep.equal({ parameter: 'page[size]' });
@@ -181,7 +182,7 @@ describe('module "controller"', () => {
 
       for (const [query, parameter] of cases) {
         const res = await fetch(`${DOMAIN}/posts?${query}`);
-        const { errors } = await res.json();
+        const { errors } = await readDocument(res);
 
         expect(res.status, query).to.equal(400);
         expect(errors[0].source, query).to.deep.equal({ parameter });

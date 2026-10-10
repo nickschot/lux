@@ -24,3 +24,6 @@ pnpm-lock.yaml
 # (which would bury the real conversion diffs). Remove this entry once no Flow
 # remains.
 **/*.js
+
+# Vendored unchanged from the JSON:API spec repository (see its README).
+test/jsonapi-schema/1.0.json

@@ -3,6 +3,7 @@ import { it, beforeAll, afterAll, describe, expect } from 'vitest';
 import Server from '../../server';
 
 import { getTestApp } from '../../../../test/utils/get-test-app';
+import { readDocument } from '../../../../test/utils/expect-jsonapi-document';
 
 const PORT = 4101;
 const DOMAIN = `http://localhost:${PORT}`;
@@ -30,7 +31,7 @@ describe('module "serializer"', () => {
         const res = await fetch(`${DOMAIN}${path}`);
 
         expect(res.status).to.equal(200);
-        await res.json();
+        await readDocument(res);
       } finally {
         store.connection.removeListener('query', onQuery);
       }
@@ -112,7 +113,7 @@ describe('module "serializer"', () => {
 
     it('still serializes the absent image as null', async () => {
       const res = await fetch(`${DOMAIN}/posts/${postId}`);
-      const { data } = await res.json();
+      const { data } = await readDocument(res);
 
       expect(data.relationships.image).to.have.property('data', null);
     });

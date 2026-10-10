@@ -2,6 +2,7 @@ import { it, describe, beforeAll, afterAll, expect } from 'vitest';
 
 import Server from '../index';
 import { getTestApp } from '../../../../test/utils/get-test-app';
+import { readDocument } from '../../../../test/utils/expect-jsonapi-document';
 
 // Routing over HTTP through the test-app's real routes: ids that are not
 // integers, methods a path does not support, HEAD and OPTIONS, and the links
@@ -60,7 +61,7 @@ describe('routing over HTTP', () => {
   describe('a resource with a string primary key', () => {
     it('shows a resource by its string id', async () => {
       const res = await request('GET', '/languages/pt-BR');
-      const { data } = await res.json();
+      const { data } = await readDocument(res);
 
       expect(res.status).to.equal(200);
       expect(data).to.deep.include({
@@ -78,7 +79,7 @@ describe('routing over HTTP', () => {
           attributes: { name: 'Português (Brasil)' }
         }
       });
-      const { data } = await res.json();
+      const { data } = await readDocument(res);
 
       expect(res.status).to.equal(200);
       expect(data.attributes).to.deep.equal({ name: 'Português (Brasil)' });
@@ -111,7 +112,7 @@ describe('routing over HTTP', () => {
   describe('methods', () => {
     it('responds 405 with `Allow` to a method the path does not support', async () => {
       const res = await request('PUT', '/posts/1');
-      const { errors } = await res.json();
+      const { errors } = await readDocument(res);
 
       expect(res.status).to.equal(405);
       expect(errors[0].status).to.equal('405');
@@ -179,7 +180,7 @@ describe('routing over HTTP', () => {
     it('carries the total across every page in `meta`', async () => {
       const total = await models.get('language').count();
       const res = await request('GET', '/languages?page[size]=1');
-      const { data, meta } = await res.json();
+      const { data, meta } = await readDocument(res);
 
       expect(total).to.be.above(1);
       expect(data).to.have.lengthOf(1);
@@ -191,7 +192,7 @@ describe('routing over HTTP', () => {
         'GET',
         '/languages?filter[name]=Meta meta-a,Meta meta-b&page[size]=1'
       );
-      const { data, meta } = await res.json();
+      const { data, meta } = await readDocument(res);
 
       expect(data).to.have.lengthOf(1);
       expect(meta).to.deep.equal({ total: 2 });
@@ -201,7 +202,7 @@ describe('routing over HTTP', () => {
       const res = await request('GET', '/languages/meta-a');
 
       expect(res.status).to.equal(200);
-      expect(await res.json()).not.to.have.property('meta');
+      expect(await readDocument(res)).not.to.have.property('meta');
     });
   });
 
@@ -210,7 +211,7 @@ describe('routing over HTTP', () => {
       const res = await request('POST', '/tags', {
         data: { type: 'tags', attributes: { name: 'routing-created' } }
       });
-      const { data, links } = await res.json();
+      const { data, links } = await readDocument(res);
 
       await models.get('tag').table().where('id', data.id).del();
 

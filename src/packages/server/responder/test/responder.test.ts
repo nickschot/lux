@@ -19,6 +19,7 @@ import { ParameterValueError } from '../../../router/route/params/errors';
 
 import setEnv from '../../../../../test/utils/set-env';
 import { getTestApp } from '../../../../../test/utils/get-test-app';
+import { readDocument } from '../../../../../test/utils/expect-jsonapi-document';
 
 const DOMAIN = 'http://localhost:4100';
 
@@ -135,7 +136,7 @@ describe('module "server/responder"', () => {
 
           expect(result.status).to.equal(400);
           expect(result.headers.get('Content-Type')).to.equal(MIME_TYPE);
-          expect(await result.json()).to.deep.equal({
+          expect(await readDocument(result)).to.deep.equal({
             errors: [
               {
                 status: '400',
@@ -183,7 +184,7 @@ describe('module "server/responder"', () => {
 
           expect(result.status).to.equal(401);
           expect(result.headers.get('Content-Type')).to.equal(MIME_TYPE);
-          expect(await result.json()).to.deep.equal({
+          expect(await readDocument(result)).to.deep.equal({
             errors: [
               {
                 status: '401',
@@ -207,7 +208,7 @@ describe('module "server/responder"', () => {
 
           expect(result.status).to.equal(404);
           expect(result.headers.get('Content-Type')).to.equal(MIME_TYPE);
-          expect(await result.json()).to.deep.equal({
+          expect(await readDocument(result)).to.deep.equal({
             errors: [
               {
                 status: '404',
@@ -231,7 +232,7 @@ describe('module "server/responder"', () => {
           expect(result.headers.get('Content-Type')).to.equal(
             'application/json'
           );
-          expect(await result.json()).to.deep.equal({ test: true });
+          expect(await readDocument(result)).to.deep.equal({ test: true });
         });
 
         it('works with an array', async () => {
@@ -245,7 +246,7 @@ describe('module "server/responder"', () => {
           expect(result.headers.get('Content-Type')).to.equal(
             'application/json'
           );
-          expect(await result.json()).to.deep.equal(['test', true]);
+          expect(await readDocument(result)).to.deep.equal(['test', true]);
         });
 
         it('labels a JSON:API document as one', async () => {
@@ -294,7 +295,7 @@ describe('module "server/responder"', () => {
 
           expect(result.status).to.equal(500);
           expect(result.headers.get('Content-Type')).to.equal(MIME_TYPE);
-          expect(await result.json()).to.deep.equal({
+          expect(await readDocument(result)).to.deep.equal({
             errors: [
               {
                 status: '500',
@@ -321,7 +322,7 @@ describe('module "server/responder"', () => {
 
           expect(result.status).to.equal(403);
           expect(result.headers.get('Content-Type')).to.equal(MIME_TYPE);
-          expect(await result.json()).to.deep.equal({
+          expect(await readDocument(result)).to.deep.equal({
             errors: [
               {
                 status: '403',
@@ -345,7 +346,7 @@ describe('module "server/responder"', () => {
           });
 
           expect(result.status).to.equal(500);
-          expect(await result.json()).to.deep.equal({
+          expect(await readDocument(result)).to.deep.equal({
             errors: [
               {
                 status: '500',
@@ -368,7 +369,7 @@ describe('module "server/responder"', () => {
           });
 
           expect(result.status).to.equal(500);
-          expect(await result.json()).to.deep.equal({
+          expect(await readDocument(result)).to.deep.equal({
             errors: [
               {
                 status: '500',
@@ -392,7 +393,7 @@ describe('module "server/responder"', () => {
           });
 
           expect(result.status).to.equal(400);
-          expect((await result.json()).errors[0]).to.have.property(
+          expect((await readDocument(result)).errors[0]).to.have.property(
             'detail',
             "Expected value for parameter 'sort' to be one of [title, -title] " +
               'but got body.'
@@ -412,7 +413,7 @@ describe('module "server/responder"', () => {
           });
 
           expect(result.status).to.equal(409);
-          expect((await result.json()).errors[0]).not.to.have.property(
+          expect((await readDocument(result)).errors[0]).not.to.have.property(
             'detail'
           );
         });
@@ -436,7 +437,7 @@ describe('module "server/responder"', () => {
           });
 
           expect(result.status).to.equal(422);
-          expect(await result.json()).to.deep.equal({
+          expect(await readDocument(result)).to.deep.equal({
             errors: [
               {
                 id: 'abc',
@@ -473,7 +474,7 @@ describe('module "server/responder"', () => {
 
           // Mixed client errors: the most generally applicable status.
           expect(result.status).to.equal(400);
-          expect((await result.json()).errors).to.deep.equal([
+          expect((await readDocument(result)).errors).to.deep.equal([
             {
               status: '403',
               title: 'Forbidden',
@@ -501,7 +502,7 @@ describe('module "server/responder"', () => {
           });
 
           expect(result.status).to.equal(422);
-          expect((await result.json()).errors).to.have.lengthOf(2);
+          expect((await readDocument(result)).errors).to.have.lengthOf(2);
         });
       });
 
@@ -515,7 +516,7 @@ describe('module "server/responder"', () => {
 
           expect(result.status).to.equal(404);
           expect(result.headers.get('Content-Type')).to.equal(MIME_TYPE);
-          expect(await result.json()).to.deep.equal({
+          expect(await readDocument(result)).to.deep.equal({
             errors: [
               {
                 status: '404',
