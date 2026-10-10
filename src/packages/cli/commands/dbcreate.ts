@@ -5,6 +5,7 @@ import { CONNECTION_STRING_MESSAGE } from '../constants';
 import DatabaseConfigMissingError from '../errors/database-config-missing';
 import { writeFile } from '../../fs';
 import { createLoader } from '../../loader';
+import { SQLITE_DRIVER } from '../../database/constants';
 import provision from '../utils/server-database';
 
 /**
@@ -18,7 +19,7 @@ export function dbcreate() {
     throw new DatabaseConfigMissingError(NODE_ENV);
   }
 
-  if (config.driver === 'sqlite3') {
+  if (config.driver === SQLITE_DRIVER) {
     return writeFile(`${CWD}/db/${config.database}_${NODE_ENV}.sqlite`, '');
   }
 

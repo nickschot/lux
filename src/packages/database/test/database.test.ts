@@ -10,19 +10,19 @@ const DATABASE_PASSWORD = process.env.DATABASE_PASSWORD as string;
 const DEFAULT_CONFIG = {
   development: {
     pool: 5,
-    driver: 'sqlite3',
+    driver: 'better-sqlite3',
     database: 'lumen_test'
   },
   test: {
     pool: 5,
-    driver: DATABASE_DRIVER || 'sqlite3',
+    driver: DATABASE_DRIVER || 'better-sqlite3',
     database: 'lumen_test',
     username: DATABASE_USERNAME,
     password: DATABASE_PASSWORD
   },
   production: {
     pool: 5,
-    driver: 'sqlite3',
+    driver: 'better-sqlite3',
     database: 'lumen_test'
   }
 };

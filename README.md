@@ -40,8 +40,8 @@ That controller, a model and a serializer are a complete `/posts` resource:
 
 ## Requirements
 
-- Node.js **22.13** or later
-- One of `sqlite3`, `pg` or `mysql2` (`lumen new` adds the one you pick)
+- Node.js **22.14** or later
+- One of `better-sqlite3`, `pg` or `mysql2` (`lumen new` adds the one you pick)
 
 ## Getting started
 

@@ -88,7 +88,7 @@ jobs:
         include:
           # Full driver coverage on the dev baseline (Node 22, the .nvmrc pin).
           - node: 22
-            driver: sqlite3
+            driver: better-sqlite3
           - node: 22
             driver: pg
             username: postgres
@@ -97,21 +97,22 @@ jobs:
             driver: mysql2
             username: root
             password: root
-          # The engines floor (>= 22.13, the first 22.x where require() of an ES
-          # module is stable, and what faker/ESLint declare), so it cannot drift
+          # The engines floor (>= 22.14: the first 22.x with N-API 10, which
+          # better-sqlite3 13's prebuilt binary needs, segfaulting on 22.13;
+          # require() of an ES module is stable since 22.13), so it cannot drift
           # from what CI proves.
-          - node: 22.13.0
-            driver: sqlite3
+          - node: 22.14.0
+            driver: better-sqlite3
           # Forward-compat across Node versions (24 LTS, 26 current), run via
-          # sqlite3 — the one native (N-API) dependency and the ABI-sensitive
-          # surface. The pure-JS pg/mysql2 drivers aren't Node-version-sensitive.
+          # better-sqlite3 — the one native (N-API) dependency, loaded from its
+          # prebuilt binaries, and the ABI-sensitive surface. The pure-JS pg/mysql2 drivers aren't Node-version-sensitive.
           - node: 24
-            driver: sqlite3
+            driver: better-sqlite3
           - node: 26
-            driver: sqlite3
+            driver: better-sqlite3
 
     # GitHub evaluates `services` statically, so both containers start for every
-    # leg — the sqlite3 leg pays the health-check wait without using them. That
+    # leg — the SQLite legs pay the health-check wait without using them. That
     # is the price of keeping this one readable job instead of three.
     services:
       postgres:
@@ -146,7 +147,7 @@ jobs:
       DATABASE_PASSWORD: ${{ matrix.password }}
       # The service containers publish on IPv4, but "localhost" can resolve to
       # ::1 on modern Node — so pin the host explicitly rather than relying on
-      # each driver's default. sqlite3 ignores it (it connects to a file).
+      # each driver's default. better-sqlite3 ignores it (it connects to a file).
       DATABASE_HOST: 127.0.0.1
       # NB: deliberately no DATABASE_URL. It takes precedence over every other
       # setting in src/packages/database/utils/connect.ts and would bypass the
@@ -197,13 +198,13 @@ jobs:
         run: mysql -h 127.0.0.1 -uroot -proot -e 'CREATE DATABASE lumen_test;'
 
       - name: Test
-        # Coverage only on the baseline sqlite3 leg — every leg exercises the
+        # Coverage only on the baseline SQLite leg — every leg exercises the
         # same source, so collecting it repeatedly just slows the matrix down.
-        run: pnpm test ${{ matrix.node == 22 && matrix.driver == 'sqlite3' && '--coverage' || '' }}
+        run: pnpm test ${{ matrix.node == 22 && matrix.driver == 'better-sqlite3' && '--coverage' || '' }}
 
       - name: Report coverage
-        # Exactly one leg, or the action posts a comment per sqlite3 leg.
-        if: matrix.node == 22 && matrix.driver == 'sqlite3' && !cancelled()
+        # Exactly one leg, or the action posts a comment per SQLite leg.
+        if: matrix.node == 22 && matrix.driver == 'better-sqlite3' && !cancelled()
         uses: davelosert/vitest-coverage-report-action@v2
 
   # Consumption smoke test: installs lumen-framework the way an app does -- as a

@@ -11,14 +11,15 @@
   "dependencies": {
     "@faker-js/faker": "^10.6.0",
     "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
     "knex": "^3.3.0",
     "mysql2": "^3.24.5",
-    "pg": "^8.23.1",
-    "sqlite3": "^6.0.1"
+    "pg": "^8.23.1"
   },
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "sqlite3"
+    "ignoredBuiltDependencies": [
+      "better-sqlite3"
     ]
-  }
+  },
+  "packageManager": "pnpm@10.34.5"
 }

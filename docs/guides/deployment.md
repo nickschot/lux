@@ -7,7 +7,7 @@ Heroku and Docker.
 
 ## What production needs
 
-- **Node.js 22.13 or later.** Pin it where your platform reads it: the
+- **Node.js 22.14 or later.** Pin it where your platform reads it: the
   `engines` field `lumen new` writes into `package.json`, `.nvmrc`, or the
   Docker base image.
 - **The app's dependencies,** installed with `npm install` (or `pnpm install`).
@@ -55,8 +55,8 @@ production: {
 
 A URL gives the host, credentials and database, and replaces those
 settings. The rest still comes from `config/database.js`: the `driver`
-(`pg`, `mysql2` or `sqlite3`), `pool` (the connection pool size, per
-process) and `ssl`, which is applied on top of the URL:
+(`pg`, `mysql2` or `better-sqlite3`), `pool` (the connection pool size, per
+process; SQLite always uses one connection) and `ssl`, which is applied on top of the URL:
 
 ```javascript
 production: {

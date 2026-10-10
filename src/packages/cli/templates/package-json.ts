@@ -1,4 +1,5 @@
 import { version } from '../../../../package.json';
+import { SQLITE_DRIVER } from '../../database/constants';
 
 const LUMEN_VERSION: string = version;
 
@@ -6,7 +7,7 @@ const LUMEN_VERSION: string = version;
 // a generated app needs installed to actually connect. Pinned to the versions
 // CI validates (see test/test-app).
 const DRIVER_DEPS: Record<string, { name: string; version: string }> = {
-  sqlite3: { name: 'sqlite3', version: '^6.0.1' },
+  [SQLITE_DRIVER]: { name: SQLITE_DRIVER, version: '^13.0.3' },
   pg: { name: 'pg', version: '^8.23.1' },
   mysql2: { name: 'mysql2', version: '^3.24.5' }
 };
@@ -15,7 +16,7 @@ const DRIVER_DEPS: Record<string, { name: string; version: string }> = {
  * @private
  */
 export default (name: string, driver: string): string => {
-  const dbDriver = DRIVER_DEPS[driver] || DRIVER_DEPS.sqlite3;
+  const dbDriver = DRIVER_DEPS[driver] || DRIVER_DEPS[SQLITE_DRIVER];
 
   const pkg: Record<string, unknown> = {
     name,
@@ -38,13 +39,15 @@ export default (name: string, driver: string): string => {
       globals: '^17.13.0'
     },
     engines: {
-      node: '>= 22.13'
+      node: '>= 22.14'
     }
   };
 
-  // sqlite3 ships a native binary; pnpm needs its build approved explicitly.
-  if (dbDriver.name === 'sqlite3') {
-    pkg.pnpm = { onlyBuiltDependencies: ['sqlite3'] };
+  // better-sqlite3 ships prebuilt binaries for every platform it supports,
+  // but pnpm would try `node-gyp rebuild` for its `binding.gyp`; say it needs
+  // no build.
+  if (dbDriver.name === SQLITE_DRIVER) {
+    pkg.pnpm = { ignoredBuiltDependencies: [SQLITE_DRIVER] };
   }
 
   return `${JSON.stringify(pkg, null, 2)}\n`;

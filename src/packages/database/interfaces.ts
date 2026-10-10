@@ -58,7 +58,7 @@ export type DatabaseEnvironmentConfig = {
    */
   debug?: boolean;
 
-  /** The client: `'pg'`, `'mysql2'` or `'sqlite3'`. */
+  /** The client: `'pg'`, `'mysql2'` or `'better-sqlite3'`. */
   driver: string;
 
   /** A Unix socket to connect through instead of `host` and `port`. */

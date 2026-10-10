@@ -11,7 +11,7 @@ It takes about ten minutes. The finished API speaks
 
 ## Before you start
 
-You need **Node.js 22.13 or later**:
+You need **Node.js 22.14 or later**:
 
 ```bash
 node --version
@@ -41,7 +41,7 @@ lumen new blog --database postgres
 ```
 
 `--database` accepts `sqlite` (the default), `postgres` and `mysql`; the
-matching driver (`sqlite3`, `pg` or `mysql2`) is added to `package.json`.
+matching driver (`better-sqlite3`, `pg` or `mysql2`) is added to `package.json`.
 
 ```bash
 cd blog

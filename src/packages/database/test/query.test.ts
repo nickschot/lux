@@ -503,7 +503,7 @@ describe('module "database/query"', () => {
         if (Array.isArray(result)) {
           result.forEach(item => {
             assertItem(item);
-            // LIKE is case-insensitive on sqlite3 and mysql2 (not on pg), so
+            // LIKE is case-insensitive on SQLite and mysql2 (not on pg), so
             // a lorem word such as "testimonium" matches it too.
             expect(item.title).to.match(/test/i);
           });

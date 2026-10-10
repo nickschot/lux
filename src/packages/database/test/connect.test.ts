@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 
-import { connectionFor } from '../utils/connect';
+import { join } from 'path';
+
+import connect, { connectionFor } from '../utils/connect';
 
 describe('module "database" #connectionFor()', () => {
   const PATH = '/app';
@@ -42,10 +44,50 @@ describe('module "database" #connectionFor()', () => {
     ).to.deep.equal({ connectionString: URL, ssl });
   });
 
-  it('passes a URL through as it is without `ssl`, and for sqlite3', () => {
+  it('passes a URL through as it is without `ssl`, and for SQLite', () => {
     expect(connectionFor(PATH, { driver: 'pg' }, URL)).to.equal(URL);
     expect(
-      connectionFor(PATH, { driver: 'sqlite3', ssl: true }, '/tmp/db.sqlite')
+      connectionFor(
+        PATH,
+        { driver: 'better-sqlite3', ssl: true },
+        '/tmp/db.sqlite'
+      )
     ).to.equal('/tmp/db.sqlite');
+  });
+});
+
+// The test-app has knex installed, which connect() loads from the app.
+const APP = join(import.meta.dirname, '../../../../test/test-app');
+
+describe('module "database" #connect()', () => {
+  it('uses one connection for SQLite, whatever `pool` says', async () => {
+    const knex = connect(APP, {
+      driver: 'better-sqlite3',
+      database: 'connect_test',
+      pool: 5
+    });
+
+    try {
+      expect(knex.client.config.pool).to.deep.equal({ min: 1, max: 1 });
+    } finally {
+      await knex.destroy();
+    }
+  });
+
+  it('says how to switch from sqlite3', () => {
+    expect(() => connect(APP, { driver: 'sqlite3', database: 'x' }))
+      .to.throw()
+      .with.property('message')
+      .that.includes("driver: 'better-sqlite3'")
+      .and.includes('replace the sqlite3 dependency');
+  });
+
+  it("rejects drivers knex 3 doesn't have", () => {
+    ['mariasql', 'strong-oracle', 'oracle'].forEach(driver => {
+      expect(() => connect(APP, { driver, database: 'x' }))
+        .to.throw()
+        .with.property('message')
+        .that.includes('Invalid database driver');
+    });
   });
 });

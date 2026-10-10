@@ -14,7 +14,7 @@ function configFor(driver: string) {
 
 describe('module "cli" template database', () => {
   it('gives SQLite the bare name, which connect() suffixes with the environment', () => {
-    const config = configFor('sqlite3');
+    const config = configFor('better-sqlite3');
 
     expect(config.development.database).to.equal('blog');
     expect(config.test.database).to.equal('blog');
