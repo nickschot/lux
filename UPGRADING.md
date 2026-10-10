@@ -319,6 +319,12 @@ See [The `lumen` command](docs/guides/cli.md).
   table. **Check** the order of the files in `db/migrate/`: rename a
   not-applied migration whose version sorts wrong. `lumen db:rollback` undoes
   the highest version, which may not be the newest migration.
+- **`lumen destroy resource` undoes `generate resource`, namespaces
+  included.** `destroy resource admin/tags` now also removes
+  `app/models/tag.js` and its migration, which it used to leave behind. A
+  model another namespace's resource still uses (`app/controllers/tags.js`)
+  is kept, for a root resource too. `update app/routes.js` is printed only
+  when the file changed.
 - **`--use-weak` works in an app with a `tsconfig.json`.** A strict
   `tsconfig.json` above the app used to force strict mode.
 - **`lumen serve` exits with code `1` when the app can't start** (a pending
