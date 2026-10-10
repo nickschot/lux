@@ -3,6 +3,7 @@ import { it, describe, beforeAll, afterAll, expect } from 'vitest';
 import Server from '../index';
 import type { Model, ModelClass } from '../../database';
 import { getTestApp } from '../../../../test/utils/get-test-app';
+import { readDocument } from '../../../../test/utils/expect-jsonapi-document';
 
 // Relationship endpoints (`/posts/1/relationships/comments`) over HTTP, and
 // the relationship `self` links that point at them. The database is shared
@@ -21,12 +22,10 @@ async function request(method: string, path: string, body?: unknown) {
     headers: { Accept: JSONAPI, 'Content-Type': JSONAPI },
     body: body === undefined ? undefined : JSON.stringify(body)
   });
-  const text = await res.text();
-
   return {
     res,
     status: res.status,
-    body: text ? JSON.parse(text) : undefined
+    body: await readDocument(res)
   };
 }
 

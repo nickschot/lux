@@ -2,6 +2,7 @@ import { it, describe, beforeAll, afterAll, expect } from 'vitest';
 
 import Server from '../index';
 import { getTestApp } from '../../../../test/utils/get-test-app';
+import { readDocument } from '../../../../test/utils/expect-jsonapi-document';
 
 // The test-app's plain routes on `posts` (neither `member` nor
 // `collection`): `featured` returns a query of its own, `topRated` builds on
@@ -14,7 +15,7 @@ let DOMAIN = '';
 async function get(path: string) {
   const res = await fetch(`${DOMAIN}${path}`, { headers: { Accept: JSONAPI } });
 
-  return { status: res.status, body: await res.json() };
+  return { status: res.status, body: await readDocument(res) };
 }
 
 describe('plain routes of a resource', () => {

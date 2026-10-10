@@ -3,6 +3,7 @@ import { it, describe, beforeAll, afterAll, expect } from 'vitest';
 import Server from '../index';
 import type { Model } from '../../database';
 import { getTestApp } from '../../../../test/utils/get-test-app';
+import { readDocument } from '../../../../test/utils/expect-jsonapi-document';
 
 // JSON:API 1.0 request documents over HTTP, through the test-app's real
 // routes: the members a document may carry, resource linkage validation, and
@@ -34,9 +35,7 @@ async function request(
     headers: { Accept: JSONAPI, 'Content-Type': JSONAPI },
     body: body === undefined ? undefined : JSON.stringify(body)
   });
-  const text = await res.text();
-
-  return { status: res.status, body: text ? JSON.parse(text) : {} };
+  return { status: res.status, body: (await readDocument(res)) ?? {} };
 }
 
 describe('request documents over HTTP', () => {
@@ -537,7 +536,7 @@ describe('request documents over HTTP', () => {
       const res = await fetch(
         `${DOMAIN}/posts?filter[title]=Mixed Case Title,No Such Title`
       );
-      const { data } = await res.json();
+      const { data } = await readDocument(res);
 
       expect(res.status).to.equal(200);
       expect(data.map(({ id }) => id)).to.deep.equal([idOf(post)]);

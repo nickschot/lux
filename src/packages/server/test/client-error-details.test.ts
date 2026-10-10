@@ -3,6 +3,7 @@ import { it, describe, beforeAll, afterAll, expect } from 'vitest';
 import Server from '../index';
 import setEnv from '../../../../test/utils/set-env';
 import { getTestApp } from '../../../../test/utils/get-test-app';
+import { readDocument } from '../../../../test/utils/expect-jsonapi-document';
 
 // The framework's own client errors over HTTP, answered in production: their
 // `detail` is kept, and names members as documents do (`created-at`).
@@ -13,7 +14,7 @@ let DOMAIN = '';
 
 async function errorFor(path: string) {
   const res = await fetch(`${DOMAIN}${path}`, { headers: { Accept: JSONAPI } });
-  const { errors } = await res.json();
+  const { errors } = await readDocument(res);
 
   return { status: res.status, error: errors[0] };
 }

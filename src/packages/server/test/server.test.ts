@@ -3,6 +3,7 @@ import { it, beforeAll, afterAll, describe, expect } from 'vitest';
 import Server from '../index';
 
 import { getTestApp } from '../../../../test/utils/get-test-app';
+import { readDocument } from '../../../../test/utils/expect-jsonapi-document';
 
 const PORT = 4100;
 const DOMAIN = `http://localhost:${PORT}`;
@@ -48,7 +49,7 @@ describe('module "server"', () => {
         expect(res.status).to.equal(406);
         expect(res.headers.get('content-type')).to.equal(JSONAPI);
 
-        const { errors } = await res.json();
+        const { errors } = await readDocument(res);
 
         expect(errors[0].status).to.equal('406');
       });

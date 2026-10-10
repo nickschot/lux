@@ -7,6 +7,7 @@ import type { Model, ModelClass } from '../../database';
 import underscore from '../../../utils/underscore';
 import { getTestApp } from '../../../../test/utils/get-test-app';
 import { getRelated } from '../../../../test/utils/get-related';
+import { readDocument } from '../../../../test/utils/expect-jsonapi-document';
 
 // End-to-end coverage of `?include=` through the real router, controllers and
 // serializers of the test-app, over HTTP. The seed data is random and shared
@@ -53,7 +54,7 @@ async function get(path: string): Promise<{ status: number; body: Document }> {
     headers: { Accept: 'application/vnd.api+json' }
   });
 
-  return { status: res.status, body: (await res.json()) as Document };
+  return { status: res.status, body: (await readDocument(res)) as Document };
 }
 
 /**

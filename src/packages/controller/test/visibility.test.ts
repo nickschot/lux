@@ -9,6 +9,7 @@ import resolveVisibility from '../../application/utils/resolve-visibility';
 import type { Model, ModelClass } from '../../database';
 import type { Request } from '../../server';
 import { getTestApp } from '../../../../test/utils/get-test-app';
+import { readDocument } from '../../../../test/utils/expect-jsonapi-document';
 
 // The test-app hides private posts everywhere but `admin`
 // (`app/controllers/application.js`); its `members` namespace extends that
@@ -47,11 +48,11 @@ async function request(
     },
     body: body ? JSON.stringify(body) : undefined
   });
-  const text = await res.text();
+  const document = (await readDocument(res)) as Document | undefined;
 
   return {
     status: res.status,
-    body: text ? (JSON.parse(text) as Document) : null
+    body: document ?? null
   };
 }
 

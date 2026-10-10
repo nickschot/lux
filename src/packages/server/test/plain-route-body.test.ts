@@ -2,6 +2,7 @@ import { it, describe, beforeAll, afterAll, expect } from 'vitest';
 
 import Server from '../index';
 import { getTestApp } from '../../../../test/utils/get-test-app';
+import { readDocument } from '../../../../test/utils/expect-jsonapi-document';
 
 // The test-app's plain `POST` routes, which answer with the body they
 // received: `/posts/echo` on a resource, `/webhooks` at the top level.
@@ -20,7 +21,7 @@ async function post(path: string, body: string, contentType: string) {
   return {
     status: res.status,
     contentType: res.headers.get('content-type'),
-    body: await res.json()
+    body: await readDocument(res)
   };
 }
 

@@ -2,6 +2,7 @@ import { it, describe, beforeAll, afterAll, expect } from 'vitest';
 
 import Server from '../index';
 import { getTestApp } from '../../../../test/utils/get-test-app';
+import { readDocument } from '../../../../test/utils/expect-jsonapi-document';
 
 // The test-app's `GET /posts/recent`, a collection route whose action builds
 // on `index`: it is paged like `index`, page links and total included.
@@ -17,7 +18,7 @@ let DOMAIN = '';
 async function get(path: string) {
   const res = await fetch(`${DOMAIN}${path}`, { headers: { Accept: JSONAPI } });
 
-  return { status: res.status, body: await res.json() };
+  return { status: res.status, body: await readDocument(res) };
 }
 
 describe('a custom collection action built on index', () => {
