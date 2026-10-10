@@ -2,7 +2,7 @@ import { Controller } from 'lumen-framework';
 
 class ReactionsController extends Controller {
   params = [
-    'type',
+    'kind',
     'user',
     'post',
     'comment'

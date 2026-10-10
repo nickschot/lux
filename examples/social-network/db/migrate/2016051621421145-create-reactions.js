@@ -5,7 +5,7 @@ export function up(schema) {
     table.increments('id');
 
     table
-      .enum('type', REACTION_TYPES)
+      .enum('kind', REACTION_TYPES)
       .index()
       .notNullable();
 

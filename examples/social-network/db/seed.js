@@ -85,7 +85,7 @@ export default async function seed(trx) {
       Reaction.transacting(trx).create({
         [`${arrayElement(['comment', 'post'])}Id`]: arrayElement([...range(1, 100)]),
         userId: arrayElement([...range(1, 100)]),
-        type: arrayElement(REACTION_TYPES)
+        kind: arrayElement(REACTION_TYPES)
       })
     ))
   );

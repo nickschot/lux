@@ -15,6 +15,7 @@ import createSerializer from './utils/create-serializer';
 import validateNamespacedSerializers from './utils/validate-namespaced-serializers';
 import validateLinksOnly from './utils/validate-links-only';
 import validateAttributes from './utils/validate-attributes';
+import validateReservedNames from './utils/validate-reserved-names';
 import resolveVisibility from './utils/resolve-visibility';
 import warnQueryParamNames from './utils/warn-query-param-names';
 
@@ -130,6 +131,7 @@ export default async function initialize<T extends Application>(
   });
 
   validateAttributes(controllers, serializers);
+  validateReservedNames(serializers, logger);
   validateNamespacedSerializers(controllers, serializers);
   resolveVisibility(controllers, store.models.values());
   warnQueryParamNames(controllers, logger);

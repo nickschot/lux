@@ -24,28 +24,30 @@ Required:
 3. Fix any relationship the app now refuses to boot with ([Models](#models)),
    and check the order of the files in `db/migrate/`
    ([CLI](#the-lumen-cli-and-generators)).
+4. Rename serializer fields named `type` or `id`, or opt them out with
+   `allowReservedNames` ([Responses](#responses)).
 
 Check, if it applies to your app:
 
-4. **ember-data clients:** a `belongsTo` the controller's `params` doesn't
+5. **ember-data clients:** a `belongsTo` the controller's `params` doesn't
    list is now refused with `403`. Turn that off with
    `rejectUnlistedRelationships = false`, or stop sending it
    ([Requests](#requests)).
-5. **Namespaces without their own `ApplicationController`, or with one that
+6. **Namespaces without their own `ApplicationController`, or with one that
    declares no visibility rules,** now follow their ancestors' hooks and
    rules ([Controllers](#controllers)).
-6. **Hooks that authorize by action name** must also allow
+7. **Hooks that authorize by action name** must also allow
    `showRelationship` and `showRelated`, the actions of the new relationship
    endpoints ([Routing](#routing)).
-7. **Custom actions that `.include()` relationships:** drop the call; the
+8. **Custom actions that `.include()` relationships:** drop the call; the
    serializer loads relationships itself ([Controllers](#controllers)).
-8. **Clients or tests asserting status codes or error `detail`s:** several
+9. **Clients or tests asserting status codes or error `detail`s:** several
    changed ([Errors](#errors)). A string an action returns is now
    `text/plain` ([Responses](#responses)).
-9. **Log parsing and alerting:** the text format changed, 4xx are no longer
-   logged as errors, and `logging.level` must be uppercase
-   ([Logging](#logging)).
-10. **Model hooks comparing records with `===`:** a hook now receives a
+10. **Log parsing and alerting:** the text format changed, 4xx are no longer
+    logged as errors, and `logging.level` must be uppercase
+    ([Logging](#logging)).
+11. **Model hooks comparing records with `===`:** a hook now receives a
     proxy of the record ([Models](#models)).
 
 The rest is new behaviour that needs no change, such as visibility rules,
@@ -109,6 +111,12 @@ and [Controllers: accepting writes](docs/guides/controllers.md#accepting-writes-
 
 See [Serializers and JSON:API](docs/guides/serializers.md).
 
+- **A serializer field named `type` or `id` fails the boot.** JSON:API
+  forbids both names for attributes and relationships, since they share a
+  namespace with the resource's own `type` and `id`; Lumen used to send them
+  anyway. **Do:** rename the column, or set `allowReservedNames = true` on the
+  serializer to keep sending it, with a warning at boot
+  ([Serializers](docs/guides/serializers.md#type-and-id)).
 - **A serializer attribute that isn't a column fails the boot.** Listing a
   getter or other computed property in `attributes` used to be accepted and
   then silently ignored: missing from every response, while `sort` and

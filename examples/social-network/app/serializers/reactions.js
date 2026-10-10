@@ -2,7 +2,7 @@ import { Serializer } from 'lumen-framework';
 
 class ReactionsSerializer extends Serializer {
   attributes = [
-    'type',
+    'kind',
     'createdAt'
   ];
 

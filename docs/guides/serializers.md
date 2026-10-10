@@ -67,6 +67,30 @@ else — a getter or other computed property — is an error when the app
 boots, naming the serializer and the attribute. Add computed values to the
 document in an `afterAction` hook or a custom action instead.
 
+### `type` and `id`
+
+JSON:API forbids an attribute or relationship named **`type`** or **`id`**:
+they share a namespace with the resource's own `type` and `id`, and a client
+that flattens a resource can't tell them apart. A serializer that lists one
+in `attributes`, `hasOne` or `hasMany` is an error when the app boots.
+
+Rename the column (`type` → `kind`, as the
+[example app](../../examples/social-network/app/serializers/reactions.js)
+does). If clients already depend on the name, opt the serializer out with
+`allowReservedNames`; the app then boots with a warning, and the field is
+sent as before:
+
+```javascript
+class ReactionsSerializer extends Serializer {
+  attributes = ['type', 'createdAt'];
+
+  // `type` breaks JSON:API, but our clients read it.
+  allowReservedNames = true;
+}
+```
+
+A namespaced serializer that extends this one inherits the setting.
+
 ## Relationships
 
 Relationships are listed by kind:
