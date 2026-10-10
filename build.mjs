@@ -18,6 +18,12 @@
 //   dist/index.js   CJS library    -> package "main" / require()
 //   dist/index.mjs  ESM library    -> the app compiler bundles this
 //   dist/cli.cjs    CJS CLI bundle  -> bin/lumen
+//   dist/testing.js / dist/testing.mjs
+//                   test helpers    -> `lumen-framework/testing`
+//
+// package.json `exports` maps the public entries. Under Node both resolve to
+// the CJS builds, as `main` did before the map; bundlers that honour the
+// `module` condition get the ESM ones, as they got `module` before.
 //
 // Type declarations (dist/types/) are emitted separately by `pnpm build:types`
 // (tsc), so this hot build/test path stays fast.
@@ -56,6 +62,18 @@ await esbuild.build({
   entryPoints: ['src/index.ts'],
   format: 'esm',
   outfile: 'dist/index.mjs'
+});
+await esbuild.build({
+  ...shared,
+  entryPoints: ['src/testing.ts'],
+  format: 'cjs',
+  outfile: 'dist/testing.js'
+});
+await esbuild.build({
+  ...shared,
+  entryPoints: ['src/testing.ts'],
+  format: 'esm',
+  outfile: 'dist/testing.mjs'
 });
 await esbuild.build({
   ...shared,

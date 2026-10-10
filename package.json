@@ -27,6 +27,19 @@
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "module": "./dist/index.mjs",
+      "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/types/testing.d.ts",
+      "module": "./dist/testing.mjs",
+      "default": "./dist/testing.js"
+    },
+    "./package.json": "./package.json"
+  },
   "bin": {
     "lumen": "bin/lumen"
   },
