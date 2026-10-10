@@ -149,10 +149,11 @@ you want a clean slate. For lots of realistic data,
 
 With SQLite the database is a file, `db/<database>_<environment>.sqlite`,
 created on first use, so `db:create` is rarely needed. With PostgreSQL or
-MySQL, create and drop the database with the server's own tools for now
-(`createdb`, `CREATE DATABASE …`): these commands connect to the database they
-create or drop, which fails
-([#111](https://github.com/nickschot/lux/issues/111)).
+MySQL, these commands connect to the server with the environment's settings:
+to its `postgres` database on PostgreSQL, without a database on MySQL. The
+user needs the right to create databases. On PostgreSQL (13 or later),
+`db:drop` also closes other connections to the database, such as a running
+`lumen serve`. With a `url` (or `DATABASE_URL`) they do nothing, and print why.
 
 A full rebuild of a development database:
 

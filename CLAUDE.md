@@ -277,12 +277,12 @@ Things worth knowing before editing it:
   releases (postgres:16, mysql:8.4) with ordinary password auth. `sqlite3` is current
   (6.0.1). **If a driver is ever pinned back, expect the server-side workarounds
   to come back with it.**
-- **`lumen db:reset` cannot provision pg/mysql.** `dbdrop` connects *to* `lumen_test` and then
-  drops it (Postgres refuses); `dbcreate` connects to a database it is about to create. So
-  those legs create the database with the service container's client and set
-  **`LUMEN_SKIP_DB_RESET=1`**, which [test/vitest.global-setup.ts](test/vitest.global-setup.ts)
-  honours. This replaced the old `CIRCLECI`/`APPVEYOR` env gating, and the matching
-  `src/constants.ts` exports are gone.
+- **`lumen db:reset` provisions pg/mysql too** (#111): `db:create`/`db:drop` connect to the
+  server (`postgres` maintenance database, or none for MySQL), not to `lumen_test`, and a
+  Postgres drop is `WITH (FORCE)`. The pg/mysql legs still create `lumen_test` up front so
+  the reset drops an existing database. **`LUMEN_SKIP_DB_RESET=1`** (honoured by
+  [test/vitest.global-setup.ts](test/vitest.global-setup.ts)) skips the reset, for a
+  database created by other means; CI no longer sets it.
 - **Seeding is not idempotent** — `db:seed` on an already-seeded database duplicates rows and
   breaks `query.test`'s absolute counts. Harmless in CI (containers start empty) but it means
   you cannot skip the reset against a warm local database.

@@ -331,6 +331,12 @@ See [The `lumen` command](docs/guides/cli.md).
   `database: 'blog'`, so `db/blog_development.sqlite`. Existing apps keep
   working as they are. **Optional:** set `database: 'blog'` for every
   environment in `config/database.js` and rename the files in `db/` to match.
+- **`lumen db:create`, `db:drop` and `db:reset` work on PostgreSQL and
+  MySQL.** They used to connect to the very database they create or drop,
+  which failed. They now connect to the server (PostgreSQL's `postgres`
+  database), quote the name, and on PostgreSQL 13+ drop a database that still
+  has connections open. **Check:** scripts that create the database with
+  `createdb` or `CREATE DATABASE` can use them instead.
 - **`--use-weak` works in an app with a `tsconfig.json`.** A strict
   `tsconfig.json` above the app used to force strict mode.
 - **`lumen serve` exits with code `1` when the app can't start** (a pending
