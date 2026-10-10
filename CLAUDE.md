@@ -257,9 +257,13 @@ with `ignoredBuiltDependencies` (pnpm otherwise runs `node-gyp rebuild` for its
 `binding.gyp` and fails without a toolchain). **SQLite always gets one connection**
 (`connect()` ignores `pool` for it): better-sqlite3 is synchronous, so a second connection
 waiting on the first's lock blocks the event loop and fails with "database is locked".
-`sqlite3` still appears in the test-app's lockfile only as an auto-installed optional peer
-of knex (like `tedious`); nothing loads it. CI additionally runs `pg` / `mysql2` via
-`DATABASE_DRIVER`.
+The test-app pins **`"packageManager": "pnpm@10.34.5"`**, like the root and the example
+app: without it a version-switching pnpm (Homebrew's, corepack) runs a newer pnpm there,
+which ignores `package.json`'s `pnpm` settings, writes a stray `pnpm-workspace.yaml` and
+fails the install on the skipped build. pnpm keeps a lockfile's existing resolutions, so
+regenerate a lockfile from scratch after removing a dependency: knex's optional peers
+(`sqlite3`, `tedious`) and their trees lingered in the test-app's for years. CI
+additionally runs `pg` / `mysql2` via `DATABASE_DRIVER`.
 
 **Current baseline (Node 22 / pnpm 10):** `850 passing` across 103 files, all on **Vitest**
 (`pnpm test` = `vitest run`, ~30 s). Coverage sits at ~70% of statements.
