@@ -1,7 +1,7 @@
 import { it, describe, expect } from 'vitest';
 
 import Controller from '../../controller';
-import createController from '../utils/create-controller';
+import createController, { setsItself } from '../utils/create-controller';
 import { build } from '../../loader';
 import type Database from '../../database';
 import type { BeforeAction, AfterAction } from '../../controller';
@@ -217,6 +217,23 @@ describe('module "application" #createController()', () => {
       expect(posts.rejectUnlistedAttributes).to.equal(true);
       expect(posts.rejectUnlistedRelationships).to.equal(false);
       expect(posts.maxIncludeDepth).to.equal(2);
+    });
+
+    it('records which ones a controller or its namespaces set', () => {
+      class PostsController extends Controller {
+        override rejectUnlistedAttributes = true;
+      }
+
+      const application = create('application', ApplicationController);
+      const posts = create('posts', PostsController, application);
+      const plain = create('posts', class extends Controller {});
+
+      expect(setsItself(posts, 'rejectUnlistedAttributes')).to.equal(true);
+      expect(setsItself(posts, 'maxIncludeDepth')).to.equal(true);
+      expect(setsItself(application, 'rejectUnlistedAttributes')).to.equal(
+        false
+      );
+      expect(setsItself(plain, 'maxIncludeDepth')).to.equal(false);
     });
 
     it('falls back to the built-in defaults', () => {

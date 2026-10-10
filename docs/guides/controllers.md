@@ -77,7 +77,7 @@ reported with a pointer to it:
 | `filter` | every attribute the serializer outputs | The keys `?filter[…]=` accepts. |
 | `defaultPerPage` | `25` | The page size when the request gives none. |
 | `maxPerPage` | `100` | The largest `?page[size]=`; a larger one is a `400`. |
-| `maxIncludeDepth` | `3` | How deep an `?include=` path may go (`comments.user` is 2). |
+| `maxIncludeDepth` | `3`, or `1` [without visibility rules](#without-rules) | How deep an `?include=` path may go (`comments.user` is 2). |
 | `query` | `[]` | Extra query parameters an action may read, beyond the JSON:API ones. |
 
 Anything outside these lists is a `400 Bad Request` naming the parameter, so
@@ -124,8 +124,12 @@ class PostsController extends Controller {
 ```
 
 This narrows **only** `GET /posts`. The other posts are still served by
-`GET /posts/:id`, in a user's `posts`, and in `?include=posts`. To keep
-records from a request everywhere, use a [visibility rule](#visibility-rules).
+`GET /posts/:id`, in a user's `posts`, in `?include=posts` and by
+`GET /users/:id/posts`. Narrowing `show` the same way leaves the records
+*related* to a post open: `?include=comments.user` and
+`GET /posts/:id/comments` don't go through `CommentsController`'s
+overrides. To keep records from a request everywhere, use a
+[visibility rule](#visibility-rules).
 
 The other built-ins are `create`, `update` and `destroy`. Each action is
 called with `(request, response)`; see the `Controller` page of the API
@@ -173,7 +177,8 @@ The `request` an action receives carries:
 | `request.body` | The parsed JSON body of a `POST` or `PATCH`, as sent. On a [plain route](routing.md#plain-routes) it is any JSON, unvalidated; read it here. |
 | `request.headers` | The headers, as a **`Map`**: `request.headers.get('authorization')`. |
 | `request.method` | `'GET'`, `'POST'`, … |
-| `request.action` | The action's name (`'index'`, `'mine'`). |
+| `request.action` | The action's name (`'index'`, `'mine'`). The relationship and related endpoints' are `showRelationship` and `showRelated`. |
+| `request.route.type` | `'member'`, `'collection'`, `'relationship'`, `'related'` or `'custom'`. |
 | `request.url` | The parsed URL (`pathname`, `query`, …). |
 | `request.id` | The request id, also sent as `X-Request-Id` and logged. |
 
@@ -279,6 +284,13 @@ export default AdminApplicationController;
 
 Hooks run after the request's parameters are validated, so a request rejected
 with a `400` never reaches them.
+
+A hook that allows or denies by `request.action` must account for every
+action, including `showRelationship` and `showRelated`
+([relationship endpoints](routing.md#relationship-and-related-endpoints)):
+one that only checks for `'show'` and `'index'` lets those through. Deny
+by default, or check `request.route.type`. Which *records* a request may
+see is a job for [visibility rules](#visibility-rules), not hooks.
 
 ### Connect-style middleware
 
@@ -390,6 +402,30 @@ class PostsController extends Controller {
 Building on `this.index(request)` or `this.show(request)` applies the rules
 already.
 
+### Without rules
+
+A namespace with no rules, neither from its own `ApplicationController` nor
+from a parent namespace's, has nothing to scope what a request reaches
+beyond the primary data. An `index` or `show` override, or a hook checking
+`request.action`, covers `GET /posts` and `GET /posts/:id`, but not the
+records included with them or served by the relationship and related
+endpoints. So such a namespace gets conservative defaults:
+
+- `maxIncludeDepth` is `1` unless a controller, or the namespace, sets it;
+- resources serve no relationship or related endpoints unless their
+  [`relationships` option](routing.md#relationship-and-related-endpoints)
+  asks for them;
+- the app logs a warning about the namespace at boot.
+
+Declaring rules lifts all three. A namespace that may see everything, such
+as an admin API, declares that explicitly:
+
+```javascript
+class ApplicationController extends Controller {
+  static visibility = {};
+}
+```
+
 ### Checking what a request can see
 
 `auditVisibility()` tests the result rather than the rules. It requests
@@ -455,7 +491,7 @@ sets its own:
 |---|---|---|
 | `rejectUnlistedAttributes` | `false` | `403` for an attribute not in `params`, instead of ignoring it. |
 | `rejectUnlistedRelationships` | `true` | `403` for a relationship not in `params`; `false` ignores it. |
-| `maxIncludeDepth` | `3` | How deep `?include=` may go. |
+| `maxIncludeDepth` | `3`, or `1` [without visibility rules](#without-rules) | How deep `?include=` may go. |
 
 One more applies to its own namespace only, not to nested ones:
 `serializerFallback` (default `true`) says whether the namespace may use the

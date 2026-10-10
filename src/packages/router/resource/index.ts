@@ -9,9 +9,11 @@ import type { ResourceOptions, ResourceRelationships } from './interfaces';
 class Resource extends Namespace {
   declare only: FreezeableSet<BuiltInAction>;
 
-  declare relationships: ResourceRelationships;
+  // `undefined` when the route does not say: the default depends on the
+  // namespace's visibility rules (see `defineRelationships()`).
+  declare relationships: ResourceRelationships | undefined;
 
-  constructor({ only, relationships = true, ...opts }: ResourceOptions) {
+  constructor({ only, relationships, ...opts }: ResourceOptions) {
     super(opts);
 
     Object.defineProperty(this, 'relationships', {

@@ -240,6 +240,9 @@ class Controller {
    * relationships, and each nested level costs its own queries per request, so
    * keep this small.
    *
+   * In a namespace without {@link Controller.visibility} rules it defaults to
+   * `1`: nothing there scopes the included records.
+   *
    * @default 3
    */
   declare maxIncludeDepth: number;
@@ -358,6 +361,12 @@ class Controller {
    * `included` for `/users?include=posts`, linked from a comment's `post`,
    * and accepted as the `post` of a new comment. `posts: query =>
    * query.isPublic()` as a visibility rule closes every one of those paths.
+   *
+   * A namespace without rules, its own or a parent's, gets conservative
+   * defaults: `maxIncludeDepth` is `1` and resources serve no relationship
+   * or related endpoints unless they ask for them, and the app warns at
+   * boot. `static visibility = {}` declares that a namespace may see
+   * everything, and lifts them.
    */
   static visibility: Visibility = {};
 
@@ -444,6 +453,16 @@ class Controller {
    * @internal
    */
   declare visibility: Visibility;
+
+  /**
+   * Whether this Controller's namespace, or one it is nested in, declares
+   * visibility rules — `static visibility = {}` included. Without any, the
+   * namespace gets conservative defaults (see `restrictOpenNamespaces()`).
+   * Resolved at boot.
+   *
+   * @internal
+   */
+  declare hasVisibilityRules: boolean;
 
   /**
    * A boolean value representing whether or not a Controller instance has a

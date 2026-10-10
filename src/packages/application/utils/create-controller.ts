@@ -11,6 +11,28 @@ import type Serializer from '../../serializer';
 import type { BundleNamespace } from '../../loader';
 import type { ApplicationClass } from '../index';
 
+type NamespaceSetting = (typeof NAMESPACE_SETTINGS)[number];
+
+/**
+ * The `NAMESPACE_SETTINGS` each controller, or a namespace it is in, sets
+ * itself. Once inherited, a setting is an own property of every controller,
+ * so this is the only record of whether anyone chose its value.
+ */
+const explicitSettings = new WeakMap<Controller, Set<NamespaceSetting>>();
+
+/**
+ * Whether `controller`, or the `ApplicationController` of a namespace it is
+ * in, sets `setting` itself rather than leaving it at the default.
+ *
+ * @internal
+ */
+export function setsItself(
+  controller: Controller,
+  setting: NamespaceSetting
+): boolean {
+  return explicitSettings.get(controller)?.has(setting) ?? false;
+}
+
 export default function createController<T extends Controller>(
   constructor: ApplicationClass<T>,
   opts: {
@@ -77,6 +99,17 @@ export default function createController<T extends Controller>(
     instance.beforeAction = ownBefore;
     instance.afterAction = ownAfter;
   }
+
+  explicitSettings.set(
+    instance,
+    new Set(
+      NAMESPACE_SETTINGS.filter(
+        setting =>
+          Object.hasOwn(instance, setting) ||
+          (parent !== null && setsItself(parent, setting))
+      )
+    )
+  );
 
   if (parent) {
     // Settings the controller does not set itself come from its namespace.

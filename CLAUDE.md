@@ -276,7 +276,7 @@ regenerate a lockfile from scratch after removing a dependency: knex's optional 
 (`sqlite3`, `tedious`) and their trees lingered in the test-app's for years. CI
 additionally runs `pg` / `mysql2` via `DATABASE_DRIVER`.
 
-**Current baseline (Node 22 / pnpm 12):** `1010 passing` across 132 files, all on **Vitest**
+**Current baseline (Node 22 / pnpm 12):** `1011 passing` across 131 files, all on **Vitest**
 (`pnpm test` = `vitest run`). A drop in the *file* count means a file failed to collect.
 
 ### CI — GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml))
