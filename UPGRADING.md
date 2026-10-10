@@ -51,6 +51,8 @@ Check, if it applies to your app:
     ([Logging](#logging)).
 11. **Model hooks comparing records with `===`:** a hook now receives a
     proxy of the record ([Models](#models)).
+11. **Imports of files inside the package** (`lumen-framework/dist/…`) no
+    longer resolve ([Package entries](#package-entries)).
 
 **ember-data clients:** a `belongsTo` the controller's `params` don't list
 is still a `403`, as in 3.x. To accept and ignore it instead, set the new
@@ -300,8 +302,8 @@ See [Controllers](docs/guides/controllers.md).
 - New, opt-in: [visibility rules](docs/guides/controllers.md#visibility-rules),
   declared once per namespace, replace `super.index(request).where(…)`
   overrides and hooks that filter hidden records out of a response.
-- New: [`auditVisibility()`](docs/guides/controllers.md#checking-what-a-request-can-see)
-  requests every read a namespace serves, with every include path, and
+- New: [`auditVisibility()`](docs/guides/controllers.md#checking-what-a-request-can-see),
+  from `lumen-framework/testing`, requests every read a namespace serves, with every include path, and
   reports each record a response contains that a hand-written list doesn't
   allow. Use it to check an upgrade: scoping done in `index`/`show`
   overrides doesn't reach included records or relationship endpoints.
@@ -442,6 +444,28 @@ See [The `lumen` command](docs/guides/cli.md).
   `server.shutdownTimeout` (new, default 8000 ms) is killed. Scripts and tests
   that construct an `Application` themselves can stop it the same way with
   the new `app.close()`.
+
+### Package entries
+
+`package.json` now has an `exports` map, which lists what an app may
+import:
+
+- `lumen-framework`, as before;
+- `lumen-framework/testing`, test helpers such as
+  [`auditVisibility()`](docs/guides/controllers.md#checking-what-a-request-can-see),
+  kept out of the main entry so they never reach an app's runtime bundle;
+- `lumen-framework/package.json`.
+
+**Imports of any other path in the package fail** with
+`ERR_PACKAGE_PATH_NOT_EXPORTED`. **Do:** import from one of the entries
+above. Compiled apps and the `lumen` CLI load the framework by file path
+and are unaffected. Under Node both entries resolve to the CommonJS builds,
+as `main` did; bundlers that read the `module` condition get the ESM ones,
+as they got the `module` field.
+
+**TypeScript** resolves `lumen-framework/testing` with `moduleResolution`
+`node16`, `nodenext` or `bundler`. `node10` ignores `exports`, and
+TypeScript 6 deprecates it.
 
 ### Types
 

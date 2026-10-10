@@ -122,7 +122,7 @@ function includesOf(route: Route): Array<string | undefined> {
  * by hand:
  *
  * ```javascript
- * import { auditVisibility } from 'lumen-framework';
+ * import { auditVisibility } from 'lumen-framework/testing';
  *
  * it('shows a member only public posts and their comments', async () => {
  *   const { violations } = await auditVisibility(app, {

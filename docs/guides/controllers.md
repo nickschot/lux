@@ -429,7 +429,8 @@ class ApplicationController extends Controller {
 
 ### Checking what a request can see
 
-`auditVisibility()` tests the result rather than the rules. It requests
+`auditVisibility()`, from `lumen-framework/testing`, tests the result rather
+than the rules. It requests
 every read a namespace serves: each list, each record by id, each
 relationship and related endpoint, without `include` and with every path it
 accepts, following every page. Then it reports each record in a response
@@ -437,7 +438,7 @@ that a list you write by hand doesn't allow, whether as primary data,
 included or in a relationship's linkage:
 
 ```javascript
-import { auditVisibility } from 'lumen-framework';
+import { auditVisibility } from 'lumen-framework/testing';
 
 it('shows a member only public posts and their comments', async () => {
   const { violations } = await auditVisibility(app, {
