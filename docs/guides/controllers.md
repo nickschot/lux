@@ -168,6 +168,7 @@ The `request` an action receives carries:
 | Property | Holds |
 |---|---|
 | `request.params` | The parsed, validated parameters: `id`, `data` (the body), `sort`, `filter`, `page`, `include`, `fields`, and any listed in `query`. |
+| `request.body` | The parsed JSON body of a `POST` or `PATCH`, as sent. On a [plain route](routing.md#plain-routes) it is any JSON, unvalidated; read it here. |
 | `request.headers` | The headers, as a **`Map`**: `request.headers.get('authorization')`. |
 | `request.method` | `'GET'`, `'POST'`, … |
 | `request.action` | The action's name (`'index'`, `'mine'`). |

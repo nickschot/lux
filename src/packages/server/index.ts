@@ -100,11 +100,14 @@ class Server {
     return [request, response];
   }
 
-  validateRequest({ method, headers }: Request): true {
+  validateRequest({ method, headers, route }: Request): true {
     let isValid = validateAccept(headers.get('accept'));
 
     if (HAS_BODY.test(method)) {
-      isValid = validateContentType(headers.get('content-type'));
+      isValid = validateContentType(headers.get('content-type'), {
+        // A plain route takes any JSON body (see `parseRequest`).
+        json: route?.type === 'custom'
+      });
     }
 
     return isValid;

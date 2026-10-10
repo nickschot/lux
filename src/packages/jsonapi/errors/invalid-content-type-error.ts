@@ -4,10 +4,13 @@ import createServerError from '../../server/utils/create-server-error';
 
 /** @internal */
 class InvalidContentTypeError extends TypeError {
-  constructor(contentType: string = 'undefined') {
+  constructor(
+    contentType: string = 'undefined',
+    accepted: Array<string> = [MIME_TYPE]
+  ) {
     super(line`
       Content-Type: '${contentType}' is not supported. Try your request again
-      with Content-Type: '${MIME_TYPE}'.
+      with Content-Type: ${accepted.map(type => `'${type}'`).join(' or ')}.
     `);
   }
 }

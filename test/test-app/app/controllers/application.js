@@ -6,6 +6,10 @@ class ApplicationController extends Controller {
   static visibility = {
     posts: query => query.isPublic()
   };
+
+  webhooks(request) {
+    return { received: request.body ?? null };
+  }
 }
 
 export default ApplicationController;
