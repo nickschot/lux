@@ -121,7 +121,8 @@ this.resource('posts', function () {
 
 A **collection** route takes the query parameters of `index` (`sort`,
 `filter`, `page`, `include`, `fields`); a **member** route those of `show`,
-plus the `:id`. Whatever the action returns — a `Query`, a model, an array of
+plus the `:id`. (A custom action's response is paged, but has no page links
+or `meta.total` yet: [#142](https://github.com/nickschot/lux/issues/142).) Whatever the action returns — a `Query`, a model, an array of
 models — is serialized like a built-in response. The easiest way to write one
 is to start from the built-in action and narrow it (this assumes posts have
 an `isPublic` column, as in the example app):
@@ -164,28 +165,14 @@ this.collection(function () {
 
 ### Plain routes
 
-`this.get('stats')` directly inside a resource — not in `member` or
-`collection` — adds `GET /posts/stats` as a **plain** route. A plain route
-takes no query parameters except the controller's
+`this.get('featured')` directly inside a resource — not in `member` or
+`collection` — adds `GET /posts/featured` as a **plain** route. It is a
+`collection` route without the client's say: it takes no query parameters
+except the controller's
 [`query`](controllers.md#reading-what-clients-may-ask-for), so a client
-can't sort, filter, page or `include` it. That makes it the place for
-responses that aren't a list of resources:
-
-```javascript
-class PostsController extends Controller {
-  stats() {
-    return Post.count().then(count => ({ count }));
-  }
-}
-```
-
-```json
-{ "count": 2 }
-```
-
-Models it returns are still serialized, like everywhere else, and the
-built-in actions work in it, with `index`'s defaults (the first page, sorted
-by `createdAt`):
+can't sort, filter, page or `include` it. What it returns becomes the
+response as on any route — models are serialized — and the built-in actions
+work in it, with `index`'s defaults (the first page, sorted by `createdAt`):
 
 ```javascript
 this.resource('posts', function () {
@@ -196,14 +183,18 @@ this.resource('posts', function () {
 ```javascript
 class PostsController extends Controller {
   featured(request) {
-    return this.index(request).where({ isPublic: true }); // a JSON:API document
+    return this.index(request).where({ isPublic: true }).limit(5);
   }
 }
 ```
 
-For a list the client can sort, filter and page, use a `collection` route.
+Use one for a response whose shape you fix, and a `collection` route for
+anything a client should be able to query. A plain route can't take a
+request body yet
+([#141](https://github.com/nickschot/lux/issues/141)).
 
-A plain route at the top level is handled by the application controller:
+Plain routes are also the only routes outside a resource. At the top level,
+one is handled by the application controller:
 
 ```javascript
 export default function routes() {
