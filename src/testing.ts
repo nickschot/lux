@@ -5,9 +5,14 @@
  *
  * @module lumen-framework/testing
  */
-export { auditVisibility } from './packages/testing';
+export { auditVisibility, startApp } from './packages/testing';
 export type {
+  AuditedDocument,
+  AuditedRoute,
   AuditVisibilityOptions,
+  DocumentCheckResult,
+  StartAppOptions,
+  StartedApp,
   VisibilityAudit,
   VisibilityViolation,
   VisibleRecords

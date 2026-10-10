@@ -47,6 +47,9 @@ describe('auditVisibility()', () => {
     tags: []
   });
 
+  // `/members/tags` is a 400 without it.
+  const MEMBER_QUERY = { tags: { fromDate: '2026-01-01' } };
+
   // What a member may see, from the database rather than the app's rules.
   let memberVisible: Record<string, true | ((id: string) => boolean)>;
 
@@ -149,6 +152,7 @@ describe('auditVisibility()', () => {
   it('finds nothing where the rules match the expectation', async () => {
     const { requests, violations } = await auditVisibility(app, {
       namespace: 'members',
+      query: MEMBER_QUERY,
       visible: memberVisible,
       ids: fixtureIds()
     });
@@ -218,6 +222,7 @@ describe('auditVisibility()', () => {
 
     const { violations } = await auditVisibility(app, {
       namespace: 'members',
+      query: MEMBER_QUERY,
       visible: withoutUsers,
       ids: fixtureIds()
     });
@@ -229,6 +234,7 @@ describe('auditVisibility()', () => {
   it('accepts a list of ids', async () => {
     const { violations } = await auditVisibility(app, {
       namespace: 'members',
+      query: MEMBER_QUERY,
       visible: {
         ...memberVisible,
         users: [idOf(fixtures.author)]
@@ -243,6 +249,212 @@ describe('auditVisibility()', () => {
         v => v.url === `/members/posts/${idOf(fixtures.publicPost)}`
       )
     ).to.equal(false);
+  });
+
+  it('reports an endpoint that answers for a hidden owner', async () => {
+    // `admin` shows private posts; members may not see them. The linkage to
+    // the author is allowed, so the relationship endpoint answers with
+    // nothing hidden: answering at all is what reveals the post.
+    const { violations } = await auditVisibility(app, {
+      namespace: 'admin',
+      visible: memberVisible,
+      ids: fixtureIds()
+    });
+    const post = idOf(fixtures.privatePost);
+    const about = (url: string) => violations.filter(v => v.url === url);
+    const owner = {
+      status: 200,
+      type: 'posts',
+      id: post,
+      message: `answered for posts ${post}, which the request may not see`
+    };
+
+    expect(about(`/admin/posts/${post}/relationships/user`)).to.deep.equal([
+      { url: `/admin/posts/${post}/relationships/user`, ...owner }
+    ]);
+    // The author's own linkage names the hidden post and comment too.
+    expect(about(`/admin/posts/${post}/user`)).to.deep.include({
+      url: `/admin/posts/${post}/user`,
+      ...owner
+    });
+  });
+
+  it('passes `onDocument` the read each document answers', async () => {
+    const routes = new Map<string, unknown>();
+    const post = idOf(fixtures.publicPost);
+    const author = idOf(fixtures.author);
+
+    await auditVisibility(app, {
+      namespace: 'members',
+      query: MEMBER_QUERY,
+      visible: memberVisible,
+      ids: fixtureIds(),
+
+      onDocument({ url, route }) {
+        routes.set(url, route);
+      }
+    });
+
+    expect(
+      routes.get(`/members/posts/${post}/relationships/user`)
+    ).to.deep.equal({
+      action: 'showRelationship',
+      type: 'posts',
+      id: post,
+      relationship: 'user'
+    });
+    expect(routes.get(`/members/posts/${post}/user`)).to.deep.equal({
+      action: 'showRelated',
+      type: 'posts',
+      id: post,
+      relationship: 'user'
+    });
+    expect(routes.get(`/members/users/${author}`)).to.deep.equal({
+      action: 'show',
+      type: 'users',
+      id: author
+    });
+    expect(
+      Array.from(routes).find(([url]) => url.startsWith('/members/posts?'))?.[1]
+    ).to.deep.equal({ action: 'index', type: 'posts' });
+  });
+
+  describe('`query`', () => {
+    it('reports a read that requires parameters it was not given', async () => {
+      const { violations } = await auditVisibility(app, {
+        namespace: 'members',
+        visible: memberVisible,
+        ids: fixtureIds()
+      });
+
+      expect(violations).to.not.be.empty;
+      expect(
+        violations.every(
+          v => v.status === 400 && v.url.startsWith('/members/tags?')
+        )
+      ).to.equal(true);
+    });
+
+    it('sends them to every read of the type, not to linkage', async () => {
+      // A seeded tag, so that a tag is requested by id too.
+      const Tag = models.get('tag') as ModelClass;
+      const tag = idOf((await Tag.first()) as unknown as Model);
+
+      const { requests, violations } = await auditVisibility(app, {
+        namespace: 'members',
+        query: MEMBER_QUERY,
+        visible: memberVisible,
+        ids: { ...fixtureIds(), tags: [tag] }
+      });
+      const post = idOf(fixtures.publicPost);
+      const params = (url: string) =>
+        new URLSearchParams(url.split('?')[1] ?? '');
+
+      expect(violations).to.deep.equal([]);
+
+      // The list, a tag by id, and the related endpoint that serves tags.
+      [
+        '/members/tags?',
+        `/members/tags/${tag}?`,
+        `/members/posts/${post}/tags?`
+      ].forEach(prefix => {
+        const sent = requests.filter(url => url.startsWith(prefix));
+
+        expect(sent, prefix).to.not.be.empty;
+        sent.forEach(url => {
+          expect(params(url).get('fromDate'), url).to.equal('2026-01-01');
+        });
+      });
+
+      expect(requests).to.include(`/members/posts/${post}/relationships/tags`);
+      expect(
+        requests
+          .filter(
+            url => !/\/members\/(tags(\/\d+)?|posts\/\d+\/tags)\?/.test(url)
+          )
+          .some(url => params(url).has('fromDate'))
+      ).to.equal(false);
+    });
+  });
+
+  it('returns every record it saw', async () => {
+    const { seen } = await auditVisibility(app, {
+      namespace: 'members',
+      query: MEMBER_QUERY,
+      visible: memberVisible,
+      ids: fixtureIds()
+    });
+
+    expect(seen.posts).to.include(idOf(fixtures.publicPost));
+    expect(seen.posts).to.not.include(idOf(fixtures.privatePost));
+    expect(seen.comments).to.include(idOf(fixtures.publicComment));
+    expect(seen.comments).to.not.include(idOf(fixtures.privateComment));
+    expect(seen.users).to.include(idOf(fixtures.author));
+    expect(new Set(seen.posts).size).to.equal(seen.posts.length);
+  });
+
+  it('reports what `onDocument` finds, as violations of the request', async () => {
+    const author = idOf(fixtures.author);
+    const checked: Array<string> = [];
+
+    const { violations } = await auditVisibility(app, {
+      namespace: 'members',
+      query: MEMBER_QUERY,
+      visible: memberVisible,
+      ids: fixtureIds(),
+
+      // Members should not see emails; the test-app shows them.
+      async onDocument({ url, document }) {
+        checked.push(url);
+
+        const resources = [
+          ...[document.data].flat(),
+          ...((document.included as Array<unknown>) ?? [])
+        ] as Array<{ type: string; id: string; attributes?: object }>;
+
+        return resources
+          .filter(
+            r => r?.type === 'users' && r.attributes && 'email' in r.attributes
+          )
+          .map(r => `users ${r.id} shows its email`);
+      }
+    });
+
+    expect(checked).to.include(`/members/users/${author}`);
+    expect(violations).to.deep.include({
+      url: `/members/users/${author}`,
+      status: 200,
+      message: `users ${author} shows its email`
+    });
+    expect(
+      violations.every(v => v.message?.endsWith('shows its email'))
+    ).to.equal(true);
+  });
+
+  describe('`origin`', () => {
+    it('sends the requests there', async () => {
+      // Nothing listens on port 1: every request fails, so none went to `app`.
+      await expect(
+        auditVisibility(app, {
+          namespace: 'members',
+          origin: 'http://localhost:1',
+          visible: memberVisible,
+          ids: fixtureIds()
+        })
+      ).rejects.toThrow();
+    });
+
+    it('is required when the application is not listening', async () => {
+      const idle = {
+        ...app,
+        router: app.router,
+        server: { instance: { address: () => null } }
+      } as unknown as Application;
+
+      await expect(
+        auditVisibility(idle, { namespace: 'members', visible: everything })
+      ).rejects.toThrow('the application is not listening');
+    });
   });
 
   it('refuses a namespace that serves no reads', async () => {

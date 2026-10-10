@@ -25,6 +25,7 @@ describe('the `lumen-framework` entries', () => {
     const testing = nodeRequire('lumen-framework/testing');
 
     expect(typeof testing.auditVisibility).to.equal('function');
+    expect(typeof testing.startApp).to.equal('function');
   });
 
   it('keeps the test helpers out of the main entry', () => {
