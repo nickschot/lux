@@ -30,7 +30,15 @@ export default function routes() {
     only: ['show', 'index']
   });
 
-  this.resource('posts');
+  this.resource('posts', function () {
+    this.collection(function () {
+      this.get('recent');
+    });
+
+    // Plain routes: neither `member` nor `collection`.
+    this.get('featured');
+    this.get('top-rated', 'topRated');
+  });
   this.resource('reactions');
   this.resource('tags');
 

@@ -65,7 +65,9 @@ export function defaultParamsFor({
 
   if (hasModel && type === 'member') {
     return getDefaultMemberParams(controller);
-  } else if (hasModel && type === 'collection') {
+  } else if (hasModel && (type === 'collection' || type === 'custom')) {
+    // A plain route takes no query parameters but the controller's `query`;
+    // the defaults let it call the built-in actions (`this.index(request)`).
     return getDefaultCollectionParams(controller);
   }
 

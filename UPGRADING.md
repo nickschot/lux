@@ -128,6 +128,17 @@ See [Serializers and JSON:API](docs/guides/serializers.md).
   be arbitrary.
 - **A created resource's `links.self` equals its `Location`** (`/tags/101`).
   It used to be the collection's URL.
+- **Plain routes serialize models too.** A route directly inside a resource
+  (not in `member` or `collection`) used to send the models it returned as
+  `[{}]`, and calling a built-in action in it (`this.index(request)`) was a
+  `500`. Both now work like a `collection` route, with `index`'s defaults; the
+  route still takes no query parameters but `query`
+  ([Routing](docs/guides/routing.md#plain-routes)).
+- **Custom collection actions built on `index` are paged like it.** A
+  collection route returning `this.index(request).where(…)` was paged
+  without saying so: only `links.self`, no `meta.total`. It now gets the page
+  links and `meta.total`, as `index` does
+  ([Routing](docs/guides/routing.md#custom-routes)).
 - **A string an action returns is sent as `text/plain; charset=utf-8`.** It
   used to be labelled `application/vnd.api+json`. A `Content-Type` the action
   sets itself is kept. **Check:** clients that read such a response.

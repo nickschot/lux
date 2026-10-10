@@ -163,17 +163,12 @@ describe('module "router/route/params"', () => {
     });
 
     describe('with custom route', () => {
-      let params;
+      it("is a collection route's, so it can call the built-in actions", () => {
+        const controller = getController('posts');
 
-      beforeAll(() => {
-        params = defaultParamsFor({
-          type: 'custom',
-          controller: getController('posts')
-        });
-      });
-
-      it('is an empty object literal', () => {
-        expect(params).to.deep.equal({});
+        expect(defaultParamsFor({ type: 'custom', controller })).to.deep.equal(
+          defaultParamsFor({ type: 'collection', controller })
+        );
       });
     });
 

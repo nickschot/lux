@@ -150,7 +150,7 @@ An action may return a value or a promise of one:
 
 | The action returns | The response |
 |---|---|
-| A `Query`, a model, or an array of models | A JSON:API document, formatted by the serializer (built-in, `collection` and `member` routes; see [Plain routes](routing.md#plain-routes)). |
+| A `Query`, a model, or an array of models | A JSON:API document, formatted by the serializer. |
 | An object or array | That value as JSON. |
 | A string | That string as the body, as `text/plain` unless the action set a `Content-Type` (`response.setHeader('Content-Type', 'text/csv')`). |
 | A number | That status code: an empty body for a success, a JSON:API error document for an error (`403` → `Forbidden`). |
