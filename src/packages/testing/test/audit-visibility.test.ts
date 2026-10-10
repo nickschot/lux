@@ -251,6 +251,74 @@ describe('auditVisibility()', () => {
     ).to.equal(false);
   });
 
+  it('reports an endpoint that answers for a hidden owner', async () => {
+    // `admin` shows private posts; members may not see them. The linkage to
+    // the author is allowed, so the relationship endpoint answers with
+    // nothing hidden: answering at all is what reveals the post.
+    const { violations } = await auditVisibility(app, {
+      namespace: 'admin',
+      visible: memberVisible,
+      ids: fixtureIds()
+    });
+    const post = idOf(fixtures.privatePost);
+    const about = (url: string) => violations.filter(v => v.url === url);
+    const owner = {
+      status: 200,
+      type: 'posts',
+      id: post,
+      message: `answered for posts ${post}, which the request may not see`
+    };
+
+    expect(about(`/admin/posts/${post}/relationships/user`)).to.deep.equal([
+      { url: `/admin/posts/${post}/relationships/user`, ...owner }
+    ]);
+    // The author's own linkage names the hidden post and comment too.
+    expect(about(`/admin/posts/${post}/user`)).to.deep.include({
+      url: `/admin/posts/${post}/user`,
+      ...owner
+    });
+  });
+
+  it('passes `onDocument` the read each document answers', async () => {
+    const routes = new Map<string, unknown>();
+    const post = idOf(fixtures.publicPost);
+    const author = idOf(fixtures.author);
+
+    await auditVisibility(app, {
+      namespace: 'members',
+      query: MEMBER_QUERY,
+      visible: memberVisible,
+      ids: fixtureIds(),
+
+      onDocument({ url, route }) {
+        routes.set(url, route);
+      }
+    });
+
+    expect(
+      routes.get(`/members/posts/${post}/relationships/user`)
+    ).to.deep.equal({
+      action: 'showRelationship',
+      type: 'posts',
+      id: post,
+      relationship: 'user'
+    });
+    expect(routes.get(`/members/posts/${post}/user`)).to.deep.equal({
+      action: 'showRelated',
+      type: 'posts',
+      id: post,
+      relationship: 'user'
+    });
+    expect(routes.get(`/members/users/${author}`)).to.deep.equal({
+      action: 'show',
+      type: 'users',
+      id: author
+    });
+    expect(
+      Array.from(routes).find(([url]) => url.startsWith('/members/posts?'))?.[1]
+    ).to.deep.equal({ action: 'index', type: 'posts' });
+  });
+
   describe('`query`', () => {
     it('reports a read that requires parameters it was not given', async () => {
       const { violations } = await auditVisibility(app, {

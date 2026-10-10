@@ -104,9 +104,15 @@ it('shows a member only public posts and their comments', async () => {
   audit still reads the routes, include paths and ids from `app`, so boot it
   in the test as well; it needn't serve the requests.
 - **`onDocument`** is called with each document a read answers with, as
-  `{ url, status, document }`, for checks beyond which records appear, such
-  as which fields a request sees of each. Return a message for each problem,
-  or several as an array; each becomes a violation of that request:
+  `{ url, status, route, document }`, for checks beyond which records
+  appear, such as which fields a request sees of each. `route` says which
+  read it was, so a check needn't parse the URL: `action` (`index`, `show`,
+  `showRelationship` or `showRelated`), `type`, and for a route with an id
+  the `id`, plus the `relationship` of a relationship or related endpoint.
+  For `/posts/3/comments` that is
+  `{ action: 'showRelated', type: 'posts', id: '3', relationship: 'comments' }`.
+  Return a message for each problem, or several as an array; each becomes a
+  violation of that request:
 
   ```javascript
   onDocument({ document }) {
@@ -121,11 +127,17 @@ it('shows a member only public posts and their comments', async () => {
 
 ### The result
 
-- **`violations`**: each record a response named that `visible` doesn't
-  allow (`{ url, status, type, id }`), each problem `onDocument` returned
-  (`{ url, status, message }`), and each read that failed with a status
-  other than `401`, `403` or `404` (`{ url, status }`), since that read went
-  unchecked. A `404` for a hidden record passes.
+- **`violations`**:
+  - each record a response named that `visible` doesn't allow
+    (`{ url, status, type, id }`);
+  - each relationship or related endpoint that answered for an owner
+    `visible` doesn't allow (`{ url, status, type, id, message }`), whatever
+    it answered with: answering at all reveals that the owner exists, and
+    what it is linked to;
+  - each problem `onDocument` returned (`{ url, status, message }`);
+  - each read that failed with a status other than `401`, `403` or `404`
+    (`{ url, status }`), since that read went unchecked. A `404` for a
+    hidden record passes.
 - **`seen`**: every record the responses named, per type, each id once. Use
   it to check that the audit reached what the request should see, not just
   that it found nothing wrong:

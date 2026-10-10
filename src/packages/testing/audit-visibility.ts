@@ -84,12 +84,35 @@ export type AuditVisibilityOptions = {
   ) => DocumentCheckResult | Promise<DocumentCheckResult>;
 };
 
+/**
+ * The read a request was made to, as the route defines it: so a check need
+ * not parse the URL to know which record it is about.
+ */
+export type AuditedRoute = {
+  /** The action, as hooks see it. */
+  action: 'index' | 'show' | 'showRelationship' | 'showRelated';
+  /**
+   * The route's resource type: for a relationship or related endpoint, the
+   * owner's (`posts` for `/posts/3/comments`).
+   */
+  type: string;
+  /**
+   * The id in the URL: the record of a `show`, the owner of a relationship
+   * or related endpoint. None for a list.
+   */
+  id?: string;
+  /** The relationship of a relationship or related endpoint (`comments`). */
+  relationship?: string;
+};
+
 /** A document a read answered with, for `onDocument`. */
 export type AuditedDocument = {
   /** The request, as a path and query string. */
   url: string;
   /** Its status. */
   status: number;
+  /** The read the request was made to. */
+  route: AuditedRoute;
   /** The parsed JSON:API document. */
   document: Record<string, unknown>;
 };
@@ -103,19 +126,27 @@ export type DocumentCheckResult =
 
 /**
  * A record a response contained that the audit's `visible` does not allow; a
- * request that failed with an error other than `401`, `403` or `404`, so that
- * what it serves could not be checked; or a problem `onDocument` found.
+ * relationship or related endpoint that answered for an owner `visible` does
+ * not allow; a request that failed with an error other than `401`, `403` or
+ * `404`, so that what it serves could not be checked; or a problem
+ * `onDocument` found.
  */
 export type VisibilityViolation = {
   /** The request, as a path and query string. */
   url: string;
   /** Its status. */
   status: number;
-  /** The record's type, if the violation is a record. */
+  /**
+   * The record's type, if the violation is a record: one the response named,
+   * or the hidden owner an endpoint answered for.
+   */
   type?: string;
   /** The record's id, if the violation is a record. */
   id?: string;
-  /** What `onDocument` found, if the violation comes from it. */
+  /**
+   * What is wrong, for a hidden owner an endpoint answered for and for what
+   * `onDocument` found.
+   */
   message?: string;
 };
 
@@ -191,9 +222,11 @@ function includesOf(route: Route): Array<string | undefined> {
  * relationship and related endpoint, without `include` and with every path
  * it accepts, following every page — and report each record in a response that
  * `visible` does not allow: in `data`, in `included`, or in any
- * relationship's linkage. A `401`, `403` or `404` (for a hidden record)
- * reveals nothing and passes; any other error is reported, since the read it
- * answers went unchecked.
+ * relationship's linkage. A relationship or related endpoint that answers
+ * for an owner `visible` does not allow is reported too, whatever it
+ * answers with: that it answers reveals the owner. A `401`, `403` or `404`
+ * (for a hidden record) reveals nothing and passes; any other error is
+ * reported, since the read it answers went unchecked.
  *
  * Visibility rules apply to every one of these paths, but scoping in an
  * `index` or `show` override, or in a hook keyed on the action, does not.
@@ -304,8 +337,17 @@ export default async function auditVisibility(
   };
 
   // One request, and the pages after it.
-  const read = async (first: string) => {
+  const read = async (first: string, route: AuditedRoute) => {
     let url: string | undefined = first;
+
+    // A relationship or related endpoint whose owner the request may not
+    // see. Answering at all, whatever it answers with, tells the client the
+    // owner exists, and what it is linked to: the owner is in the URL, not
+    // in the response, so `check()` cannot catch it.
+    const hiddenOwner =
+      route.action.startsWith('showRel') &&
+      route.id !== undefined &&
+      !allows(visible[route.type], route.id);
 
     for (let page = 0; url && page < MAX_PAGES; page += 1) {
       audit.requests.push(url);
@@ -318,6 +360,18 @@ export default async function auditVisibility(
         audit.violations.push({ url, status: res.status });
         await res.body?.cancel();
         return;
+      }
+
+      if (res.ok && hiddenOwner && page === 0) {
+        audit.violations.push({
+          url,
+          status: res.status,
+          type: route.type,
+          id: route.id,
+          message:
+            `answered for ${route.type} ${route.id}, which the request ` +
+            'may not see'
+        });
       }
 
       // An override may answer with something other than a document (a
@@ -337,6 +391,7 @@ export default async function auditVisibility(
         const found = await onDocument({
           url,
           status: res.status,
+          route,
           document: document as Record<string, unknown>
         });
         const messages =
@@ -383,15 +438,22 @@ export default async function auditVisibility(
       return search ? `?${search}` : '';
     };
 
-    const targets = route.dynamicSegments.length
-      ? (await idsOf(route)).map(id =>
-          route.path.replace(':id', encodeURIComponent(id))
-        )
-      : [route.path];
+    const about = {
+      action: route.action as AuditedRoute['action'],
+      type: route.controller.model.resourceName,
+      ...(route.relationship ? { relationship: route.relationship } : {})
+    };
 
-    for (const path of targets) {
+    const targets: Array<[string, AuditedRoute]> = route.dynamicSegments.length
+      ? (await idsOf(route)).map(id => [
+          route.path.replace(':id', encodeURIComponent(id)),
+          { ...about, id }
+        ])
+      : [[route.path, about]];
+
+    for (const [path, target] of targets) {
       for (const include of includesOf(route)) {
-        await read(path + query(include));
+        await read(path + query(include), target);
       }
     }
   }

@@ -8,6 +8,7 @@
 export { auditVisibility, startApp } from './packages/testing';
 export type {
   AuditedDocument,
+  AuditedRoute,
   AuditVisibilityOptions,
   DocumentCheckResult,
   StartAppOptions,

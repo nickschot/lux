@@ -3,6 +3,7 @@ export { default as startApp } from './start-app';
 export type { StartAppOptions, StartedApp } from './start-app';
 export type {
   AuditedDocument,
+  AuditedRoute,
   AuditVisibilityOptions,
   DocumentCheckResult,
   VisibilityAudit,
