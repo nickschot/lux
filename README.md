@@ -94,8 +94,6 @@ answers.
   `pnpm docs:api` in a checkout of this repository, then open
   `docs/api/index.html`.
 
-More guides are in progress.
-
 ## Contributing
 
 ```bash

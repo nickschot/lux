@@ -74,6 +74,6 @@ pnpm build
 
 echo
 echo "devcontainer ready."
-echo "  pnpm test        # expect 552 passing"
+echo "  pnpm test        # the full suite"
 echo "  claude           # first run will prompt for login"
 echo "  gh auth status   # or: gh auth login"

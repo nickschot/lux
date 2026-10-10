@@ -30,26 +30,27 @@ Required:
 
 Check, if it applies to your app:
 
-5. **ember-data clients:** a `belongsTo` the controller's `params` doesn't
-   list is now refused with `403`. Turn that off with
-   `rejectUnlistedRelationships = false`, or stop sending it
-   ([Requests](#requests)).
-6. **Namespaces without their own `ApplicationController`, or with one that
-   declares no visibility rules,** now follow their ancestors' hooks and
-   rules ([Controllers](#controllers)).
-7. **Hooks that authorize by action name** must also allow
+5. **Namespaces whose `ApplicationController` declares no visibility
+   rules** now follow their parent namespace's rules
+   ([Controllers](#controllers)).
+6. **Hooks that authorize by action name** must also allow
    `showRelationship` and `showRelated`, the actions of the new relationship
    endpoints ([Routing](#routing)).
-8. **Custom actions that `.include()` relationships:** drop the call; the
+7. **Custom actions that `.include()` relationships:** drop the call; the
    serializer loads relationships itself ([Controllers](#controllers)).
-9. **Clients or tests asserting status codes or error `detail`s:** several
+8. **Clients or tests asserting status codes or error `detail`s:** several
    changed ([Errors](#errors)). A string an action returns is now
    `text/plain` ([Responses](#responses)).
-10. **Log parsing and alerting:** the text format changed, 4xx are no longer
-    logged as errors, and `logging.level` must be uppercase
-    ([Logging](#logging)).
-11. **Model hooks comparing records with `===`:** a hook now receives a
+9. **Log parsing and alerting:** the text format changed, 4xx are no longer
+   logged as errors, and `logging.level` must be uppercase
+   ([Logging](#logging)).
+10. **Model hooks comparing records with `===`:** a hook now receives a
     proxy of the record ([Models](#models)).
+
+**ember-data clients** see no change: a `belongsTo` the controller's
+`params` don't list is still a `403`, as in 3.x. To accept and ignore it
+instead, set the new `rejectUnlistedRelationships = false`
+([Requests](#requests)).
 
 The rest is new behaviour that needs no change, such as visibility rules,
 relationship endpoints, `linksOnly` and request ids. Each is listed below with
@@ -261,11 +262,6 @@ See [Controllers](docs/guides/controllers.md).
 - **Hooks are bound to the controller declaring them**, including the root
   `ApplicationController`'s, whose hooks ran with `this` undefined on its own
   routes.
-- **A namespace without an `ApplicationController` runs its ancestors'
-  hooks.** Controllers in `app/controllers/admin/` with no
-  `admin/application.js` used to get none of the root's hooks — an
-  authentication `beforeAction` included — nor its settings. **Check:**
-  requests to such a namespace now run them.
 - **Visibility rules follow the parent namespace** until a namespace's
   `ApplicationController` declares its own. One that extended `Controller`
   without declaring rules used to give its namespace none, so records the
@@ -299,8 +295,8 @@ See [Models and queries](docs/guides/models.md).
   `Model.transacting(trx)` now runs in `trx` (`find`, `where`, `first`,
   `count`, scopes, included relationships); it used to forward only `create`.
   A hook's reads used to run on a second connection, so they couldn't see
-  the write, and with a pool of one connection (SQLite's default) the request
-  hung until `Timeout acquiring a connection`. **Do:** read through the hook's
+  the write, and with a single connection (as SQLite now always has) the
+  request hung until `Timeout acquiring a connection`. **Do:** read through the hook's
   `trx` (`Post.transacting(trx).find(comment.postId)`), and drop a `pool`
   raised only to avoid that hang.
 - **A hook receives its record bound to the transaction.** In a hook,

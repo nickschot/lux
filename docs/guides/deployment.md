@@ -56,7 +56,8 @@ production: {
 A URL gives the host, credentials and database, and replaces those
 settings. The rest still comes from `config/database.js`: the `driver`
 (`pg`, `mysql2` or `better-sqlite3`), `pool` (the connection pool size, per
-process; SQLite always uses one connection) and `ssl`, which is applied on top of the URL:
+process; SQLite always uses one connection) and `ssl`, which is applied on
+top of the URL:
 
 ```javascript
 production: {

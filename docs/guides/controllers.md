@@ -49,9 +49,11 @@ inheritance (see [Hooks](#hooks), [Visibility rules](#visibility-rules) and
 | A relationship the model has, not in `params` | `403 Forbidden` | `rejectUnlistedRelationships = false` ignores it instead |
 | A member the model does not have at all | `400 Bad Request` | — |
 
-The defaults suit clients like ember-data, which send every attribute back on
-save, read-only ones included. A rejected member is reported with a pointer to
-it:
+Ignoring attributes suits clients like ember-data, which send every attribute
+back on save, read-only ones included. ember-data sends every `belongsTo` back
+too: set `rejectUnlistedRelationships = false` for it, or mark those
+relationships `serialize: false` in its serializer. A rejected member is
+reported with a pointer to it:
 
 ```json
 {
@@ -275,10 +277,6 @@ class AdminApplicationController extends ApplicationController {
 export default AdminApplicationController;
 ```
 
-A namespace without an `ApplicationController` of its own (controllers in
-`app/controllers/admin/`, but no `admin/application.js`) runs its closest
-ancestor namespace's hooks, so the root's authentication still applies there.
-
 Hooks run after the request's parameters are validated, so a request rejected
 with a `400` never reaches them.
 
@@ -344,8 +342,8 @@ and read from the request.
 ### Per namespace
 
 A nested namespace follows its parent namespace's rules until its
-`ApplicationController` declares its own — also when the namespace has no
-`ApplicationController`, or one that extends `Controller` only to add a hook.
+`ApplicationController` declares its own — also when that one extends
+`Controller` only to add a hook.
 Declaring rules replaces the parent's; to build on them, extend the parent's
 class and use `super`. The example app hides private posts everywhere, shows
 everything to admins, and hides more from members:

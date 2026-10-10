@@ -246,8 +246,10 @@ curl -g 'localhost:4000/posts?include=user&fields[posts]=title&fields[users]=nam
 (`-g` stops curl from reading the square brackets as a pattern.)
 
 - `include=user` adds each post's author to the response, under `included`.
-- `fields[posts]=title` and `fields[users]=name` keep only those attributes
-  — a *sparse fieldset*. Lumen selects only those columns from the database.
+- `fields[posts]=title` and `fields[users]=name` keep only the attributes
+  and relationships they name — a *sparse fieldset* — so these resources
+  have no `relationships`. Lumen selects only those columns from the
+  database.
 
 ```json
 {
@@ -295,7 +297,7 @@ Every list takes the JSON:API query parameters:
 | `filter` | `filter[title]=Hello%20again,Third` | Only records whose attribute matches; a comma means *any of*. |
 | `page` | `page[size]=10&page[number]=2` | Page through the results; `links` has `first`, `prev`, `next` and `last`. |
 | `include` | `include=user` | Add related resources to the response. |
-| `fields` | `fields[posts]=title` | Only these attributes, per type. |
+| `fields` | `fields[posts]=title` | Only these attributes and relationships, per type. |
 
 ```bash
 curl -g 'localhost:4000/posts?page[size]=1'
