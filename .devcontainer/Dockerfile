@@ -39,7 +39,7 @@ RUN curl -fsSL -o /tmp/watchman.zip \
 # installer puts everything under the user's own $HOME instead.
 
 # pnpm comes from corepack, which honours the `packageManager` field in
-# package.json (pnpm@10.34.5) — so the container pins the same version as the
+# package.json (pnpm@12.5.1) — so the container pins the same version as the
 # host without Volta. This also removes the host's VOLTA_FEATURE_PNPM gotcha
 # entirely: node here is simply the image's node.
 #
@@ -105,4 +105,4 @@ ENV PATH="/home/node/.local/bin:${PATH}"
 # `pnpm` from $HOME) corepack otherwise fetches the newest pnpm, which requires
 # Node >= 22.13 and dies with a confusing `No such built-in module: node:sqlite`.
 # Pinning the fallback turns that into a working command.
-RUN corepack prepare pnpm@10.34.5 --activate
+RUN corepack prepare pnpm@12.5.1 --activate

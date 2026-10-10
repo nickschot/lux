@@ -81,9 +81,16 @@ since its 6.0.0, and Lumen no longer accepts it: an app with
 1. In `config/database.js`, set `driver: 'better-sqlite3'` for every
    environment.
 2. Replace the dependency: remove `sqlite3`, add `better-sqlite3`. It ships
-   prebuilt binaries; with pnpm, add
-   `"pnpm": { "ignoredBuiltDependencies": ["better-sqlite3"] }` to
-   `package.json` so it doesn't try to compile it.
+   prebuilt binaries, so with pnpm, skip its build script in a
+   `pnpm-workspace.yaml` next to `package.json`. pnpm 12 fails an install
+   over a build script it wasn't told about, and ignores a `pnpm` field in
+   `package.json`. esbuild, which Lumen depends on, needs no build either:
+
+   ```yaml
+   allowBuilds:
+     esbuild: false
+     better-sqlite3: false
+   ```
 
 The database files (`db/<database>_<environment>.sqlite`) stay where they
 are and need no conversion. SQLite now always uses a single connection,
@@ -379,6 +386,9 @@ See [The `lumen` command](docs/guides/cli.md).
   model another namespace's resource still uses (`app/controllers/tags.js`)
   is kept, for a root resource too. `update app/routes.js` is printed only
   when the file changed.
+- **`lumen new` writes a `pnpm-workspace.yaml`**, which tells pnpm 12 to
+  skip the build scripts of esbuild and, in a SQLite app, better-sqlite3
+  (see [Requirements](#requirements)). npm ignores it.
 - **`lumen new` names SQLite databases once.** It used to write
   `database: 'blog_dev'` (and `_test`, `_prod`), to which SQLite appends the
   environment again: `db/blog_dev_development.sqlite`. New apps get

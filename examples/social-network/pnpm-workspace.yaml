@@ -1,0 +1,7 @@
+# better-sqlite3 ships prebuilt binaries: pnpm need not build it.
+#
+# Its own file, not the root's: with only the root pnpm-workspace.yaml,
+# pnpm 12 treats this directory as part of the root workspace and installs
+# nothing here.
+allowBuilds:
+  better-sqlite3: false

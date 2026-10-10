@@ -18,7 +18,7 @@ const DRIVER_DEPS: Record<string, { name: string; version: string }> = {
 export default (name: string, driver: string): string => {
   const dbDriver = DRIVER_DEPS[driver] || DRIVER_DEPS[SQLITE_DRIVER];
 
-  const pkg: Record<string, unknown> = {
+  const pkg = {
     name,
     version: '0.0.1',
     description: '',
@@ -42,13 +42,6 @@ export default (name: string, driver: string): string => {
       node: '>= 22.14'
     }
   };
-
-  // better-sqlite3 ships prebuilt binaries for every platform it supports,
-  // but pnpm would try `node-gyp rebuild` for its `binding.gyp`; say it needs
-  // no build.
-  if (dbDriver.name === SQLITE_DRIVER) {
-    pkg.pnpm = { ignoredBuiltDependencies: [SQLITE_DRIVER] };
-  }
 
   return `${JSON.stringify(pkg, null, 2)}\n`;
 };
