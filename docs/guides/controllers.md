@@ -77,7 +77,7 @@ reported with a pointer to it:
 | `filter` | every attribute the serializer outputs | The keys `?filter[…]=` accepts. |
 | `defaultPerPage` | `25` | The page size when the request gives none. |
 | `maxPerPage` | `100` | The largest `?page[size]=`; a larger one is a `400`. |
-| `maxIncludeDepth` | `3`, or `1` [without visibility rules](#without-rules) | How deep an `?include=` path may go (`comments.user` is 2). |
+| `maxIncludeDepth` | `3`, or `0` [without visibility rules](#without-rules) | How deep an `?include=` path may go (`comments.user` is 2); `0` turns `include` off. |
 | `query` | `[]` | Extra query parameters an action may read, beyond the JSON:API ones. |
 
 Anything outside these lists is a `400 Bad Request` naming the parameter, so
@@ -411,7 +411,8 @@ beyond the primary data. An `index` or `show` override, or a hook checking
 records included with them or served by the relationship and related
 endpoints. So such a namespace gets conservative defaults:
 
-- `maxIncludeDepth` is `1` unless a controller, or the namespace, sets it;
+- `maxIncludeDepth` is `0`, so any `?include=` is a `400`, unless a
+  controller or the namespace sets it;
 - resources serve no relationship or related endpoints unless their
   [`relationships` option](routing.md#relationship-and-related-endpoints)
   asks for them;
@@ -491,7 +492,7 @@ sets its own:
 |---|---|---|
 | `rejectUnlistedAttributes` | `false` | `403` for an attribute not in `params`, instead of ignoring it. |
 | `rejectUnlistedRelationships` | `true` | `403` for a relationship not in `params`; `false` ignores it. |
-| `maxIncludeDepth` | `3`, or `1` [without visibility rules](#without-rules) | How deep `?include=` may go. |
+| `maxIncludeDepth` | `3`, or `0` [without visibility rules](#without-rules) | How deep `?include=` may go; `0` turns it off. |
 
 One more applies to its own namespace only, not to nested ones:
 `serializerFallback` (default `true`) says whether the namespace may use the

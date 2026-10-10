@@ -137,11 +137,10 @@ describe('a namespace without visibility rules, over HTTP', () => {
     );
   });
 
-  it('includes 1 level deep', async () => {
-    expect(await statusOf(`/posts/${postId}?include=comments`)).to.equal(200);
-    expect(await statusOf(`/posts/${postId}?include=comments.post`)).to.equal(
-      400
-    );
+  it('serves no includes', async () => {
+    expect(await statusOf(`/posts/${postId}`)).to.equal(200);
+    expect(await statusOf(`/posts/${postId}?include=comments`)).to.equal(400);
+    expect(await statusOf(`/posts?include=user`)).to.equal(400);
   });
 
   it('serves no relationship or related endpoints', async () => {

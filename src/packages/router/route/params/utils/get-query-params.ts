@@ -115,13 +115,14 @@ function getIncludeParam(controller: Controller): [string, ParameterLike] {
     new Parameter({
       path: 'include',
       type: 'array',
-      // Every top level name stays allowed (as before), plus the nested paths
-      // (`comments.user`) reachable through each related serializer in the
-      // controller's namespace (at every level, even below a root fallback
-      // serializer), down to the controller's `maxIncludeDepth`.
+      // Every top level name, plus the nested paths (`comments.user`)
+      // reachable through each related serializer in the controller's
+      // namespace (at every level, even below a root fallback serializer),
+      // down to the controller's `maxIncludeDepth`. At `0`, none: any
+      // `include` is a 400.
       values: Array.from(
         new Set([
-          ...relationships,
+          ...(maxIncludeDepth < 1 ? [] : relationships),
           ...enumerateIncludePaths(
             model,
             relationships,

@@ -13,7 +13,7 @@ import { setsItself } from './create-controller';
  * data: an `index` or `show` override, or a hook checking `request.action`,
  * does not apply to included resources or to the relationship and related
  * endpoints. So unless a controller (or its namespace) sets
- * `maxIncludeDepth`, `?include=` goes 1 level deep; the router serves
+ * `maxIncludeDepth`, `?include=` is turned off (`0`); the router serves
  * relationship endpoints only where a resource's `relationships` option asks
  * for them. Declaring rules — `static visibility = {}` for a namespace that
  * may see everything — lifts both.
@@ -33,7 +33,7 @@ export default function restrictOpenNamespaces(
 
     if (!setsItself(controller, 'maxIncludeDepth')) {
       Object.defineProperty(controller, 'maxIncludeDepth', {
-        value: 1,
+        value: 0,
         writable: true,
         enumerable: true,
         configurable: true
@@ -51,9 +51,9 @@ export default function restrictOpenNamespaces(
       : 'app/controllers/application.js';
 
     logger.warn(line`
-      Namespace '/${namespace}' has no visibility rules, so its includes stop
-      at 1 level and its resources serve no relationship or related endpoints,
-      unless a controller or route sets them. Scoping in an index or show
+      Namespace '/${namespace}' has no visibility rules, so it serves no
+      includes and its resources serve no relationship or related endpoints,
+      unless a controller or route turns them on. Scoping in an index or show
       override, or in a hook checking request.action, covers only the primary
       data. Declare the rules in ${file}; \`static visibility = {}\` if the
       namespace may see everything.

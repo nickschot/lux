@@ -34,7 +34,7 @@ Check, if it applies to your app:
    rules** now follow their parent namespace's rules
    ([Controllers](#controllers)).
 6. **Namespaces with no visibility rules**, of their own or a parent's,
-   now include only 1 level deep and serve no relationship or related
+   now serve no `?include=` (a `400`) and no relationship or related
    endpoints, and the app warns about each at boot. Scoping done in
    `index`/`show` overrides or action-named hooks never reached included
    records or those endpoints ([Controllers](#controllers)).
@@ -288,12 +288,15 @@ See [Controllers](docs/guides/controllers.md).
   records, which nest since 3.1, nor their relationship linkage or the
   relationship and related endpoints. In a namespace where neither its
   `ApplicationController` nor a parent namespace's declares rules,
-  `maxIncludeDepth` now defaults to `1`, resources serve no relationship
-  endpoints unless their `relationships` option asks for them, and the app
-  warns about the namespace at boot. **Do:** move the scoping into
+  `maxIncludeDepth` now defaults to `0`, so any `?include=` is a `400`;
+  resources serve no relationship endpoints unless their `relationships`
+  option asks for them; and the app warns about the namespace at boot.
+  Setting `maxIncludeDepth` yourself turns includes back on. **Do:** move the scoping into
   [visibility rules](docs/guides/controllers.md#without-rules), or declare
   `static visibility = {};` where a namespace may see everything. Both
   restore the old defaults and silence the warning.
+- **`maxIncludeDepth = 0` turns `?include=` off.** It used to still allow
+  a resource's direct relationships.
 - New, opt-in: [visibility rules](docs/guides/controllers.md#visibility-rules),
   declared once per namespace, replace `super.index(request).where(…)`
   overrides and hooks that filter hidden records out of a response.

@@ -224,7 +224,7 @@ class Controller {
    * How many relationships deep an `?include` path may go on this
    * controller's routes. `comments.reactions.user` is 3 levels deep; with `1`
    * only direct relationships (`comments`) can be included. Paths deeper than
-   * this are rejected with `400 Bad Request`.
+   * this are rejected with `400 Bad Request`; `0` turns `?include` off.
    *
    * Set on a namespace's `ApplicationController`, it applies to every
    * controller in the namespace (and in namespaces nested in it) that does not
@@ -241,7 +241,7 @@ class Controller {
    * keep this small.
    *
    * In a namespace without {@link Controller.visibility} rules it defaults to
-   * `1`: nothing there scopes the included records.
+   * `0`: nothing there scopes the included records.
    *
    * @default 3
    */
@@ -363,9 +363,9 @@ class Controller {
    * query.isPublic()` as a visibility rule closes every one of those paths.
    *
    * A namespace without rules, its own or a parent's, gets conservative
-   * defaults: `maxIncludeDepth` is `1` and resources serve no relationship
-   * or related endpoints unless they ask for them, and the app warns at
-   * boot. `static visibility = {}` declares that a namespace may see
+   * defaults: `maxIncludeDepth` is `0` (no includes), resources serve no
+   * relationship or related endpoints unless they ask for them, and the app
+   * warns at boot. `static visibility = {}` declares that a namespace may see
    * everything, and lifts them.
    */
   static visibility: Visibility = {};

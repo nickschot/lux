@@ -94,7 +94,7 @@ describe('module "application" #restrictOpenNamespaces()', () => {
     expect(warnings).to.deep.equal([]);
   });
 
-  it('includes 1 level deep in a namespace without rules', () => {
+  it('turns includes off in a namespace without rules', () => {
     class ApplicationController extends Controller {}
 
     const controllers = boot([
@@ -103,7 +103,7 @@ describe('module "application" #restrictOpenNamespaces()', () => {
     ]);
 
     expect(controllers.get('posts')?.hasVisibilityRules).to.equal(false);
-    expect(controllers.get('posts')?.maxIncludeDepth).to.equal(1);
+    expect(controllers.get('posts')?.maxIncludeDepth).to.equal(0);
   });
 
   it('keeps a `maxIncludeDepth` the controller or its namespace sets', () => {
@@ -138,9 +138,9 @@ describe('module "application" #restrictOpenNamespaces()', () => {
       ['members/posts', PostsController]
     ]);
 
-    expect(controllers.get('posts')?.maxIncludeDepth).to.equal(1);
+    expect(controllers.get('posts')?.maxIncludeDepth).to.equal(0);
     expect(controllers.get('admin/posts')?.maxIncludeDepth).to.equal(3);
-    expect(controllers.get('members/posts')?.maxIncludeDepth).to.equal(1);
+    expect(controllers.get('members/posts')?.maxIncludeDepth).to.equal(0);
   });
 
   it('warns once per namespace without rules that serves records', () => {
