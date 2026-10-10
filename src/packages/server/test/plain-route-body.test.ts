@@ -68,11 +68,27 @@ describe('the body of a plain route', () => {
       JSONAPI
     );
 
-    expect(asJSON.body).to.deep.equal({ received: [1, 2] });
+    expect(asJSON.body.received).to.deep.equal([1, 2]);
     expect(asJSONAPI.status).to.equal(200);
-    expect(asJSONAPI.body).to.deep.equal({
-      received: { data: { type: 'anything' } }
+    expect(asJSONAPI.body.received).to.deep.equal({
+      data: { type: 'anything' }
     });
+  });
+
+  // In 3.x, a controller listing `data` in `query` got the body there,
+  // camelized and with dates parsed.
+  it('stays out of `request.params`, with its keys and dates as sent', async () => {
+    const sent = {
+      data: {
+        type: 'posts',
+        attributes: { 'published-at': '2026-01-01T00:00:00.000Z' }
+      }
+    };
+    const res = await post('/posts/echo', JSON.stringify(sent), JSONAPI);
+
+    expect(res.status).to.equal(200);
+    expect(res.body.received).to.deep.equal(sent);
+    expect(res.body.params).to.not.have.property('data');
   });
 
   it('may be empty', async () => {
