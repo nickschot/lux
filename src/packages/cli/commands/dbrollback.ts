@@ -1,10 +1,9 @@
-import { EOL } from 'os';
-
 import { CWD } from '../../../constants';
 import Database from '../../database';
 import Logger from '../../logger';
 import { readdir } from '../../fs';
 import { createLoader } from '../../loader';
+import printStatements from '../utils/print-statements';
 
 /**
  * @private
@@ -47,12 +46,7 @@ export async function dbrollback() {
       migration = migrations.get(`${migration}-down`);
 
       if (migration) {
-        const query = migration.run(schema());
-
-        await query.on('query', () => {
-          process.stdout.write(query.toString());
-          process.stdout.write(EOL);
-        });
+        await printStatements(migration.run(schema()), connection);
 
         await connection('migrations')
           .where({

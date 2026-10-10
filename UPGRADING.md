@@ -319,6 +319,12 @@ See [The `lumen` command](docs/guides/cli.md).
   table. **Check** the order of the files in `db/migrate/`: rename a
   not-applied migration whose version sorts wrong. `lumen db:rollback` undoes
   the highest version, which may not be the newest migration.
+- **`lumen destroy resource` undoes `generate resource`, namespaces
+  included.** `destroy resource admin/tags` now also removes
+  `app/models/tag.js` and its migration, which it used to leave behind. A
+  model another namespace's resource still uses (`app/controllers/tags.js`)
+  is kept, for a root resource too. `update app/routes.js` is printed only
+  when the file changed.
 - **`lumen new` names SQLite databases once.** It used to write
   `database: 'blog_dev'` (and `_test`, `_prod`), to which SQLite appends the
   environment again: `db/blog_dev_development.sqlite`. New apps get
