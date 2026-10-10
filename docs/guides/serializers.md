@@ -217,7 +217,9 @@ curl -g 'localhost:4000/posts/1?include=user.posts&fields[posts]=title,user&fiel
 ```
 
 - Paths may be **nested** (`user.posts`, `comments.reactions.user`), up to
-  the controller's `maxIncludeDepth` (3 by default). The resources along the
+  the controller's `maxIncludeDepth` (3 by default, 0 — no includes — in a
+  namespace [without visibility rules](controllers.md#without-rules)). The
+  resources along the
   way are included too: `comments.user` includes the comments as well as
   their users.
 - Each resource appears **once**: a resource that is already primary data is

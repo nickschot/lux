@@ -220,6 +220,51 @@ describe('module "router"', () => {
         });
       });
 
+      describe('in a namespace without visibility rules', () => {
+        // The test-app declares rules at its root, so every namespace has
+        // some: shadow the flag on the posts controller instead.
+        const openRoutesFor = (relationships?: boolean | Array<string>) => {
+          const posts = controllers.get('posts');
+          const open = new Map(controllers);
+
+          open.set(
+            'posts',
+            Object.create(posts, { hasVisibilityRules: { value: false } })
+          );
+
+          return new Router({
+            controller,
+            controllers: open,
+
+            routes() {
+              this.resource('posts', { relationships });
+              this.resource('users');
+            }
+          });
+        };
+
+        it('routes none by default', () => {
+          const subject = openRoutesFor();
+
+          expect(subject.has('GET:/posts/:dynamic')).to.be.true;
+          expect(has(subject, 'user')).to.deep.equal({
+            relationship: false,
+            related: false
+          });
+        });
+
+        it('routes them when the resource asks for them', () => {
+          expect(has(openRoutesFor(true), 'user')).to.deep.equal({
+            relationship: true,
+            related: true
+          });
+          expect(has(openRoutesFor(['user']), 'user')).to.deep.equal({
+            relationship: true,
+            related: true
+          });
+        });
+      });
+
       it('rejects a relationship the serializer does not expose', () => {
         expect(() => routesFor(['user', 'nope', 'categorizations'])).to.throw(
           TypeError,

@@ -54,8 +54,9 @@ function rulesFor(
 /**
  * Give every controller the visibility rules of its namespace — the
  * `static visibility` of the namespace's `ApplicationController`, or, when it
- * has none or declares none, the closest ancestor namespace's — and refuse to boot on rules that cannot be
- * applied: rules declared on any other controller (a rule must hold for the
+ * has none or declares none, the closest ancestor namespace's — and whether
+ * any were declared (`hasVisibilityRules`), and refuse to boot on rules that
+ * cannot be applied: rules declared on any other controller (a rule must hold for the
  * whole namespace, since types are included across controllers), rules for a
  * type that has no model, and rules that are not functions.
  *
@@ -101,11 +102,21 @@ export default function resolveVisibility(
   }
 
   controllers.forEach((controller, key) => {
-    Object.defineProperty(controller, 'visibility', {
-      value: Object.freeze({ ...(rulesFor(controllers, key) ?? {}) }),
-      writable: false,
-      enumerable: false,
-      configurable: false
+    const rules = rulesFor(controllers, key);
+
+    Object.defineProperties(controller, {
+      visibility: {
+        value: Object.freeze({ ...(rules ?? {}) }),
+        writable: false,
+        enumerable: false,
+        configurable: false
+      },
+      hasVisibilityRules: {
+        value: rules !== undefined,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      }
     });
   });
 }

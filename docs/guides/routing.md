@@ -95,6 +95,10 @@ this.resource('users', { relationships: false });
 A relationship left out keeps its linkage in documents and can still be
 `include`d; it just has no endpoints and no links.
 
+In a namespace [without visibility rules](controllers.md#without-rules),
+the default is `false`: nothing there would scope the related records. Name
+the relationships, or pass `true`, to serve them anyway.
+
 ## Custom routes
 
 Inside a resource, `member` and `collection` add routes that behave like the

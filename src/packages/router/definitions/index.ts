@@ -65,10 +65,16 @@ function relatedControllerFor(
  * related type has a controller, a related endpoint (`/posts/1/comments`).
  * Naming a relationship the Serializer does not expose is a boot error.
  *
+ * Without the option, a namespace without visibility rules serves none:
+ * nothing there scopes the related records, whatever the controllers'
+ * `index` and `show` do.
+ *
  * @internal
  */
 function defineRelationships(namespace: Resource): void {
-  const { controller, controllers, path, relationships } = namespace;
+  const { controller, controllers, path } = namespace;
+  const relationships =
+    namespace.relationships ?? controller.hasVisibilityRules === true;
   const exposed = relationshipsFor(controller);
 
   if (Array.isArray(relationships)) {

@@ -33,23 +33,29 @@ Check, if it applies to your app:
 5. **Namespaces whose `ApplicationController` declares no visibility
    rules** now follow their parent namespace's rules
    ([Controllers](#controllers)).
-6. **Hooks that authorize by action name** must also allow
+6. **Namespaces with no visibility rules**, of their own or a parent's,
+   now serve no `?include=` (a `400`) and no relationship or related
+   endpoints, and the app warns about each at boot. Scoping done in
+   `index`/`show` overrides or action-named hooks never reached included
+   records or those endpoints ([Controllers](#controllers)).
+7. **Hooks that authorize by action name** must also allow
    `showRelationship` and `showRelated`, the actions of the new relationship
    endpoints ([Routing](#routing)).
-7. **Custom actions that `.include()` relationships:** drop the call; the
+8. **Custom actions that `.include()` relationships:** drop the call; the
    serializer loads relationships itself ([Controllers](#controllers)).
-8. **Clients or tests asserting status codes or error `detail`s:** several
+9. **Clients or tests asserting status codes or error `detail`s:** several
    changed ([Errors](#errors)). A string an action returns is now
    `text/plain` ([Responses](#responses)).
-9. **Log parsing and alerting:** the text format changed, 4xx are no longer
-   logged as errors, and `logging.level` must be uppercase
-   ([Logging](#logging)).
-10. **Model hooks comparing records with `===`:** a hook now receives a
+10. **Log parsing and alerting:** the text format changed, 4xx are no longer
+    logged as errors, and `logging.level` must be uppercase
+    ([Logging](#logging)).
+11. **Model hooks comparing records with `===`:** a hook now receives a
     proxy of the record ([Models](#models)).
 
-**ember-data clients** see no change: a `belongsTo` the controller's
-`params` don't list is still a `403`, as in 3.x. To accept and ignore it
-instead, set the new `rejectUnlistedRelationships = false`
+**ember-data clients:** a `belongsTo` the controller's `params` don't list
+is still a `403`, as in 3.x. To accept and ignore it instead, set the new
+`rejectUnlistedRelationships = false`. An attribute the client model has
+but the server model doesn't is now a `400`, where it used to be dropped
 ([Requests](#requests)).
 
 The rest is new behaviour that needs no change, such as visibility rules,
@@ -238,7 +244,9 @@ See [Routing](docs/guides/routing.md).
   relationship a serializer outputs. Their actions are `showRelationship` and
   `showRelated`. A `beforeAction` hook that allows only some actions by name
   must allow these too, or check `request.route.type`. Limit the endpoints
-  with the resource's `relationships` option. A custom member route of the
+  with the resource's `relationships` option. A namespace without
+  visibility rules serves them only where that option asks for them
+  ([Controllers](#controllers)). A custom member route of the
   same name (`this.get('comments')`) takes precedence over a related
   endpoint.
 - **Resources with a non-numeric primary key are routable.** Integer keys
@@ -274,6 +282,21 @@ See [Controllers](docs/guides/controllers.md).
   without declaring rules used to give its namespace none, so records the
   root's rules hide were visible there. **Do:** declare
   `static visibility = {};` where a namespace should see everything.
+- **A namespace without visibility rules gets conservative defaults.**
+  Scoping a read in an `index` or `show` override, or in a hook keyed on
+  the action name, only covers the primary data. It never reached included
+  records, which nest since 3.1, nor their relationship linkage or the
+  relationship and related endpoints. In a namespace where neither its
+  `ApplicationController` nor a parent namespace's declares rules,
+  `maxIncludeDepth` now defaults to `0`, so any `?include=` is a `400`;
+  resources serve no relationship endpoints unless their `relationships`
+  option asks for them; and the app warns about the namespace at boot.
+  Setting `maxIncludeDepth` yourself turns includes back on. **Do:** move the scoping into
+  [visibility rules](docs/guides/controllers.md#without-rules), or declare
+  `static visibility = {};` where a namespace may see everything. Both
+  restore the old defaults and silence the warning.
+- **`maxIncludeDepth = 0` turns `?include=` off.** It used to still allow
+  a resource's direct relationships.
 - New, opt-in: [visibility rules](docs/guides/controllers.md#visibility-rules),
   declared once per namespace, replace `super.index(request).where(…)`
   overrides and hooks that filter hidden records out of a response.

@@ -86,6 +86,10 @@ describe('module "router/route/params"', () => {
       expect(values).to.not.include('comments.reactions.user');
     });
 
+    it('allows no includes at depth 0', () => {
+      expect(includeFor(0)).to.deep.equal([]);
+    });
+
     it('only allows direct relationships at depth 1', () => {
       expect(includeFor(1)).to.have.members([
         'user',
