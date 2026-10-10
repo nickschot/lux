@@ -3,13 +3,13 @@ import { stripVTControlCharacters } from 'util';
 import { it, describe, expect } from 'vitest';
 
 import { infoTemplate, debugTemplate } from '../request-logger/templates';
-import type { RequestLogger$templateData } from '../request-logger/interfaces';
+import type { RequestLoggerTemplateData } from '../request-logger/interfaces';
 
-function dataFor(route?: unknown): RequestLogger$templateData {
+function dataFor(route?: unknown): RequestLoggerTemplateData {
   return {
     path: '/nowhere',
     stats: [],
-    route: route as RequestLogger$templateData['route'],
+    route: route as RequestLoggerTemplateData['route'],
     method: 'GET',
     params: {},
     startTime: 0,

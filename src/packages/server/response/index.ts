@@ -3,10 +3,10 @@
  * place into the framework's `Response` shape; the parameter is genuinely
  * untyped at that boundary.
  */
-import type { Response, Response$opts } from './interfaces';
+import type { Response, ResponseOptions } from './interfaces';
 
 /** @internal */
-export function createResponse(res: any, opts: Response$opts): Response {
+export function createResponse(res: any, opts: ResponseOptions): Response {
   return Object.assign(res, opts, {
     stats: []
   });

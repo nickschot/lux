@@ -5,7 +5,7 @@ import type Logger from '../logger';
 import { ModelMissingError } from './errors';
 import initialize from './initialize';
 import normalizeModelName from './utils/normalize-model-name';
-import type { Database$opts, ModelClass } from './interfaces';
+import type { DatabaseOptions, ModelClass } from './interfaces';
 
 /** @internal */
 class Database {
@@ -23,7 +23,7 @@ class Database {
 
   declare models: Map<string, ModelClass>;
 
-  constructor(opts: Database$opts) {
+  constructor(opts: DatabaseOptions) {
     // Lumen databases construct asynchronously: `initialize` populates `this` and
     // resolves once the schema/migrations/models are ready, so `new Database()`
     // is awaited by callers. TS can't express a Promise-returning constructor,
@@ -54,7 +54,7 @@ export { default as createMigrations } from './utils/create-migrations';
 export { default as pendingMigrations } from './utils/pending-migrations';
 
 export type {
-  Database$opts,
+  DatabaseOptions,
   DatabaseConfig,
   DatabaseEnvironmentConfig,
   DatabasePoolConfig,

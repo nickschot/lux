@@ -1,11 +1,11 @@
 import type Controller from '../../controller';
 import type { RequestMethod } from '../../server';
 
-export type Route$type =
+export type RouteType =
   'custom' | 'member' | 'collection' | 'relationship' | 'related';
 
-export type Route$opts = {
-  type: Route$type;
+export type RouteOptions = {
+  type: RouteType;
   path: string;
   action: string;
   method: RequestMethod;

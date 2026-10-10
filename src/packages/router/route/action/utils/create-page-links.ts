@@ -1,5 +1,5 @@
 import type { RequestParams } from '../../../../server';
-import type { JSONAPI$DocumentLinks } from '../../../../jsonapi';
+import type { JsonApiDocumentLinks } from '../../../../jsonapi';
 
 const PAGE_NUMBER = 'page[number]';
 
@@ -58,7 +58,7 @@ export default function createPageLinks(opts: {
   domain: string;
   pathname: string;
   defaultPerPage: number;
-}): JSONAPI$DocumentLinks {
+}): JsonApiDocumentLinks {
   const { page: { number = 1, size = opts.defaultPerPage } = {} } = opts.params;
   const lastPageNum = opts.total > 0 ? Math.ceil(opts.total / size) : 1;
   const linkForPage = createLinkTemplate(opts);

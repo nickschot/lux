@@ -1,7 +1,7 @@
 import { Route } from '../../../index';
 import { normalizeName, normalizePath } from '../../../namespace';
 import type { RequestMethod } from '../../../../server';
-import type { Router$Namespace, Route$opts, Route$type } from '../../../index';
+import type { RouterNamespace, RouteOptions, RouteType } from '../../../index';
 
 /**
  * Add the route `opts` describes to `namespace`, along with a `HEAD` route
@@ -9,7 +9,7 @@ import type { Router$Namespace, Route$opts, Route$type } from '../../../index';
  *
  * @internal
  */
-export function addRoute(namespace: Router$Namespace, opts: Route$opts) {
+export function addRoute(namespace: RouterNamespace, opts: RouteOptions) {
   namespace.add(new Route(opts));
 
   // HEAD is GET without a body (Node drops it), so it runs the GET action.
@@ -33,9 +33,9 @@ export default function createDefinition({
   method,
   namespace
 }: {
-  type: Route$type;
+  type: RouteType;
   method: RequestMethod;
-  namespace: Router$Namespace;
+  namespace: RouterNamespace;
 }) {
   return function define(name: string, action: string = normalizeName(name)) {
     const normalized = normalizeName(name);

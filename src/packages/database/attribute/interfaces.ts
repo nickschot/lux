@@ -1,4 +1,4 @@
-export type Attribute$meta = {
+export type AttributeMeta = {
   key: string;
   type: string;
   nullable: boolean;

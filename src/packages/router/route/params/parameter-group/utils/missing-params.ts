@@ -1,5 +1,5 @@
 import { ParameterRequiredError } from '../../errors';
-import type { Server$Error } from '../../../../../server';
+import type { ServerError } from '../../../../../server';
 import type ParameterGroup from '../index';
 
 /**
@@ -10,7 +10,7 @@ import type ParameterGroup from '../index';
 export default function missingParams(
   group: ParameterGroup,
   params: Record<string, unknown>
-): Array<Server$Error> {
+): Array<ServerError> {
   return Array.from(group)
     .filter(([key, { required }]) => required && !(key in params))
     .map(([, { path }]) => new ParameterRequiredError(path));

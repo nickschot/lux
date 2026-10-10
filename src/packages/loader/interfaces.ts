@@ -6,8 +6,5 @@
 import type { FreezeableMap } from '../freezeable';
 
 export type Loader = (type: string) => any;
-export type Bundle$Namespace<T> = FreezeableMap<string, T>;
-export type Bundle$NamespaceGroup<T> = FreezeableMap<
-  string,
-  Bundle$Namespace<T>
->;
+export type BundleNamespace<T> = FreezeableMap<string, T>;
+export type BundleNamespaceGroup<T> = FreezeableMap<string, BundleNamespace<T>>;

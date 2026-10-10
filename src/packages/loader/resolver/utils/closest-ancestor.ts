@@ -1,9 +1,9 @@
 import { posix } from 'path';
 
-import type { Bundle$Namespace } from '../../index';
+import type { BundleNamespace } from '../../index';
 
 export default function closestAncestor<T>(
-  source: Bundle$Namespace<T>,
+  source: BundleNamespace<T>,
   key: string
 ): T | undefined {
   const name = posix.basename(key);

@@ -7,12 +7,12 @@ import { parse as parseURL } from 'url';
 
 import entries from '../../../utils/entries';
 
-import type { Request, Request$opts } from './interfaces';
+import type { Request, RequestOptions } from './interfaces';
 
 /** @internal */
 export function createRequest(
   req: any,
-  { logger, router }: Request$opts
+  { logger, router }: RequestOptions
 ): Request {
   const url = { ...parseURL(req.url, true), params: [] };
   const headers: Map<string, string> = new Map(entries(req.headers));

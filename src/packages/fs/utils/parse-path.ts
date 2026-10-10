@@ -2,7 +2,7 @@ import path from 'path';
 
 import { CWD } from '../../../constants';
 import chain from '../../../utils/chain';
-import type { fs$ParsedPath } from '../index';
+import type { ParsedPath } from '../index';
 
 /**
  * @private
@@ -11,7 +11,7 @@ export default function resolvePath(
   cwd: string = CWD,
   dir: string = '',
   name: string = ''
-): fs$ParsedPath {
+): ParsedPath {
   return chain(name.split('/'))
     .pipe(parts => path.join(cwd, dir, ...parts))
     .pipe(path.parse)

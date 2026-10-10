@@ -1,6 +1,6 @@
 import createServerError from '../../../../server/utils/create-server-error';
 import sourceFor from '../../../../server/utils/source-for';
-import type { Server$ErrorSource } from '../../../../server';
+import type { ServerErrorSource } from '../../../../server';
 
 /**
  * JSON:API 1.0: "A server MUST return 403 Forbidden in response to an
@@ -9,7 +9,7 @@ import type { Server$ErrorSource } from '../../../../server';
  * @internal
  */
 class ClientGeneratedIdError extends TypeError {
-  declare source: Server$ErrorSource;
+  declare source: ServerErrorSource;
 
   constructor() {
     super('Client-generated IDs are not supported for this resource.');

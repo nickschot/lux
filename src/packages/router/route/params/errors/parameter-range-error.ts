@@ -1,12 +1,12 @@
 import { line } from '../../../../logger';
 import createServerError from '../../../../server/utils/create-server-error';
 import sourceFor, { nameFor } from '../../../../server/utils/source-for';
-import type { Server$ErrorSource } from '../../../../server';
+import type { ServerErrorSource } from '../../../../server';
 import type Parameter from '../parameter';
 
 /** @internal */
 class ParameterRangeError extends RangeError {
-  declare source: Server$ErrorSource;
+  declare source: ServerErrorSource;
 
   constructor({ path, min, max }: Parameter, actual: number) {
     const bounds = [

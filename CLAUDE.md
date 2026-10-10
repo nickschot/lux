@@ -331,9 +331,13 @@ specs carried through the runner swap — were fixed once the migration settled.
   broken `{@link}`, or a public signature naming a type
   `src/index.ts` does not export. Fix the latter by exporting it — or (for
   framework internals) listing it in `intentionallyNotExported`.
-- **Public types** have plain names at their definition (`LoggerConfig`, not
-  `Logger$config` — the `$` style is a Flow leftover, kept only for internal
-  types). Each package's `index.ts` exports its own public types, and
+- **Types have plain PascalCase names**, public and internal alike
+  (`LoggerConfig`, `RouteOptions`, `JsonApiDocument`; `Options` for what was
+  `$opts`). The `Foo$bar` style was a Flow leftover and is gone (#92, #93);
+  ESLint's `@typescript-eslint/naming-convention` keeps it out. The only `$`
+  names left are the identifiers the app compiler generates (`Admin$Posts`).
+  **Public types** are defined under the name they are exported as. Each
+  package's `index.ts` exports its own public types, and
   `src/index.ts` re-exports them **by name** from those package indexes: no
   `as` aliases, no deep imports from `interfaces.ts`, no `export *` (package
   indexes also export internals). That list is the public type API. `@private` hides a member from the reference;

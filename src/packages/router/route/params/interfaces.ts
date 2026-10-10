@@ -1,16 +1,16 @@
 import type Controller from '../../../controller';
-import type { Route$type } from '../index';
+import type { RouteType } from '../index';
 import type { RequestMethod } from '../../../server';
-import type { Lumen$Collection } from '../../../../interfaces';
+import type { LumenCollection } from '../../../../interfaces';
 
-export type Params$opts = {
-  type: Route$type;
+export type ParamsOptions = {
+  type: RouteType;
   method: RequestMethod;
   controller: Controller;
   dynamicSegments: Array<string>;
 };
 
-export type ParameterLike$opts = {
+export type ParameterLikeOptions = {
   path: string;
   type?: string;
   values?: Array<unknown>;
@@ -22,7 +22,7 @@ export type ParameterLike$opts = {
   sanitize?: boolean;
 };
 
-export interface ParameterLike extends Lumen$Collection<unknown> {
+export interface ParameterLike extends LumenCollection<unknown> {
   path: string;
   type: string;
   required: boolean;

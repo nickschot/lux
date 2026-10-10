@@ -12,7 +12,7 @@ export type LogFunction = (
 /** Lines for people (`text`) or one JSON object per line (`json`). */
 export type LogFormat = 'text' | 'json';
 
-export type Logger$data = {
+export type LogData = {
   level: LogLevel;
   message?: unknown;
   context?: Record<string, unknown>;

@@ -8,16 +8,16 @@ import type { Model, ModelClass } from '../../database';
 import { NAMESPACE_SETTINGS } from '../../controller';
 import type Controller from '../../controller';
 import type Serializer from '../../serializer';
-import type { Bundle$Namespace } from '../../loader';
-import type { Application$Class } from '../index';
+import type { BundleNamespace } from '../../loader';
+import type { ApplicationClass } from '../index';
 
 export default function createController<T extends Controller>(
-  constructor: Application$Class<T>,
+  constructor: ApplicationClass<T>,
   opts: {
     key: string;
     store: Database;
     parent?: Controller | null;
-    serializers: Bundle$Namespace<Serializer<Model>>;
+    serializers: BundleNamespace<Serializer<Model>>;
   }
 ): T {
   const { key, store, serializers } = opts;

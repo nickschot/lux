@@ -1,4 +1,4 @@
-export interface Lumen$Collection<T> {
+export interface LumenCollection<T> {
   size: number;
 
   has(key: T): boolean;

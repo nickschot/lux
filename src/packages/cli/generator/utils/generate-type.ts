@@ -14,7 +14,7 @@ import modelMigrationTemplate from '../../templates/model-migration';
 import middlewareTemplate from '../../templates/middleware';
 import utilTemplate from '../../templates/util';
 import chain from '../../../../utils/chain';
-import type { Generator$opts } from '../index';
+import type { GeneratorOptions } from '../index';
 
 import log from './log';
 import createGenerator from './create-generator';
@@ -23,7 +23,7 @@ import { createConflictResolver, detectConflict } from './migration-conflict';
 /**
  * @private
  */
-export async function controller(opts: Generator$opts): Promise<void> {
+export async function controller(opts: GeneratorOptions): Promise<void> {
   const { cwd } = opts;
   let { name } = opts;
 
@@ -64,7 +64,7 @@ export async function controller(opts: Generator$opts): Promise<void> {
 /**
  * @private
  */
-export async function serializer(opts: Generator$opts): Promise<void> {
+export async function serializer(opts: GeneratorOptions): Promise<void> {
   const { cwd } = opts;
   let { name } = opts;
 
@@ -105,7 +105,7 @@ export async function serializer(opts: Generator$opts): Promise<void> {
 /**
  * @private
  */
-export function migration(opts: Generator$opts) {
+export function migration(opts: GeneratorOptions) {
   const { cwd, onConflict } = opts;
   let { name } = opts;
 
@@ -135,7 +135,7 @@ export function migration(opts: Generator$opts) {
 /**
  * @private
  */
-export function modelMigration(opts: Generator$opts) {
+export function modelMigration(opts: GeneratorOptions) {
   const { cwd, onConflict } = opts;
   let { name } = opts;
 
@@ -166,7 +166,7 @@ export function modelMigration(opts: Generator$opts) {
 /**
  * @private
  */
-export async function model(opts: Generator$opts): Promise<void> {
+export async function model(opts: GeneratorOptions): Promise<void> {
   let { name } = opts;
   const generate = createGenerator({
     dir: joinPath('app', 'models'),
@@ -186,7 +186,7 @@ export async function model(opts: Generator$opts): Promise<void> {
 /**
  * @private
  */
-export function middleware(opts: Generator$opts) {
+export function middleware(opts: GeneratorOptions) {
   let { name } = opts;
   const parts = name.split('/');
 
@@ -206,7 +206,7 @@ export function middleware(opts: Generator$opts) {
 /**
  * @private
  */
-export function util(opts: Generator$opts) {
+export function util(opts: GeneratorOptions) {
   let { name } = opts;
   const parts = name.split('/');
 
@@ -226,7 +226,7 @@ export function util(opts: Generator$opts) {
 /**
  * @private
  */
-export async function resource(opts: Generator$opts) {
+export async function resource(opts: GeneratorOptions) {
   await model(opts);
   await controller(opts);
   await serializer(opts);

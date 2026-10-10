@@ -126,6 +126,6 @@ class Application {
 export default Application;
 export type {
   ApplicationOptions,
-  Application$Class,
-  Application$factoryOpts
+  ApplicationClass,
+  ApplicationFactoryOptions
 } from './interfaces';

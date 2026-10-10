@@ -1,7 +1,7 @@
 import { posix } from 'path';
 
-import type { Builder$Construct, Builder$ParentBuilder } from '../interfaces';
-import type { Builder$NamespaceMeta } from '../interfaces';
+import type { BuilderConstruct, ParentBuilder } from '../interfaces';
+import type { NamespaceMeta } from '../interfaces';
 
 import sortByNamespace from './sort-by-namespace';
 
@@ -11,7 +11,7 @@ import sortByNamespace from './sort-by-namespace';
  * (`members` when only `members/v2` has files).
  */
 function inheritedParent<T>(
-  built: Array<Builder$NamespaceMeta<T>>,
+  built: Array<NamespaceMeta<T>>,
   key: string
 ): T | null {
   let namespace = key;
@@ -39,12 +39,12 @@ function inheritedParent<T>(
  * (hooks, settings).
  */
 export default function createParentBuilder<T>(
-  construct: Builder$Construct<T>
-): Builder$ParentBuilder<T> {
+  construct: BuilderConstruct<T>
+): ParentBuilder<T> {
   return target =>
     Array.from(target)
       .sort(sortByNamespace)
-      .reduce<Array<Builder$NamespaceMeta<T>>>((result, [key, value]) => {
+      .reduce<Array<NamespaceMeta<T>>>((result, [key, value]) => {
         const parentClass = value.get('application') || null;
         const inherited = key === 'root' ? null : inheritedParent(result, key);
         const parent = parentClass

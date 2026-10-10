@@ -1,6 +1,6 @@
 import { CWD } from '../../../constants';
 import { runGenerator } from '../generator';
-import type { Generator$opts } from '../generator';
+import type { GeneratorOptions } from '../generator';
 
 /**
  * @private
@@ -11,10 +11,10 @@ export function generate({
   type,
   attrs = []
 }: {
-  cwd?: Generator$opts['cwd'];
-  name: Generator$opts['name'];
-  type: Generator$opts['type'];
-  attrs?: Generator$opts['attrs'];
+  cwd?: GeneratorOptions['cwd'];
+  name: GeneratorOptions['name'];
+  type: GeneratorOptions['type'];
+  attrs?: GeneratorOptions['attrs'];
 }): Promise<void> {
   return runGenerator({
     cwd,

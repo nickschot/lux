@@ -2,14 +2,14 @@ import type { Writable } from 'stream';
 
 import type Logger from '../../logger';
 
-type Response$stat = {
+type ResponseStat = {
   type: string;
   name: string;
   duration: number;
   controller: string;
 };
 
-export type Response$opts = {
+export type ResponseOptions = {
   logger: Logger;
 };
 
@@ -21,7 +21,7 @@ export interface Response extends Writable {
   [key: string]: unknown;
 
   /** @internal */
-  stats: Array<Response$stat>;
+  stats: Array<ResponseStat>;
 
   /** The application's logger. */
   logger: Logger;

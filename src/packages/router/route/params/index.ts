@@ -5,7 +5,7 @@ import getURLParams from './utils/get-url-params';
 import getDataParams, { getDocumentParams } from './utils/get-data-params';
 import getDefaultMemberParams from './utils/get-default-member-params';
 import getDefaultCollectionParams from './utils/get-default-collection-params';
-import type { Params$opts } from './interfaces';
+import type { ParamsOptions } from './interfaces';
 import {
   getMemberQueryParams,
   getCollectionQueryParams,
@@ -18,7 +18,7 @@ export function paramsFor({
   method,
   controller,
   dynamicSegments
-}: Params$opts) {
+}: ParamsOptions) {
   let params = getURLParams(dynamicSegments);
 
   if (type === 'member') {
@@ -75,6 +75,6 @@ export function defaultParamsFor({
 export { default as validateClientId } from './utils/validate-client-id';
 export { default as validateResourceId } from './utils/validate-resource-id';
 
-export type { ParameterLike, ParameterLike$opts } from './interfaces';
+export type { ParameterLike, ParameterLikeOptions } from './interfaces';
 export type { default as Parameter } from './parameter';
 export type { default as ParameterGroup } from './parameter-group';

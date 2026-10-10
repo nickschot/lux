@@ -1,6 +1,6 @@
 import type Logger from '../../logger';
 
-export type Cluster$opts = {
+export type ClusterOptions = {
   path: string;
   port: number;
   logger: Logger;

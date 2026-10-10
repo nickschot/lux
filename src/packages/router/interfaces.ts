@@ -2,20 +2,20 @@ import type Route from './route';
 import type Controller from '../controller';
 import type { FreezeableSet } from '../freezeable';
 
-export type Router$opts = {
+export type RouterOptions = {
   controller: Controller;
   controllers: Map<string, Controller>;
 
   routes(): void;
 };
 
-type Router$NS$content = Route | Router$Namespace;
+type RouterNamespaceEntry = Route | RouterNamespace;
 
-export interface Router$Namespace extends FreezeableSet<Router$NS$content> {
+export interface RouterNamespace extends FreezeableSet<RouterNamespaceEntry> {
   name: string;
   path: string;
   isRoot: boolean;
-  namespace: Router$Namespace;
+  namespace: RouterNamespace;
   controller: Controller;
   controllers: Map<string, Controller>;
 }

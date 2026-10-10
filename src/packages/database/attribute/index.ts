@@ -1,10 +1,10 @@
 import createGetter from './utils/create-getter';
 import createSetter from './utils/create-setter';
 import createNormalizer from './utils/create-normalizer';
-import type { Attribute$meta } from './interfaces';
+import type { AttributeMeta } from './interfaces';
 
 /** @internal */
-export function createAttribute(opts: Attribute$meta): PropertyDescriptor {
+export function createAttribute(opts: AttributeMeta): PropertyDescriptor {
   const normalize = createNormalizer(opts.type);
   const meta = {
     ...opts,
@@ -18,4 +18,4 @@ export function createAttribute(opts: Attribute$meta): PropertyDescriptor {
   };
 }
 
-export type { Attribute$meta } from './interfaces';
+export type { AttributeMeta } from './interfaces';

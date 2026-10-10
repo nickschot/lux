@@ -2,7 +2,7 @@ import UnknownAttributeError from '../../../errors/unknown-attribute-error';
 import type Controller from '../../controller';
 import type Serializer from '../../serializer';
 import type { Model, ModelClass } from '../../database';
-import type { Bundle$Namespace } from '../../loader';
+import type { BundleNamespace } from '../../loader';
 
 const columnsOf = (model: ModelClass) =>
   `${model.name} (table \`${model.tableName}\`)`;
@@ -20,9 +20,9 @@ const columnsOf = (model: ModelClass) =>
  * @internal
  */
 export default function validateAttributes(
-  controllers: Bundle$Namespace<Controller> | Map<string, Controller>,
+  controllers: BundleNamespace<Controller> | Map<string, Controller>,
   serializers:
-    Bundle$Namespace<Serializer<Model>> | Map<string, Serializer<Model>>
+    BundleNamespace<Serializer<Model>> | Map<string, Serializer<Model>>
 ): void {
   const problems: Array<string> = [];
 

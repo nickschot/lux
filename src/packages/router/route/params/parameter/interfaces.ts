@@ -1,5 +1,5 @@
-import type { ParameterLike$opts } from '../index';
+import type { ParameterLikeOptions } from '../index';
 
-export type Parameter$opts = ParameterLike$opts & {
+export type ParameterOptions = ParameterLikeOptions & {
   values?: Array<unknown>;
 };

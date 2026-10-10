@@ -1,4 +1,4 @@
-export type fs$writeOpts =
+export type WriteOptions =
   | string
   | {
       mode?: number;
@@ -6,16 +6,16 @@ export type fs$writeOpts =
       encoding?: string | null;
     };
 
-export type fs$readOpts =
+export type ReadOptions =
   | string
   | {
       flag?: string;
       encoding?: string | null;
     };
 
-export type fs$PathRemover = (source: string) => string;
+export type PathRemover = (source: string) => string;
 
-export interface fs$ParsedPath {
+export interface ParsedPath {
   root: string;
   dir: string;
   base: string;

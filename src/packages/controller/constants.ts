@@ -1,7 +1,12 @@
-import type { Controller$builtIn } from './index';
+import type { BuiltInAction } from './index';
 
-export const BUILT_IN_ACTIONS: ReadonlyArray<Controller$builtIn> =
-  Object.freeze(['show', 'index', 'create', 'update', 'destroy']);
+export const BUILT_IN_ACTIONS: ReadonlyArray<BuiltInAction> = Object.freeze([
+  'show',
+  'index',
+  'create',
+  'update',
+  'destroy'
+]);
 
 /**
  * Settings a controller takes from its namespace's `ApplicationController`

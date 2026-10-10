@@ -21,6 +21,6 @@ export { closestAncestor, closestChild } from './resolver';
 
 export type {
   Loader,
-  Bundle$Namespace,
-  Bundle$NamespaceGroup
+  BundleNamespace,
+  BundleNamespaceGroup
 } from './interfaces';

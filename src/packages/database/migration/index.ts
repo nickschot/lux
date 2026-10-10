@@ -1,10 +1,10 @@
-import type { Migration$Fn } from './interfaces';
+import type { MigrationFn } from './interfaces';
 
 /** @internal */
 class Migration<T extends object> {
-  declare fn: Migration$Fn<T>;
+  declare fn: MigrationFn<T>;
 
-  constructor(fn: Migration$Fn<T>) {
+  constructor(fn: MigrationFn<T>) {
     this.fn = fn;
   }
 
@@ -15,4 +15,4 @@ class Migration<T extends object> {
 
 export default Migration;
 export { default as generateTimestamp } from './utils/generate-timestamp';
-export type { Migration$Fn } from './interfaces';
+export type { MigrationFn } from './interfaces';

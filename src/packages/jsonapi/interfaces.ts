@@ -1,73 +1,73 @@
-type JSONAPI$value =
+type JsonApiValue =
   | string
   | number
   | boolean
-  | JSONAPI$BaseObject
-  | Array<JSONAPI$BaseObject>
+  | JsonApiBaseObject
+  | Array<JsonApiBaseObject>
   | null
   | undefined;
 
-interface JSONAPI$BaseObject {
-  [key: string]: JSONAPI$value;
-  meta?: JSONAPI$BaseObject;
+interface JsonApiBaseObject {
+  [key: string]: JsonApiValue;
+  meta?: JsonApiBaseObject;
 }
 
-interface JSONAPI$LinkObject {
+interface JsonApiLinkObject {
   href: string;
-  meta?: JSONAPI$BaseObject;
+  meta?: JsonApiBaseObject;
 }
 
-type JSONAPI$Link = string | JSONAPI$LinkObject | null;
+type JsonApiLink = string | JsonApiLinkObject | null;
 
-interface JSONAPI$ResourceLinksObject {
-  self?: JSONAPI$Link;
-  related?: JSONAPI$Link;
+interface JsonApiResourceLinksObject {
+  self?: JsonApiLink;
+  related?: JsonApiLink;
 }
 
-export type JSONAPI$versions = '1.0';
+export type JsonApiVersion = '1.0';
 
-export interface JSONAPI$IdentifierObject {
+export interface JsonApiIdentifierObject {
   id: string;
   type: string;
-  meta?: JSONAPI$BaseObject;
+  meta?: JsonApiBaseObject;
 }
 
-export interface JSONAPI$ResourceObject {
+export interface JsonApiResourceObject {
   id: string;
   type: string;
-  links?: JSONAPI$ResourceLinksObject;
-  attributes?: JSONAPI$BaseObject;
+  links?: JsonApiResourceLinksObject;
+  attributes?: JsonApiBaseObject;
 
   relationships?: {
-    [key: string]: JSONAPI$RelationshipObject | null | undefined;
+    [key: string]: JsonApiRelationshipObject | null | undefined;
   };
 }
 
-export interface JSONAPI$RelationshipObject {
+export interface JsonApiRelationshipObject {
   // Resource linkage: `null`/one identifier for to-one relationships, an array
   // for to-many ones. Left out of a relationship serialized as links only.
-  data?: JSONAPI$IdentifierObject | Array<JSONAPI$IdentifierObject> | null;
-  meta?: JSONAPI$BaseObject;
-  links?: JSONAPI$ResourceLinksObject;
+  data?: JsonApiIdentifierObject | Array<JsonApiIdentifierObject> | null;
+  meta?: JsonApiBaseObject;
+  links?: JsonApiResourceLinksObject;
 }
 
-export interface JSONAPI$DocumentLinks extends JSONAPI$ResourceLinksObject {
-  first?: JSONAPI$Link;
-  last?: JSONAPI$Link;
-  prev?: JSONAPI$Link | null;
-  next?: JSONAPI$Link | null;
+export interface JsonApiDocumentLinks extends JsonApiResourceLinksObject {
+  first?: JsonApiLink;
+  last?: JsonApiLink;
+  prev?: JsonApiLink | null;
+  next?: JsonApiLink | null;
 }
 
-export interface JSONAPI$ErrorObject {
+export interface JsonApiErrorObject {
   id?: string;
   code?: string;
-  meta?: JSONAPI$BaseObject;
+  meta?: JsonApiBaseObject;
   title?: string;
   status?: string;
   detail?: string;
 
   links?: {
-    about: JSONAPI$Link;
+    about: JsonApiLink;
   };
 
   source?: {
@@ -76,16 +76,16 @@ export interface JSONAPI$ErrorObject {
   };
 }
 
-export interface JSONAPI$Document {
-  data?: Array<JSONAPI$ResourceObject> | JSONAPI$ResourceObject;
-  meta?: JSONAPI$BaseObject;
-  links?: JSONAPI$DocumentLinks;
-  errors?: Array<JSONAPI$ErrorObject>;
-  included?: Array<JSONAPI$ResourceObject>;
+export interface JsonApiDocument {
+  data?: Array<JsonApiResourceObject> | JsonApiResourceObject;
+  meta?: JsonApiBaseObject;
+  links?: JsonApiDocumentLinks;
+  errors?: Array<JsonApiErrorObject>;
+  included?: Array<JsonApiResourceObject>;
 
   jsonapi?: {
-    version: JSONAPI$versions;
-    meta?: JSONAPI$BaseObject;
+    version: JsonApiVersion;
+    meta?: JsonApiBaseObject;
   };
 }
 
@@ -93,13 +93,13 @@ export interface JSONAPI$Document {
  * The document a relationship endpoint responds with: the relationship's
  * resource linkage as primary data.
  */
-export interface JSONAPI$RelationshipDocument extends Omit<
-  JSONAPI$RelationshipObject,
+export interface JsonApiRelationshipDocument extends Omit<
+  JsonApiRelationshipObject,
   'links'
 > {
-  links: JSONAPI$ResourceLinksObject;
+  links: JsonApiResourceLinksObject;
 
   jsonapi: {
-    version: JSONAPI$versions;
+    version: JsonApiVersion;
   };
 }

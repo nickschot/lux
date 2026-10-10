@@ -2,7 +2,7 @@ import createServerError from '../../server/utils/create-server-error';
 import sourceFor from '../../server/utils/source-for';
 import stringify from '../../../utils/stringify';
 import type { ModelClass } from '../../database';
-import type { Server$ErrorSource } from '../../server';
+import type { ServerErrorSource } from '../../server';
 
 /**
  * JSON:API 1.0: "A server MUST return 404 Not Found when processing a request
@@ -11,7 +11,7 @@ import type { Server$ErrorSource } from '../../server';
  * @internal
  */
 class RelatedRecordNotFoundError extends Error {
-  declare source: Server$ErrorSource;
+  declare source: ServerErrorSource;
 
   constructor(
     { name, primaryKey }: ModelClass,

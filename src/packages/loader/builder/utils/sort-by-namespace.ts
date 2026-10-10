@@ -1,11 +1,11 @@
-import type { Bundle$Namespace } from '../../index';
+import type { BundleNamespace } from '../../index';
 
 /**
  * @private
  */
 export default function sortByNamespace<T>(
-  [a]: [string, Bundle$Namespace<T>],
-  [b]: [string, Bundle$Namespace<T>]
+  [a]: [string, BundleNamespace<T>],
+  [b]: [string, BundleNamespace<T>]
 ): number {
   if (a === 'root') {
     return -1;

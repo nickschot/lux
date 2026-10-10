@@ -4,11 +4,11 @@ import { deepFreezeProps } from '../../freezeable';
 import { tryCatchSync } from '../../../utils/try-catch';
 import type Serializer from '../../serializer';
 import type { Model, ModelClass } from '../../database';
-import type { Application$Class, Application$factoryOpts } from '../index';
+import type { ApplicationClass, ApplicationFactoryOptions } from '../index';
 
 export default function createSerializer<T extends Serializer<Model>>(
-  constructor: Application$Class<T>,
-  opts: Application$factoryOpts<T>
+  constructor: ApplicationClass<T>,
+  opts: ApplicationFactoryOptions<T>
 ): T {
   const { key, store } = opts;
   const namespace = posix.dirname(key).replace('.', '');

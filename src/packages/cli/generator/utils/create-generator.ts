@@ -2,7 +2,7 @@ import { join as joinPath } from 'path';
 
 import chalk from '../../../../utils/chalk';
 import { rmrf, exists, mkdirRec, writeFile, parsePath } from '../../../fs';
-import type { Generator, Generator$template } from '../index';
+import type { Generator, GeneratorTemplate } from '../index';
 
 import log from './log';
 
@@ -17,7 +17,7 @@ export default function createGenerator({
   hasConflict = exists
 }: {
   dir: string;
-  template: Generator$template;
+  template: GeneratorTemplate;
   hasConflict?: (path: string) => Promise<boolean>;
 }): Generator {
   return async ({ cwd, attrs, onConflict, ...opts }) => {

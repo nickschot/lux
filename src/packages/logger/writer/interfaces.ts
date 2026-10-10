@@ -1,3 +1,3 @@
-import type { Logger$data } from '../interfaces';
+import type { LogData } from '../interfaces';
 
-export type Logger$Writer = (data: Logger$data) => void;
+export type LogWriter = (data: LogData) => void;

@@ -4,7 +4,7 @@ import sourceFor, {
   memberPathFor,
   nameFor
 } from '../../../../server/utils/source-for';
-import type { Server$ErrorSource } from '../../../../server';
+import type { ServerErrorSource } from '../../../../server';
 import type { ParameterLike } from '../index';
 
 // Parameters whose values are member names or relationship paths, which the
@@ -13,7 +13,7 @@ const MEMBER_VALUED = new Set(['sort', 'fields', 'include']);
 
 /** @internal */
 class ParameterValueError extends TypeError {
-  declare source: Server$ErrorSource;
+  declare source: ServerErrorSource;
 
   constructor(param: ParameterLike, actual: unknown) {
     const asSent = MEMBER_VALUED.has(param.path.split('.')[0] ?? '')

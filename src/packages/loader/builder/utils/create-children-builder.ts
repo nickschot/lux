@@ -1,8 +1,8 @@
-import type { Builder$Construct, Builder$ChildrenBuilder } from '../interfaces';
+import type { BuilderConstruct, ChildrenBuilder } from '../interfaces';
 
 export default function createChildrenBuilder<T>(
-  construct: Builder$Construct<T>
-): Builder$ChildrenBuilder<T> {
+  construct: BuilderConstruct<T>
+): ChildrenBuilder<T> {
   return target =>
     target.map(({ key, value, parent }) =>
       Array.from(value).map(([name, constructor]): [string, T] => {

@@ -5,7 +5,7 @@ import createController from '../utils/create-controller';
 import { build } from '../../loader';
 import type Database from '../../database';
 import type { BeforeAction, AfterAction } from '../../controller';
-import type { Bundle$Namespace } from '../../loader';
+import type { BundleNamespace } from '../../loader';
 import type { Model } from '../../database';
 import type Serializer from '../../serializer';
 
@@ -17,7 +17,7 @@ describe('module "application" #createController()', () => {
       throw new Error('no models');
     }
   } as unknown as Database;
-  const serializers = new Map() as unknown as Bundle$Namespace<
+  const serializers = new Map() as unknown as BundleNamespace<
     Serializer<Model>
   >;
 

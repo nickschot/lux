@@ -1,5 +1,5 @@
 import { exists, readdir, parsePath } from '../../../fs';
-import type { Generator$opts } from '../index';
+import type { GeneratorOptions } from '../index';
 
 export function detectConflict(path: string): Promise<boolean> {
   const { dir, base } = parsePath(path);
@@ -12,9 +12,9 @@ export function createConflictResolver({
   cwd,
   onConflict
 }: {
-  cwd: Generator$opts['cwd'];
-  onConflict: Generator$opts['onConflict'];
-}): Generator$opts['onConflict'] {
+  cwd: GeneratorOptions['cwd'];
+  onConflict: GeneratorOptions['onConflict'];
+}): GeneratorOptions['onConflict'] {
   return async (path: string) => {
     if (await onConflict(path)) {
       const parsed = parsePath(cwd, path);

@@ -1,9 +1,9 @@
 import { posix } from 'path';
 
-import type { Bundle$Namespace } from '../../index';
+import type { BundleNamespace } from '../../index';
 
 export default function closestChild<T>(
-  source: Bundle$Namespace<T>,
+  source: BundleNamespace<T>,
   key: string
 ): T | undefined {
   const [[, result] = []] = Array.from(source)

@@ -1,11 +1,11 @@
 import createServerError from '../../../../server/utils/create-server-error';
 import sourceFor, { nameFor } from '../../../../server/utils/source-for';
 import { line } from '../../../../logger';
-import type { Server$ErrorSource } from '../../../../server';
+import type { ServerErrorSource } from '../../../../server';
 
 /** @internal */
 class ResourceMismatchError extends TypeError {
-  declare source: Server$ErrorSource;
+  declare source: ServerErrorSource;
 
   constructor(path: string, expected: unknown, actual: unknown) {
     let normalized = actual;

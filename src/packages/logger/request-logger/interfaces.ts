@@ -1,7 +1,7 @@
 import type { Route } from '../../router';
 import type { Request, Response } from '../../server';
 
-export type Logger$RequestLogger = (
+export type RequestLoggerFn = (
   req: Request,
   res: Response,
 
@@ -10,16 +10,16 @@ export type Logger$RequestLogger = (
   }
 ) => void;
 
-type RequestLogger$stat = {
+type RequestLoggerStat = {
   type: string;
   name: string;
   duration: number;
   controller: string;
 };
 
-export type RequestLogger$templateData = {
+export type RequestLoggerTemplateData = {
   path: string;
-  stats: Array<RequestLogger$stat>;
+  stats: Array<RequestLoggerStat>;
   route?: Route;
   method: string;
   params: Record<string, unknown>;

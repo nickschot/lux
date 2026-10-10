@@ -1,10 +1,10 @@
 import createServerError from '../../../../server/utils/create-server-error';
 import sourceFor, { nameFor } from '../../../../server/utils/source-for';
-import type { Server$ErrorSource } from '../../../../server';
+import type { ServerErrorSource } from '../../../../server';
 
 /** @internal */
 class ParameterRequiredError extends TypeError {
-  declare source: Server$ErrorSource;
+  declare source: ServerErrorSource;
 
   constructor(path: string) {
     super(`Missing required parameter '${nameFor(path)}'.`);
