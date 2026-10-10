@@ -1,15 +1,32 @@
 import { EOL } from 'os';
+import { posix } from 'path';
 
 import { pluralize, singularize } from 'inflection';
 
 import chalk from '../../../utils/chalk';
 import { CWD } from '../../../constants';
-import { rmrf, exists, readdir, readFile, writeFile } from '../../fs';
+import {
+  rmrf,
+  exists,
+  readdir,
+  readdirRec,
+  readFile,
+  writeFile
+} from '../../fs';
+
+function log(text: string) {
+  process.stdout.write(text);
+  process.stdout.write(EOL);
+}
 
 /**
  * @private
  */
-export async function destroyType(type: string, name: string) {
+export async function destroyType(
+  type: string,
+  name: string,
+  cwd: string = CWD
+) {
   const normalizedType = type.toLowerCase();
   let normalizedName = name;
   let path: string | undefined;
@@ -17,18 +34,20 @@ export async function destroyType(type: string, name: string) {
 
   switch (normalizedType) {
     case 'model':
-      normalizedName = singularize(normalizedName);
+      // `generate` writes a model under its bare name, whatever the
+      // namespace: `admin/tag` is `app/models/tag.js`.
+      normalizedName = singularize(posix.basename(normalizedName));
       path = `app/${pluralize(normalizedType)}/${normalizedName}.js`;
       break;
 
     case 'migration':
-      migrations = await readdir(`${CWD}/db/migrate`);
+      migrations = await readdir(`${cwd}/db/migrate`);
 
       // `find` may return undefined (no matching migration); pre-existing
       // behaviour lets that flow into the path as the string "undefined",
       // which then simply fails the `exists` check below.
       normalizedName = migrations.find(
-        file => `${normalizedName}.js` === file.substr(17)
+        file => `${posix.basename(normalizedName)}.js` === file.substring(17)
       ) as string;
 
       path = `db/migrate/${normalizedName}`;
@@ -52,48 +71,92 @@ export async function destroyType(type: string, name: string) {
       return;
   }
 
-  if (await exists(`${CWD}/${path}`)) {
-    await rmrf(`${CWD}/${path}`);
-
-    process.stdout.write(`${chalk.red('remove')} ${path}`);
-    process.stdout.write(EOL);
+  if (await exists(`${cwd}/${path}`)) {
+    await rmrf(`${cwd}/${path}`);
+    log(`${chalk.red('remove')} ${path}`);
   }
+}
+
+/**
+ * The controllers, in any namespace, of the resource `name` other than its
+ * own: `admin/tags` for `tags`, and the other way around.
+ *
+ * @private
+ */
+async function otherControllersOf(name: string, cwd: string) {
+  const dir = `${cwd}/app/controllers`;
+  const own = `${pluralize(name)}.js`;
+  const file = posix.basename(own);
+
+  if (!(await exists(dir))) {
+    return [];
+  }
+
+  return (await readdirRec(dir))
+    .map(path => path.split('\\').join('/'))
+    .filter(path => posix.basename(path) === file && path !== own)
+    .map(path => `app/controllers/${path}`);
 }
 
 /**
  * @private
  */
-export async function destroy({ type, name }: { type: string; name: string }) {
+export async function destroy({
+  type,
+  name,
+  cwd = CWD
+}: {
+  type: string;
+  name: string;
+  cwd?: string;
+}) {
   if (type === 'resource') {
-    const routes = (await readFile(`${CWD}/app/routes.js`))
-      .toString('utf8')
-      .split('\n')
-      .reduce((lines, line) => {
-        const pattern = new RegExp(
-          `\\s*this.resource\\(('|"|\`)${pluralize(name)}('|"|\`)\\);?`
-        );
+    const model = singularize(posix.basename(name));
+    const others = await otherControllersOf(name, cwd);
 
-        return pattern.test(line) ? lines : [...lines, line];
-      }, [] as string[])
-      .join('\n');
+    // One at a time, so the output lists them in a stable order.
+    await destroyType('controller', name, cwd);
+    await destroyType('serializer', name, cwd);
 
-    await Promise.all([
-      destroyType('model', name),
-      destroyType('migration', `create-${pluralize(name)}`),
-      destroyType('serializer', name),
-      destroyType('controller', name)
-    ]);
+    // Another namespace's resource for the same model still needs it.
+    if (others.length) {
+      log(
+        `${chalk.yellow('keep')} app/models/${model}.js and its migration ` +
+          `(used by ${others.join(', ')})`
+      );
+    } else {
+      await destroyType('model', model, cwd);
+      await destroyType('migration', `create-${pluralize(model)}`, cwd);
+    }
 
-    await writeFile(`${CWD}/app/routes.js`, routes);
+    // Only a root resource has a route; `generate` leaves a namespaced one
+    // to the app.
+    if (posix.dirname(name) === '.') {
+      const path = `${cwd}/app/routes.js`;
+      const before = (await readFile(path)).toString('utf8');
+      const pattern = new RegExp(
+        `\\s*this.resource\\(('|"|\`)${pluralize(name)}('|"|\`)\\);?`
+      );
+      const after = before
+        .split('\n')
+        .filter(line => !pattern.test(line))
+        .join('\n');
 
-    process.stdout.write(`${chalk.green('update')} app/routes.js`);
-    process.stdout.write(EOL);
+      if (after !== before) {
+        await writeFile(path, after);
+        log(`${chalk.green('update')} app/routes.js`);
+      }
+    }
   } else if (type === 'model') {
     await Promise.all([
-      destroyType(type, name),
-      destroyType('migration', `create-${pluralize(name)}`)
+      destroyType(type, name, cwd),
+      destroyType(
+        'migration',
+        `create-${pluralize(singularize(posix.basename(name)))}`,
+        cwd
+      )
     ]);
   } else {
-    await destroyType(type, name);
+    await destroyType(type, name, cwd);
   }
 }

@@ -69,8 +69,24 @@ lumen generate resource post title:string body:text published:boolean user:belon
 ### `lumen destroy <type> <name>`
 
 Alias `lumen d`. Removes what `generate` wrote for that type and name, and
-the route of a resource. (A namespaced resource currently keeps its model and
-migration: [#115](https://github.com/nickschot/lux/issues/115).)
+the route of a root resource. For `resource`, that is the model, its `create`
+migration, the controller and the serializer, in a namespace too:
+
+```bash
+lumen destroy resource admin/tags
+```
+```
+remove app/controllers/admin/tags.js
+remove app/serializers/admin/tags.js
+remove app/models/tag.js
+remove db/migrate/2026100720200685-create-tags.js
+```
+
+The model and migration stay when another namespace's resource still uses
+them (`app/controllers/tags.js` beside `admin/tags.js`); Lumen says so. The
+namespace's `application.js` files stay, as other resources may share them.
+Removing a migration doesn't undo it: run `lumen db:rollback` first if it has
+been applied.
 
 ## Running the app
 
