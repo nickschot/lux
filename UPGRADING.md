@@ -145,6 +145,13 @@ See [Serializers and JSON:API](docs/guides/serializers.md).
   without saying so: only `links.self`, no `meta.total`. It now gets the page
   links and `meta.total`, as `index` does
   ([Routing](docs/guides/routing.md#custom-routes)).
+- **JSON that isn't a JSON:API document is sent as `application/json`.** An
+  object or array an action returns used to be labelled
+  `application/vnd.api+json` whatever it held. Now only a JSON:API document
+  (an object with a top-level `jsonapi`, `data` or `errors`) is; every
+  document Lumen builds has `jsonapi`. A success status returned as a number
+  (`return 202;`) has no `Content-Type`, as its body is empty. **Check:**
+  clients that require the JSON:API type on such responses.
 - **A string an action returns is sent as `text/plain; charset=utf-8`.** It
   used to be labelled `application/vnd.api+json`. A `Content-Type` the action
   sets itself is kept. **Check:** clients that read such a response.

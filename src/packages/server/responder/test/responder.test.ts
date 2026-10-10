@@ -149,6 +149,18 @@ describe('module "server/responder"', () => {
         });
       });
 
+      describe('- responding with a success status', () => {
+        it('sends no Content-Type with the empty body', async () => {
+          const result = await test((req, res) => {
+            createResponder(req, res)(202);
+          });
+
+          expect(result.status).to.equal(202);
+          expect(result.headers.get('Content-Type')).to.be.null;
+          expect(await result.text()).to.equal('');
+        });
+      });
+
       describe('- responding with a boolean', () => {
         it('works with `true`', async () => {
           const result = await test((req, res) => {
@@ -216,7 +228,9 @@ describe('module "server/responder"', () => {
           });
 
           expect(result.status).to.equal(200);
-          expect(result.headers.get('Content-Type')).to.equal(MIME_TYPE);
+          expect(result.headers.get('Content-Type')).to.equal(
+            'application/json'
+          );
           expect(await result.json()).to.deep.equal({ test: true });
         });
 
@@ -228,8 +242,37 @@ describe('module "server/responder"', () => {
           });
 
           expect(result.status).to.equal(200);
-          expect(result.headers.get('Content-Type')).to.equal(MIME_TYPE);
+          expect(result.headers.get('Content-Type')).to.equal(
+            'application/json'
+          );
           expect(await result.json()).to.deep.equal(['test', true]);
+        });
+
+        it('labels a JSON:API document as one', async () => {
+          const result = await test((req, res) => {
+            createResponder(
+              req,
+              res
+            )({
+              data: [],
+              jsonapi: { version: VERSION }
+            });
+          });
+
+          expect(result.headers.get('Content-Type')).to.equal(MIME_TYPE);
+        });
+
+        it('labels a document an afterAction hook rebuilt as one', async () => {
+          const result = await test((req, res) => {
+            const payload = { data: [], jsonapi: { version: VERSION } };
+
+            createResponder(
+              req,
+              res
+            )({ ...payload, meta: { apiVersion: '2' } });
+          });
+
+          expect(result.headers.get('Content-Type')).to.equal(MIME_TYPE);
         });
       });
 

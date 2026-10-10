@@ -1,8 +1,8 @@
-import { MIME_TYPE } from '../../jsonapi';
 import type { Request, Response } from '../index';
 
 import normalize from './utils/normalize';
 import hasContentType from './utils/has-content-type';
+import contentTypeFor from './utils/content-type-for';
 
 /** @internal */
 export function createResponder(req: Request, res: Response) {
@@ -13,13 +13,15 @@ export function createResponder(req: Request, res: Response) {
       res.statusCode = normalized.statusCode;
     }
 
-    // A string an action returns is its body as is: plain text, unless the
-    // action set a Content-Type of its own (CSV, HTML, …).
+    // Labelled by what it is, unless the action set a Content-Type of its own
+    // (CSV, HTML, …): a JSON:API document, other JSON, plain text, or nothing
+    // for an empty body.
     if (res.statusCode !== 204 && !hasContentType(res)) {
-      res.setHeader(
-        'Content-Type',
-        typeof data === 'string' ? 'text/plain; charset=utf-8' : MIME_TYPE
-      );
+      const contentType = contentTypeFor(normalized.body);
+
+      if (contentType) {
+        res.setHeader('Content-Type', contentType);
+      }
     }
 
     res.end(normalized.data);

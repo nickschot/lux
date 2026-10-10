@@ -51,6 +51,8 @@ export default function normalize(data?: unknown) {
 
   return {
     statusCode,
+    // The body before it is serialized, which decides its Content-Type.
+    body: normalized,
     data: stringify(normalized)
   };
 }

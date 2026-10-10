@@ -17,7 +17,11 @@ async function post(path: string, body: string, contentType: string) {
     body
   });
 
-  return { status: res.status, body: await res.json() };
+  return {
+    status: res.status,
+    contentType: res.headers.get('content-type'),
+    body: await res.json()
+  };
 }
 
 describe('the body of a plain route', () => {
@@ -50,6 +54,8 @@ describe('the body of a plain route', () => {
     );
 
     expect(res.status).to.equal(200);
+    // Plain JSON, not a JSON:API document.
+    expect(res.contentType).to.equal('application/json');
     expect(res.body).to.deep.equal({ received: sent });
   });
 
