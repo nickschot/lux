@@ -17,7 +17,7 @@ an app would write them.
 
 Required:
 
-1. Run **Node 22.13 or later**, and update the database drivers. **SQLite
+1. Run **Node 22.14 or later**, and update the database drivers. **SQLite
    apps:** switch from `sqlite3` to `better-sqlite3`
    ([Requirements](#requirements)).
 2. Remove `"test": "lumen test"` from `package.json`: the command is gone
@@ -57,9 +57,11 @@ a link to its guide.
 
 ### Requirements
 
-**Node 22.13 or later.** Node 20 reached end of life in April 2026. 22.13 is
-the first 22.x where `require()` of an ES module is stable, and the framework's
-ESM-only dependencies rely on it. Pin it with `engines`, `.nvmrc` or `volta`.
+**Node 22.14 or later.** Node 20 reached end of life in April 2026. 22.14 is
+the first 22.x with N-API 10, which better-sqlite3's prebuilt binary needs
+(on 22.13 it crashes); `require()` of an ES module, which the framework's
+ESM-only dependencies rely on, is stable since 22.13. Pin it with `engines`,
+`.nvmrc` or `volta`.
 
 **Database drivers.** Match these versions:
 

@@ -11,7 +11,7 @@ It takes about ten minutes. The finished API speaks
 
 ## Before you start
 
-You need **Node.js 22.13 or later**:
+You need **Node.js 22.14 or later**:
 
 ```bash
 node --version

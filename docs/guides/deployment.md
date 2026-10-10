@@ -7,7 +7,7 @@ Heroku and Docker.
 
 ## What production needs
 
-- **Node.js 22.13 or later.** Pin it where your platform reads it: the
+- **Node.js 22.14 or later.** Pin it where your platform reads it: the
   `engines` field `lumen new` writes into `package.json`, `.nvmrc`, or the
   Docker base image.
 - **The app's dependencies,** installed with `npm install` (or `pnpm install`).

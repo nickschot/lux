@@ -139,9 +139,11 @@ spec `await`s the real call; and `logger.test`'s "writes with a recent timestamp
 - **Package manager:** **pnpm 10** (migrated from yarn; `pnpm-lock.yaml`, `packageManager`
   field). The old `yarn.lock` is retained untracked for reference only.
 - **Node:** pinned to **22** via **Volta** (`volta` field in `package.json`; `.nvmrc` = 22);
-  `engines` is `>= 22.13` (first 22.x where `require()` of ESM is stable — 22.12 unflagged
-  it but still warns — and the floor faker 10 and ESLint 10 declare), and CI runs a leg
-  on exactly 22.13.0 so the floor is proven. Node 20 is EOL (April 2026) and dropped.
+  `engines` is `>= 22.14`: the first 22.x with **N-API 10**, which better-sqlite3 13's
+  prebuilt binary needs (on 22.13 it segfaults — `lumen db:migrate` exits 139). Below
+  that: 22.13 is where `require()` of ESM is stable (22.12 unflagged it but still warns)
+  and the floor faker 10 and ESLint 10 declare. CI runs a leg on exactly 22.14.0 so the
+  floor is proven. Node 20 is EOL (April 2026) and dropped.
 
 ## Devcontainer (preferred environment)
 

@@ -97,10 +97,11 @@ jobs:
             driver: mysql2
             username: root
             password: root
-          # The engines floor (>= 22.13, the first 22.x where require() of an ES
-          # module is stable, and what faker/ESLint declare), so it cannot drift
+          # The engines floor (>= 22.14: the first 22.x with N-API 10, which
+          # better-sqlite3 13's prebuilt binary needs, segfaulting on 22.13;
+          # require() of an ES module is stable since 22.13), so it cannot drift
           # from what CI proves.
-          - node: 22.13.0
+          - node: 22.14.0
             driver: better-sqlite3
           # Forward-compat across Node versions (24 LTS, 26 current), run via
           # better-sqlite3 — the one native (N-API) dependency, loaded from its
