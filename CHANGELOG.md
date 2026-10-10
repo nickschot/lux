@@ -1,5 +1,109 @@
 # Lumen Changelog
 
+## Release (2026-10-10)
+
+* lumen-framework 4.0.0 (major)
+
+#### :boom: Breaking Change
+* `lumen-framework`
+  * [#161](https://github.com/nickschot/lux/pull/161) package.json exports map, with test helpers in lumen-framework/testing ([@schot-bot](https://github.com/schot-bot))
+  * [#158](https://github.com/nickschot/lux/pull/158) Conservative defaults for namespaces without visibility rules ([@schot-bot](https://github.com/schot-bot))
+  * [#154](https://github.com/nickschot/lux/pull/154) Replace sqlite3 with better-sqlite3 ([@schot-bot](https://github.com/schot-bot))
+  * [#153](https://github.com/nickschot/lux/pull/153) Refuse serializer fields named type or id, with an opt-out ([@schot-bot](https://github.com/schot-bot))
+  * [#147](https://github.com/nickschot/lux/pull/147) Label only JSON:API documents as application/vnd.api+json ([@schot-bot](https://github.com/schot-bot))
+  * [#134](https://github.com/nickschot/lux/pull/134) Plain-text strings, public client error details, document names in errors ([@schot-bot](https://github.com/schot-bot))
+  * [#131](https://github.com/nickschot/lux/pull/131) Check relationships when the app boots ([@schot-bot](https://github.com/schot-bot))
+  * [#130](https://github.com/nickschot/lux/pull/130) Refuse to boot on serializer attributes that aren't columns ([@schot-bot](https://github.com/schot-bot))
+  * [#86](https://github.com/nickschot/lux/pull/86) Remove the `lumen test` stub ([@schot-bot](https://github.com/schot-bot))
+  * [#84](https://github.com/nickschot/lux/pull/84) feat(logger)!: a text format that reads well in a plain log viewer ([@schot-bot](https://github.com/schot-bot))
+  * [#71](https://github.com/nickschot/lux/pull/71) chore!: require Node 22.13 or newer ([@schot-bot](https://github.com/schot-bot))
+  * [#66](https://github.com/nickschot/lux/pull/66) feat(cli)!: upgrade commander from 2 to 15 ([@schot-bot](https://github.com/schot-bot))
+  * [#58](https://github.com/nickschot/lux/pull/58) chore!: require Node 22.12 or newer ([@schot-bot](https://github.com/schot-bot))
+  * [#42](https://github.com/nickschot/lux/pull/42) fix(serializer): link to-one related resources as `related` ([@schot-bot](https://github.com/schot-bot))
+  * [#41](https://github.com/nickschot/lux/pull/41) fix(server): parse request documents per JSON:API 1.0 ([@schot-bot](https://github.com/schot-bot))
+  * [#40](https://github.com/nickschot/lux/pull/40) fix(router): spec-compliant pagination links and page limits ([@schot-bot](https://github.com/schot-bot))
+  * [#38](https://github.com/nickschot/lux/pull/38) fix(serializer): apply sparse fieldsets as JSON:API 1.0 specifies ([@schot-bot](https://github.com/schot-bot))
+  * [#34](https://github.com/nickschot/lux/pull/34) refactor(serializer): load all linkage through one batched path ([@schot-bot](https://github.com/schot-bot))
+
+#### :rocket: Enhancement
+* `lumen-framework`
+  * [#162](https://github.com/nickschot/lux/pull/162) startApp(), and auditVisibility() query, origin, seen and onDocument ([@schot-bot](https://github.com/schot-bot))
+  * [#159](https://github.com/nickschot/lux/pull/159) auditVisibility(): test what a request can see ([@schot-bot](https://github.com/schot-bot))
+  * [#145](https://github.com/nickschot/lux/pull/145) Plain routes take any JSON body, as request.body ([@schot-bot](https://github.com/schot-bot))
+  * [#84](https://github.com/nickschot/lux/pull/84) feat(logger)!: a text format that reads well in a plain log viewer ([@schot-bot](https://github.com/schot-bot))
+  * [#59](https://github.com/nickschot/lux/pull/59) chore(deps): upgrade inflection to v3 ([@schot-bot](https://github.com/schot-bot))
+  * [#56](https://github.com/nickschot/lux/pull/56) feat(router): choose which relationships of a resource are routed ([@schot-bot](https://github.com/schot-bot))
+  * [#54](https://github.com/nickschot/lux/pull/54) feat(serializer): serialize to-many relationships as links only ([@schot-bot](https://github.com/schot-bot))
+  * [#55](https://github.com/nickschot/lux/pull/55) feat(router): carry the total of an index in `meta` ([@schot-bot](https://github.com/schot-bot))
+  * [#48](https://github.com/nickschot/lux/pull/48) feat(controller): configure how unlisted attributes and relationships are handled ([@schot-bot](https://github.com/schot-bot))
+  * [#46](https://github.com/nickschot/lux/pull/46) fix(server): report every problem and richer JSON:API error objects ([@schot-bot](https://github.com/schot-bot))
+  * [#45](https://github.com/nickschot/lux/pull/45) fix(router): route string ids, answer 405, HEAD and OPTIONS properly ([@schot-bot](https://github.com/schot-bot))
+  * [#43](https://github.com/nickschot/lux/pull/43) fix(router): reject unknown attributes, ignore ones the controller does not accept ([@schot-bot](https://github.com/schot-bot))
+  * [#35](https://github.com/nickschot/lux/pull/35) feat(controller): namespace-wide visibility rules ([@schot-bot](https://github.com/schot-bot))
+
+#### :bug: Bug Fix
+* `lumen-framework`
+  * [#156](https://github.com/nickschot/lux/pull/156) Move to pnpm 12; pin Node with devEngines.runtime ([@schot-bot](https://github.com/schot-bot))
+  * [#152](https://github.com/nickschot/lux/pull/152) Percent-encode the query of a document's links.self ([@schot-bot](https://github.com/schot-bot))
+  * [#143](https://github.com/nickschot/lux/pull/143) Page custom collection actions built on index ([@schot-bot](https://github.com/schot-bot))
+  * [#138](https://github.com/nickschot/lux/pull/138) Create and drop PostgreSQL and MySQL databases ([@schot-bot](https://github.com/schot-bot))
+  * [#137](https://github.com/nickschot/lux/pull/137) Name a new app's SQLite database once ([@schot-bot](https://github.com/schot-bot))
+  * [#136](https://github.com/nickschot/lux/pull/136) Destroy everything a namespaced resource generated ([@schot-bot](https://github.com/schot-bot))
+  * [#135](https://github.com/nickschot/lux/pull/135) Print each migration statement once ([@schot-bot](https://github.com/schot-bot))
+  * [#133](https://github.com/nickschot/lux/pull/133) Honour the relationship option foreignKey ([@schot-bot](https://github.com/schot-bot))
+  * [#129](https://github.com/nickschot/lux/pull/129) Apply ssl on top of a database URL ([@schot-bot](https://github.com/schot-bot))
+  * [#128](https://github.com/nickschot/lux/pull/128) Shut down gracefully on SIGTERM; exit 1 when the app can't start ([@schot-bot](https://github.com/schot-bot))
+  * [#107](https://github.com/nickschot/lux/pull/107) Bind records, and hook records, to their transaction ([@schot-bot](https://github.com/schot-bot))
+  * [#106](https://github.com/nickschot/lux/pull/106) Let model hooks read inside their transaction ([@schot-bot](https://github.com/schot-bot))
+  * [#101](https://github.com/nickschot/lux/pull/101) Namespace settings reach every controller; namespace hooks run once ([@schot-bot](https://github.com/schot-bot))
+  * [#94](https://github.com/nickschot/lux/pull/94) Point a generated belongs-to at the plural inverse ([@schot-bot](https://github.com/schot-bot))
+  * [#110](https://github.com/nickschot/lux/pull/110) Generate migration versions that sort in creation order ([@schot-bot](https://github.com/schot-bot))
+  * [#78](https://github.com/nickschot/lux/pull/78) fix(responder): strip the space after a [public] error prefix ([@schot-bot](https://github.com/schot-bot))
+  * [#52](https://github.com/nickschot/lux/pull/52) fix(router): replace only dynamic segments in a route's static path ([@schot-bot](https://github.com/schot-bot))
+  * [#50](https://github.com/nickschot/lux/pull/50) fix(build): pin esbuild strictness; default tryCatch rescue to undefined ([@schot-bot](https://github.com/schot-bot))
+  * [#49](https://github.com/nickschot/lux/pull/49) fix(serializer): drop to-one relationship links until endpoints exist ([@schot-bot](https://github.com/schot-bot))
+  * [#44](https://github.com/nickschot/lux/pull/44) fix(database): write has-many-through relationships to the join table ([@schot-bot](https://github.com/schot-bot))
+
+#### :memo: Documentation
+* `lumen-framework`
+  * [#163](https://github.com/nickschot/lux/pull/163) UPGRADING: plain-route bodies leave request.params; keeping parent hooks ([@schot-bot](https://github.com/schot-bot))
+  * [#155](https://github.com/nickschot/lux/pull/155) Pre-4.0 audit of the guides, UPGRADING and CLAUDE.md ([@schot-bot](https://github.com/schot-bot))
+  * [#125](https://github.com/nickschot/lux/pull/125) Document the remaining public API; drop YUIDoc leftovers ([@schot-bot](https://github.com/schot-bot))
+  * [#124](https://github.com/nickschot/lux/pull/124) Document the Controller API; drop the Lux-era overview ([@schot-bot](https://github.com/schot-bot))
+  * [#123](https://github.com/nickschot/lux/pull/123) Document the Model and Query API; drop YUIDoc leftovers in database ([@schot-bot](https://github.com/schot-bot))
+  * [#121](https://github.com/nickschot/lux/pull/121) Restructure UPGRADING.md as a 3.x → 4.0 upgrade log ([@schot-bot](https://github.com/schot-bot))
+  * [#91](https://github.com/nickschot/lux/pull/91) Generate an API reference with TypeDoc, checked in CI ([@schot-bot](https://github.com/schot-bot))
+  * [#88](https://github.com/nickschot/lux/pull/88) Port the social-network example to the current framework, drop todo ([@schot-bot](https://github.com/schot-bot))
+  * [#87](https://github.com/nickschot/lux/pull/87) Rewrite the README, drop stale docs, move internal notes ([@schot-bot](https://github.com/schot-bot))
+
+#### :house: Internal
+* `lumen-framework`
+  * [#157](https://github.com/nickschot/lux/pull/157) Fix Plan Release: let npm on another Node through the devEngines pin ([@schot-bot](https://github.com/schot-bot))
+  * [#151](https://github.com/nickschot/lux/pull/151) Validate response documents against the JSON:API 1.0 schema in tests ([@schot-bot](https://github.com/schot-bot))
+  * [#139](https://github.com/nickschot/lux/pull/139) Drop the Foo$bar naming for internal types ([@schot-bot](https://github.com/schot-bot))
+  * [#126](https://github.com/nickschot/lux/pull/126) Fail the docs job on undocumented public symbols ([@schot-bot](https://github.com/schot-bot))
+  * [#92](https://github.com/nickschot/lux/pull/92) Give public types plain names at their definition ([@schot-bot](https://github.com/schot-bot))
+  * [#77](https://github.com/nickschot/lux/pull/77) refactor: typed readAttribute/writeAttribute helpers for Model access ([@schot-bot](https://github.com/schot-bot))
+  * [#76](https://github.com/nickschot/lux/pull/76) refactor: move off Reflect where plain JavaScript does the job ([@schot-bot](https://github.com/schot-bot))
+  * [#75](https://github.com/nickschot/lux/pull/75) chore(test-app): bump bcryptjs to 3, drop unused mssql ([@schot-bot](https://github.com/schot-bot))
+  * [#73](https://github.com/nickschot/lux/pull/73) chore(deps): bump sqlite3 to 6 ([@schot-bot](https://github.com/schot-bot))
+  * [#72](https://github.com/nickschot/lux/pull/72) chore(deps): upgrade ESLint from 9 to 10 ([@schot-bot](https://github.com/schot-bot))
+  * [#70](https://github.com/nickschot/lux/pull/70) test: upgrade Vitest and coverage-v8 from 4 to 5 ([@schot-bot](https://github.com/schot-bot))
+  * [#69](https://github.com/nickschot/lux/pull/69) test: upgrade sinon from 2 to 22 ([@schot-bot](https://github.com/schot-bot))
+  * [#68](https://github.com/nickschot/lux/pull/68) chore(deps): upgrade ora from 5 to 9 ([@schot-bot](https://github.com/schot-bot))
+  * [#67](https://github.com/nickschot/lux/pull/67) chore(deps): upgrade chalk from 4 to 6 ([@schot-bot](https://github.com/schot-bot))
+  * [#65](https://github.com/nickschot/lux/pull/65) test: replace faker with @faker-js/faker ([@schot-bot](https://github.com/schot-bot))
+  * [#64](https://github.com/nickschot/lux/pull/64) test: use Node's global fetch instead of node-fetch ([@schot-bot](https://github.com/schot-bot))
+  * [#63](https://github.com/nickschot/lux/pull/63) refactor(logger): strip ANSI codes with Node's stripVTControlCharacters ([@schot-bot](https://github.com/schot-bot))
+  * [#62](https://github.com/nickschot/lux/pull/62) chore(deps): bump pg to 8.23 and mysql2 to 3.24 ([@schot-bot](https://github.com/schot-bot))
+  * [#61](https://github.com/nickschot/lux/pull/61) chore(deps): upgrade release-plan to 0.20 and shx to 0.4 ([@schot-bot](https://github.com/schot-bot))
+  * [#60](https://github.com/nickschot/lux/pull/60) chore(deps): patch/minor bumps for esbuild and dev tooling ([@schot-bot](https://github.com/schot-bot))
+  * [#39](https://github.com/nickschot/lux/pull/39) test(request): make request.test assertions able to fail ([@schot-bot](https://github.com/schot-bot))
+  * [#36](https://github.com/nickschot/lux/pull/36) chore(test-app): hide private posts with a visibility rule ([@schot-bot](https://github.com/schot-bot))
+
+#### Committers: 1
+- [@schot-bot](https://github.com/schot-bot)
+
 ## Release (2026-10-04)
 
 * lumen-framework 3.1.1 (patch)
