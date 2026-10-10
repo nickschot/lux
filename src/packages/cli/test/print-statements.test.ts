@@ -17,6 +17,9 @@ describe('module "cli" #printStatements()', () => {
   });
 
   it('prints each statement once, as it runs', async () => {
+    // A retry runs again after a failed attempt left the table behind.
+    await connection.schema.dropTableIfExists('print_statements');
+
     const lines: Array<string> = [];
 
     await printStatements(
@@ -30,7 +33,9 @@ describe('module "cli" #printStatements()', () => {
 
     expect(lines).to.have.length(2);
     expect(lines[0]).to.match(/^create table .print_statements./);
-    expect(lines[1]).to.match(/^create index /);
+    // `create index` on SQLite and PostgreSQL, `alter table … add index` on
+    // MySQL.
+    expect(lines[1]).to.match(/^(create index |alter table .+ add index )/);
     lines.forEach(text => expect(text.endsWith(`;${EOL}`)).to.equal(true));
   });
 });
