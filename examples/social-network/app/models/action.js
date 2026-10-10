@@ -91,7 +91,7 @@ class Action extends Model {
           await Notification
             .transacting(trx)
             .create({
-              message: createMessage(user.name, reaction.type),
+              message: createMessage(user.name, reaction.kind),
               recipientId: reactable.userId,
             });
         }

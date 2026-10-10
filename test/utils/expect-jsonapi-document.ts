@@ -31,13 +31,13 @@ const SPEC_EXCEPTIONS: Array<(document: Record<string, unknown>) => void> = [
 ];
 
 /**
- * Known deviations, each tracked by an issue: a copy of the document with
- * that one bug undone, so it is validated for everything else. Keep each as
- * narrow as the bug, and delete it with the fix.
+ * Known deviations: a copy of the document with that one deviation undone,
+ * so it is validated for everything else. Keep each as narrow as it is, and
+ * delete it when it goes away.
  */
 const KNOWN_DEVIATIONS: Array<(document: Record<string, unknown>) => void> = [
-  // #149: reactions serialize their `type` column as an attribute, which
-  // JSON:API forbids (`type` and `id` share the fields' namespace).
+  // The test-app's reactions serialize a `type` attribute, which JSON:API
+  // forbids, on purpose: they test the `allowReservedNames` opt-out (#149).
   document => {
     const resources = [document.data, document.included].flat();
 

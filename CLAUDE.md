@@ -331,8 +331,9 @@ specs carried through the runner swap — were fixed once the migration settled.
   not `res.json()`: every `application/vnd.api+json` body is then checked
   against the JSON:API 1.0 schema in `test/jsonapi-schema/` (vendored
   unchanged; see its README). Known deviations live in the helper's
-  `KNOWN_DEVIATIONS`, each tied to an issue (#149); delete the entry
-  with the fix rather than adding broader ones.
+  `KNOWN_DEVIATIONS`: today only the test-app's reactions, whose `type`
+  attribute tests the serializer opt-out `allowReservedNames` (#149). Keep
+  each entry as narrow as the deviation, rather than adding broader ones.
 - **API reference: TypeDoc** ([typedoc.json](typedoc.json), `pnpm docs:api` →
   gitignored `docs/api/`), from `src/index.ts`. CI's `docs` job fails on any
   warning — a public symbol without a doc comment (`notDocumented`), a

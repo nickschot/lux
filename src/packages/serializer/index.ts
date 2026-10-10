@@ -134,6 +134,26 @@ class Serializer<T extends Model> {
   linksOnly: Array<string> = [];
 
   /**
+   * Allow `attributes`, `hasOne` or `hasMany` to name `type` or `id`.
+   *
+   * JSON:API forbids a field with either name: they share a namespace with
+   * the resource's own `type` and `id`. By default the application refuses
+   * to boot when a serializer lists one. Set this for a serializer whose
+   * clients already rely on such a field; the application then boots with a
+   * warning, and the field is sent as before:
+   *
+   * ```javascript
+   * class ReactionsSerializer extends Serializer {
+   *   attributes = ['type', 'createdAt'];
+   *
+   *   // `type` breaks JSON:API, but our clients read it.
+   *   allowReservedNames = true;
+   * }
+   * ```
+   */
+  allowReservedNames: boolean = false;
+
+  /**
    * The resolved Model that a Serializer instance represents.
    *
    * @internal

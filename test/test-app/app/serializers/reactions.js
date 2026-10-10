@@ -11,6 +11,9 @@ class ReactionsSerializer extends Serializer {
     'user',
     'comment'
   ];
+
+  // `type` is a field name JSON:API forbids; kept to test the opt-out.
+  allowReservedNames = true;
 }
 
 export default ReactionsSerializer;
