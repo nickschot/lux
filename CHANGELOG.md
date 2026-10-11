@@ -1,5 +1,16 @@
 # Lumen Changelog
 
+## Release (2026-10-11)
+
+* lumen-framework 4.1.0 (minor)
+
+#### :rocket: Enhancement
+* `lumen-framework`
+  * [#166](https://github.com/nickschot/lux/pull/166) auditVisibility() reports values a list's order or selection reveals ([@schot-bot](https://github.com/schot-bot))
+
+#### Committers: 1
+- [@schot-bot](https://github.com/schot-bot)
+
 ## Release (2026-10-10)
 
 * lumen-framework 4.0.0 (major)
