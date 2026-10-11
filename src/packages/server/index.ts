@@ -7,7 +7,7 @@ import { errorName } from '../logger';
 import type Logger from '../logger';
 import type Router from '../router';
 
-import { HAS_BODY } from './constants';
+import { HAS_BODY, MAX_BODY_SIZE } from './constants';
 import { createRequest, parseRequest } from './request';
 import { createResponse } from './response';
 import { createResponder } from './responder';
@@ -18,6 +18,7 @@ import setCORSHeaders from './utils/set-cors-headers';
 import statusForError from './utils/status-for-error';
 import requestIdFor from './utils/request-id-for';
 import clientIpFor from './utils/client-ip-for';
+import validateMaxBodySize from './utils/validate-max-body-size';
 import type { Request } from './request/interfaces';
 import type { Response } from './response/interfaces';
 import type { ServerOptions, CorsConfig } from './interfaces';
@@ -32,9 +33,19 @@ class Server {
 
   declare trustProxy: boolean;
 
+  declare maxBodySize: number;
+
   declare instance: HTTPServer;
 
-  constructor({ logger, router, cors, trustProxy = false }: ServerOptions) {
+  constructor({
+    logger,
+    router,
+    cors,
+    trustProxy = false,
+    maxBodySize = MAX_BODY_SIZE
+  }: ServerOptions) {
+    validateMaxBodySize(maxBodySize, '`server.maxBodySize`');
+
     Object.defineProperties(this, {
       router: {
         value: router,
@@ -59,6 +70,13 @@ class Server {
 
       trustProxy: {
         value: trustProxy,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      },
+
+      maxBodySize: {
+        value: maxBodySize,
         writable: false,
         enumerable: false,
         configurable: false
@@ -125,7 +143,11 @@ class Server {
     const isValid = tryCatchSync(() => this.validateRequest(request), respond);
 
     if (isValid) {
-      parseRequest(request)
+      // The route's controller may allow a different size than the server.
+      const maxBodySize =
+        request.route?.controller.maxBodySize ?? this.maxBodySize;
+
+      parseRequest(request, maxBodySize)
         .then(params => {
           const { route, method } = request;
           const allowed = this.router.methodsFor(request);
@@ -157,6 +179,12 @@ class Server {
             logger.error(err, context);
           } else {
             logger.debug(`${errorName(err)}: ${err?.message}`, context);
+          }
+
+          // The rest of a body too large to read is still on its way: close
+          // the connection rather than receive it.
+          if (statusForError(err) === 413) {
+            response.setHeader('Connection', 'close');
           }
 
           respond(err);

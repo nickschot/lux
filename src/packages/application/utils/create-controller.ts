@@ -10,6 +10,7 @@ import type Controller from '../../controller';
 import type Serializer from '../../serializer';
 import type { BundleNamespace } from '../../loader';
 import type { ApplicationClass } from '../index';
+import validateMaxBodySize from '../../server/utils/validate-max-body-size';
 
 type NamespaceSetting = (typeof NAMESPACE_SETTINGS)[number];
 
@@ -67,6 +68,13 @@ export default function createController<T extends Controller>(
     namespace,
     serializer
   });
+
+  if (instance.maxBodySize !== undefined) {
+    validateMaxBodySize(
+      instance.maxBodySize,
+      `controllers/${key}: \`maxBodySize\``
+    );
+  }
 
   if (serializer) {
     if (!instance.filter.length) {

@@ -1,6 +1,10 @@
 import { Controller } from 'LUMEN_LOCAL';
 
 class PostsController extends Controller {
+  // More than the server's limit, which the body-size tests lower: posts'
+  // routes (`/posts/echo`) take larger bodies than the rest.
+  maxBodySize = 64 * 1024;
+
   params = [
     'user',
     'body',
