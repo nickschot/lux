@@ -2,6 +2,20 @@
 
 ## Release (2026-10-11)
 
+* lumen-framework 4.2.0 (minor)
+
+#### :rocket: Enhancement
+* `lumen-framework`
+  * [#181](https://github.com/nickschot/lux/pull/181) Warn about namespaces that may sort and filter on hidden fields ([@schot-bot](https://github.com/schot-bot))
+  * [#165](https://github.com/nickschot/lux/pull/165) Add a defaultSortAndFilter namespace setting ([@schot-bot](https://github.com/schot-bot))
+  * [#182](https://github.com/nickschot/lux/pull/182) strictVisibility: require a visibility rule for every reachable type ([@schot-bot](https://github.com/schot-bot))
+  * [#179](https://github.com/nickschot/lux/pull/179) Limit the size of request bodies ([@schot-bot](https://github.com/schot-bot))
+
+#### Committers: 1
+- [@schot-bot](https://github.com/schot-bot)
+
+## Release (2026-10-11)
+
 * lumen-framework 4.1.1 (patch)
 
 #### :bug: Bug Fix

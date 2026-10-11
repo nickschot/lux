@@ -1,18 +1,18 @@
 {
   "solution": {
     "lumen-framework": {
-      "impact": "patch",
-      "oldVersion": "4.1.0",
-      "newVersion": "4.1.1",
+      "impact": "minor",
+      "oldVersion": "4.1.1",
+      "newVersion": "4.2.0",
       "tagName": "latest",
       "constraints": [
         {
-          "impact": "patch",
-          "reason": "Appears in changelog section :bug: Bug Fix"
+          "impact": "minor",
+          "reason": "Appears in changelog section :rocket: Enhancement"
         }
       ],
       "pkgJSONPath": "./package.json"
     }
   },
-  "description": "## Release (2026-10-11)\n\n* lumen-framework 4.1.1 (patch)\n\n#### :bug: Bug Fix\n* `lumen-framework`\n  * [#177](https://github.com/nickschot/lux/pull/177) auditVisibility(): onDocument can no longer disable the audit's own checks ([@schot-bot](https://github.com/schot-bot))\n\n#### Committers: 1\n- [@schot-bot](https://github.com/schot-bot)\n"
+  "description": "## Release (2026-10-11)\n\n* lumen-framework 4.2.0 (minor)\n\n#### :rocket: Enhancement\n* `lumen-framework`\n  * [#181](https://github.com/nickschot/lux/pull/181) Warn about namespaces that may sort and filter on hidden fields ([@schot-bot](https://github.com/schot-bot))\n  * [#165](https://github.com/nickschot/lux/pull/165) Add a defaultSortAndFilter namespace setting ([@schot-bot](https://github.com/schot-bot))\n  * [#182](https://github.com/nickschot/lux/pull/182) strictVisibility: require a visibility rule for every reachable type ([@schot-bot](https://github.com/schot-bot))\n  * [#179](https://github.com/nickschot/lux/pull/179) Limit the size of request bodies ([@schot-bot](https://github.com/schot-bot))\n\n#### Committers: 1\n- [@schot-bot](https://github.com/schot-bot)\n"
 }
