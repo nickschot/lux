@@ -2,6 +2,17 @@
 
 ## Release (2026-10-11)
 
+* lumen-framework 4.1.1 (patch)
+
+#### :bug: Bug Fix
+* `lumen-framework`
+  * [#177](https://github.com/nickschot/lux/pull/177) auditVisibility(): onDocument can no longer disable the audit's own checks ([@schot-bot](https://github.com/schot-bot))
+
+#### Committers: 1
+- [@schot-bot](https://github.com/schot-bot)
+
+## Release (2026-10-11)
+
 * lumen-framework 4.1.0 (minor)
 
 #### :rocket: Enhancement
