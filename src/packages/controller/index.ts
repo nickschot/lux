@@ -63,8 +63,8 @@ import type {
  * `app/controllers/admin/application.js`) holds what applies to the whole
  * namespace: its hooks run around every action in it, and it declares the
  * {@link Controller.visibility} rules and the settings
- * `rejectUnlistedAttributes`, `rejectUnlistedRelationships` and
- * `maxIncludeDepth` for every controller in it. See the
+ * `rejectUnlistedAttributes`, `rejectUnlistedRelationships`,
+ * `maxIncludeDepth` and `maxBodySize` for every controller in it. See the
  * [controllers guide](https://github.com/nickschot/lux/blob/main/docs/guides/controllers.md).
  */
 class Controller {
@@ -246,6 +246,26 @@ class Controller {
    * @default 3
    */
   declare maxIncludeDepth: number;
+
+  /**
+   * The largest request body, in bytes, this controller's routes read: a
+   * larger one is a `413 Payload Too Large`. Unset, the server's
+   * `maxBodySize` applies (1 MiB by default). Set it for routes that take
+   * larger bodies, such as an import:
+   *
+   * ```javascript
+   * class ImportsController extends Controller {
+   *   maxBodySize = 10 * 1024 * 1024; // 10 MiB
+   * }
+   * ```
+   *
+   * Set on a namespace's `ApplicationController`, it applies to every
+   * controller in the namespace (and in namespaces nested in it) that does not
+   * set it itself. `Infinity` turns the limit off.
+   *
+   * @default undefined
+   */
+  declare maxBodySize: number | undefined;
 
   /**
    * Whether a namespace may fall back to the root Serializer of a type it has
@@ -765,7 +785,8 @@ class Controller {
 Object.defineProperties(Controller.prototype, {
   rejectUnlistedAttributes: { value: false, writable: true },
   rejectUnlistedRelationships: { value: true, writable: true },
-  maxIncludeDepth: { value: 3, writable: true }
+  maxIncludeDepth: { value: 3, writable: true },
+  maxBodySize: { value: undefined, writable: true }
 });
 
 export default Controller;

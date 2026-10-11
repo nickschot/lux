@@ -283,6 +283,37 @@ describe('module "application" #createController()', () => {
       expect(setsItself(plain, 'maxIncludeDepth')).to.equal(false);
     });
 
+    it('passes `maxBodySize` down, and leaves it unset by default', () => {
+      class AdminApplicationController extends Controller {
+        override maxBodySize = 10 * 1024 * 1024;
+      }
+
+      const application = create('application', ApplicationController);
+      const admin = create(
+        'admin/application',
+        AdminApplicationController,
+        application
+      );
+
+      expect(
+        create('posts', class extends Controller {}, application)
+      ).to.have.property('maxBodySize', undefined);
+      expect(
+        create('admin/posts', class extends Controller {}, admin).maxBodySize
+      ).to.equal(10 * 1024 * 1024);
+    });
+
+    it('refuses a `maxBodySize` that is not a number of bytes', () => {
+      class PostsController extends Controller {
+        override maxBodySize = 1.5;
+      }
+
+      expect(() => create('posts', PostsController)).to.throw(
+        TypeError,
+        'controllers/posts: `maxBodySize` must be a positive whole number'
+      );
+    });
+
     it('falls back to the built-in defaults', () => {
       class PostsController extends Controller {}
 

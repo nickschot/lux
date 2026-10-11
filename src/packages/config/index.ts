@@ -1,4 +1,5 @@
 import { NODE_ENV } from '../../constants';
+import { MAX_BODY_SIZE } from '../server/constants';
 
 import type { Config } from './interfaces';
 
@@ -11,7 +12,8 @@ export function createDefaultConfig(): Config {
       cors: {
         enabled: false
       },
-      trustProxy: false
+      trustProxy: false,
+      maxBodySize: MAX_BODY_SIZE
     },
     logging: {
       level: isProdENV ? 'INFO' : 'DEBUG',

@@ -82,6 +82,7 @@ error.
 | `405 Method Not Allowed` | A method the path doesn't route, with an `Allow` header. | [Routing](routing.md#resources) |
 | `406 Not Acceptable` | An `Accept` header whose every JSON:API entry has parameters. | [Serializers](serializers.md#request-documents) |
 | `409 Conflict` | `data.type` or `data.id` not matching the resource; a unique constraint violation. | [Serializers](serializers.md#request-documents), [Models](models.md#errors-from-the-database) |
+| `413 Payload Too Large` | A request body larger than `maxBodySize` (1 MiB by default). | [Controllers](controllers.md#body-size) |
 | `415 Unsupported Media Type` | A body without `Content-Type: application/vnd.api+json` (a [plain route](routing.md#plain-routes) also takes `application/json`). | [Serializers](serializers.md#request-documents) |
 | `422 Unprocessable Entity` | A model validation failed. | [Models](models.md#validations) |
 | `500 Internal Server Error` | Any other error. | — |

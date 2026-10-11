@@ -1,5 +1,8 @@
 export const HAS_BODY = /^(POST|PATCH)$/;
 
+/** The largest request body read by default, in bytes: 1 MiB. */
+export const MAX_BODY_SIZE = 1024 * 1024;
+
 export const STATUS_CODES = new Map([
   [100, 'Continue'],
   [101, 'Switching Protocols'],

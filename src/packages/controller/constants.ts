@@ -15,5 +15,6 @@ export const BUILT_IN_ACTIONS: ReadonlyArray<BuiltInAction> = Object.freeze([
 export const NAMESPACE_SETTINGS = [
   'rejectUnlistedAttributes',
   'rejectUnlistedRelationships',
-  'maxIncludeDepth'
+  'maxIncludeDepth',
+  'maxBodySize'
 ] as const;

@@ -69,6 +69,27 @@ reported with a pointer to it:
 }
 ```
 
+### Body size
+
+A request body larger than 1 MiB is a `413 Payload Too Large`. Lumen refuses
+it before reading it when its `Content-Length` says so, and stops reading as
+soon as it passes the limit otherwise, so a large body can't exhaust the
+server's memory: the body is read before any hook runs. The connection is
+closed after the `413`.
+
+Change the limit for the whole app with `server.maxBodySize`, in bytes, in
+`config/environments/*.js`. Change it for the routes that need more with a
+controller's `maxBodySize`, or a namespace's on its `ApplicationController`:
+
+```javascript
+class ImportsController extends Controller {
+  maxBodySize = 10 * 1024 * 1024; // 10 MiB
+}
+```
+
+`Infinity` turns the limit off. Anything else but a positive whole number
+stops the app from booting.
+
 ## Reading: what clients may ask for
 
 | Property | Default | Controls |
@@ -462,6 +483,7 @@ sets its own:
 | `rejectUnlistedAttributes` | `false` | `403` for an attribute not in `params`, instead of ignoring it. |
 | `rejectUnlistedRelationships` | `true` | `403` for a relationship not in `params`; `false` ignores it. |
 | `maxIncludeDepth` | `3`, or `0` [without visibility rules](#without-rules) | How deep `?include=` may go; `0` turns it off. |
+| `maxBodySize` | the server's, 1 MiB | The largest request body, in bytes; a larger one is a `413`. See [Body size](#body-size). |
 
 One more applies to its own namespace only, not to nested ones:
 `serializerFallback` (default `true`) says whether the namespace may use the

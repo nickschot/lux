@@ -1,4 +1,4 @@
-import { MalformedRequestError } from '../errors';
+import { MalformedRequestError, PayloadTooLargeError } from '../errors';
 import isObject from '../../../../../utils/is-object';
 import { tryCatchSync } from '../../../../../utils/try-catch';
 import type { Request } from '../../interfaces';
@@ -6,26 +6,51 @@ import type { Request } from '../../interfaces';
 import normalizeDocument from './normalize-document';
 
 /**
- * The request body, read to the end as text.
+ * The request body, read to the end as text. The bytes are decoded once, at
+ * the end: a chunk may end inside a multi-byte character.
+ *
+ * A body of more than `limit` bytes is a `413`: at once when its
+ * `Content-Length` says so, otherwise as soon as the bytes read pass it, and
+ * nothing more of it is kept.
  *
  * @internal
  */
-export function readBody(req: Request): Promise<string> {
+export function readBody(req: Request, limit = Infinity): Promise<string> {
+  const declared = Number(req.headers.get('content-length'));
+
+  if (declared > limit) {
+    return Promise.reject(new PayloadTooLargeError(limit));
+  }
+
   return new Promise((resolve, reject) => {
-    let body = '';
+    const chunks: Array<Buffer> = [];
+    let size = 0;
     const cleanUp = () => {
       req.removeAllListeners('end');
       req.removeAllListeners('data');
       req.removeAllListeners('error');
     };
 
-    req.on('data', data => {
-      body += data.toString();
+    req.on('data', (data: Buffer | string) => {
+      const chunk = typeof data === 'string' ? Buffer.from(data) : data;
+
+      size += chunk.length;
+
+      if (size > limit) {
+        // The rest of the body is discarded as it arrives; the response
+        // closes the connection.
+        cleanUp();
+        chunks.length = 0;
+        reject(new PayloadTooLargeError(limit));
+        return;
+      }
+
+      chunks.push(chunk);
     });
 
     req.once('end', () => {
       cleanUp();
-      resolve(body);
+      resolve(Buffer.concat(chunks).toString('utf8'));
     });
 
     req.once('error', err => {
@@ -41,8 +66,11 @@ export function readBody(req: Request): Promise<string> {
  *
  * @internal
  */
-export async function parseJSON(req: Request): Promise<unknown> {
-  const body = await readBody(req);
+export async function parseJSON(
+  req: Request,
+  limit?: number
+): Promise<unknown> {
+  const body = await readBody(req, limit);
 
   if (!body.trim()) {
     return undefined;
@@ -64,9 +92,10 @@ export async function parseJSON(req: Request): Promise<unknown> {
  * @internal
  */
 export default async function parseWrite(
-  req: Request
+  req: Request,
+  limit?: number
 ): Promise<Record<string, unknown>> {
-  const body = await readBody(req);
+  const body = await readBody(req, limit);
   const parsed = tryCatchSync(() => JSON.parse(body) as unknown);
 
   if (!isObject(parsed)) {

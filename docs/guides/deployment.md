@@ -78,7 +78,9 @@ them from `process.env` as above.
 [Logging](logging.md)) and server settings. The generated file logs JSON at
 `INFO` without request bodies, which suits a log service. Behind a single
 proxy that adds the client's address to `X-Forwarded-For`, add
-`server: { trustProxy: true }`.
+`server: { trustProxy: true }`. Request bodies are limited to 1 MiB; raise
+the limit with `server: { maxBodySize: … }` (in bytes), or only for the
+routes that need it (see [Controllers](controllers.md#body-size)).
 
 To accept browser requests from another origin, enable CORS there too:
 

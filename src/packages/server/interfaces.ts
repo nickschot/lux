@@ -44,6 +44,17 @@ export type ServerConfig = {
   trustProxy?: boolean;
 
   /**
+   * The largest request body, in bytes, the server reads: a larger one is a
+   * `413 Payload Too Large`, refused before it is read when its
+   * `Content-Length` says so, and as soon as it passes the limit otherwise.
+   * Defaults to 1 MiB (`1048576`). `Infinity` turns the limit off.
+   *
+   * A controller's `maxBodySize` sets a different limit for its routes, or,
+   * on a namespace's `ApplicationController`, for the namespace's.
+   */
+  maxBodySize?: number;
+
+  /**
    * How long, in milliseconds, `lumen serve` lets a worker finish the
    * requests in flight when it stops (`SIGTERM`, `SIGINT`) before killing
    * it. Defaults to `8000`: within Docker's 10 s grace period, and Heroku's

@@ -8,7 +8,8 @@ export const CREATE_DEFAULT_CONFIG_RESULT = {
     cors: {
       enabled: false
     },
-    trustProxy: false
+    trustProxy: false,
+    maxBodySize: 1024 * 1024
   },
   logging: {
     level: isProdENV ? 'INFO' : 'DEBUG',
