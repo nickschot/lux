@@ -34,6 +34,24 @@ export function setsItself(
   return explicitSettings.get(controller)?.has(setting) ?? false;
 }
 
+/**
+ * The lists (`sort`, `filter`) each controller got by default, from its
+ * serializer's attributes, rather than listing them.
+ */
+const defaultedLists = new WeakMap<Controller, Set<'sort' | 'filter'>>();
+
+/**
+ * Which of `sort` and `filter` `controller` did not list, and so accepts
+ * every attribute its serializer outputs.
+ *
+ * @internal
+ */
+export function defaultedListsOf(
+  controller: Controller
+): Array<'sort' | 'filter'> {
+  return Array.from(defaultedLists.get(controller) ?? []);
+}
+
 export default function createController<T extends Controller>(
   constructor: ApplicationClass<T>,
   opts: {
@@ -125,13 +143,19 @@ export default function createController<T extends Controller>(
 
   // After the settings: whether there are defaults can be the namespace's call.
   if (serializer && instance.defaultSortAndFilter) {
+    const defaulted = new Set<'sort' | 'filter'>();
+
     if (!instance.filter.length) {
       instance.filter = [...serializer.attributes];
+      defaulted.add('filter');
     }
 
     if (!instance.sort.length) {
       instance.sort = [...serializer.attributes];
+      defaulted.add('sort');
     }
+
+    defaultedLists.set(instance, defaulted);
   }
 
   Object.defineProperty(instance, 'parent', {

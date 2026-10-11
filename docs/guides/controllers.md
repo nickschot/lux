@@ -142,6 +142,12 @@ class MembersUsersController extends Controller {
 }
 ```
 
+Lumen can't see an `afterAction` that hides fields, but it warns at boot
+about the setup that needs one of these: a namespace with visibility rules
+whose controllers run after hooks and accept the default `sort` or `filter`.
+Setting `defaultSortAndFilter` either way silences it: `false` as above, or
+`true` to keep the defaults on purpose.
+
 `query` lets an action read a parameter of its own. It arrives in
 `request.params`:
 
