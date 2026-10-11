@@ -1,6 +1,6 @@
 {
   "name": "lumen-framework",
-  "version": "4.1.1",
+  "version": "4.2.0",
   "description": "Build scalable, Node.js-powered REST APIs with almost no code.",
   "keywords": [
     "mvc",
