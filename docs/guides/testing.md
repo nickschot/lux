@@ -112,7 +112,9 @@ it('shows a member only public posts and their comments', async () => {
   For `/posts/3/comments` that is
   `{ action: 'showRelated', type: 'posts', id: '3', relationship: 'comments' }`.
   Return a message for each problem, or several as an array; each becomes a
-  violation of that request:
+  violation of that request. It runs after the audit's own checks of the
+  document and gets a copy of it, so a check may change the document (walk
+  `data` with `shift()`, say) without hiding anything the audit reports:
 
   ```javascript
   onDocument({ document }) {

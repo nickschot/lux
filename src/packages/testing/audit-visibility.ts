@@ -79,6 +79,9 @@ export type AuditVisibilityOptions = {
    * message, or several, for each problem found: each is reported as a
    * violation of that request. May be async.
    *
+   * It runs after the audit's own checks of the document, and gets a copy
+   * of it: changing the document can't change what the audit reports.
+   *
    * ```javascript
    * onDocument({ document }) {
    *   return document.included
@@ -454,23 +457,6 @@ export default async function auditVisibility(
 
       check(url, res.status, identifiersIn(document));
 
-      if (onDocument && document) {
-        const found = await onDocument({
-          url,
-          status: res.status,
-          route,
-          document: document as Record<string, unknown>
-        });
-        const messages =
-          typeof found === 'string' ? [found] : Array.from(found ?? []);
-
-        const at = { url, status: res.status };
-
-        messages.forEach(message => {
-          audit.violations.push({ ...at, message });
-        });
-      }
-
       if (listing && document) {
         const resources = listedResources(document, listing);
         const at = { url, status: res.status };
@@ -487,6 +473,26 @@ export default async function auditVisibility(
       }
 
       const next: unknown = document?.links?.next;
+
+      // Last, on a copy: the audit's own checks and the next page are done
+      // with the document, so a callback that changes it (walking `data`
+      // with `shift()`) can only add problems, not hide them.
+      if (onDocument && document) {
+        const found = await onDocument({
+          url,
+          status: res.status,
+          route,
+          document: structuredClone(document) as Record<string, unknown>
+        });
+        const messages =
+          typeof found === 'string' ? [found] : Array.from(found ?? []);
+
+        const at = { url, status: res.status };
+
+        messages.forEach(message => {
+          audit.violations.push({ ...at, message });
+        });
+      }
 
       url = typeof next === 'string' ? relative(next) : undefined;
     }
