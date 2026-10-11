@@ -125,6 +125,21 @@ it('shows a member only public posts and their comments', async () => {
   }
   ```
 
+- **`sortAndFilter`** (on by default) looks for values a list's order or
+  selection gives away although its documents hide them, as when an
+  `afterAction` blanks fields per record: sorting and filtering still run
+  against the real column. Each list (an index or a to-many related endpoint) is checked for:
+  - records that leave out an attribute their serializer outputs, while the
+    route accepts it as `sort` or `filter`;
+  - an attribute some records show as `null` and others don't. The list is
+    requested sorted by it, and `null`s that aren't one block at the start
+    or the end mean the order used values the response hides. This adds a
+    request per such attribute and list, and finds a leak only when the
+    fixture has records with a value on both sides of a hidden one.
+
+  Pass `false` for a namespace whose lists order by something else before
+  the requested `sort`, which can interleave real `null`s.
+
 ### The result
 
 - **`violations`**:
@@ -134,6 +149,8 @@ it('shows a member only public posts and their comments', async () => {
     `visible` doesn't allow (`{ url, status, type, id, message }`), whatever
     it answered with: answering at all reveals that the owner exists, and
     what it is linked to;
+  - each value a list's order or selection reveals (`{ url, status, message }`),
+    with `sortAndFilter`;
   - each problem `onDocument` returned (`{ url, status, message }`);
   - each read that failed with a status other than `401`, `403` or `404`
     (`{ url, status }`), since that read went unchecked. A `404` for a

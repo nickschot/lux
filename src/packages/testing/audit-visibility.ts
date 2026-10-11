@@ -6,6 +6,14 @@ import type Route from '../router/route';
 
 import identifiersIn from './utils/identifiers-in';
 import type { Identifier } from './utils/identifiers-in';
+import {
+  hiddenButQueryable,
+  interleavedNulls,
+  listedResources,
+  listingOf,
+  sortProbes
+} from './utils/query-oracles';
+import type { Listing } from './utils/query-oracles';
 
 /**
  * Which records of one type a request may see, for {@link auditVisibility}:
@@ -82,6 +90,27 @@ export type AuditVisibilityOptions = {
   onDocument?: (
     response: AuditedDocument
   ) => DocumentCheckResult | Promise<DocumentCheckResult>;
+
+  /**
+   * Whether to look for values a list's order or selection reveals although
+   * its documents hide them, as when an `afterAction` blanks fields per
+   * record: sorting and filtering still run against the real column. On by
+   * default. Each list is checked for
+   *
+   * - records that leave out an attribute their serializer outputs, while
+   *   the route accepts it as `sort` or `filter`;
+   * - an attribute some records show as `null` and others don't: the list is
+   *   requested sorted by it, and `null`s that are not one block at the
+   *   start or the end mean the order used values the response hides.
+   *
+   * The second check adds a request per such attribute and list, and finds
+   * a leak only when the fixture has records on both sides of a hidden one.
+   * Turn it off for a list whose action orders by something else before the
+   * requested `sort`, which can interleave real `null`s.
+   *
+   * @default true
+   */
+  sortAndFilter?: boolean;
 };
 
 /**
@@ -128,8 +157,9 @@ export type DocumentCheckResult =
  * A record a response contained that the audit's `visible` does not allow; a
  * relationship or related endpoint that answered for an owner `visible` does
  * not allow; a request that failed with an error other than `401`, `403` or
- * `404`, so that what it serves could not be checked; or a problem
- * `onDocument` found.
+ * `404`, so that what it serves could not be checked; a value a list's order
+ * or selection reveals (see `sortAndFilter`); or a problem `onDocument`
+ * found.
  */
 export type VisibilityViolation = {
   /** The request, as a path and query string. */
@@ -144,8 +174,8 @@ export type VisibilityViolation = {
   /** The record's id, if the violation is a record. */
   id?: string;
   /**
-   * What is wrong, for a hidden owner an endpoint answered for and for what
-   * `onDocument` found.
+   * What is wrong, for a hidden owner an endpoint answered for, a value a
+   * list's order or selection reveals, and what `onDocument` found.
    */
   message?: string;
 };
@@ -273,7 +303,8 @@ export default async function auditVisibility(
     ids = {},
     query: required = {},
     origin = originOf(app),
-    onDocument
+    onDocument,
+    sortAndFilter = true
   }: AuditVisibilityOptions
 ): Promise<VisibilityAudit> {
   const audit: VisibilityAudit = { requests: [], violations: [], seen: {} };
@@ -336,8 +367,44 @@ export default async function auditVisibility(
     });
   };
 
-  // One request, and the pages after it.
-  const read = async (first: string, route: AuditedRoute) => {
+  // Request a list sorted by `name`, and report an order that used values its
+  // documents hide.
+  const probeSort = async (base: string, listing: Listing, name: string) => {
+    const url = `${base}${base.includes('?') ? '&' : '?'}sort=${name}`;
+
+    audit.requests.push(url);
+
+    const res: globalThis.Response = await fetch(origin + url, {
+      headers: { Accept: 'application/vnd.api+json', ...headers }
+    });
+
+    if (!res.ok || !res.headers.get('content-type')?.includes('json')) {
+      if (!res.ok && !DENIED.has(res.status)) {
+        audit.violations.push({ url, status: res.status });
+      }
+
+      await res.body?.cancel();
+      return;
+    }
+
+    const message = interleavedNulls(
+      listedResources(await res.json(), listing),
+      listing,
+      name
+    );
+
+    if (message) {
+      audit.violations.push({ url, status: res.status, message });
+    }
+  };
+
+  // One request, and the pages after it. `listing` is given for a list
+  // requested without `include`, to check its order and selection.
+  const read = async (
+    first: string,
+    route: AuditedRoute,
+    listing?: Listing
+  ) => {
     let url: string | undefined = first;
 
     // A relationship or related endpoint whose owner the request may not
@@ -404,6 +471,21 @@ export default async function auditVisibility(
         });
       }
 
+      if (listing && document) {
+        const resources = listedResources(document, listing);
+        const at = { url, status: res.status };
+
+        hiddenButQueryable(resources, listing).forEach(message => {
+          audit.violations.push({ ...at, message });
+        });
+
+        if (page === 0) {
+          for (const name of sortProbes(resources, listing)) {
+            await probeSort(first, listing, name);
+          }
+        }
+      }
+
       const next: unknown = document?.links?.next;
 
       url = typeof next === 'string' ? relative(next) : undefined;
@@ -438,6 +520,19 @@ export default async function auditVisibility(
       return search ? `?${search}` : '';
     };
 
+    // A list (an index, or a to-many related endpoint) whose order and
+    // selection to check.
+    const lister = route.related ?? route.controller;
+    const listing =
+      sortAndFilter && paged && served && lister.serializer
+        ? listingOf(
+            served,
+            lister.serializer.attributes,
+            lister.sort,
+            lister.filter
+          )
+        : undefined;
+
     const about = {
       action: route.action as AuditedRoute['action'],
       type: route.controller.model.resourceName,
@@ -453,7 +548,11 @@ export default async function auditVisibility(
 
     for (const [path, target] of targets) {
       for (const include of includesOf(route)) {
-        await read(path + query(include), target);
+        await read(
+          path + query(include),
+          target,
+          include ? undefined : listing
+        );
       }
     }
   }
