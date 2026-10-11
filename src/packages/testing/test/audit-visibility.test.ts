@@ -1,3 +1,7 @@
+import { createServer } from 'http';
+import type { AddressInfo } from 'net';
+import type { Server } from 'http';
+
 import { it, describe, beforeAll, afterAll, expect } from 'vitest';
 
 import { auditVisibility } from '../index';
@@ -454,6 +458,99 @@ describe('auditVisibility()', () => {
       await expect(
         auditVisibility(idle, { namespace: 'members', visible: everything })
       ).rejects.toThrow('the application is not listening');
+    });
+  });
+
+  describe('`sortAndFilter`', () => {
+    // Stands in for an app whose afterAction hides part of a record: even
+    // posts show no body and leave out their title. The app behind it still
+    // sorts and filters on the real columns.
+    let proxy: Server;
+    let proxyOrigin: string;
+
+    beforeAll(async () => {
+      const { port } = app.server.instance.address() as AddressInfo;
+      const upstreamOrigin = `http://localhost:${port}`;
+
+      proxy = createServer(async (req, res) => {
+        const upstream = await fetch(upstreamOrigin + req.url, {
+          headers: { Accept: 'application/vnd.api+json' }
+        });
+        const contentType = upstream.headers.get('content-type') ?? '';
+        let body = await upstream.text();
+
+        if (contentType.includes('json')) {
+          const document = JSON.parse(body);
+          const resources = [document?.data, document?.included ?? []].flat();
+
+          resources.forEach(resource => {
+            if (
+              resource?.type === 'posts' &&
+              Number(resource.id) % 2 === 0 &&
+              resource.attributes
+            ) {
+              resource.attributes.body = null;
+              delete resource.attributes.title;
+            }
+          });
+
+          body = JSON.stringify(document);
+        }
+
+        res.writeHead(upstream.status, { 'Content-Type': contentType });
+        res.end(body);
+      });
+
+      await new Promise<void>(resolve => proxy.listen(0, resolve));
+      proxyOrigin = `http://localhost:${(proxy.address() as AddressInfo).port}`;
+    });
+
+    afterAll(async () => {
+      await new Promise(resolve => proxy.close(resolve));
+    });
+
+    const audit = (sortAndFilter?: boolean) =>
+      auditVisibility(app, {
+        namespace: 'members',
+        query: MEMBER_QUERY,
+        visible: memberVisible,
+        ids: fixtureIds(),
+        origin: proxyOrigin,
+        ...(sortAndFilter === undefined ? {} : { sortAndFilter })
+      });
+
+    it('reports an attribute a list leaves out but sorts and filters on', async () => {
+      const { violations } = await audit();
+      const found = violations.find(
+        ({ url, message }) =>
+          url.startsWith('/members/posts?') &&
+          message?.includes('leave out `title`')
+      );
+
+      expect(found?.message).to.match(
+        /^posts \d+.* leave out `title`, which this route accepts as `sort` and `filter`: /
+      );
+    });
+
+    it('reports a list sorted by values its documents hide', async () => {
+      const { requests, violations } = await audit();
+      const found = violations.find(({ url }) =>
+        /^\/members\/posts\?.*sort=body/.test(url)
+      );
+
+      expect(
+        requests.some(url => /^\/members\/posts\?.*sort=body/.test(url))
+      ).to.equal(true);
+      expect(found?.message).to.match(
+        /^sorting by `body` puts posts \d+.*, which show it as null, between records that show a value/
+      );
+    });
+
+    it('can be turned off', async () => {
+      const { requests, violations } = await audit(false);
+
+      expect(requests.filter(url => url.includes('sort='))).to.deep.equal([]);
+      expect(violations).to.deep.equal([]);
     });
   });
 
