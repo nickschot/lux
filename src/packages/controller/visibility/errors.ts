@@ -30,3 +30,28 @@ export class VisibilityRuleError extends TypeError {
     super(`The visibility rule for "${resourceName}" ${problem}`);
   }
 }
+
+/**
+ * A namespace with `strictVisibility` can reach types it has no rule for:
+ * each listed with the shortest way it is reached.
+ *
+ * @internal
+ */
+export class StrictVisibilityError extends TypeError {
+  constructor(missing: Map<string, Map<string, string>>) {
+    super(
+      [
+        'Namespaces with `strictVisibility` reach types they have no ' +
+          'visibility rule for. Give each a rule, `true` if it may be seen ' +
+          'in full:',
+        ...Array.from(missing, ([namespace, types]) => [
+          `  /${namespace}:`,
+          ...Array.from(
+            types,
+            ([type, via]) => `    - ${type} (reached through ${via})`
+          )
+        ]).flat()
+      ].join('\n')
+    );
+  }
+}

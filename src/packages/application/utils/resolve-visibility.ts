@@ -6,32 +6,51 @@ import type { Visibility } from '../../controller';
 import type { ModelClass } from '../../database';
 import type { BundleNamespace } from '../../loader';
 
-type ControllerClass = { visibility?: Visibility };
+type ControllerClass = {
+  visibility?: Visibility;
+  strictVisibility?: unknown;
+};
+
+const classOf = (controller: Controller): ControllerClass =>
+  controller.constructor as ControllerClass;
 
 const rulesOf = (controller: Controller): Visibility | undefined =>
-  (controller.constructor as ControllerClass).visibility;
+  classOf(controller).visibility;
 
 /**
- * Whether an `ApplicationController` has rules of its own: declared on its
- * class, or inherited from a class other than `Controller` (whose `{}` is
- * only the default). One extending `Controller` without declaring any —
- * e.g. to add a hook — has none, and takes its parent namespace's.
+ * Whether an `ApplicationController` declares `setting` itself: on its
+ * class, or inherited from a class other than `Controller` (whose value is
+ * only the default). One extending `Controller` without declaring it — e.g.
+ * to add a hook — takes its parent namespace's. Decided by which class
+ * holds the static, not by its value: `static strictVisibility = false`
+ * declares it, although it equals the default.
  */
-const declaresRules = (application: Controller): boolean =>
-  rulesOf(application) !== Controller.visibility;
+function declares(
+  application: Controller,
+  setting: 'visibility' | 'strictVisibility'
+): boolean {
+  let owner: unknown = application.constructor;
+
+  while (owner && !Object.hasOwn(owner, setting)) {
+    owner = Object.getPrototypeOf(owner);
+  }
+
+  return Boolean(owner) && owner !== Controller;
+}
 
 /**
- * The rules that govern `key`'s namespace: those of the closest
- * `ApplicationController`, from the namespace's own up, that has rules.
+ * The closest `ApplicationController` governing `key`'s namespace for
+ * `setting`: from the namespace's own up, the first that declares it.
  *
  * Walks up with `dirname()` until it stops changing the path — at `.` for the
  * relative keys the loader produces, at `/` for anything else — so the walk
  * ends whatever the key.
  */
-function rulesFor(
+function governing(
   controllers: BundleNamespace<Controller> | Map<string, Controller>,
-  key: string
-): Visibility | undefined {
+  key: string,
+  setting: 'visibility' | 'strictVisibility'
+): Controller | undefined {
   let namespace = posix.dirname(key);
   let previous: string | undefined;
 
@@ -40,8 +59,8 @@ function rulesFor(
       namespace === '.' ? 'application' : `${namespace}/application`
     );
 
-    if (application && declaresRules(application)) {
-      return rulesOf(application);
+    if (application && declares(application, setting)) {
+      return application;
     }
 
     previous = namespace;
@@ -54,8 +73,10 @@ function rulesFor(
 /**
  * Give every controller the visibility rules of its namespace — the
  * `static visibility` of the namespace's `ApplicationController`, or, when it
- * has none or declares none, the closest ancestor namespace's — and whether
- * any were declared (`hasVisibilityRules`), and refuse to boot on rules that
+ * has none or declares none, the closest ancestor namespace's — whether any
+ * were declared (`hasVisibilityRules`), and whether the namespace's
+ * `strictVisibility`, resolved the same way, is on (`hasStrictVisibility`);
+ * and refuse to boot on rules that
  * cannot be applied: rules declared on any other controller (a rule must hold for the
  * whole namespace, since types are included across controllers), rules for a
  * type that has no model, and rules that are not functions.
@@ -80,6 +101,20 @@ export default function resolveVisibility(
       );
     }
 
+    if (!isApplication && Object.hasOwn(ctor, 'strictVisibility')) {
+      problems.push(
+        `${key}: declare \`strictVisibility\` on the namespace's ` +
+          'ApplicationController instead; it applies to the whole namespace.'
+      );
+    }
+
+    if (
+      isApplication &&
+      typeof classOf(controller).strictVisibility !== 'boolean'
+    ) {
+      problems.push(`${key}: \`strictVisibility\` must be true or false.`);
+    }
+
     if (isApplication) {
       const rules = rulesOf(controller) ?? {};
 
@@ -89,8 +124,10 @@ export default function resolveVisibility(
         Object.entries(rules).forEach(([type, rule]) => {
           if (!types.has(type)) {
             problems.push(`${key}: no model for type "${type}".`);
-          } else if (typeof rule !== 'function') {
-            problems.push(`${key}: the rule for "${type}" is not a function.`);
+          } else if (typeof rule !== 'function' && rule !== true) {
+            problems.push(
+              `${key}: the rule for "${type}" is not a function or \`true\`.`
+            );
           }
         });
       }
@@ -102,7 +139,9 @@ export default function resolveVisibility(
   }
 
   controllers.forEach((controller, key) => {
-    const rules = rulesFor(controllers, key);
+    const governor = governing(controllers, key, 'visibility');
+    const rules = governor && rulesOf(governor);
+    const strict = governing(controllers, key, 'strictVisibility');
 
     Object.defineProperties(controller, {
       visibility: {
@@ -113,6 +152,12 @@ export default function resolveVisibility(
       },
       hasVisibilityRules: {
         value: rules !== undefined,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      },
+      hasStrictVisibility: {
+        value: Boolean(strict && classOf(strict).strictVisibility),
         writable: false,
         enumerable: false,
         configurable: false

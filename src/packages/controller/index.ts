@@ -387,8 +387,45 @@ class Controller {
    * relationship or related endpoints unless they ask for them, and the app
    * warns at boot. `static visibility = {}` declares that a namespace may see
    * everything, and lifts them.
+   *
+   * A rule may also be `true`: the request may see every record of the type.
+   * It is the same as leaving the type out, but explicit, which
+   * {@link Controller.strictVisibility} requires.
    */
   static visibility: Visibility = {};
+
+  /**
+   * Whether every type the namespace can reach must have a visibility rule.
+   * In a namespace with rules, a type without one is visible in full, so a
+   * relationship added to a serializer can make a new type reachable,
+   * through `include`, linkage or a related endpoint, without anyone
+   * deciding what it shows. With `strictVisibility`, the app refuses to boot
+   * until it has a rule, and lists each type with the path that reaches it.
+   * A type that may be seen in full says so with `true`:
+   *
+   * ```javascript
+   * // app/controllers/application.js
+   * class ApplicationController extends Controller {
+   *   static strictVisibility = true;
+   *
+   *   static visibility = {
+   *     posts: query => query.isPublic(),
+   *     tags: true
+   *   };
+   * }
+   * ```
+   *
+   * The types a namespace can reach are each controller's own, and every
+   * type its serializers' relationships lead to, down to its
+   * `maxIncludeDepth` (and always the direct ones, whose linkage every
+   * response carries). Declared on a namespace's `ApplicationController`, it
+   * follows nested namespaces as the rules do, until one declares its own:
+   * an admin namespace that extends this class and sees everything needs
+   * `static strictVisibility = false`, or a `true` rule per type.
+   *
+   * @default false
+   */
+  static strictVisibility: boolean = false;
 
   /**
    * Narrow `query` with the visibility rule for its type that applies to
@@ -483,6 +520,14 @@ class Controller {
    * @internal
    */
   declare hasVisibilityRules: boolean;
+
+  /**
+   * Whether this Controller's namespace, or the closest one it is nested in
+   * that declares it, has `strictVisibility`. Resolved at boot.
+   *
+   * @internal
+   */
+  declare hasStrictVisibility: boolean;
 
   /**
    * A boolean value representing whether or not a Controller instance has a

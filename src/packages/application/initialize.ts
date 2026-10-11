@@ -18,6 +18,7 @@ import validateAttributes from './utils/validate-attributes';
 import validateReservedNames from './utils/validate-reserved-names';
 import resolveVisibility from './utils/resolve-visibility';
 import restrictOpenNamespaces from './utils/restrict-open-namespaces';
+import validateStrictVisibility from './utils/validate-strict-visibility';
 import warnQueryParamNames from './utils/warn-query-param-names';
 
 import type Controller from '../controller';
@@ -134,6 +135,7 @@ export default async function initialize<T extends Application>(
   validateAttributes(controllers, serializers);
   validateReservedNames(serializers, logger);
   resolveVisibility(controllers, store.models.values());
+  validateStrictVisibility(controllers);
   // Before the serializers are checked: it lowers `maxIncludeDepth`, which
   // decides how many of them a namespace needs.
   restrictOpenNamespaces(controllers, logger);

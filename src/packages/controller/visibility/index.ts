@@ -7,11 +7,14 @@ import { VisibilityRuleError } from './errors';
 
 /**
  * A namespace's visibility rules: per resource type, a function that narrows
- * a `Query` of that type to the rows the request may see.
+ * a `Query` of that type to the rows the request may see, or `true` for a
+ * type the request may see in full. `true` is the same as no rule, but says
+ * so: a namespace with `strictVisibility` requires a rule for every type it
+ * can reach.
  */
 export type Visibility = Record<
   string,
-  (query: Query<Array<Model>>, request: Request) => Query<Array<Model>>
+  ((query: Query<Array<Model>>, request: Request) => Query<Array<Model>>) | true
 >;
 
 /**
