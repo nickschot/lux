@@ -259,6 +259,11 @@ const posts = await Post.where({ isPublic: true })
 | `count()` | `User.where({ name }).count()` | The number of matching records. |
 
 Attributes are camelCase in conditions (`{ userId: 1 }`), as on records.
+A name the model has no attribute for, whether a typo or a relationship
+(`{ user: 1 }` rather than `{ userId: 1 }`), is an error when the query is
+built, in `where`, `not`, `whereBetween`, `order`, `select` and `distinct`
+alike. Dropping it instead would match more records than meant. In a
+visibility rule, it would match all of them.
 
 ### Scopes
 
