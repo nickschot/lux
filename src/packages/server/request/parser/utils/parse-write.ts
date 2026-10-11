@@ -6,26 +6,27 @@ import type { Request } from '../../interfaces';
 import normalizeDocument from './normalize-document';
 
 /**
- * The request body, read to the end as text.
+ * The request body, read to the end as text. The bytes are decoded once, at
+ * the end: a chunk may end inside a multi-byte character.
  *
  * @internal
  */
 export function readBody(req: Request): Promise<string> {
   return new Promise((resolve, reject) => {
-    let body = '';
+    const chunks: Array<Buffer> = [];
     const cleanUp = () => {
       req.removeAllListeners('end');
       req.removeAllListeners('data');
       req.removeAllListeners('error');
     };
 
-    req.on('data', data => {
-      body += data.toString();
+    req.on('data', (data: Buffer | string) => {
+      chunks.push(typeof data === 'string' ? Buffer.from(data) : data);
     });
 
     req.once('end', () => {
       cleanUp();
-      resolve(body);
+      resolve(Buffer.concat(chunks).toString('utf8'));
     });
 
     req.once('error', err => {
