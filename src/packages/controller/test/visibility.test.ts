@@ -483,6 +483,20 @@ describe('visibility rules', () => {
       expect(query.snapshots).to.deep.equal([]);
     });
 
+    // A misspelt attribute used to drop the rule's only condition, so the
+    // rule hid nothing: every post was visible.
+    it('fails on a rule that names an attribute the type does not have', () => {
+      const scope = new Scope(
+        { posts: query => query.where({ isPubic: true }) },
+        req
+      );
+
+      expect(() => scope.apply(Post.select('id'))).to.throw(
+        TypeError,
+        'has no attribute "isPubic" (in `where()`)'
+      );
+    });
+
     it('cannot be unscoped', async () => {
       const scope = new Scope({ posts: query => query.isPublic() }, req);
       const query = scope.apply(Post.select('id')).unscope('isPublic');

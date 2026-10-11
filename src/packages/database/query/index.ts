@@ -13,6 +13,7 @@ import type { ModelClass } from '../interfaces';
 
 import scopesFor from './utils/scopes-for';
 import formatSelect from './utils/format-select';
+import { UnknownColumnError } from './errors';
 import { runQuery, createRunner } from './runner';
 
 /**
@@ -184,6 +185,21 @@ class Query<T = any> extends Promise<T> {
   }
 
   /**
+   * The column of `attr`, an attribute name as on records. Throws for one
+   * the model doesn't have: dropping it would widen a condition, or select
+   * or sort by nothing.
+   */
+  private columnFor(attr: string, method: string): string {
+    const columnName = this.model.columnNameFor(attr);
+
+    if (!columnName) {
+      throw new UnknownColumnError(this.model, attr, method);
+    }
+
+    return columnName;
+  }
+
+  /**
    * The records that do *not* match `conditions`; the opposite of
    * {@link Query.where}, with the same conditions.
    *
@@ -264,28 +280,26 @@ class Query<T = any> extends Promise<T> {
   /**
    * Sort by the attribute `attr`, `'ASC'` (the default) or `'DESC'`. Ties are
    * broken by the primary key, so pages are stable. A later `order` replaces an
-   * earlier one; an attribute the model doesn't have is ignored.
+   * earlier one. An attribute the model doesn't have throws an error.
    *
    * ```javascript
    * await Post.order('createdAt', 'DESC');
    * ```
    */
   order(attr: string, direction: string = 'ASC'): this {
-    if (!this.shouldCount) {
-      const columnName = this.model.columnNameFor(attr);
+    const columnName = this.columnFor(attr, 'order');
 
-      if (columnName) {
-        this.snapshots = this.snapshots
-          .filter(([method]) => method !== 'orderByRaw')
-          .concat([
-            [
-              'orderByRaw',
-              uniq([columnName, this.model.primaryKey])
-                .map(key => `${this.model.tableName}.${key} ${direction}`)
-                .join(', ')
-            ]
-          ]);
-      }
+    if (!this.shouldCount) {
+      this.snapshots = this.snapshots
+        .filter(([method]) => method !== 'orderByRaw')
+        .concat([
+          [
+            'orderByRaw',
+            uniq([columnName, this.model.primaryKey])
+              .map(key => `${this.model.tableName}.${key} ${direction}`)
+              .join(', ')
+          ]
+        ]);
     }
 
     return this;
@@ -301,8 +315,9 @@ class Query<T = any> extends Promise<T> {
    * await Post.where({ publishedAt: null }); // published_at IS NULL
    * ```
    *
-   * Names that aren't attributes of the model are ignored. Calls chain as
-   * `AND`.
+   * A name that isn't an attribute of the model throws an error, rather than
+   * dropping the condition and matching more records than meant. Calls chain
+   * as `AND`.
    *
    * @param not - Used by {@link Query.not}.
    */
@@ -314,35 +329,33 @@ class Query<T = any> extends Promise<T> {
     const where = entries(conditions).reduce<Record<string, any>>(
       (obj, condition) => {
         let [key, value] = condition;
-        const columnName = this.model.columnNameFor(key);
+        const columnName = this.columnFor(key, not ? 'not' : 'where');
 
-        if (columnName) {
-          key = `${tableName}.${columnName}`;
+        key = `${tableName}.${columnName}`;
 
-          if (typeof value === 'undefined') {
-            value = null;
-          }
+        if (typeof value === 'undefined') {
+          value = null;
+        }
 
-          if (isSubquery(value)) {
-            // `model.table().select(...)`: the column is one of its values.
-            this.snapshots.push([not ? 'whereNotIn' : 'whereIn', [key, value]]);
-          } else if (Array.isArray(value)) {
-            if (value.length === 1) {
-              return {
-                ...obj,
-                [key]: value[0]
-              };
-            }
-
-            this.snapshots.push([not ? 'whereNotIn' : 'whereIn', [key, value]]);
-          } else if (value === null) {
-            this.snapshots.push([not ? 'whereNotNull' : 'whereNull', [key]]);
-          } else {
+        if (isSubquery(value)) {
+          // `model.table().select(...)`: the column is one of its values.
+          this.snapshots.push([not ? 'whereNotIn' : 'whereIn', [key, value]]);
+        } else if (Array.isArray(value)) {
+          if (value.length === 1) {
             return {
               ...obj,
-              [key]: value
+              [key]: value[0]
             };
           }
+
+          this.snapshots.push([not ? 'whereNotIn' : 'whereIn', [key, value]]);
+        } else if (value === null) {
+          this.snapshots.push([not ? 'whereNotNull' : 'whereNull', [key]]);
+        } else {
+          return {
+            ...obj,
+            [key]: value
+          };
         }
 
         return obj;
@@ -374,17 +387,15 @@ class Query<T = any> extends Promise<T> {
     entries(conditions).forEach(condition => {
       let [key] = condition;
       const [, value] = condition;
-      const columnName = this.model.columnNameFor(key);
+      const columnName = this.columnFor(key, 'whereBetween');
 
-      if (columnName) {
-        key = `${tableName}.${columnName}`;
+      key = `${tableName}.${columnName}`;
 
-        if (Array.isArray(value)) {
-          this.snapshots.push([
-            `where${not ? 'NotBetween' : 'Between'}`,
-            [key, value]
-          ]);
-        }
+      if (Array.isArray(value)) {
+        this.snapshots.push([
+          `where${not ? 'NotBetween' : 'Between'}`,
+          [key, value]
+        ]);
       }
     });
 
@@ -493,6 +504,8 @@ class Query<T = any> extends Promise<T> {
    * ```
    */
   select(...attrs: Array<string>): this {
+    attrs.forEach(attr => this.columnFor(attr, 'select'));
+
     if (!this.shouldCount) {
       this.snapshots.push(['select', formatSelect(this.model, attrs)]);
     }
@@ -504,6 +517,8 @@ class Query<T = any> extends Promise<T> {
    * Only unique combinations of these attributes.
    */
   distinct(...attrs: Array<string>): this {
+    attrs.forEach(attr => this.columnFor(attr, 'distinct'));
+
     if (!this.shouldCount) {
       this.snapshots.push(['distinct', formatSelect(this.model, attrs)]);
     }

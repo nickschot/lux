@@ -808,6 +808,54 @@ describe('module "database/query"', () => {
       });
     });
 
+    describe('an attribute the model does not have', () => {
+      // A typo, or a relationship where an attribute belongs. It used to be
+      // dropped, so `where({ userID: 1 })` matched every post.
+      const message = (attribute: string, method: string) =>
+        `TestModel has no attribute "${attribute}" (in \`${method}()\`)`;
+
+      it('is an error in `where()` and `not()`', () => {
+        expect(() =>
+          new Query(TestModel).where({ isPublic: true, userID: 1 })
+        ).to.throw(TypeError, message('userID', 'where'));
+        expect(() => new Query(TestModel).not({ user: 1 })).to.throw(
+          TypeError,
+          message('user', 'not')
+        );
+      });
+
+      it('is an error in `whereBetween()`', () => {
+        expect(() =>
+          new Query(TestModel).whereBetween({ created: [1, 2] })
+        ).to.throw(TypeError, message('created', 'whereBetween'));
+      });
+
+      it('is an error in `order()`, where it used to sort by nothing', () => {
+        expect(() => new Query(TestModel).order('created', 'DESC')).to.throw(
+          TypeError,
+          message('created', 'order')
+        );
+      });
+
+      it('is an error in `select()` and `distinct()`', () => {
+        expect(() => new Query(TestModel).select('id', 'tags')).to.throw(
+          TypeError,
+          message('tags', 'select')
+        );
+        expect(() => new Query(TestModel).distinct('nope')).to.throw(
+          TypeError,
+          message('nope', 'distinct')
+        );
+      });
+
+      it('is an error even in a count, which drops the rest', () => {
+        const count = new Query(TestModel).count();
+
+        expect(() => count.order('nope')).to.throw(TypeError);
+        expect(() => count.select('nope')).to.throw(TypeError);
+      });
+    });
+
     describe('#distinct()', () => {
       let subject;
       const attrs = ['title'];

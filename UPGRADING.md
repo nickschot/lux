@@ -61,6 +61,8 @@ Check, if it applies to your app:
     proxy of the record ([Models](#models)).
 14. **Imports of files inside the package** (`lumen-framework/dist/…`) no
     longer resolve ([Package entries](#package-entries)).
+15. **Queries that name an attribute the model doesn't have** now throw
+    instead of ignoring it ([Models](#models)).
 
 **ember-data clients:** a `belongsTo` the controller's `params` don't list
 is still a `403`, as in 3.x. To accept and ignore it instead, set the new
@@ -348,6 +350,18 @@ See [Controllers](docs/guides/controllers.md).
 ### Models
 
 See [Models and queries](docs/guides/models.md).
+
+- **An attribute the model doesn't have is an error in a query.** `where`,
+  `not`, `whereBetween`, `order`, `select` and `distinct` throw a `TypeError`
+  naming the model, the attribute and the method when a name isn't an
+  attribute of the model, such as a typo or a relationship where its foreign
+  key belongs. `where`, `not`, `whereBetween` and `order` used to drop it
+  silently, so a condition matched more records than meant, and a misspelt
+  visibility rule hid nothing. `select` and `distinct` failed with an SQL
+  error about a column named `undefined`. **Do:** fix the names the error
+  reports. An app-side safeguard that checked this, outside production, can
+  go. (A fix in a 4.x release, listed here since it can surface in an app
+  moving to 4.)
 
 - **New: `foreignKey`** sets a relationship's column when it doesn't follow
   the naming (`writer: { inverse: 'books', model: 'author', foreignKey:
