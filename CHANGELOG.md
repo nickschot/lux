@@ -2,6 +2,17 @@
 
 ## Release (2026-10-11)
 
+* lumen-framework 4.2.1 (patch)
+
+#### :bug: Bug Fix
+* `lumen-framework`
+  * [#183](https://github.com/nickschot/lux/pull/183) Queries: an attribute the model doesn't have is an error ([@schot-bot](https://github.com/schot-bot))
+
+#### Committers: 1
+- [@schot-bot](https://github.com/schot-bot)
+
+## Release (2026-10-11)
+
 * lumen-framework 4.2.0 (minor)
 
 #### :rocket: Enhancement
