@@ -19,6 +19,7 @@ import validateReservedNames from './utils/validate-reserved-names';
 import resolveVisibility from './utils/resolve-visibility';
 import restrictOpenNamespaces from './utils/restrict-open-namespaces';
 import validateStrictVisibility from './utils/validate-strict-visibility';
+import warnDefaultSortAndFilter from './utils/warn-default-sort-and-filter';
 import warnQueryParamNames from './utils/warn-query-param-names';
 
 import type Controller from '../controller';
@@ -139,6 +140,7 @@ export default async function initialize<T extends Application>(
   // Before the serializers are checked: it lowers `maxIncludeDepth`, which
   // decides how many of them a namespace needs.
   restrictOpenNamespaces(controllers, logger);
+  warnDefaultSortAndFilter(controllers, logger);
   validateNamespacedSerializers(controllers, serializers);
   warnQueryParamNames(controllers, logger);
 
