@@ -5,6 +5,7 @@ import type { Server } from 'http';
 import { it, describe, beforeAll, afterAll, expect } from 'vitest';
 
 import { auditVisibility } from '../index';
+import type { AuditVisibilityOptions } from '../index';
 import type Application from '../../application';
 import type { Model, ModelClass } from '../../database';
 import { getTestApp } from '../../../../test/utils/get-test-app';
@@ -509,14 +510,18 @@ describe('auditVisibility()', () => {
       await new Promise(resolve => proxy.close(resolve));
     });
 
-    const audit = (sortAndFilter?: boolean) =>
+    const audit = (
+      sortAndFilter?: boolean,
+      options: Partial<AuditVisibilityOptions> = {}
+    ) =>
       auditVisibility(app, {
         namespace: 'members',
         query: MEMBER_QUERY,
         visible: memberVisible,
         ids: fixtureIds(),
         origin: proxyOrigin,
-        ...(sortAndFilter === undefined ? {} : { sortAndFilter })
+        ...(sortAndFilter === undefined ? {} : { sortAndFilter }),
+        ...options
       });
 
     it('reports an attribute a list leaves out but sorts and filters on', async () => {
@@ -544,6 +549,36 @@ describe('auditVisibility()', () => {
       expect(found?.message).to.match(
         /^sorting by `body` puts posts \d+.*, which show it as null, between records that show a value/
       );
+    });
+
+    // nickschot/lux#168: the checks used to run after `onDocument`, on the
+    // same object, so a callback that emptied it disabled them.
+    it('still reports when `onDocument` empties the document', async () => {
+      const expected = await audit();
+      const emptied = await audit(undefined, {
+        // The walk from the issue: `queue` is `document.data` itself.
+        onDocument({ document }) {
+          const queue = Array.isArray(document.data)
+            ? document.data
+            : [document.data];
+
+          while (queue.length) {
+            queue.shift();
+          }
+
+          delete document.included;
+          delete document.links;
+        }
+      });
+
+      expect(
+        expected.violations.some(({ message }) =>
+          message?.includes('leave out `title`')
+        )
+      ).to.equal(true);
+      expect(emptied.violations).to.deep.equal(expected.violations);
+      expect(emptied.requests).to.deep.equal(expected.requests);
+      expect(emptied.seen).to.deep.equal(expected.seen);
     });
 
     it('can be turned off', async () => {
