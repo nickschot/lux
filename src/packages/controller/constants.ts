@@ -16,5 +16,6 @@ export const NAMESPACE_SETTINGS = [
   'rejectUnlistedAttributes',
   'rejectUnlistedRelationships',
   'maxIncludeDepth',
-  'maxBodySize'
+  'maxBodySize',
+  'defaultSortAndFilter'
 ] as const;

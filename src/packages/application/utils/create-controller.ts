@@ -76,16 +76,6 @@ export default function createController<T extends Controller>(
     );
   }
 
-  if (serializer) {
-    if (!instance.filter.length) {
-      instance.filter = [...serializer.attributes];
-    }
-
-    if (!instance.sort.length) {
-      instance.sort = [...serializer.attributes];
-    }
-  }
-
   const ownBefore = instance.beforeAction.map(fn => fn.bind(instance));
   const ownAfter = instance.afterAction.map(fn => fn.bind(instance));
 
@@ -130,6 +120,17 @@ export default function createController<T extends Controller>(
           configurable: true
         });
       }
+    }
+  }
+
+  // After the settings: whether there are defaults can be the namespace's call.
+  if (serializer && instance.defaultSortAndFilter) {
+    if (!instance.filter.length) {
+      instance.filter = [...serializer.attributes];
+    }
+
+    if (!instance.sort.length) {
+      instance.sort = [...serializer.attributes];
     }
   }
 

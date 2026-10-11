@@ -325,6 +325,86 @@ describe('module "application" #createController()', () => {
     });
   });
 
+  describe('sort and filter defaults', () => {
+    const withSerializer = <T extends Controller>(
+      key: string,
+      constructor: new (...args: Array<never>) => T,
+      parent: Controller | null = null
+    ) =>
+      createController(constructor, {
+        key,
+        store,
+        parent,
+        serializers: new Map([
+          ['posts', { attributes: ['title', 'body'] }]
+        ]) as unknown as BundleNamespace<Serializer<Model>>
+      });
+
+    class StrictApplicationController extends Controller {
+      override defaultSortAndFilter = false;
+    }
+
+    it("default to the serializer's attributes", () => {
+      const posts = withSerializer('posts', class extends Controller {});
+
+      expect(posts.sort).to.deep.equal(['title', 'body']);
+      expect(posts.filter).to.deep.equal(['title', 'body']);
+    });
+
+    it('are none in a namespace that turns them off', () => {
+      const application = create('application', StrictApplicationController);
+      const posts = withSerializer(
+        'posts',
+        class extends Controller {},
+        application
+      );
+
+      expect(posts.defaultSortAndFilter).to.equal(false);
+      expect(posts.sort).to.deep.equal([]);
+      expect(posts.filter).to.deep.equal([]);
+    });
+
+    it("keep a controller's own lists there", () => {
+      class PostsController extends Controller {
+        override sort = ['title'];
+      }
+
+      const application = create('application', StrictApplicationController);
+      const posts = withSerializer('posts', PostsController, application);
+
+      expect(posts.sort).to.deep.equal(['title']);
+      expect(posts.filter).to.deep.equal([]);
+    });
+
+    it('stay off in a nested namespace', () => {
+      const application = create('application', StrictApplicationController);
+      const members = create(
+        'members/application',
+        class extends Controller {},
+        application
+      );
+      const posts = withSerializer(
+        'members/posts',
+        class extends Controller {},
+        members
+      );
+
+      expect(posts.sort).to.deep.equal([]);
+      expect(posts.filter).to.deep.equal([]);
+    });
+
+    it('can be turned back on by a controller', () => {
+      class PostsController extends Controller {
+        override defaultSortAndFilter = true;
+      }
+
+      const application = create('application', StrictApplicationController);
+      const posts = withSerializer('posts', PostsController, application);
+
+      expect(posts.sort).to.deep.equal(['title', 'body']);
+    });
+  });
+
   describe('a namespace without an ApplicationController', () => {
     // Built the way the application builds its controllers, from the loaded
     // modules: `admin` has controllers but no `admin/application.js`.

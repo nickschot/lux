@@ -64,7 +64,8 @@ import type {
  * namespace: its hooks run around every action in it, and it declares the
  * {@link Controller.visibility} rules and the settings
  * `rejectUnlistedAttributes`, `rejectUnlistedRelationships`,
- * `maxIncludeDepth` and `maxBodySize` for every controller in it. See the
+ * `maxIncludeDepth`, `maxBodySize` and `defaultSortAndFilter` for every
+ * controller in it. See the
  * [controllers guide](https://github.com/nickschot/lux/blob/main/docs/guides/controllers.md).
  */
 class Controller {
@@ -94,16 +95,19 @@ class Controller {
 
   /**
    * The attributes `?sort=` accepts, each also with `-` for descending.
-   * Defaults to every attribute the controller's serializer outputs; anything
-   * else is a `400 Bad Request`. Each must be a column of the model's table,
-   * or the app refuses to boot.
+   * Defaults to every attribute the controller's serializer outputs (none
+   * when {@link Controller.defaultSortAndFilter} is off); anything else is a
+   * `400 Bad Request`. Each must be a column of the model's table, or the app
+   * refuses to boot.
    */
   sort: Array<string> = [];
 
   /**
    * The attributes `?filter[…]=` accepts. Defaults to every attribute the
-   * controller's serializer outputs; anything else is a `400 Bad Request`.
-   * Each must be a column of the model's table, or the app refuses to boot.
+   * controller's serializer outputs (none when
+   * {@link Controller.defaultSortAndFilter} is off); anything else is a
+   * `400 Bad Request`. Each must be a column of the model's table, or the app
+   * refuses to boot.
    */
   filter: Array<string> = [];
 
@@ -266,6 +270,28 @@ class Controller {
    * @default undefined
    */
   declare maxBodySize: number | undefined;
+
+  /**
+   * Whether `sort` and `filter` default to every attribute the serializer
+   * outputs. Turn it off for a namespace whose responses hide part of a
+   * record after the query — an `afterAction` that blanks some fields per
+   * record, say. Sorting or filtering still runs against the real column, so
+   * the order or selection of the rows would give the hidden value away.
+   *
+   * Off, a controller accepts only the `sort` and `filter` it lists, and an
+   * empty list accepts none. Set on a namespace's `ApplicationController`,
+   * it applies to every controller in the namespace (and in namespaces nested
+   * in it) that does not set it itself:
+   *
+   * ```javascript
+   * class MembersApplicationController extends ApplicationController {
+   *   defaultSortAndFilter = false;
+   * }
+   * ```
+   *
+   * @default true
+   */
+  declare defaultSortAndFilter: boolean;
 
   /**
    * Whether a namespace may fall back to the root Serializer of a type it has
@@ -831,7 +857,8 @@ Object.defineProperties(Controller.prototype, {
   rejectUnlistedAttributes: { value: false, writable: true },
   rejectUnlistedRelationships: { value: true, writable: true },
   maxIncludeDepth: { value: 3, writable: true },
-  maxBodySize: { value: undefined, writable: true }
+  maxBodySize: { value: undefined, writable: true },
+  defaultSortAndFilter: { value: true, writable: true }
 });
 
 export default Controller;

@@ -94,8 +94,8 @@ stops the app from booting.
 
 | Property | Default | Controls |
 |---|---|---|
-| `sort` | every attribute the serializer outputs | The values `?sort=` accepts (each also with `-` for descending). |
-| `filter` | every attribute the serializer outputs | The keys `?filter[…]=` accepts. |
+| `sort` | every attribute the serializer outputs, or none [with `defaultSortAndFilter` off](#sorting-and-filtering-on-hidden-fields) | The values `?sort=` accepts (each also with `-` for descending). |
+| `filter` | every attribute the serializer outputs, or none [with `defaultSortAndFilter` off](#sorting-and-filtering-on-hidden-fields) | The keys `?filter[…]=` accepts. |
 | `defaultPerPage` | `25` | The page size when the request gives none. |
 | `maxPerPage` | `100` | The largest `?page[size]=`; a larger one is a `400`. |
 | `maxIncludeDepth` | `3`, or `0` [without visibility rules](#without-rules) | How deep an `?include=` path may go (`comments.user` is 2); `0` turns `include` off. |
@@ -110,6 +110,35 @@ class PostsController extends Controller {
   sort = ['title', 'createdAt'];
   filter = ['title'];
   maxPerPage = 50;
+}
+```
+
+### Sorting and filtering on hidden fields
+
+Sorting and filtering run against the database, not against the response.
+That's fine while the serializer decides what a client sees. It isn't when a
+response hides part of a record afterwards, such as an `afterAction` that
+blanks some fields per record: `?sort=salary` still orders the rows by the
+real salaries, and `?filter[salary]=…` still selects by them, so the order or
+the selection gives the hidden value away.
+
+For such a namespace, turn the defaults off on its `ApplicationController`.
+Each controller then accepts only the `sort` and `filter` it lists, and an
+empty list accepts none:
+
+```javascript
+// app/controllers/members/application.js
+class MembersApplicationController extends ApplicationController {
+  defaultSortAndFilter = false;
+}
+```
+
+```javascript
+// app/controllers/members/users.js
+class MembersUsersController extends Controller {
+  // Only what every member may see of every user.
+  sort = ['name'];
+  filter = ['id'];
 }
 ```
 
@@ -520,6 +549,7 @@ sets its own:
 | `rejectUnlistedRelationships` | `true` | `403` for a relationship not in `params`; `false` ignores it. |
 | `maxIncludeDepth` | `3`, or `0` [without visibility rules](#without-rules) | How deep `?include=` may go; `0` turns it off. |
 | `maxBodySize` | the server's, 1 MiB | The largest request body, in bytes; a larger one is a `413`. See [Body size](#body-size). |
+| `defaultSortAndFilter` | `true` | `false`: `sort` and `filter` accept only what a controller lists ([why](#sorting-and-filtering-on-hidden-fields)). |
 
 One more applies to its own namespace only, not to nested ones:
 `serializerFallback` (default `true`) says whether the namespace may use the
