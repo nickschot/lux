@@ -409,6 +409,42 @@ Declaring `visibility` on any other controller is a boot error: a type can be
 included from any controller in the namespace, so its rule must hold for the
 whole namespace.
 
+### Requiring a rule for every type
+
+In a namespace with rules, a type without one is visible in full. That makes
+a new relationship on a serializer an easy way to leak: it can make a type
+reachable, through `include`, linkage or a related endpoint, without anyone
+deciding what it shows. The same goes for types that share a table, where a
+rule on one doesn't cover the others.
+
+`static strictVisibility = true` makes the app refuse to boot while the
+namespace can reach a type it has no rule for. A type that may be seen in
+full says so with `true`:
+
+```javascript
+// app/controllers/application.js
+class ApplicationController extends Controller {
+  static strictVisibility = true;
+
+  static visibility = {
+    posts: query => query.isPublic(),
+    users: true,
+    tags: true
+  };
+}
+```
+
+The error lists each missing type with the shortest way it is reached, such
+as `users (reached through controllers/posts → user)`. A namespace reaches
+each of its controllers' types, and every type their serializers'
+relationships lead to, down to `maxIncludeDepth`. The direct relationships
+always count, since every response carries their linkage.
+
+Like the rules, `strictVisibility` follows nested namespaces until one
+declares its own. An admin namespace that extends the root's class to see
+everything (`static visibility = {}`) needs `static strictVisibility = false`
+too, or a `true` rule for each type.
+
 ### Queries you build yourself
 
 Rules apply to the queries Lumen makes. A custom action that builds its own —

@@ -668,7 +668,7 @@ describe('visibility rules', () => {
         .with.property('message')
         .that.includes('posts: declare rules on the namespace')
         .and.includes('no model for type "post"')
-        .and.includes('the rule for "comments" is not a function');
+        .and.includes('the rule for "comments" is not a function or `true`');
     });
   });
 });
