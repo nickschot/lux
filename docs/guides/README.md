@@ -21,8 +21,9 @@ Guides to building a JSON:API server with Lumen, written for Lumen 4.0.
    request ids, filtering credentials, and logging from your code.
 9. **[The `lumen` command](cli.md)** — every command and option: generators,
    `serve`, `build`, `console` and the database commands.
-10. **[Testing](testing.md)** — booting the app in a test, and checking what
-    each request can see with `auditVisibility()`.
+10. **[Testing](testing.md)** — booting the app in a test, checking what
+    each request can see with `auditVisibility()`, and snapshotting what each
+    namespace exposes with `exposureOf()`.
 11. **[Deployment](deployment.md)** — production configuration, migrations
     on deploy, starting and stopping, and recipes for Heroku and Docker.
 

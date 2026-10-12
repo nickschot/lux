@@ -279,6 +279,7 @@ jobs:
             const assert = require('assert');
             assert.equal(typeof require('lumen-framework/testing').auditVisibility, 'function');
             assert.equal(typeof require('lumen-framework/testing').startApp, 'function');
+            assert.equal(typeof require('lumen-framework/testing').exposureOf, 'function');
             assert.equal(require('lumen-framework').auditVisibility, undefined);
             assert.throws(() => require('lumen-framework/dist/index.js'), { code: 'ERR_PACKAGE_PATH_NOT_EXPORTED' });
           "

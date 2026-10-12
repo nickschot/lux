@@ -26,6 +26,7 @@ describe('the `lumen-framework` entries', () => {
 
     expect(typeof testing.auditVisibility).to.equal('function');
     expect(typeof testing.startApp).to.equal('function');
+    expect(typeof testing.exposureOf).to.equal('function');
   });
 
   it('keeps the test helpers out of the main entry', () => {
