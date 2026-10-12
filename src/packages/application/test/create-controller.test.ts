@@ -405,6 +405,32 @@ describe('module "application" #createController()', () => {
     });
   });
 
+  describe('the namespace', () => {
+    // Built the way the application builds its controllers: the loader
+    // constructs the root namespace's ApplicationController under the key
+    // `root/application`.
+    const controllers = () =>
+      build(
+        new Map<string, typeof Controller>([
+          ['application', ApplicationController],
+          ['posts', class PostsController extends Controller {}],
+          ['admin/application', class extends Controller {}],
+          ['admin/posts', class extends Controller {}]
+        ]) as never,
+        (key, constructor, parent) =>
+          create(key, constructor as typeof Controller, parent ?? null)
+      );
+
+    it("is the root's, '', for the root ApplicationController too", () => {
+      const built = controllers();
+
+      expect(built.get('application')?.namespace).to.equal('');
+      expect(built.get('posts')?.namespace).to.equal('');
+      expect(built.get('admin/application')?.namespace).to.equal('admin');
+      expect(built.get('admin/posts')?.namespace).to.equal('admin');
+    });
+  });
+
   describe('a namespace without an ApplicationController', () => {
     // Built the way the application builds its controllers, from the loaded
     // modules: `admin` has controllers but no `admin/application.js`.

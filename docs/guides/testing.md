@@ -1,7 +1,8 @@
 # Testing
 
 `lumen-framework/testing` has helpers for an app's own tests: booting the
-app in the test, and checking what each request can see. They are kept out of
+app in the test, checking what each request can see, and reporting what each
+namespace exposes. They are kept out of
 the main entry, so they never reach the app's runtime bundle.
 
 Any test runner works; the examples use Vitest.
@@ -170,3 +171,43 @@ it('shows a member only public posts and their comments', async () => {
 Requests go one at a time, and custom routes aren't requested. A namespace
 that serves no reads throws, so a mistyped `namespace` can't pass by
 checking nothing.
+
+## Reviewing what a namespace exposes: `exposureOf()`
+
+What a namespace exposes is spread over routes, controllers, serializers,
+visibility rules and namespace settings. A change to any of them can widen
+it without the diff looking like an access change: a new serializer
+attribute or relationship, a controller left on the default `sort`, an
+include path a deeper `maxIncludeDepth` makes reachable. `exposureOf(app)`
+reports it all from the booted app, as plain JSON. Snapshot it, and such a
+change shows up in review as a diff of the snapshot:
+
+```javascript
+import { exposureOf } from 'lumen-framework/testing';
+
+it('exposes what we expect', () => {
+  expect(exposureOf(app)).toMatchSnapshot();
+});
+```
+
+`exposureOf(app)` reports every namespace, keyed by its path (`/`,
+`/members`); `exposureOf(app, 'members')` reports one, and throws for a
+namespace that serves no routes. For each namespace:
+
+- **`visibilityRules`** and **`strictVisibility`**: whether it has rules,
+  its own or a parent's, and whether every type it reaches must have one.
+- **`routes`**: each route as `GET /members/posts/:id → show`, with its
+  action, relationship and related endpoints included. `HEAD` and `OPTIONS`,
+  which every route has, are left out.
+- **`controllers`**: per resource type, what a client may ask of its routes:
+  `sort`, `filter`, the `include` paths, the controller's own `query`
+  parameters, and for a controller with resource write routes the `params`
+  a write may set.
+- **`types`**: every type the namespace can return, include or link to.
+  For each, its `rule` (`narrows` for a function, `all` for `true`, `none`
+  for no rule), the `attributes` and `relationships` the namespace's
+  serializer outputs, and its `linksOnly` relationships.
+
+Every list and key is sorted, so the report changes only when the exposure
+does. The report shows *whether* a rule covers a type, not what the rule
+lets through: `auditVisibility()` checks that.

@@ -61,7 +61,11 @@ export default function createController<T extends Controller>(
     serializers: BundleNamespace<Serializer<Model>>;
   }
 ): T {
-  const { key, store, serializers } = opts;
+  const { store, serializers } = opts;
+  // The loader builds the root namespace's ApplicationController as
+  // `root/application`: it is `application`, in the namespace `''`, like
+  // the rest of the root.
+  const key = opts.key.replace(/^root\//, '');
   const namespace = posix.dirname(key).replace('.', '');
   let { parent } = opts;
   let model: ModelClass | null | undefined = tryCatchSync(() =>

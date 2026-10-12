@@ -1,5 +1,6 @@
 import type { Model, ModelClass } from '../../database';
 import type Serializer from '../index';
+import type Controller from '../../controller';
 
 /**
  * A parsed `include` parameter: each relationship name maps to the tree of
@@ -130,4 +131,32 @@ export function enumerateIncludeTypes(
   }
 
   return types;
+}
+
+/**
+ * The `include` paths `controller`'s routes accept: every top level
+ * relationship its serializer outputs, plus the nested paths
+ * (`comments.user`) reachable through each related serializer in the
+ * controller's namespace (at every level, even below a root fallback
+ * serializer), down to the controller's `maxIncludeDepth`. At `0`, none.
+ *
+ * @internal
+ */
+export function includePathsFor(controller: Controller): Array<string> {
+  const { model, maxIncludeDepth, serializer } = controller;
+  const { hasOne, hasMany } = serializer;
+  const relationships = [...hasOne, ...hasMany];
+
+  if (maxIncludeDepth < 1) {
+    return [];
+  }
+
+  return Array.from(
+    new Set([
+      ...relationships,
+      ...enumerateIncludePaths(model, relationships, maxIncludeDepth, related =>
+        controller.serializerFor(related)
+      )
+    ])
+  );
 }

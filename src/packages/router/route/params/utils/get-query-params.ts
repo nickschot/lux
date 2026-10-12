@@ -3,8 +3,8 @@ import ParameterGroup from '../parameter-group';
 import type Controller from '../../../../controller';
 import type { ParameterLike } from '../interfaces';
 import {
-  enumerateIncludePaths,
-  enumerateIncludeTypes
+  enumerateIncludeTypes,
+  includePathsFor
 } from '../../../../serializer/utils/include-tree';
 
 /** @internal */
@@ -106,31 +106,13 @@ function getFieldsParam(controller: Controller): [string, ParameterLike] {
 
 /** @internal */
 function getIncludeParam(controller: Controller): [string, ParameterLike] {
-  const { model, maxIncludeDepth, serializer } = controller;
-  const { hasOne, hasMany } = serializer;
-  const relationships = [...hasOne, ...hasMany];
-
   return [
     'include',
     new Parameter({
       path: 'include',
       type: 'array',
-      // Every top level name, plus the nested paths (`comments.user`)
-      // reachable through each related serializer in the controller's
-      // namespace (at every level, even below a root fallback serializer),
-      // down to the controller's `maxIncludeDepth`. At `0`, none: any
-      // `include` is a 400.
-      values: Array.from(
-        new Set([
-          ...(maxIncludeDepth < 1 ? [] : relationships),
-          ...enumerateIncludePaths(
-            model,
-            relationships,
-            maxIncludeDepth,
-            related => controller.serializerFor(related)
-          )
-        ])
-      )
+      // At `maxIncludeDepth` 0, none: any `include` is a 400.
+      values: includePathsFor(controller)
     })
   ];
 }
